@@ -1,67 +1,34 @@
-import Image from 'next/image';
+import { typography } from '@repo/styles/typography';
 
-import styles from './page.module.css';
+import * as styles from './page.css';
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{' '}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{' '}
-            or the{' '}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{' '}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className={styles.container}>
+      <h1 className={`${typography.f40EB} ${styles.heading}`}>
+        IT 전문가와 함께, 원하는 목표를 시작하세요
+      </h1>
+
+      <h2 className={`${typography.f32B} ${styles.heading}`}>
+        시험 텍스트를 입력해 보세요
+      </h2>
+
+      <p className={typography.f24R}>24px / Regular / 기본색</p>
+
+      <p className={`${typography.f16R} ${styles.fontGroup}`}>
+        16px / Regular / gray500 — fontGroup 스타일 적용
+      </p>
+
+      <p className={`${typography.f18B} ${styles.accent}`}>
+        18px / Bold / blue300
+      </p>
+
+      <p className={`${typography.f14B} ${styles.danger}`}>
+        14px / Bold / red200
+      </p>
+
+      <span className={typography.f12R}>12px / Regular</span>
+      <span className={typography.f8R}>8px / Regular (가장 작은 사이즈)</span>
+    </main>
   );
 }
