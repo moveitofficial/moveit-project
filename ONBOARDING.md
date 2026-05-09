@@ -25,7 +25,7 @@
 ### 필수 환경
 
 - **Node.js** `v24.14.0` (정확히 이 버전, `.nvmrc`로 고정)
-- **pnpm** 9.x (`npm install -g pnpm`)
+- **pnpm** `v8.15.9` (Corepack으로 자동 관리됨 — 별도 글로벌 설치 불필요)
 
 #### Node 버전 맞추기
 
@@ -51,11 +51,12 @@ asdf local nodejs 24.14.0
 
 > ⚠️ 다른 버전이면 `pnpm install`이 **실패**합니다 (`engine-strict` 켜져 있음). 이건 의도된 거고 — 환경 통일을 위해서입니다.
 
-### 셋업 (3줄)
+### 셋업 (4줄)
 
 ```bash
 git clone <repo-url>
 cd moveit-project
+corepack enable
 pnpm install
 ```
 
