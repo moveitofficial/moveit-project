@@ -10,6 +10,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/api": "workspace:*",
     "@repo/fonts": "workspace:*",
     "@repo/providers": "workspace:*",
     "@repo/styles": "workspace:*",
