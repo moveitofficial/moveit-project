@@ -2,11 +2,12 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Request 검증 관련
+  // Request 유효성 검사
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -14,6 +15,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // 전역 예외 필터
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Swagger
   const config = new DocumentBuilder()
@@ -23,6 +27,12 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
+
+  // CORS
+  app.enableCors({
+    origin: [process.env['CLIENT_URL'], process.env['ADMIN_URL']],
+    credentials: true,
+  });
 
   await app.listen(process.env['PORT'] ?? 8000);
 }
