@@ -5,7 +5,8 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 /** @type {import("typescript-eslint").Config} */
-export const nestConfig = tseslint.config(   // ← named export
+export const nestConfig = tseslint.config(
+  // ← named export
   {
     ignores: ['dist/**', '.turbo/**', 'node_modules/**'],
   },
@@ -20,7 +21,9 @@ export const nestConfig = tseslint.config(   // ← named export
       },
       sourceType: 'commonjs',
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['*.mjs'],
+        },
       },
     },
   },
@@ -30,6 +33,8 @@ export const nestConfig = tseslint.config(   // ← named export
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
       'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'error',
     },
   },
 );

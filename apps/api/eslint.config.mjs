@@ -1,2 +1,1 @@
-/** @type {import("eslint").Linter.Config} */
-export { nextConfig as default } from '@repo/eslint-config/nest';
+export { nestConfig as default } from '@repo/eslint-config/nest';

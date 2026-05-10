@@ -60,6 +60,22 @@ corepack enable
 pnpm install
 ```
 
+### (백엔드 개발자라면 추가로)
+
+Prisma / DB 초기 설정이 필요한 경우:
+
+```bash
+# 환경변수 세팅
+cp apps/api/.env.example apps/api/.env.development
+
+# Prisma 클라이언트 생성
+pnpm --filter api run prisma:generate
+
+# 마이그레이션 적용
+pnpm --filter api run prisma:migrate
+```
+자세한 내용은 [7.1 백엔드 초기 환경 세팅](#71-백엔드-초기-환경-세팅-prisma) 참고
+
 ### 실행
 
 ```bash
@@ -428,6 +444,31 @@ pnpm --filter web add @repo/types
 import type { User } from '@repo/types/user';
 ```
 
+---
+
+## 7.1 백엔드(API) 초기 환경 세팅 (Prisma)
+
+### 1. 환경변수 설정
+
+```bash
+# apps/api/.env.example 복사
+cp apps/api/.env.example apps/api/.env.development
+
+# DATABASE_URL 본인 로컬 DB로 설정
+```
+
+---
+### 2. Prisma 클라이언트 생성
+```bash
+pnpm --filter api run prisma:generate
+```
+
+---
+### 3. 마이그레이션 적용
+```bash
+pnpm --filter api run prisma:migrate
+> ⚠️ migrate는 처음 세팅/스키마 변경 시에만 실행
+```
 ---
 
 ## 8. 자주 만나는 함정
