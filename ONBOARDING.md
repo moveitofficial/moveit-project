@@ -578,4 +578,4 @@ cd apps/web && pnpm install some-pkg  # ❌ 자체 node_modules 생김
 
 ---
 
-> 마지막 업데이트: 2026-05-07
+> 마지막 업데이트: 2026-05-11

@@ -8,7 +8,8 @@
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "env": ["PORT", "CLIENT_URL", "ADMIN_URL", "NODE_ENV"]
     },
     "check-types": {
       "dependsOn": ["^check-types"]

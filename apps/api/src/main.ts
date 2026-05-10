@@ -1,8 +1,11 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,6 +22,12 @@ async function bootstrap() {
   // 전역 예외 필터
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  // 전역 인터셉터
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new TransformInterceptor(),
+  );
+
   // Swagger
   const config = new DocumentBuilder()
     .setTitle('moveit API')
@@ -30,10 +39,10 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: [process.env['CLIENT_URL'], process.env['ADMIN_URL']],
+    origin: [process.env.CLIENT_URL, process.env.ADMIN_URL],
     credentials: true,
   });
 
-  await app.listen(process.env['PORT'] ?? 8000);
+  await app.listen(process.env.PORT ?? 8000);
 }
-bootstrap();
+void bootstrap();

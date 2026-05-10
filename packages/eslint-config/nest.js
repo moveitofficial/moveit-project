@@ -1,17 +1,12 @@
 // @ts-check
-import eslint from '@eslint/js';
+import { config as baseConfig } from './base.js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 /** @type {import("typescript-eslint").Config} */
 export const nestConfig = tseslint.config(
-  // ← named export
-  {
-    ignores: ['dist/**', '.turbo/**', 'node_modules/**'],
-  },
-  eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+  ...baseConfig,
   eslintPluginPrettierRecommended,
   {
     languageOptions: {
@@ -29,12 +24,12 @@ export const nestConfig = tseslint.config(
   },
   {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
-      'no-console': ['error', { allow: ['warn', 'error'] }],
-      'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-extraneous-class': [
+        'error',
+        { allowWithDecorator: true },
+      ],
     },
   },
 );

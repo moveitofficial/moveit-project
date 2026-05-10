@@ -107,13 +107,22 @@ enum ServiceStatus {
 }
 
 enum OrderStatus {
-  PENDING_PAYMENT // 결제 대기
-  PAID // 결제 완료
-  IN_PROGRESS // 진행 중
-  COMPLETED // 완료
+  NEGOTIATING             // 논의중
+  CANCEL_REQUESTED        // 취소요청
+  PAYMENT_CANCELLED       // 결제취소
 
-  CANCELLED // 취소
-  REFUNDED // 환불
+  IN_PROGRESS             // 작업중
+  DEADLINE_IMMINENT       // 마감임박
+  EXPIRED                 // 기한만료
+
+  WORK_COMPLETED          // 작업완료 (구매확정 대기)
+
+  PURCHASE_CONFIRMED      // 구매확정 완료 (정산요청 안함)
+  SETTLEMENT_REQUESTED    // 정산요청
+  SETTLEMENT_COMPLETED    // 정산 완료
+
+  REFUND_REQUESTED        // 환불요청
+  REFUND_COMPLETED        // 환불완료
 }
 
 enum PaymentStatus {
@@ -125,8 +134,8 @@ enum PaymentStatus {
 }
 
 enum RefundType {
-  CANCEL // 결제 전/후 취소
-  REFUND // 환불 (결제 후 반환)
+  CANCEL // 작업 전 취소일 경우
+  REFUND // 기한 만료로 인한 환불
 }
 
 enum RefundStatus {
@@ -522,7 +531,7 @@ model Review {
   id        String   @id @default(uuid()) @db.Uuid
   orderId   String   @unique @map("order_id") @db.Uuid
   userId    String   @map("user_id") @db.Uuid
-  rating    Int
+  rating    Int      @default(0)
   content   String
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -544,7 +553,7 @@ model Order {
   agreedServicePrice Int         @map("agreed_service_price")
   platformFee        Int         @map("platform_fee")
   totalAmount        Int         @map("total_amount")
-  status             OrderStatus // 상태값 재정의해야함
+  status             OrderStatus 
   startDate          DateTime    @map("start_date")
   endDate            DateTime    @map("end_date")
   refundReason       String?     @map("refund_reason")
