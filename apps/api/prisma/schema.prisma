@@ -73,7 +73,7 @@ enum TechStackName {
   DOCKER
 }
 
-enum ServiceTypeName {
+enum ServiceGroupName {
   IT_COACHING // IT 코칭
   PROJECT_REQUEST // 프로젝트 의뢰
 }
@@ -107,22 +107,22 @@ enum ServiceStatus {
 }
 
 enum OrderStatus {
-  NEGOTIATING             // 논의중
-  CANCEL_REQUESTED        // 취소요청
-  PAYMENT_CANCELLED       // 결제취소
+  NEGOTIATING // 논의중
+  CANCEL_REQUESTED // 취소요청
+  PAYMENT_CANCELLED // 결제취소
 
-  IN_PROGRESS             // 작업중
-  DEADLINE_IMMINENT       // 마감임박
-  EXPIRED                 // 기한만료
+  IN_PROGRESS // 작업중
+  DEADLINE_IMMINENT // 마감임박
+  EXPIRED // 기한만료
 
-  WORK_COMPLETED          // 작업완료 (구매확정 대기)
+  WORK_COMPLETED // 작업완료 (구매확정 대기)
 
-  PURCHASE_CONFIRMED      // 구매확정 완료 (정산요청 안함)
-  SETTLEMENT_REQUESTED    // 정산요청
-  SETTLEMENT_COMPLETED    // 정산 완료
+  PURCHASE_CONFIRMED // 구매확정 완료 (정산요청 안함)
+  SETTLEMENT_REQUESTED // 정산요청
+  SETTLEMENT_COMPLETED // 정산 완료
 
-  REFUND_REQUESTED        // 환불요청
-  REFUND_COMPLETED        // 환불완료
+  REFUND_REQUESTED // 환불요청
+  REFUND_COMPLETED // 환불완료
 }
 
 enum PaymentStatus {
@@ -341,21 +341,21 @@ model TechStack {
   @@map("tech_stacks")
 }
 
-model ServiceType {
-  id       String          @id @default(uuid()) @db.Uuid
-  category ServiceTypeName
+model ServiceGroup {
+  id   String           @id @default(uuid()) @db.Uuid
+  name ServiceGroupName
 
   clientInterestCategories  ClientInterestCategory[]
   expertSpecialtyCategories ExpertSpecialtyCategory[]
   services                  Service[]
   statisticsByCategory      StatisticsByCategory[]
 
-  @@map("service_types")
+  @@map("service_groups")
 }
 
 model ServiceCategory {
-  id     String              @id @default(uuid()) @db.Uuid
-  detail ServiceCategoryName
+  id   String              @id @default(uuid()) @db.Uuid
+  name ServiceCategoryName
 
   clientInterestCategories  ClientInterestCategory[]
   expertSpecialtyCategories ExpertSpecialtyCategory[]
@@ -368,11 +368,11 @@ model ServiceCategory {
 model ClientInterestCategory {
   id                String @id @default(uuid()) @db.Uuid
   clientProfileId   String @map("client_profile_id") @db.Uuid
-  serviceTypeId     String @map("service_type_id") @db.Uuid
+  serviceGroupId     String @map("service_group_id") @db.Uuid
   serviceCategoryId String @map("service_category_id") @db.Uuid
 
   clientProfile   ClientProfile   @relation(fields: [clientProfileId], references: [id])
-  serviceType     ServiceType     @relation(fields: [serviceTypeId], references: [id])
+  serviceGroup     ServiceGroup     @relation(fields: [serviceGroupId], references: [id])
   serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
 
   @@map("client_interest_categories")
@@ -381,11 +381,11 @@ model ClientInterestCategory {
 model ExpertSpecialtyCategory {
   id                String @id @default(uuid()) @db.Uuid
   expertProfileId   String @map("expert_profile_id") @db.Uuid
-  serviceTypeId     String @map("service_type_id") @db.Uuid
+  serviceGroupId     String @map("service_group_id") @db.Uuid
   serviceCategoryId String @map("service_category_id") @db.Uuid
 
   expertProfile   ExpertProfile   @relation(fields: [expertProfileId], references: [id])
-  serviceType     ServiceType     @relation(fields: [serviceTypeId], references: [id])
+  serviceGroup     ServiceGroup     @relation(fields: [serviceGroupId], references: [id])
   serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
 
   @@map("expert_specialty_categories")
@@ -458,11 +458,11 @@ model Service {
   description       String
   refundPolicy      String        @map("refund_policy")
   status            ServiceStatus
-  serviceTypeId     String        @map("service_type_id") @db.Uuid
+  serviceGroupId     String        @map("service_group_id") @db.Uuid
   serviceCategoryId String        @map("service_category_id") @db.Uuid
 
   expertUser      User            @relation("ExpertServices", fields: [expertUserId], references: [id])
-  serviceType     ServiceType     @relation(fields: [serviceTypeId], references: [id])
+  serviceGroup     ServiceGroup     @relation(fields: [serviceGroupId], references: [id])
   serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
 
   techStacks       ServiceTechStack[]
@@ -553,7 +553,7 @@ model Order {
   agreedServicePrice Int         @map("agreed_service_price")
   platformFee        Int         @map("platform_fee")
   totalAmount        Int         @map("total_amount")
-  status             OrderStatus 
+  status             OrderStatus
   startDate          DateTime    @map("start_date")
   endDate            DateTime    @map("end_date")
   refundReason       String?     @map("refund_reason")
@@ -912,13 +912,13 @@ model StatisticsBySeller {
 
 model StatisticsByCategory {
   id                     String @id @default(uuid()) @db.Uuid
-  serviceTypeId          String @map("service_type_id") @db.Uuid
+  serviceGroupId          String @map("service_group_id") @db.Uuid
   serviceCategoryId      String @map("service_category_id") @db.Uuid
   totalTransactionAmount Int    @default(0) @map("total_transaction_amount")
   totalTransactionCount  Int    @default(0) @map("total_transaction_count")
   maxTransactionAmount   Int    @default(0) @map("max_transaction_amount")
 
-  serviceType     ServiceType     @relation(fields: [serviceTypeId], references: [id])
+  serviceGroup    ServiceGroup    @relation(fields: [serviceGroupId], references: [id])
   serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
 
   @@map("statistics_by_category")

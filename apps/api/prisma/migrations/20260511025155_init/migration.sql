@@ -11,7 +11,7 @@ CREATE TYPE "Region" AS ENUM ('SEOUL', 'BUSAN', 'DAEGU', 'INCHEON', 'GWANGJU', '
 CREATE TYPE "TechStackName" AS ENUM ('JAVASCRIPT', 'TYPESCRIPT', 'PYTHON', 'JAVA', 'KOTLIN', 'SWIFT', 'REACT', 'NEXTJS', 'VUE', 'REACT_NATIVE', 'NODEJS', 'NESTJS', 'SPRING', 'DJANGO', 'FASTAPI', 'POSTGRESQL', 'MYSQL', 'MONGODB', 'AWS', 'DOCKER');
 
 -- CreateEnum
-CREATE TYPE "ServiceTypeName" AS ENUM ('IT_COACHING', 'PROJECT_REQUEST');
+CREATE TYPE "ServiceGroupName" AS ENUM ('IT_COACHING', 'PROJECT_REQUEST');
 
 -- CreateEnum
 CREATE TYPE "ServiceCategoryName" AS ENUM ('WEB', 'APP', 'AI', 'GAME', 'DATA_ANALYTICS');
@@ -135,17 +135,17 @@ CREATE TABLE "tech_stacks" (
 );
 
 -- CreateTable
-CREATE TABLE "service_types" (
+CREATE TABLE "service_groups" (
     "id" UUID NOT NULL,
-    "category" "ServiceTypeName" NOT NULL,
+    "name" "ServiceGroupName" NOT NULL,
 
-    CONSTRAINT "service_types_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "service_groups_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "service_categories" (
     "id" UUID NOT NULL,
-    "detail" "ServiceCategoryName" NOT NULL,
+    "name" "ServiceCategoryName" NOT NULL,
 
     CONSTRAINT "service_categories_pkey" PRIMARY KEY ("id")
 );
@@ -154,7 +154,7 @@ CREATE TABLE "service_categories" (
 CREATE TABLE "client_interest_categories" (
     "id" UUID NOT NULL,
     "client_profile_id" UUID NOT NULL,
-    "service_type_id" UUID NOT NULL,
+    "service_group_id" UUID NOT NULL,
     "service_category_id" UUID NOT NULL,
 
     CONSTRAINT "client_interest_categories_pkey" PRIMARY KEY ("id")
@@ -164,7 +164,7 @@ CREATE TABLE "client_interest_categories" (
 CREATE TABLE "expert_specialty_categories" (
     "id" UUID NOT NULL,
     "expert_profile_id" UUID NOT NULL,
-    "service_type_id" UUID NOT NULL,
+    "service_group_id" UUID NOT NULL,
     "service_category_id" UUID NOT NULL,
 
     CONSTRAINT "expert_specialty_categories_pkey" PRIMARY KEY ("id")
@@ -223,7 +223,7 @@ CREATE TABLE "services" (
     "description" TEXT NOT NULL,
     "refund_policy" TEXT NOT NULL,
     "status" "ServiceStatus" NOT NULL,
-    "service_type_id" UUID NOT NULL,
+    "service_group_id" UUID NOT NULL,
     "service_category_id" UUID NOT NULL,
 
     CONSTRAINT "services_pkey" PRIMARY KEY ("id")
@@ -554,7 +554,7 @@ CREATE TABLE "statistics_by_seller" (
 -- CreateTable
 CREATE TABLE "statistics_by_category" (
     "id" UUID NOT NULL,
-    "service_type_id" UUID NOT NULL,
+    "service_group_id" UUID NOT NULL,
     "service_category_id" UUID NOT NULL,
     "total_transaction_amount" INTEGER NOT NULL DEFAULT 0,
     "total_transaction_count" INTEGER NOT NULL DEFAULT 0,
@@ -612,7 +612,7 @@ ALTER TABLE "expert_profiles" ADD CONSTRAINT "expert_profiles_user_id_fkey" FORE
 ALTER TABLE "client_interest_categories" ADD CONSTRAINT "client_interest_categories_client_profile_id_fkey" FOREIGN KEY ("client_profile_id") REFERENCES "client_profiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "client_interest_categories" ADD CONSTRAINT "client_interest_categories_service_type_id_fkey" FOREIGN KEY ("service_type_id") REFERENCES "service_types"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "client_interest_categories" ADD CONSTRAINT "client_interest_categories_service_group_id_fkey" FOREIGN KEY ("service_group_id") REFERENCES "service_groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "client_interest_categories" ADD CONSTRAINT "client_interest_categories_service_category_id_fkey" FOREIGN KEY ("service_category_id") REFERENCES "service_categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -621,7 +621,7 @@ ALTER TABLE "client_interest_categories" ADD CONSTRAINT "client_interest_categor
 ALTER TABLE "expert_specialty_categories" ADD CONSTRAINT "expert_specialty_categories_expert_profile_id_fkey" FOREIGN KEY ("expert_profile_id") REFERENCES "expert_profiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "expert_specialty_categories" ADD CONSTRAINT "expert_specialty_categories_service_type_id_fkey" FOREIGN KEY ("service_type_id") REFERENCES "service_types"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "expert_specialty_categories" ADD CONSTRAINT "expert_specialty_categories_service_group_id_fkey" FOREIGN KEY ("service_group_id") REFERENCES "service_groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "expert_specialty_categories" ADD CONSTRAINT "expert_specialty_categories_service_category_id_fkey" FOREIGN KEY ("service_category_id") REFERENCES "service_categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -645,7 +645,7 @@ ALTER TABLE "portfolio_skills" ADD CONSTRAINT "portfolio_skills_portfolio_id_fke
 ALTER TABLE "services" ADD CONSTRAINT "services_expert_user_id_fkey" FOREIGN KEY ("expert_user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "services" ADD CONSTRAINT "services_service_type_id_fkey" FOREIGN KEY ("service_type_id") REFERENCES "service_types"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "services" ADD CONSTRAINT "services_service_group_id_fkey" FOREIGN KEY ("service_group_id") REFERENCES "service_groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "services" ADD CONSTRAINT "services_service_category_id_fkey" FOREIGN KEY ("service_category_id") REFERENCES "service_categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -789,7 +789,7 @@ ALTER TABLE "cs_message_attachments" ADD CONSTRAINT "cs_message_attachments_mess
 ALTER TABLE "statistics_by_seller" ADD CONSTRAINT "statistics_by_seller_seller_user_id_fkey" FOREIGN KEY ("seller_user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "statistics_by_category" ADD CONSTRAINT "statistics_by_category_service_type_id_fkey" FOREIGN KEY ("service_type_id") REFERENCES "service_types"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "statistics_by_category" ADD CONSTRAINT "statistics_by_category_service_group_id_fkey" FOREIGN KEY ("service_group_id") REFERENCES "service_groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "statistics_by_category" ADD CONSTRAINT "statistics_by_category_service_category_id_fkey" FOREIGN KEY ("service_category_id") REFERENCES "service_categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
