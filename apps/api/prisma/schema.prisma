@@ -1,0 +1,925 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AuthProvider {
+  LOCAL // 이메일 가입
+  GOOGLE
+  KAKAO
+  NAVER
+}
+
+enum Role {
+  CLIENT
+  EXPERT
+}
+
+enum Region {
+  SEOUL // 서울특별시
+  BUSAN // 부산광역시
+  DAEGU // 대구광역시
+  INCHEON // 인천광역시
+  GWANGJU // 광주광역시
+  DAEJEON // 대전광역시
+  ULSAN // 울산광역시
+  SEJONG // 세종특별자치시
+  GYEONGGI_NORTH // 경기북부
+  GYEONGGI_SOUTH // 경기남부
+  GANGWON // 강원특별자치도
+  CHUNGBUK // 충청북도
+  CHUNGNAM // 충청남도
+  JEONBUK // 전라북도
+  JEONNAM // 전라남도
+  GYEONGBUK // 경상북도
+  GYEONGNAM // 경상남도
+  JEJU // 제주특별자치도
+}
+
+enum TechStackName {
+  JAVASCRIPT
+  TYPESCRIPT
+
+  PYTHON
+  JAVA
+  KOTLIN
+  SWIFT
+
+  REACT
+  NEXTJS
+  VUE
+  REACT_NATIVE
+
+  NODEJS
+  NESTJS
+  SPRING
+  DJANGO
+  FASTAPI
+
+  POSTGRESQL
+  MYSQL
+  MONGODB
+
+  AWS
+  DOCKER
+}
+
+enum ServiceGroupName {
+  IT_COACHING // IT 코칭
+  PROJECT_REQUEST // 프로젝트 의뢰
+}
+
+enum ServiceCategoryName {
+  WEB // 웹
+  APP // 앱
+  AI // AI
+  GAME // 게임
+  DATA_ANALYTICS // 데이터 분석
+}
+
+enum BusinessSector {
+  PUBLIC_INSTITUTION // 공기업 / 공공기관
+  ECOMMERCE // 온라인 쇼핑몰
+  LEGAL_TAX // 법률 / 세무
+  REAL_ESTATE // 부동산 / 분양
+  MEDICAL_PHARMA // 병원 / 제약
+}
+
+enum StackType {
+  DESIGN // 디자인
+  FRONTEND // 프론트엔드
+  BACKEND // 백엔드
+}
+
+enum ServiceStatus {
+  ACTIVE // 활성화
+  PAUSED // 일시 정지
+  CLOSED // 서비스 종료
+}
+
+enum OrderStatus {
+  NEGOTIATING // 논의중
+  CANCEL_REQUESTED // 취소요청
+  PAYMENT_CANCELLED // 결제취소
+
+  IN_PROGRESS // 작업중
+  DEADLINE_IMMINENT // 마감임박
+  EXPIRED // 기한만료
+
+  WORK_COMPLETED // 작업완료 (구매확정 대기)
+
+  PURCHASE_CONFIRMED // 구매확정 완료 (정산요청 안함)
+  SETTLEMENT_REQUESTED // 정산요청
+  SETTLEMENT_COMPLETED // 정산 완료
+
+  REFUND_REQUESTED // 환불요청
+  REFUND_COMPLETED // 환불완료
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum RefundType {
+  CANCEL // 작업 전 취소일 경우
+  REFUND // 기한 만료로 인한 환불
+}
+
+enum RefundStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum CommunityCategory {
+  QUESTION // 질문
+  TIP // 팁 공유
+  REVIEW // 후기
+  STUDY_GROUP // 스터디모임
+  FREE // 자유
+}
+
+enum NotificationType {
+  COMMUNITY // 게시글 관련
+  TRANSACTION // 거래 관련
+  REMINDER // 리마인드 관련
+}
+
+enum NotificationCategory {
+  // COMMUNITY
+  POST_COMMENT
+  POST_REPLY
+  POST_LIKE
+
+  // TRANSACTION -> 수정해야함 아직 대충만들었음
+  ORDER_CREATED
+  ORDER_CANCELLED
+  PAYMENT_SUCCESS
+  REFUND_REQUESTED
+  SETTLEMENT_DONE
+  PURCHASE_CONFIRM_REQUEST
+
+  // SYSTEM / REMINDER
+  DEADLINE_REMINDER
+}
+
+enum ReferenceType {
+  SERVICE
+  ORDER
+  POST
+  COMMENT
+  PAYMENT
+  REFUND
+}
+
+enum MainSectionType {
+  POPULAR_IT_COACHING // 가장 많이 찾는 IT 코칭
+  POPULAR_PROJECT_REQUEST // 가장 많이 찾는 프로젝트 의뢰
+
+  MOVEIT_POPULAR_PROJECT_EXPERT // 무빗 인기 프로젝트 의뢰 전문가
+  MOVEIT_POPULAR_COACHING // 무빗 인기 코칭
+
+  RECOMMENDED_IT_COACHING // 추천 IT 코칭
+  RECOMMENDED_PROJECT_REQUEST // 추천 프로젝트 의뢰
+}
+
+enum MainTargetType {
+  USER
+  SERVICE
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  SYSTEM
+}
+
+enum SystemMessageType {
+  TRADE_REQUEST_SENT
+  TRADE_REQUEST_RECEIVED
+  TRADE_CANCELED
+  PAYMENT_REQUEST
+  PAYMENT_HELD
+  PAYMENT_COMPLETED
+  SCHEDULE_REQUEST
+  SCHEDULE_REGISTERED
+  ORDER_COMPLETION_PENDING
+}
+
+enum SenderType {
+  USER
+  ADMIN
+}
+
+enum CsChatStatus {
+  OPEN
+  ASSIGNED
+  CLOSED
+}
+
+model User {
+  id              String       @id @default(uuid()) @db.Uuid
+  email           String       @unique
+  name            String?
+  password        String
+  provider        AuthProvider
+  providerId      String?      @map("provider_id")
+  role            Role
+  profileImageUrl String?      @map("profile_image_url")
+  isBlocked       Boolean      @default(false) @map("is_blocked")
+  isDeleted       Boolean      @default(false) @map("is_deleted")
+  region          Region?
+  bankName        String?      @map("bank_name")
+  bankAccount     String?      @map("bank_account")
+  phoneNumber     String?      @map("phone_number")
+
+  clientProfile      ClientProfile?
+  expertProfile      ExpertProfile?
+  services           Service[]           @relation("ExpertServices")
+  reviews            Review[]
+  ordersAsClient     Order[]             @relation("ClientOrders")
+  ordersAsExpert     Order[]             @relation("ExpertOrders")
+  payments           Payment[]
+  refundsAsClient    Refund[]            @relation("ClientRefunds")
+  refundsAsExpert    Refund[]            @relation("ExpertRefunds")
+  favoriteServices   FavoriteService[]
+  favoriteExperts    FavoriteExpert[]    @relation("ClientFavoriteExperts")
+  favoritedByClients FavoriteExpert[]    @relation("ExpertFavoritedBy")
+  reportsAsClient    Report[]            @relation("ClientReports")
+  reportsAsExpert    Report[]            @relation("ExpertReports")
+  communityPosts     CommunityPost[]
+  comments           Comment[]
+  likes              Like[]
+  chatRoomsAsClient  ChatRoom[]          @relation("ClientChatRooms")
+  chatRoomsAsExpert  ChatRoom[]          @relation("ExpertChatRooms")
+  chatParticipants   ChatParticipant[]
+  messages           Message[]
+  csChatRooms        CsChatRoom[]
+  statisticsBySeller StatisticsBySeller?
+  notifications      Notification[]
+
+  @@map("users")
+}
+
+model Admin {
+  id       String  @id @default(uuid()) @db.Uuid
+  email    String
+  password String
+  name     String
+  isSuper  Boolean @default(false) @map("is_super")
+
+  csChatRooms     CsChatRoom[]
+  approvedRefunds Refund[]
+  communityPosts  CommunityPost[]
+
+  @@map("admins")
+}
+
+// =========================
+// 프로필
+// =========================
+
+model ClientProfile {
+  id       String  @id @default(uuid()) @db.Uuid
+  userId   String  @unique @map("user_id") @db.Uuid
+  nickname String?
+
+  user               User                     @relation(fields: [userId], references: [id])
+  interestCategories ClientInterestCategory[]
+
+  @@map("client_profiles")
+}
+
+model ExpertProfile {
+  id               String  @id @default(uuid()) @db.Uuid
+  userId           String  @unique @map("user_id") @db.Uuid
+  isApproved       Boolean @default(false) @map("is_approved")
+  rejectReason     String? @map("reject_reason")
+  businessName     String? @map("business_name")
+  businessNumber   String? @map("business_number")
+  ceoName          String? @map("ceo_name")
+  contactTimeStart String? @map("contact_time_start")
+  contactTimeEnd   String? @map("contact_time_end")
+  foundedYear      Int?    @map("founded_year")
+  employeeMin      Int?    @map("employee_min")
+  employeeMax      Int?    @map("employee_max")
+  description      String?
+
+  user                User                      @relation(fields: [userId], references: [id])
+  specialtyCategories ExpertSpecialtyCategory[]
+  techStacks          ExpertTechStack[]
+  portfolios          Portfolio[]
+
+  @@map("expert_profiles")
+}
+
+// =========================
+// 카테고리 / 기술 스택
+// =========================
+
+model TechStack {
+  id   String        @id @default(uuid()) @db.Uuid
+  name TechStackName
+
+  expertTechStacks  ExpertTechStack[]
+  serviceTechStacks ServiceTechStack[]
+
+  @@map("tech_stacks")
+}
+
+model ServiceGroup {
+  id   String           @id @default(uuid()) @db.Uuid
+  name ServiceGroupName
+
+  clientInterestCategories  ClientInterestCategory[]
+  expertSpecialtyCategories ExpertSpecialtyCategory[]
+  services                  Service[]
+  statisticsByCategory      StatisticsByCategory[]
+
+  @@map("service_groups")
+}
+
+model ServiceCategory {
+  id   String              @id @default(uuid()) @db.Uuid
+  name ServiceCategoryName
+
+  clientInterestCategories  ClientInterestCategory[]
+  expertSpecialtyCategories ExpertSpecialtyCategory[]
+  services                  Service[]
+  statisticsByCategory      StatisticsByCategory[]
+
+  @@map("service_categories")
+}
+
+model ClientInterestCategory {
+  id                String @id @default(uuid()) @db.Uuid
+  clientProfileId   String @map("client_profile_id") @db.Uuid
+  serviceGroupId     String @map("service_group_id") @db.Uuid
+  serviceCategoryId String @map("service_category_id") @db.Uuid
+
+  clientProfile   ClientProfile   @relation(fields: [clientProfileId], references: [id])
+  serviceGroup     ServiceGroup     @relation(fields: [serviceGroupId], references: [id])
+  serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
+
+  @@map("client_interest_categories")
+}
+
+model ExpertSpecialtyCategory {
+  id                String @id @default(uuid()) @db.Uuid
+  expertProfileId   String @map("expert_profile_id") @db.Uuid
+  serviceGroupId     String @map("service_group_id") @db.Uuid
+  serviceCategoryId String @map("service_category_id") @db.Uuid
+
+  expertProfile   ExpertProfile   @relation(fields: [expertProfileId], references: [id])
+  serviceGroup     ServiceGroup     @relation(fields: [serviceGroupId], references: [id])
+  serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
+
+  @@map("expert_specialty_categories")
+}
+
+model ExpertTechStack {
+  id              String @id @default(uuid()) @db.Uuid
+  expertProfileId String @map("expert_profile_id") @db.Uuid
+  techStackId     String @map("tech_stack_id") @db.Uuid
+
+  expertProfile ExpertProfile @relation(fields: [expertProfileId], references: [id])
+  techStack     TechStack     @relation(fields: [techStackId], references: [id])
+
+  @@map("expert_tech_stacks")
+}
+
+// =========================
+// 포트폴리오
+// =========================
+
+model Portfolio {
+  id              String         @id @default(uuid()) @db.Uuid
+  expertProfileId String         @map("expert_profile_id") @db.Uuid
+  title           String
+  description     String
+  clientName      String         @map("client_name")
+  businessSector  BusinessSector @map("business_sector")
+
+  expertProfile ExpertProfile    @relation(fields: [expertProfileId], references: [id])
+  images        PortfolioImage[]
+  skills        PortfolioSkill[]
+
+  @@map("portfolios")
+}
+
+model PortfolioImage {
+  id          String  @id @default(uuid()) @db.Uuid
+  portfolioId String  @map("portfolio_id") @db.Uuid
+  imgUrl      String  @map("img_url")
+  isMain      Boolean @default(false) @map("is_main")
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id])
+
+  @@map("portfolio_images")
+}
+
+model PortfolioSkill {
+  id          String    @id @default(uuid()) @db.Uuid
+  portfolioId String    @map("portfolio_id") @db.Uuid
+  stackName   String    @map("stack_name")
+  stackType   StackType @map("stack_type")
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id])
+
+  @@map("portfolio_skills")
+}
+
+// =========================
+// 서비스
+// =========================
+
+model Service {
+  id                String        @id @default(uuid()) @db.Uuid
+  expertUserId      String        @map("expert_user_id") @db.Uuid
+  title             String
+  workDuration      Int           @map("work_duration")
+  revisionCount     Int           @map("revision_count")
+  serviceScope      String        @map("service_scope")
+  servicePrice      Int           @map("service_price")
+  description       String
+  refundPolicy      String        @map("refund_policy")
+  status            ServiceStatus
+  serviceGroupId     String        @map("service_group_id") @db.Uuid
+  serviceCategoryId String        @map("service_category_id") @db.Uuid
+
+  expertUser      User            @relation("ExpertServices", fields: [expertUserId], references: [id])
+  serviceGroup     ServiceGroup     @relation(fields: [serviceGroupId], references: [id])
+  serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
+
+  techStacks       ServiceTechStack[]
+  images           ServiceImage[]
+  steps            ServiceStep[]
+  faqs             ServiceFaq[]
+  orders           Order[]
+  favoriteServices FavoriteService[]
+  chatRooms        ChatRoom[]
+
+  @@map("services")
+}
+
+model ServiceTechStack {
+  id          String @id @default(uuid()) @db.Uuid
+  serviceId   String @map("service_id") @db.Uuid
+  techStackId String @map("tech_stack_id") @db.Uuid
+
+  service   Service   @relation(fields: [serviceId], references: [id])
+  techStack TechStack @relation(fields: [techStackId], references: [id])
+
+  @@map("service_tech_stacks")
+}
+
+model ServiceImage {
+  id        String  @id @default(uuid()) @db.Uuid
+  serviceId String  @map("service_id") @db.Uuid
+  imgUrl    String  @map("img_url")
+  isMain    Boolean @default(false) @map("is_main")
+
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@map("service_images")
+}
+
+model ServiceStep {
+  id          String @id @default(uuid()) @db.Uuid
+  serviceId   String @map("service_id") @db.Uuid
+  title       String
+  description String
+  order       Int
+
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@unique([serviceId, order])
+  @@map("service_steps")
+}
+
+model ServiceFaq {
+  id        String   @id @default(uuid()) @db.Uuid
+  serviceId String   @map("service_id") @db.Uuid
+  question  String
+  answer    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@map("service_faqs")
+}
+
+// =========================
+// 리뷰
+// =========================
+
+model Review {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String   @unique @map("order_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  rating    Int      @default(0)
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@map("reviews")
+}
+
+// =========================
+// 주문 / 결제 / 환불
+// =========================
+
+model Order {
+  id                 String      @id @default(uuid()) @db.Uuid
+  clientUserId       String      @map("client_user_id") @db.Uuid
+  expertUserId       String      @map("expert_user_id") @db.Uuid
+  serviceId          String      @map("service_id") @db.Uuid
+  agreedServicePrice Int         @map("agreed_service_price")
+  platformFee        Int         @map("platform_fee")
+  totalAmount        Int         @map("total_amount")
+  status             OrderStatus
+  startDate          DateTime    @map("start_date")
+  endDate            DateTime    @map("end_date")
+  refundReason       String?     @map("refund_reason")
+
+  clientUser User     @relation("ClientOrders", fields: [clientUserId], references: [id])
+  expertUser User     @relation("ExpertOrders", fields: [expertUserId], references: [id])
+  service    Service  @relation(fields: [serviceId], references: [id])
+  payment    Payment?
+  review     Review?
+
+  @@map("orders")
+}
+
+model Payment {
+  id           String        @id @default(uuid()) @db.Uuid
+  orderId      String        @unique @map("order_id") @db.Uuid
+  clientUserId String        @map("client_user_id") @db.Uuid
+  paidAmount   Int           @map("paid_amount")
+  status       PaymentStatus
+  method       String
+  paymentKey   String        @map("payment_key")
+  rawData      Json          @map("raw_data")
+  approvedAt   DateTime      @map("approved_at")
+
+  order      Order   @relation(fields: [orderId], references: [id])
+  clientUser User    @relation(fields: [clientUserId], references: [id])
+  refund     Refund?
+
+  @@map("payments")
+}
+
+model Refund {
+  id              String       @id @default(uuid()) @db.Uuid
+  paymentId       String       @unique @map("payment_id") @db.Uuid
+  clientUserId    String       @map("client_user_id") @db.Uuid
+  expertUserId    String       @map("expert_user_id") @db.Uuid
+  refundAmount    Int          @map("refund_amount")
+  type            RefundType
+  status          RefundStatus
+  reason          String
+  approvedAdminId String       @map("approved_admin_id") @db.Uuid
+  requestedAt     DateTime     @map("requested_at")
+  approvedAt      DateTime?    @map("approved_at")
+  refundedAt      DateTime?    @map("refunded_at")
+  paymentKey      String       @map("payment_key")
+  rawData         Json         @map("raw_data")
+
+  payment       Payment @relation(fields: [paymentId], references: [id])
+  clientUser    User    @relation("ClientRefunds", fields: [clientUserId], references: [id])
+  expertUser    User    @relation("ExpertRefunds", fields: [expertUserId], references: [id])
+  approvedAdmin Admin   @relation(fields: [approvedAdminId], references: [id])
+
+  @@map("refunds")
+}
+
+// =========================
+// 즐겨찾기
+// =========================
+
+model FavoriteService {
+  id           String @id @default(uuid()) @db.Uuid
+  clientUserId String @map("client_user_id") @db.Uuid
+  serviceId    String @map("service_id") @db.Uuid
+
+  clientUser User    @relation(fields: [clientUserId], references: [id])
+  service    Service @relation(fields: [serviceId], references: [id])
+
+  @@unique([clientUserId, serviceId])
+  @@map("favorite_services")
+}
+
+model FavoriteExpert {
+  id           String @id @default(uuid()) @db.Uuid
+  clientUserId String @map("client_user_id") @db.Uuid
+  expertUserId String @map("expert_user_id") @db.Uuid
+
+  clientUser User @relation("ClientFavoriteExperts", fields: [clientUserId], references: [id])
+  expertUser User @relation("ExpertFavoritedBy", fields: [expertUserId], references: [id])
+
+  @@unique([clientUserId, expertUserId])
+  @@map("favorite_experts")
+}
+
+// =========================
+// 신고
+// =========================
+
+model Report {
+  id           String @id @default(uuid()) @db.Uuid
+  clientUserId String @map("client_user_id") @db.Uuid
+  expertUserId String @map("expert_user_id") @db.Uuid
+  reason       String
+  detail       String
+
+  clientUser User          @relation("ClientReports", fields: [clientUserId], references: [id])
+  expertUser User          @relation("ExpertReports", fields: [expertUserId], references: [id])
+  images     ReportImage[]
+
+  @@map("reports")
+}
+
+model ReportImage {
+  id        String @id @default(uuid()) @db.Uuid
+  reportsId String @map("reports_id") @db.Uuid
+  imageUrl  String @map("image_url")
+
+  report Report @relation(fields: [reportsId], references: [id])
+
+  @@map("reports_images")
+}
+
+// =========================
+// 커뮤니티
+// =========================
+
+model CommunityPost {
+  id       String            @id @default(uuid()) @db.Uuid
+  userId   String            @map("user_id") @db.Uuid
+  category CommunityCategory
+  title    String
+  content  String
+  likes    Int               @default(0)
+
+  deletedAt        DateTime? @map("deleted_at")
+  deleteReason     String?   @map("delete_reason")
+  deletedByAdminId String?   @map("deleted_by_admin_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user           User      @relation(fields: [userId], references: [id])
+  deletedByAdmin Admin?    @relation(fields: [deletedByAdminId], references: [id])
+  comments       Comment[]
+  likeRecords    Like[]
+
+  @@map("community_posts")
+}
+
+model Comment {
+  id              String   @id @default(uuid()) @db.Uuid
+  postId          String   @map("post_id") @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  parentCommentId String?  @map("parent_comment_id") @db.Uuid
+  content         String
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  post          CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id])
+  parentComment Comment?      @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies       Comment[]     @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id])
+
+  @@unique([userId, postId])
+  @@map("likes")
+}
+
+// =========================
+// 알림
+// =========================
+
+model Notification {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  type     NotificationType
+  category NotificationCategory
+
+  content String
+
+  referenceType ReferenceType @map("reference_type")
+  referenceId   String        @map("reference_id") @db.Uuid
+
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("moveit_notifications")
+}
+
+// =========================
+// 배너 / 메인 / FAQ
+// =========================
+
+model Banner {
+  id        String   @id @default(uuid()) @db.Uuid
+  imageUrl  String   @map("image_url")
+  actionUrl String   @map("action_url")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("banners")
+}
+
+model MainSetting {
+  id          String          @id @default(uuid()) @db.Uuid
+  sectionType MainSectionType @map("section_type")
+  targetType  MainTargetType  @map("target_type")
+
+  targetUserId    String? @map("target_user_id") @db.Uuid
+  targetServiceId String? @map("target_service_id") @db.Uuid
+
+  @@map("main_settings")
+}
+
+model Faq {
+  id      String @id @default(uuid()) @db.Uuid
+  title   String
+  content String
+
+  @@map("faqs")
+}
+
+// =========================
+// 채팅
+// =========================
+
+model ChatRoom {
+  id               String  @id @default(uuid()) @db.Uuid
+  clientUserId     String  @map("client_user_id") @db.Uuid
+  expertUserId     String  @map("expert_user_id") @db.Uuid
+  currentServiceId String  @map("current_service_id") @db.Uuid
+  lastMessageId    String? @map("last_message_id") @db.Uuid
+
+  clientUser     User              @relation("ClientChatRooms", fields: [clientUserId], references: [id])
+  expertUser     User              @relation("ExpertChatRooms", fields: [expertUserId], references: [id])
+  currentService Service           @relation(fields: [currentServiceId], references: [id])
+  participants   ChatParticipant[]
+
+  messages    Message[] @relation("ChatRoomMessages")
+  lastMessage Message?  @relation("ChatRoomLastMessage", fields: [lastMessageId], references: [id])
+
+  @@unique([clientUserId, expertUserId])
+  @@map("chat_rooms")
+}
+
+model ChatParticipant {
+  id                String  @id @default(uuid()) @db.Uuid
+  chatRoomId        String  @map("chat_room_id") @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  lastReadMessageId String? @map("last_read_message_id") @db.Uuid
+
+  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([chatRoomId, userId])
+  @@map("chat_participants")
+}
+
+model Message {
+  id            String             @id @default(uuid()) @db.Uuid
+  chatRoomId    String             @map("chat_room_id") @db.Uuid
+  senderId      String             @map("sender_id") @db.Uuid
+  type          MessageType
+  systemType    SystemMessageType? @map("system_type")
+  referenceType String?            @map("reference_type")
+  referenceId   String?            @map("reference_id") @db.Uuid
+  content       String
+  createdAt     DateTime           @default(now()) @map("created_at")
+
+  chatRoom       ChatRoom            @relation("ChatRoomMessages", fields: [chatRoomId], references: [id])
+  chatRoomAsLast ChatRoom[]          @relation("ChatRoomLastMessage")
+  sender         User                @relation(fields: [senderId], references: [id])
+  attachments    MessageAttachment[]
+
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id        String @id @default(uuid()) @db.Uuid
+  messageId String @map("message_id") @db.Uuid
+  fileUrl   String @map("file_url")
+  fileName  String @map("file_name")
+  fileType  String @map("file_type")
+  fileSize  Int    @map("file_size")
+
+  message Message @relation(fields: [messageId], references: [id])
+
+  @@map("message_attachments")
+}
+
+// =========================
+// CS 채팅
+// =========================
+
+model CsChatRoom {
+  id              String       @id @default(uuid()) @db.Uuid
+  userId          String       @map("user_id") @db.Uuid
+  assignedAdminId String?      @map("assigned_admin_id") @db.Uuid
+  lastMessageId   String?      @map("last_message_id") @db.Uuid
+  status          CsChatStatus
+
+  user          User        @relation(fields: [userId], references: [id])
+  assignedAdmin Admin?      @relation(fields: [assignedAdminId], references: [id])
+  messages      CsMessage[] @relation("CsChatRoomMessages")
+  lastMessage   CsMessage?  @relation("CsChatRoomLastMessage", fields: [lastMessageId], references: [id])
+
+  @@map("cs_chat_rooms")
+}
+
+model CsMessage {
+  id            String     @id @default(uuid()) @db.Uuid
+  chatRoomId    String     @map("chat_room_id") @db.Uuid
+  senderType    SenderType
+  senderUserId  String?    @db.Uuid
+  senderAdminId String?    @db.Uuid
+
+  content   String
+  type      MessageType
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  chatRoom       CsChatRoom            @relation("CsChatRoomMessages", fields: [chatRoomId], references: [id])
+  chatRoomAsLast CsChatRoom[]          @relation("CsChatRoomLastMessage")
+  attachments    CsMessageAttachment[]
+
+  @@map("cs_messages")
+}
+
+model CsMessageAttachment {
+  id        String @id @default(uuid()) @db.Uuid
+  messageId String @map("message_id") @db.Uuid
+  fileUrl   String @map("file_url")
+  fileName  String @map("file_name")
+  fileType  String @map("file_type")
+  fileSize  Int    @map("file_size")
+
+  message CsMessage @relation(fields: [messageId], references: [id])
+
+  @@map("cs_message_attachments")
+}
+
+// =========================
+// 통계
+// =========================
+
+model StatisticsBySeller {
+  id                     String @id @default(uuid()) @db.Uuid
+  sellerUserId           String @unique @map("seller_user_id") @db.Uuid
+  totalTransactionAmount Int    @default(0) @map("total_transaction_amount")
+  totalTransactionCount  Int    @default(0) @map("total_transaction_count")
+  maxTransactionAmount   Int    @default(0) @map("max_transaction_amount")
+
+  sellerUser User @relation(fields: [sellerUserId], references: [id])
+
+  @@map("statistics_by_seller")
+}
+
+model StatisticsByCategory {
+  id                     String @id @default(uuid()) @db.Uuid
+  serviceGroupId          String @map("service_group_id") @db.Uuid
+  serviceCategoryId      String @map("service_category_id") @db.Uuid
+  totalTransactionAmount Int    @default(0) @map("total_transaction_amount")
+  totalTransactionCount  Int    @default(0) @map("total_transaction_count")
+  maxTransactionAmount   Int    @default(0) @map("max_transaction_amount")
+
+  serviceGroup    ServiceGroup    @relation(fields: [serviceGroupId], references: [id])
+  serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
+
+  @@map("statistics_by_category")
+}

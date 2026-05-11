@@ -25,7 +25,7 @@
 ### 필수 환경
 
 - **Node.js** `v24.14.0` (정확히 이 버전, `.nvmrc`로 고정)
-- **pnpm** 9.x (`npm install -g pnpm`)
+- **pnpm** `v8.15.9` (Corepack으로 자동 관리됨 — 별도 글로벌 설치 불필요)
 
 #### Node 버전 맞추기
 
@@ -51,13 +51,30 @@ asdf local nodejs 24.14.0
 
 > ⚠️ 다른 버전이면 `pnpm install`이 **실패**합니다 (`engine-strict` 켜져 있음). 이건 의도된 거고 — 환경 통일을 위해서입니다.
 
-### 셋업 (3줄)
+### 셋업 (4줄)
 
 ```bash
 git clone <repo-url>
 cd moveit-project
+corepack enable
 pnpm install
 ```
+
+### (백엔드 개발자라면 추가로)
+
+Prisma / DB 초기 설정이 필요한 경우:
+
+```bash
+# 환경변수 세팅
+cp apps/api/.env.example apps/api/.env.development
+
+# Prisma 클라이언트 생성
+pnpm --filter api run prisma:generate
+
+# 마이그레이션 적용
+pnpm --filter api run prisma:migrate
+```
+자세한 내용은 [7.1 백엔드 초기 환경 세팅](#71-백엔드-초기-환경-세팅-prisma) 참고
 
 ### 실행
 
@@ -429,6 +446,31 @@ import type { User } from '@repo/types/user';
 
 ---
 
+## 7.1 백엔드(API) 초기 환경 세팅 (Prisma)
+
+### 1. 환경변수 설정
+
+```bash
+# apps/api/.env.example 복사
+cp apps/api/.env.example apps/api/.env.development
+
+# DATABASE_URL 본인 로컬 DB로 설정
+```
+
+---
+### 2. Prisma 클라이언트 생성
+```bash
+pnpm --filter api run prisma:generate
+```
+
+---
+### 3. 마이그레이션 적용
+```bash
+pnpm --filter api run prisma:migrate
+> ⚠️ migrate는 처음 세팅/스키마 변경 시에만 실행
+```
+---
+
 ## 8. 자주 만나는 함정
 
 ### 🚫 워크스페이스 안에서 직접 `pnpm install`
@@ -536,4 +578,4 @@ cd apps/web && pnpm install some-pkg  # ❌ 자체 node_modules 생김
 
 ---
 
-> 마지막 업데이트: 2026-05-07
+> 마지막 업데이트: 2026-05-11
