@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import basicAuth from 'express-basic-auth';
 
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -34,6 +35,19 @@ async function bootstrap() {
     .setDescription('moveit API 문서')
     .setVersion('1.0')
     .build();
+  app.use(
+    '/docs',
+    basicAuth({
+      challenge: true,
+      users: {
+        [process.env.SWAGGER_USER ?? 'admin']:
+          process.env.SWAGGER_PASSWORD ??
+          (() => {
+            throw new Error('SWAGGER_PASSWORD is not set');
+          })(),
+      },
+    }),
+  );
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 

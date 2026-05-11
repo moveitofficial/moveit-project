@@ -9,7 +9,14 @@
     },
     "lint": {
       "dependsOn": ["^lint"],
-      "env": ["PORT", "CLIENT_URL", "ADMIN_URL", "NODE_ENV"]
+      "env": [
+        "PORT",
+        "CLIENT_URL",
+        "ADMIN_URL",
+        "NODE_ENV",
+        "SWAGGER_USER",
+        "SWAGGER_PASSWORD"
+      ]
     },
     "check-types": {
       "dependsOn": ["^check-types"]
