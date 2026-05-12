@@ -15,7 +15,8 @@
         "ADMIN_URL",
         "NODE_ENV",
         "SWAGGER_USER",
-        "SWAGGER_PASSWORD"
+        "SWAGGER_PASSWORD",
+        "DATABASE_URL"
       ]
     },
     "check-types": {
