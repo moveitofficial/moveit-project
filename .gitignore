@@ -50,3 +50,6 @@ next-env.d.ts
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# pnpm content-addressable store (must not be committed)
+.pnpm-store/
