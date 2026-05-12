@@ -6,6 +6,8 @@ import { AppService } from './app.service';
 import { ChatModule } from './chat/chat.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { S3Module } from './s3/s3.module';
+import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -18,6 +20,8 @@ import { UsersModule } from './users/users.module';
     HealthModule,
     ChatModule,
     UsersModule,
+    S3Module,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

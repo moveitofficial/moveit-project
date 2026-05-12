@@ -231,21 +231,28 @@ enum CsChatStatus {
   CLOSED
 }
 
+enum MessageReferenceType {
+  ORDER
+  PAYMENT
+}
+
 model User {
   id              String       @id @default(uuid()) @db.Uuid
   email           String       @unique
   name            String?
-  password        String
+  password        String?
   provider        AuthProvider
   providerId      String?      @map("provider_id")
   role            Role
   profileImageUrl String?      @map("profile_image_url")
   isBlocked       Boolean      @default(false) @map("is_blocked")
   isDeleted       Boolean      @default(false) @map("is_deleted")
+  deletedAt       DateTime?    @map("deleted_at")
   region          Region?
   bankName        String?      @map("bank_name")
   bankAccount     String?      @map("bank_account")
   phoneNumber     String?      @map("phone_number")
+  createdAt       DateTime     @default(now()) @map("created_at")
 
   clientProfile      ClientProfile?
   expertProfile      ExpertProfile?
@@ -269,20 +276,26 @@ model User {
   chatParticipants   ChatParticipant[]
   messages           Message[]
   csChatRooms        CsChatRoom[]
+  sentCsMessages     CsMessage[]
   statisticsBySeller StatisticsBySeller?
   notifications      Notification[]
 
+  @@unique([provider, providerId])
   @@map("users")
 }
 
 model Admin {
-  id       String  @id @default(uuid()) @db.Uuid
-  email    String
-  password String
-  name     String
-  isSuper  Boolean @default(false) @map("is_super")
+  id                 String    @id @default(uuid()) @db.Uuid
+  email              String    @unique
+  password           String
+  name               String
+  isSuper            Boolean   @default(false) @map("is_super")
+  mustChangePassword Boolean   @default(true) @map("must_change_password")
+  lastLoginAt        DateTime? @map("last_login_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
 
   csChatRooms     CsChatRoom[]
+  sentCsMessages  CsMessage[]
   approvedRefunds Refund[]
   communityPosts  CommunityPost[]
 
@@ -305,19 +318,23 @@ model ClientProfile {
 }
 
 model ExpertProfile {
-  id               String  @id @default(uuid()) @db.Uuid
-  userId           String  @unique @map("user_id") @db.Uuid
-  isApproved       Boolean @default(false) @map("is_approved")
-  rejectReason     String? @map("reject_reason")
-  businessName     String? @map("business_name")
-  businessNumber   String? @map("business_number")
-  ceoName          String? @map("ceo_name")
-  contactTimeStart String? @map("contact_time_start")
-  contactTimeEnd   String? @map("contact_time_end")
-  foundedYear      Int?    @map("founded_year")
-  employeeMin      Int?    @map("employee_min")
-  employeeMax      Int?    @map("employee_max")
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @unique @map("user_id") @db.Uuid
+  isApproved       Boolean   @default(false) @map("is_approved")
+  approvedAt       DateTime? @map("approved_at")
+  rejectReason     String?   @map("reject_reason")
+  businessName     String?   @map("business_name")
+  businessNumber   String?   @map("business_number")
+  ceoName          String?   @map("ceo_name")
+  contactTimeStart String?   @map("contact_time_start")
+  contactTimeEnd   String?   @map("contact_time_end")
+  foundedYear      Int?      @map("founded_year")
+  employeeMin      Int?      @map("employee_min")
+  employeeMax      Int?      @map("employee_max")
   description      String?
+  avgRating        Float?    @map("avg_rating")
+  reviewCount      Int       @default(0) @map("review_count")
+  createdAt        DateTime  @default(now()) @map("created_at")
 
   user                User                      @relation(fields: [userId], references: [id])
   specialtyCategories ExpertSpecialtyCategory[]
@@ -333,7 +350,7 @@ model ExpertProfile {
 
 model TechStack {
   id   String        @id @default(uuid()) @db.Uuid
-  name TechStackName
+  name TechStackName @unique
 
   expertTechStacks  ExpertTechStack[]
   serviceTechStacks ServiceTechStack[]
@@ -343,7 +360,7 @@ model TechStack {
 
 model ServiceGroup {
   id   String           @id @default(uuid()) @db.Uuid
-  name ServiceGroupName
+  name ServiceGroupName @unique
 
   clientInterestCategories  ClientInterestCategory[]
   expertSpecialtyCategories ExpertSpecialtyCategory[]
@@ -355,7 +372,7 @@ model ServiceGroup {
 
 model ServiceCategory {
   id   String              @id @default(uuid()) @db.Uuid
-  name ServiceCategoryName
+  name ServiceCategoryName @unique
 
   clientInterestCategories  ClientInterestCategory[]
   expertSpecialtyCategories ExpertSpecialtyCategory[]
@@ -368,26 +385,28 @@ model ServiceCategory {
 model ClientInterestCategory {
   id                String @id @default(uuid()) @db.Uuid
   clientProfileId   String @map("client_profile_id") @db.Uuid
-  serviceGroupId     String @map("service_group_id") @db.Uuid
+  serviceGroupId    String @map("service_group_id") @db.Uuid
   serviceCategoryId String @map("service_category_id") @db.Uuid
 
   clientProfile   ClientProfile   @relation(fields: [clientProfileId], references: [id])
-  serviceGroup     ServiceGroup     @relation(fields: [serviceGroupId], references: [id])
+  serviceGroup    ServiceGroup    @relation(fields: [serviceGroupId], references: [id])
   serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
 
+  @@unique([clientProfileId, serviceGroupId, serviceCategoryId])
   @@map("client_interest_categories")
 }
 
 model ExpertSpecialtyCategory {
   id                String @id @default(uuid()) @db.Uuid
   expertProfileId   String @map("expert_profile_id") @db.Uuid
-  serviceGroupId     String @map("service_group_id") @db.Uuid
+  serviceGroupId    String @map("service_group_id") @db.Uuid
   serviceCategoryId String @map("service_category_id") @db.Uuid
 
   expertProfile   ExpertProfile   @relation(fields: [expertProfileId], references: [id])
-  serviceGroup     ServiceGroup     @relation(fields: [serviceGroupId], references: [id])
+  serviceGroup    ServiceGroup    @relation(fields: [serviceGroupId], references: [id])
   serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
 
+  @@unique([expertProfileId, serviceGroupId, serviceCategoryId])
   @@map("expert_specialty_categories")
 }
 
@@ -399,6 +418,7 @@ model ExpertTechStack {
   expertProfile ExpertProfile @relation(fields: [expertProfileId], references: [id])
   techStack     TechStack     @relation(fields: [techStackId], references: [id])
 
+  @@unique([expertProfileId, techStackId])
   @@map("expert_tech_stacks")
 }
 
@@ -413,6 +433,8 @@ model Portfolio {
   description     String
   clientName      String         @map("client_name")
   businessSector  BusinessSector @map("business_sector")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
 
   expertProfile ExpertProfile    @relation(fields: [expertProfileId], references: [id])
   images        PortfolioImage[]
@@ -427,7 +449,7 @@ model PortfolioImage {
   imgUrl      String  @map("img_url")
   isMain      Boolean @default(false) @map("is_main")
 
-  portfolio Portfolio @relation(fields: [portfolioId], references: [id])
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
 
   @@map("portfolio_images")
 }
@@ -438,7 +460,7 @@ model PortfolioSkill {
   stackName   String    @map("stack_name")
   stackType   StackType @map("stack_type")
 
-  portfolio Portfolio @relation(fields: [portfolioId], references: [id])
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
 
   @@map("portfolio_skills")
 }
@@ -458,11 +480,13 @@ model Service {
   description       String
   refundPolicy      String        @map("refund_policy")
   status            ServiceStatus
-  serviceGroupId     String        @map("service_group_id") @db.Uuid
+  serviceGroupId    String        @map("service_group_id") @db.Uuid
   serviceCategoryId String        @map("service_category_id") @db.Uuid
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
 
   expertUser      User            @relation("ExpertServices", fields: [expertUserId], references: [id])
-  serviceGroup     ServiceGroup     @relation(fields: [serviceGroupId], references: [id])
+  serviceGroup    ServiceGroup    @relation(fields: [serviceGroupId], references: [id])
   serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
 
   techStacks       ServiceTechStack[]
@@ -481,9 +505,10 @@ model ServiceTechStack {
   serviceId   String @map("service_id") @db.Uuid
   techStackId String @map("tech_stack_id") @db.Uuid
 
-  service   Service   @relation(fields: [serviceId], references: [id])
+  service   Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   techStack TechStack @relation(fields: [techStackId], references: [id])
 
+  @@unique([serviceId, techStackId])
   @@map("service_tech_stacks")
 }
 
@@ -493,7 +518,7 @@ model ServiceImage {
   imgUrl    String  @map("img_url")
   isMain    Boolean @default(false) @map("is_main")
 
-  service Service @relation(fields: [serviceId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@map("service_images")
 }
@@ -505,7 +530,7 @@ model ServiceStep {
   description String
   order       Int
 
-  service Service @relation(fields: [serviceId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@unique([serviceId, order])
   @@map("service_steps")
@@ -518,7 +543,7 @@ model ServiceFaq {
   answer    String
   createdAt DateTime @default(now()) @map("created_at")
 
-  service Service @relation(fields: [serviceId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@map("service_faqs")
 }
@@ -531,7 +556,7 @@ model Review {
   id        String   @id @default(uuid()) @db.Uuid
   orderId   String   @unique @map("order_id") @db.Uuid
   userId    String   @map("user_id") @db.Uuid
-  rating    Int      @default(0)
+  rating    Int
   content   String
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -557,6 +582,8 @@ model Order {
   startDate          DateTime    @map("start_date")
   endDate            DateTime    @map("end_date")
   refundReason       String?     @map("refund_reason")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  confirmedAt        DateTime?   @map("confirmed_at")
 
   clientUser User     @relation("ClientOrders", fields: [clientUserId], references: [id])
   expertUser User     @relation("ExpertOrders", fields: [expertUserId], references: [id])
@@ -574,9 +601,10 @@ model Payment {
   paidAmount   Int           @map("paid_amount")
   status       PaymentStatus
   method       String
-  paymentKey   String        @map("payment_key")
-  rawData      Json          @map("raw_data")
-  approvedAt   DateTime      @map("approved_at")
+  paymentKey   String?       @unique @map("payment_key")
+  rawData      Json?         @map("raw_data")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  approvedAt   DateTime?     @map("approved_at")
 
   order      Order   @relation(fields: [orderId], references: [id])
   clientUser User    @relation(fields: [clientUserId], references: [id])
@@ -594,17 +622,17 @@ model Refund {
   type            RefundType
   status          RefundStatus
   reason          String
-  approvedAdminId String       @map("approved_admin_id") @db.Uuid
+  approvedAdminId String?      @map("approved_admin_id") @db.Uuid
   requestedAt     DateTime     @map("requested_at")
   approvedAt      DateTime?    @map("approved_at")
   refundedAt      DateTime?    @map("refunded_at")
-  paymentKey      String       @map("payment_key")
-  rawData         Json         @map("raw_data")
+  paymentKey      String?      @unique @map("payment_key")
+  rawData         Json?        @map("raw_data")
 
   payment       Payment @relation(fields: [paymentId], references: [id])
   clientUser    User    @relation("ClientRefunds", fields: [clientUserId], references: [id])
   expertUser    User    @relation("ExpertRefunds", fields: [expertUserId], references: [id])
-  approvedAdmin Admin   @relation(fields: [approvedAdminId], references: [id])
+  approvedAdmin Admin?  @relation(fields: [approvedAdminId], references: [id])
 
   @@map("refunds")
 }
@@ -614,9 +642,10 @@ model Refund {
 // =========================
 
 model FavoriteService {
-  id           String @id @default(uuid()) @db.Uuid
-  clientUserId String @map("client_user_id") @db.Uuid
-  serviceId    String @map("service_id") @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
+  clientUserId String   @map("client_user_id") @db.Uuid
+  serviceId    String   @map("service_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
 
   clientUser User    @relation(fields: [clientUserId], references: [id])
   service    Service @relation(fields: [serviceId], references: [id])
@@ -626,9 +655,10 @@ model FavoriteService {
 }
 
 model FavoriteExpert {
-  id           String @id @default(uuid()) @db.Uuid
-  clientUserId String @map("client_user_id") @db.Uuid
-  expertUserId String @map("expert_user_id") @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
+  clientUserId String   @map("client_user_id") @db.Uuid
+  expertUserId String   @map("expert_user_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
 
   clientUser User @relation("ClientFavoriteExperts", fields: [clientUserId], references: [id])
   expertUser User @relation("ExpertFavoritedBy", fields: [expertUserId], references: [id])
@@ -642,11 +672,12 @@ model FavoriteExpert {
 // =========================
 
 model Report {
-  id           String @id @default(uuid()) @db.Uuid
-  clientUserId String @map("client_user_id") @db.Uuid
-  expertUserId String @map("expert_user_id") @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
+  clientUserId String   @map("client_user_id") @db.Uuid
+  expertUserId String   @map("expert_user_id") @db.Uuid
   reason       String
   detail       String
+  createdAt    DateTime @default(now()) @map("created_at")
 
   clientUser User          @relation("ClientReports", fields: [clientUserId], references: [id])
   expertUser User          @relation("ExpertReports", fields: [expertUserId], references: [id])
@@ -660,7 +691,7 @@ model ReportImage {
   reportsId String @map("reports_id") @db.Uuid
   imageUrl  String @map("image_url")
 
-  report Report @relation(fields: [reportsId], references: [id])
+  report Report @relation(fields: [reportsId], references: [id], onDelete: Cascade)
 
   @@map("reports_images")
 }
@@ -769,9 +800,10 @@ model MainSetting {
 }
 
 model Faq {
-  id      String @id @default(uuid()) @db.Uuid
-  title   String
-  content String
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@map("faqs")
 }
@@ -781,11 +813,12 @@ model Faq {
 // =========================
 
 model ChatRoom {
-  id               String  @id @default(uuid()) @db.Uuid
-  clientUserId     String  @map("client_user_id") @db.Uuid
-  expertUserId     String  @map("expert_user_id") @db.Uuid
-  currentServiceId String  @map("current_service_id") @db.Uuid
-  lastMessageId    String? @map("last_message_id") @db.Uuid
+  id               String   @id @default(uuid()) @db.Uuid
+  clientUserId     String   @map("client_user_id") @db.Uuid
+  expertUserId     String   @map("expert_user_id") @db.Uuid
+  currentServiceId String   @map("current_service_id") @db.Uuid
+  lastMessageId    String?  @map("last_message_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
 
   clientUser     User              @relation("ClientChatRooms", fields: [clientUserId], references: [id])
   expertUser     User              @relation("ExpertChatRooms", fields: [expertUserId], references: [id])
@@ -800,12 +833,13 @@ model ChatRoom {
 }
 
 model ChatParticipant {
-  id                String  @id @default(uuid()) @db.Uuid
-  chatRoomId        String  @map("chat_room_id") @db.Uuid
-  userId            String  @map("user_id") @db.Uuid
-  lastReadMessageId String? @map("last_read_message_id") @db.Uuid
+  id                String   @id @default(uuid()) @db.Uuid
+  chatRoomId        String   @map("chat_room_id") @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  lastReadMessageId String?  @map("last_read_message_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at")
 
-  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id])
+  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id])
 
   @@unique([chatRoomId, userId])
@@ -813,15 +847,15 @@ model ChatParticipant {
 }
 
 model Message {
-  id            String             @id @default(uuid()) @db.Uuid
-  chatRoomId    String             @map("chat_room_id") @db.Uuid
-  senderId      String             @map("sender_id") @db.Uuid
+  id            String                @id @default(uuid()) @db.Uuid
+  chatRoomId    String                @map("chat_room_id") @db.Uuid
+  senderId      String                @map("sender_id") @db.Uuid
   type          MessageType
-  systemType    SystemMessageType? @map("system_type")
-  referenceType String?            @map("reference_type")
-  referenceId   String?            @map("reference_id") @db.Uuid
+  systemType    SystemMessageType?    @map("system_type")
+  referenceType MessageReferenceType? @map("reference_type")
+  referenceId   String?               @map("reference_id") @db.Uuid
   content       String
-  createdAt     DateTime           @default(now()) @map("created_at")
+  createdAt     DateTime              @default(now()) @map("created_at")
 
   chatRoom       ChatRoom            @relation("ChatRoomMessages", fields: [chatRoomId], references: [id])
   chatRoomAsLast ChatRoom[]          @relation("ChatRoomLastMessage")
@@ -839,7 +873,7 @@ model MessageAttachment {
   fileType  String @map("file_type")
   fileSize  Int    @map("file_size")
 
-  message Message @relation(fields: [messageId], references: [id])
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@map("message_attachments")
 }
@@ -854,6 +888,7 @@ model CsChatRoom {
   assignedAdminId String?      @map("assigned_admin_id") @db.Uuid
   lastMessageId   String?      @map("last_message_id") @db.Uuid
   status          CsChatStatus
+  createdAt       DateTime     @default(now()) @map("created_at")
 
   user          User        @relation(fields: [userId], references: [id])
   assignedAdmin Admin?      @relation(fields: [assignedAdminId], references: [id])
@@ -876,6 +911,8 @@ model CsMessage {
 
   chatRoom       CsChatRoom            @relation("CsChatRoomMessages", fields: [chatRoomId], references: [id])
   chatRoomAsLast CsChatRoom[]          @relation("CsChatRoomLastMessage")
+  senderUser     User?                 @relation(fields: [senderUserId], references: [id])
+  senderAdmin    Admin?                @relation(fields: [senderAdminId], references: [id])
   attachments    CsMessageAttachment[]
 
   @@map("cs_messages")
@@ -889,7 +926,7 @@ model CsMessageAttachment {
   fileType  String @map("file_type")
   fileSize  Int    @map("file_size")
 
-  message CsMessage @relation(fields: [messageId], references: [id])
+  message CsMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@map("cs_message_attachments")
 }
@@ -899,11 +936,12 @@ model CsMessageAttachment {
 // =========================
 
 model StatisticsBySeller {
-  id                     String @id @default(uuid()) @db.Uuid
-  sellerUserId           String @unique @map("seller_user_id") @db.Uuid
-  totalTransactionAmount Int    @default(0) @map("total_transaction_amount")
-  totalTransactionCount  Int    @default(0) @map("total_transaction_count")
-  maxTransactionAmount   Int    @default(0) @map("max_transaction_amount")
+  id                     String   @id @default(uuid()) @db.Uuid
+  sellerUserId           String   @unique @map("seller_user_id") @db.Uuid
+  totalTransactionAmount Int      @default(0) @map("total_transaction_amount")
+  totalTransactionCount  Int      @default(0) @map("total_transaction_count")
+  maxTransactionAmount   Int      @default(0) @map("max_transaction_amount")
+  updatedAt              DateTime @updatedAt @map("updated_at")
 
   sellerUser User @relation(fields: [sellerUserId], references: [id])
 
@@ -911,15 +949,17 @@ model StatisticsBySeller {
 }
 
 model StatisticsByCategory {
-  id                     String @id @default(uuid()) @db.Uuid
-  serviceGroupId          String @map("service_group_id") @db.Uuid
-  serviceCategoryId      String @map("service_category_id") @db.Uuid
-  totalTransactionAmount Int    @default(0) @map("total_transaction_amount")
-  totalTransactionCount  Int    @default(0) @map("total_transaction_count")
-  maxTransactionAmount   Int    @default(0) @map("max_transaction_amount")
+  id                     String   @id @default(uuid()) @db.Uuid
+  serviceGroupId         String   @map("service_group_id") @db.Uuid
+  serviceCategoryId      String   @map("service_category_id") @db.Uuid
+  totalTransactionAmount Int      @default(0) @map("total_transaction_amount")
+  totalTransactionCount  Int      @default(0) @map("total_transaction_count")
+  maxTransactionAmount   Int      @default(0) @map("max_transaction_amount")
+  updatedAt              DateTime @updatedAt @map("updated_at")
 
   serviceGroup    ServiceGroup    @relation(fields: [serviceGroupId], references: [id])
   serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
 
+  @@unique([serviceGroupId, serviceCategoryId])
   @@map("statistics_by_category")
 }
