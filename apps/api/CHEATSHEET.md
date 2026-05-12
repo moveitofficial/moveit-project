@@ -59,6 +59,26 @@ pnpm --filter api add -D <패키지>      # devDependency
 pnpm --filter api remove <패키지>
 ```
 
+### NestJS CLI (코드 생성)
+
+```bash
+# 리소스 한번에 생성 (module + controller + service + dto + entity)
+pnpm --filter api exec nest g res <name>
+
+# 개별 생성
+pnpm --filter api exec nest g mo <name>        # module
+pnpm --filter api exec nest g co <name>        # controller
+pnpm --filter api exec nest g s <name>         # service
+pnpm --filter api exec nest g gu <name>        # guard
+pnpm --filter api exec nest g mi <name>        # middleware
+pnpm --filter api exec nest g pi <name>        # pipe
+pnpm --filter api exec nest g i <name>         # interceptor
+pnpm --filter api exec nest g f <name>         # filter
+pnpm --filter api exec nest g d <name>         # decorator
+```
+
+> `nest g res`는 REST/GraphQL 선택 프롬프트가 뜹니다. REST 선택하면 됩니다.
+
 ### Prisma 명령어
 
 > ⛔ **`prisma:migrate`, `prisma:seed`는 직접 실행 금지**  
