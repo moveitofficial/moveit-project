@@ -53,7 +53,9 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: [process.env.CLIENT_URL, process.env.ADMIN_URL],
+    origin: [process.env.CLIENT_URL, process.env.ADMIN_URL].filter(
+      (url): url is string => url !== undefined,
+    ),
     credentials: true,
   });
 

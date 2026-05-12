@@ -10,7 +10,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
-import { WsExceptionFilter } from '../common/filters/ws-exceptions.filter';
+import { WsExceptionFilter } from '../common/filters/ws-exception.filter';
 
 @UseFilters(WsExceptionFilter)
 @WebSocketGateway({
