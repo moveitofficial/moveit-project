@@ -10,14 +10,14 @@ import { map } from 'rxjs/operators';
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<
   T,
-  { success: boolean; statusCode: number; data: T }
+  { success: boolean; message: string; data: T }
 > {
   intercept(
     context: ExecutionContext,
     next: CallHandler<T>,
-  ): Observable<{ success: boolean; statusCode: number; data: T }> {
+  ): Observable<{ success: boolean; message: string; data: T }> {
     return next
       .handle()
-      .pipe(map((data) => ({ success: true, statusCode: 200, data })));
+      .pipe(map((data) => ({ success: true, message: '요청 성공', data })));
   }
 }
