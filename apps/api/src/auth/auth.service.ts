@@ -5,7 +5,6 @@ import { AuthProvider, Prisma, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 import { AppException } from '../common/exceptions/app.exception';
-import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 
 import {
@@ -33,7 +32,6 @@ const BCRYPT_COST = 12;
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
@@ -44,25 +42,14 @@ export class AuthService {
     role: Role;
     profileSetupCompleted: boolean;
   }> {
-    if (dto.provider !== AuthProvider.LOCAL) {
-      throw new AppException(
-        HttpStatus.BAD_REQUEST,
-        '이메일 회원가입은 LOCAL provider만 사용할 수 있습니다.',
-        'AUTH_INVALID_PROVIDER',
-      );
-    }
-
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
 
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          email: dto.email,
-          password: passwordHash,
-          name: dto.name,
-          role: dto.role,
-          provider: AuthProvider.LOCAL,
-        },
+      const user = await this.usersService.createLocalUser({
+        email: dto.email,
+        passwordHash,
+        name: dto.name,
+        role: dto.role,
       });
 
       return {
@@ -91,7 +78,7 @@ export class AuthService {
     accessToken: string;
     refreshToken: string;
   }> {
-    const user = await this.usersService.findUserByEmail(dto.email);
+    const user = await this.usersService.getUserByEmail(dto.email);
 
     if (user === null) {
       throw new AppException(
