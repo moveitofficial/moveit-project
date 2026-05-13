@@ -1,0 +1,65 @@
+import type { AdminService, ApiSuccess, PaginatedResult } from './types';
+
+export const mockAdminServices: AdminService[] = [
+  {
+    id: 'svc-001',
+    title: '안드로이드 / iOS 앱 개발 React Native',
+    expertName: '코드잇 에이전시',
+    expertId: 'expert-001',
+    serviceType: 'IT_COACHING',
+    categoryName: '앱',
+    price: 380_000,
+    status: 'ON_SALE',
+    reviewCount: 328,
+    rating: 4.9,
+    createdAt: '2025-12-15T10:00:00.000Z',
+  },
+  {
+    id: 'svc-002',
+    title: 'React 기반 웹사이트 제작 (반응형)',
+    expertName: '웹스튜디오',
+    expertId: 'expert-002',
+    serviceType: 'IT_COACHING',
+    categoryName: '프론트엔드',
+    price: 250_000,
+    status: 'ON_SALE',
+    reviewCount: 154,
+    rating: 4.7,
+    createdAt: '2026-01-20T11:00:00.000Z',
+  },
+  {
+    id: 'svc-003',
+    title: 'NestJS + PostgreSQL 백엔드 API 구축',
+    expertName: '백엔드 마스터',
+    expertId: 'expert-003',
+    serviceType: 'IT_COACHING',
+    categoryName: '백엔드',
+    price: 500_000,
+    status: 'STOPPED',
+    reviewCount: 89,
+    rating: 5,
+    createdAt: '2026-02-01T09:00:00.000Z',
+  },
+  {
+    id: 'svc-007',
+    title: '문제 있는 서비스',
+    expertName: '거절업체',
+    expertId: 'expert-004',
+    serviceType: 'PROJECT_REQUEST',
+    categoryName: '웹',
+    price: 100_000,
+    status: 'HIDDEN',
+    reviewCount: 0,
+    rating: 0,
+    createdAt: '2026-04-25T14:00:00.000Z',
+  },
+];
+
+export const mockAdminServicesResponse: ApiSuccess<PaginatedResult<AdminService>> = {
+  success: true,
+  message: '서비스 관리 목록을 조회했습니다.',
+  data: {
+    items: mockAdminServices,
+    pagination: { page: 1, pageSize: 50, totalCount: 4, hasNext: false },
+  },
+};
