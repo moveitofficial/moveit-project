@@ -10,7 +10,6 @@ import type { Request } from 'express';
 
 export interface JwtRefreshUser {
   userId: string;
-  refreshToken: string;
 }
 
 @Injectable()
@@ -27,24 +26,14 @@ export class JwtRefreshStrategy extends PassportStrategy(
         },
       ]),
       secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
-      passReqToCallback: true,
     });
   }
 
-  validate(req: Request, payload: JwtRefreshPayload): JwtRefreshUser {
+  validate(payload: JwtRefreshPayload): JwtRefreshUser {
     if (payload.typ !== JWT_REFRESH_TYP) {
       throw new UnauthorizedException();
     }
 
-    const refreshToken: unknown = req.cookies[REFRESH_COOKIE_NAME];
-
-    if (typeof refreshToken !== 'string') {
-      throw new UnauthorizedException();
-    }
-
-    return {
-      userId: payload.sub,
-      refreshToken,
-    };
+    return { userId: payload.sub };
   }
 }
