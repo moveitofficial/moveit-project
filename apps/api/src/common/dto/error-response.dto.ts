@@ -1,41 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { AUTH_ERRORS } from '../constants/errors';
-
-class DuplicateEmailErrorDetailDto {
-  @ApiProperty({ example: AUTH_ERRORS.DUPLICATE_EMAIL.code })
+class ErrorDetailDto {
+  @ApiProperty({ example: 'AUTH_DUPLICATE_EMAIL' })
   declare code: string;
 
   @ApiProperty({ example: {} })
   declare details: Record<string, unknown>;
 }
 
-export class DuplicateEmailErrorResponseDto {
+export class ErrorResponseDto {
   @ApiProperty({ example: false })
   declare success: boolean;
 
-  @ApiProperty({ example: AUTH_ERRORS.DUPLICATE_EMAIL.message })
+  @ApiProperty({ example: '이미 가입된 이메일입니다.' })
   declare message: string;
 
-  @ApiProperty({ type: DuplicateEmailErrorDetailDto })
-  declare error: DuplicateEmailErrorDetailDto;
-}
-
-class InternalServerErrorDetailDto {
-  @ApiProperty({ example: 'INTERNAL_SERVER_ERROR' })
-  declare code: string;
-
-  @ApiProperty({ example: {} })
-  declare details: Record<string, unknown>;
-}
-
-export class InternalServerErrorResponseDto {
-  @ApiProperty({ example: false })
-  declare success: boolean;
-
-  @ApiProperty({ example: '서버 에러..' })
-  declare message: string;
-
-  @ApiProperty({ type: InternalServerErrorDetailDto })
-  declare error: InternalServerErrorDetailDto;
+  @ApiProperty({ type: ErrorDetailDto })
+  declare error: ErrorDetailDto;
 }

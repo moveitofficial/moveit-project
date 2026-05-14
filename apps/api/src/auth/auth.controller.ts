@@ -8,18 +8,18 @@ import {
 } from '@nestjs/common';
 import {
   ApiConflictResponse,
-  ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { AUTH_ERRORS } from '../common/constants/errors';
-import {
-  DuplicateEmailErrorResponseDto,
-  InternalServerErrorResponseDto,
-} from '../common/dto/error-response.dto';
+import { AUTH_ERRORS, USER_ERRORS } from '../common/constants/errors';
+import { ErrorResponseDto } from '../common/dto/error-response.dto';
+import { errorResponseExample } from '../common/swagger/error-response-example';
 
 import { AuthService } from './auth.service';
 import {
@@ -43,11 +43,13 @@ export class AuthController {
   })
   @ApiConflictResponse({
     description: AUTH_ERRORS.DUPLICATE_EMAIL.message,
-    type: DuplicateEmailErrorResponseDto,
+    type: ErrorResponseDto,
+    example: errorResponseExample(AUTH_ERRORS.DUPLICATE_EMAIL),
   })
   @ApiInternalServerErrorResponse({
     description: AUTH_ERRORS.INTERNAL_SERVER_ERROR.message,
-    type: InternalServerErrorResponseDto,
+    type: ErrorResponseDto,
+    example: errorResponseExample(AUTH_ERRORS.INTERNAL_SERVER_ERROR),
   })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '이메일 회원가입 (LOCAL)' })
@@ -56,13 +58,45 @@ export class AuthController {
     return this.authService.signUpWithEmail(body);
   }
 
-  @ApiInternalServerErrorResponse({ description: '서버 오류' })
-  @ApiConflictResponse({
-    description: '이미 가입된 이메일 (AUTH_DUPLICATE_EMAIL)',
-  })
-  @ApiCreatedResponse({
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: '로그인 성공',
     type: signInHttpResponseDto,
+  })
+  @ApiConflictResponse({
+    description: AUTH_ERRORS.DUPLICATE_EMAIL.message,
+    type: ErrorResponseDto,
+    example: errorResponseExample(AUTH_ERRORS.DUPLICATE_EMAIL),
+  })
+  @ApiUnauthorizedResponse({
+    description: AUTH_ERRORS.INVALID_CREDENTIALS.message,
+    type: ErrorResponseDto,
+    example: errorResponseExample(AUTH_ERRORS.INVALID_CREDENTIALS),
+  })
+  @ApiForbiddenResponse({
+    description: AUTH_ERRORS.BLOCKED.message,
+    type: ErrorResponseDto,
+    example: errorResponseExample(AUTH_ERRORS.BLOCKED),
+  })
+  @ApiUnauthorizedResponse({
+    description: AUTH_ERRORS.TOKEN_EXPIRED.message,
+    type: ErrorResponseDto,
+    example: errorResponseExample(AUTH_ERRORS.TOKEN_EXPIRED),
+  })
+  @ApiUnauthorizedResponse({
+    description: AUTH_ERRORS.REFRESH_TOKEN_INVALID.message,
+    type: ErrorResponseDto,
+    example: errorResponseExample(AUTH_ERRORS.REFRESH_TOKEN_INVALID),
+  })
+  @ApiNotFoundResponse({
+    description: USER_ERRORS.NOT_FOUND.message,
+    type: ErrorResponseDto,
+    example: errorResponseExample(USER_ERRORS.NOT_FOUND),
+  })
+  @ApiInternalServerErrorResponse({
+    description: USER_ERRORS.INTERNAL_SERVER_ERROR.message,
+    type: ErrorResponseDto,
+    example: errorResponseExample(USER_ERRORS.INTERNAL_SERVER_ERROR),
   })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '이메일 로그인 (LOCAL)' })
