@@ -1,16 +1,19 @@
-import { typography } from '@repo/styles/typography';
 import { RoundChip } from '@repo/ui/RoundChip';
 
-export default function LoginPage() {
+export default function Hero() {
   return (
-    <main
+    <div
       style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}
     >
-      <h1 className={typography.f32B}>관리자 로그인 IT</h1>
-
       <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <h3>size: web</h3>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            flexWrap: 'wrap',
+          }}
+        >
           <RoundChip text="white / full" size="web" />
           <RoundChip text="white / half" size="web" opacity="half" />
           <RoundChip text="blue100 / full" size="web" color="blue100" />
@@ -65,6 +68,6 @@ export default function LoginPage() {
           />
         </div>
       </section>
-    </main>
+    </div>
   );
 }
