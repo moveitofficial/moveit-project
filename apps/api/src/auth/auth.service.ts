@@ -1,9 +1,10 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthProvider, Prisma, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
+import { AUTH_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { UsersService } from '../users/users.service';
 
@@ -62,11 +63,7 @@ export class AuthService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new AppException(
-          HttpStatus.CONFLICT,
-          '이미 가입된 이메일입니다.',
-          'AUTH_DUPLICATE_EMAIL',
-        );
+        throw new AppException(AUTH_ERRORS.DUPLICATE_EMAIL);
       }
 
       throw error;
@@ -81,44 +78,24 @@ export class AuthService {
     const user = await this.usersService.getUserByEmail(dto.email);
 
     if (user === null) {
-      throw new AppException(
-        HttpStatus.UNAUTHORIZED,
-        '이메일 또는 비밀번호가 올바르지 않습니다.',
-        'AUTH_INVALID_CREDENTIALS',
-      );
+      throw new AppException(AUTH_ERRORS.INVALID_CREDENTIALS);
     }
 
     if (user.provider !== AuthProvider.LOCAL || user.password === null) {
-      throw new AppException(
-        HttpStatus.UNAUTHORIZED,
-        '이메일 또는 비밀번호가 올바르지 않습니다.',
-        'AUTH_INVALID_CREDENTIALS',
-      );
+      throw new AppException(AUTH_ERRORS.INVALID_CREDENTIALS);
     }
 
     if (user.isBlocked) {
-      throw new AppException(
-        HttpStatus.FORBIDDEN,
-        '차단된 계정입니다.',
-        'AUTH_BLOCKED',
-      );
+      throw new AppException(AUTH_ERRORS.BLOCKED);
     }
 
     if (user.isDeleted) {
-      throw new AppException(
-        HttpStatus.UNAUTHORIZED,
-        '이메일 또는 비밀번호가 올바르지 않습니다.',
-        'AUTH_INVALID_CREDENTIALS',
-      );
+      throw new AppException(AUTH_ERRORS.INVALID_CREDENTIALS);
     }
 
     const passwordOk = await bcrypt.compare(dto.password, user.password);
     if (!passwordOk) {
-      throw new AppException(
-        HttpStatus.UNAUTHORIZED,
-        '이메일 또는 비밀번호가 올바르지 않습니다.',
-        'AUTH_INVALID_CREDENTIALS',
-      );
+      throw new AppException(AUTH_ERRORS.INVALID_CREDENTIALS);
     }
 
     const accessPayload: JwtAccessPayload = {
