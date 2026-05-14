@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AuthProvider, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import {
   IsEmail,
   IsEnum,
@@ -34,8 +34,4 @@ export class SignUpRequestDto {
   @ApiProperty({ enum: Role, example: Role.CLIENT })
   @IsEnum(Role)
   declare role: Role;
-
-  @ApiProperty({ enum: AuthProvider, example: AuthProvider.LOCAL })
-  @IsEnum(AuthProvider)
-  declare provider: AuthProvider;
 }
