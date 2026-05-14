@@ -14,8 +14,8 @@
     "@repo/fonts": "workspace:*",
     "@repo/providers": "workspace:*",
     "@repo/styles": "workspace:*",
+    "@repo/ui": "workspace:*",
     "@tanstack/react-query": "^5.100.9",
-    "@vanilla-extract/css": "^1.20.1",
     "@vanilla-extract/next-plugin": "^2.5.2",
     "clsx": "^2.1.1",
     "lucide-react": "^0.460.0",
@@ -33,6 +33,6 @@
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "typescript": "^5"
+    "typescript": "5.9.2"
   }
 }

@@ -2,9 +2,12 @@ import { typography } from '@repo/styles/typography';
 
 import * as styles from './page.css';
 
+import Hero from '@/feature/main/components/Hero/Hero';
+
 export default function Home() {
   return (
     <main className={styles.container}>
+      <Hero />
       <h1 className={`${typography.f40EB} ${styles.heading}`}>
         IT 전문가와 함께, 원하는 목표를 시작하세요
       </h1>
