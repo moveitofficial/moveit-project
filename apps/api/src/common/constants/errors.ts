@@ -26,6 +26,11 @@ export const AUTH_ERRORS = {
     message: '유효하지 않은 리프레시 토큰입니다.',
     code: 'AUTH_REFRESH_TOKEN_INVALID',
   },
+  INTERNAL_SERVER_ERROR: {
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    message: '서버 오류가 발생했습니다.',
+    code: 'AUTH_INTERNAL_SERVER_ERROR',
+  },
 } as const;
 
 export const USER_ERRORS = {
@@ -48,6 +53,11 @@ export const USER_ERRORS = {
     status: HttpStatus.UNAUTHORIZED,
     message: '탈퇴한 계정입니다.',
     code: 'USER_DELETED',
+  },
+  INTERNAL_SERVER_ERROR: {
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    message: '서버 오류가 발생했습니다.',
+    code: 'USER_INTERNAL_SERVER_ERROR',
   },
 } as const;
 
