@@ -40,7 +40,7 @@ export class AuthService {
   async signUpWithEmail(dto: SignUpRequestDto): Promise<{
     userId: string;
     role: Role;
-    profileSetupCompleted: boolean;
+    onboardingRequired: boolean;
   }> {
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
 
@@ -55,7 +55,7 @@ export class AuthService {
       return {
         userId: user.id,
         role: user.role,
-        profileSetupCompleted: false,
+        onboardingRequired: true,
       };
     } catch (error: unknown) {
       if (
