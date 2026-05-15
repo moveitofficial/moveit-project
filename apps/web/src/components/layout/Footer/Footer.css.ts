@@ -3,7 +3,7 @@ import { style } from '@vanilla-extract/css';
 
 export const wrapper = style({
   width: '100%',
-  backgroundColor: '#ffffff',
+  backgroundColor: vars.color.white,
   display: 'flex',
   flexDirection: 'row',
   justifyContent: 'center',

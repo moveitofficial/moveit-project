@@ -13,7 +13,6 @@ export const roundContainer = recipe({
     justifyContent: 'center',
     gap: '8px',
     borderRadius: 100,
-
     backgroundColor: `color-mix(in srgb, ${bgColor} ${bgAlpha}, transparent)`,
   },
 
@@ -24,20 +23,21 @@ export const roundContainer = recipe({
         {
           padding: '4px 12px',
           border: 'none',
-          color: '#ffffff',
+          color: vars.color.white,
           cursor: 'default',
         },
       ],
       web: {
-        padding: '12px 16px',
+        padding: '8px 16px',
         border: '1px solid transparent',
         cursor: 'pointer',
       },
     },
     color: {
+      labelWhite: [typography.f14B, { vars: { [bgColor]: vars.color.white } }],
       white: {
         borderColor: vars.color.line200,
-        vars: { [bgColor]: '#ffffff' },
+        vars: { [bgColor]: vars.color.white },
       },
       blue100: {
         vars: { [bgColor]: vars.color.blue100 },
@@ -59,7 +59,7 @@ export const roundContainer = recipe({
       full: { vars: { [bgAlpha]: '100%' } },
       half: [
         typography.f16EB,
-        { vars: { [bgAlpha]: '20%' }, color: '#ffffff' },
+        { vars: { [bgAlpha]: '20%' }, color: vars.color.white },
       ],
     },
   },

@@ -27,11 +27,11 @@ export const radio = style({
   height: '16px',
   borderRadius: '50%',
   border: `1px solid ${vars.color.line200}`,
-  backgroundColor: '#ffffff',
+  backgroundColor: vars.color.white,
   cursor: 'pointer',
 
   ':checked': {
     backgroundColor: vars.color.blue200,
-    boxShadow: 'inset 0 0 0 3px #ffffff',
+    boxShadow: `inset 0 0 0 3px ${vars.color.white}`,
   },
 });
