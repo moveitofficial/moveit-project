@@ -178,6 +178,9 @@ class Seeder {
     await this.#seedFavorites(clients, experts, services);
     console.warn(`✅ 즐겨찾기`);
 
+    await this.#seedRecentlyViewedServices(clients, services);
+    console.warn(`✅ 최근 본 서비스 (CLIENT 전용)`);
+
     await this.#seedReports(clients, experts);
     console.warn(`✅ 신고 10건 (증거 이미지 포함)`);
 
@@ -233,6 +236,7 @@ class Seeder {
     await this.#prisma.report.deleteMany();
     await this.#prisma.favoriteService.deleteMany();
     await this.#prisma.favoriteExpert.deleteMany();
+    await this.#prisma.recentlyViewedService.deleteMany();
     await this.#prisma.review.deleteMany();
     await this.#prisma.refund.deleteMany();
     await this.#prisma.payment.deleteMany();
@@ -727,6 +731,28 @@ class Seeder {
       expertPairs.add(key);
       await this.#prisma.favoriteExpert.create({
         data: { clientUserId: client.id, expertUserId: expert.id },
+      });
+    }
+  }
+
+  // ─── 10-2. Recently Viewed Services (CLIENT 전용) ─────────────────────
+  async #seedRecentlyViewedServices(
+    clients: User[],
+    services: Service[],
+  ): Promise<void> {
+    const pairs = new Set<string>();
+    for (let i = 0; i < 30; i++) {
+      const client = pick(clients);
+      const service = pick(services);
+      const key = `${client.id}-${service.id}`;
+      if (pairs.has(key)) continue;
+      pairs.add(key);
+      await this.#prisma.recentlyViewedService.create({
+        data: {
+          clientUserId: client.id,
+          serviceId: service.id,
+          viewedAt: faker.date.recent({ days: 14 }),
+        },
       });
     }
   }

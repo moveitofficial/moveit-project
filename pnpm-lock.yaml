@@ -20,9 +20,9 @@ importers:
 
   apps/admin:
     dependencies:
-      '@repo/api':
+      '@repo/fetcher':
         specifier: workspace:*
-        version: link:../../packages/api
+        version: link:../../packages/fetcher
       '@repo/fonts':
         specifier: workspace:*
         version: link:../../packages/fonts
@@ -247,9 +247,9 @@ importers:
 
   apps/web:
     dependencies:
-      '@repo/api':
+      '@repo/fetcher':
         specifier: workspace:*
-        version: link:../../packages/api
+        version: link:../../packages/fetcher
       '@repo/fonts':
         specifier: workspace:*
         version: link:../../packages/fonts
@@ -315,27 +315,6 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
-  packages/api:
-    devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../eslint-config
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@types/node':
-        specifier: ^20
-        version: 20.19.40
-      eslint:
-        specifier: ^9.39.1
-        version: 9.39.4
-      next:
-        specifier: 16.2.5
-        version: 16.2.5(@babel/core@7.29.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4)(react@19.2.4)
-      typescript:
-        specifier: 5.9.2
-        version: 5.9.2
-
   packages/eslint-config:
     devDependencies:
       '@eslint/js':
@@ -380,6 +359,27 @@ importers:
       typescript-eslint:
         specifier: ^8.56.0
         version: 8.59.2(eslint@9.39.4)(typescript@5.9.2)
+
+  packages/fetcher:
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^20
+        version: 20.19.40
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.4
+      next:
+        specifier: 16.2.5
+        version: 16.2.5(@babel/core@7.29.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4)(react@19.2.4)
+      typescript:
+        specifier: 5.9.2
+        version: 5.9.2
 
   packages/fonts:
     dependencies:
@@ -6628,7 +6628,7 @@ packages:
     resolution: {integrity: sha512-EzV94NYKoO09GLXGjXj9JIlXijVck4ONSr5wiCWDvhsvj5jxSrzTmRU/9C1DyB6uToszLs8aifA6NQ7lEQdvFw==}
     engines: {node: '>= 0.8'}
     dependencies:
-      '@types/node': 20.19.40
+      '@types/node': 24.12.3
       require-like: 0.1.2
     dev: false
 
