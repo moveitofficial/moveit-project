@@ -6,7 +6,14 @@ import * as styles from './RoundChip.css';
 interface Props {
   text: string;
   size: 'admin' | 'web';
-  color?: 'white' | 'blue100' | 'blue300' | 'blue400' | 'red200' | 'yellow100';
+  color?:
+    | 'labelWhite'
+    | 'white'
+    | 'blue100'
+    | 'blue300'
+    | 'blue400'
+    | 'red200'
+    | 'yellow100';
   opacity?: 'full' | 'half';
   close?: boolean;
 }
