@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthProvider, Prisma, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
-import { AUTH_ERRORS } from '../common/constants/errors';
+import { AUTH_ERRORS, USER_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { UsersService } from '../users/users.service';
 
@@ -78,7 +78,7 @@ export class AuthService {
     const user = await this.usersService.getUserByEmail(dto.email);
 
     if (user === null) {
-      throw new AppException(AUTH_ERRORS.INVALID_CREDENTIALS);
+      throw new AppException(USER_ERRORS.NOT_FOUND);
     }
 
     if (user.provider !== AuthProvider.LOCAL || user.password === null) {

@@ -10,12 +10,20 @@ import {
 } from 'class-validator';
 
 export class SignUpRequestDto {
-  @ApiProperty({ example: 'king@example.com' })
+  @ApiProperty({
+    example: 'king@example.com',
+    description: 'email',
+    required: true,
+  })
   @IsEmail()
   @MaxLength(320)
   declare email: string;
 
-  @ApiProperty({ example: 'Password123!' })
+  @ApiProperty({
+    example: 'Password123!',
+    description: 'password',
+    required: true,
+  })
   @IsString()
   @MinLength(8)
   @MaxLength(128)
@@ -25,13 +33,22 @@ export class SignUpRequestDto {
   })
   declare password: string;
 
-  @ApiProperty({ example: '킹한준' })
+  @ApiProperty({
+    example: '킹한준',
+    description: 'name',
+    required: true,
+  })
   @IsString()
   @MinLength(1)
   @MaxLength(50)
   declare name: string;
 
-  @ApiProperty({ enum: Role, example: Role.CLIENT })
+  @ApiProperty({
+    enum: Role,
+    example: Role.CLIENT,
+    description: 'role',
+    required: true,
+  })
   @IsEnum(Role)
   declare role: Role;
 }
