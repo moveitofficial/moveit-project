@@ -1,9 +1,10 @@
+import { vars } from '@repo/styles/tokens';
 import { style } from '@vanilla-extract/css';
 
 export const wrapper = style({
   width: '100%',
   flex: 1,
-  backgroundColor: '#ffffff',
+  backgroundColor: vars.color.white,
 });
 
 export const inner = style({

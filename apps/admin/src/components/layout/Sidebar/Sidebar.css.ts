@@ -62,11 +62,11 @@ export const item = style({
   borderRadius: '8px',
   ':hover': {
     backgroundColor: ACTIVE_BG,
-    color: '#ffffff',
+    color: vars.color.white,
   },
 });
 
 export const itemActive = style({
   backgroundColor: ACTIVE_BG,
-  color: '#ffffff',
+  color: vars.color.white,
 });

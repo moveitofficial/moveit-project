@@ -6,7 +6,7 @@ export const header = style({
   top: 0,
   height: '64px',
   flexShrink: 0,
-  backgroundColor: '#ffffff',
+  backgroundColor: vars.color.white,
   borderBottom: `1px solid ${vars.color.line200}`,
   padding: '0 32px',
   display: 'flex',

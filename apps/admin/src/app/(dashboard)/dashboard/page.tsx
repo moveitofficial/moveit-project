@@ -1,3 +1,4 @@
+import { vars } from '@repo/styles/tokens';
 import { typography } from '@repo/styles/typography';
 
 export default function DashboardPage() {
@@ -13,7 +14,7 @@ export default function DashboardPage() {
         <div
           key={i}
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: vars.color.white,
             border: '1px solid #E6E6E6',
             borderRadius: '8px',
             padding: '24px',
@@ -44,7 +45,7 @@ export default function DashboardPage() {
       <div
         style={{
           backgroundColor: '#1B92FF',
-          color: '#ffffff',
+          color: vars.color.white,
           padding: '40px',
           borderRadius: '8px',
           textAlign: 'center',
