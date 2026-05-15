@@ -1,12 +1,13 @@
 import footerLogo from '@public/header/headerLogo.svg';
 import { typography } from '@repo/styles/typography';
 import clsx from 'clsx';
+import { type Route } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import * as styles from './Footer.css';
 
-const footerMenu = [
+const footerMenu: { title: string; items: { label: string; href: Route }[] }[] = [
   {
     title: '서비스',
     items: [

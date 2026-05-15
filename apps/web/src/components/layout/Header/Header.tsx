@@ -1,19 +1,20 @@
 import headerLogo from '@public/header/headerLogo.svg';
 import { typography } from '@repo/styles/typography';
 import clsx from 'clsx';
+import { type Route } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import * as styles from './Header.css';
 
-const navItems = [
+const navItems: { label: string; href: Route }[] = [
   { label: 'IT코칭', href: '#' },
   { label: '프로젝트의뢰', href: '#' },
   { label: '자유게시판', href: '#' },
   { label: 'FAQ', href: '#' },
 ];
 
-const userMenuItems = [
+const userMenuItems: { label: string; href: Route }[] = [
   { label: '전문가 등록', href: '#' },
   { label: '로그인', href: '#' },
 ];
