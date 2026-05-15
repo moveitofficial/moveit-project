@@ -10,6 +10,7 @@
     "base.json",
     "nextjs.json",
     "react-library.json",
+    "react-internal.json",
     "node.json"
   ]
 }

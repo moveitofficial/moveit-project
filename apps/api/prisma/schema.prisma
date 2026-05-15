@@ -254,31 +254,32 @@ model User {
   phoneNumber     String?      @map("phone_number")
   createdAt       DateTime     @default(now()) @map("created_at")
 
-  clientProfile      ClientProfile?
-  expertProfile      ExpertProfile?
-  services           Service[]           @relation("ExpertServices")
-  reviews            Review[]
-  ordersAsClient     Order[]             @relation("ClientOrders")
-  ordersAsExpert     Order[]             @relation("ExpertOrders")
-  payments           Payment[]
-  refundsAsClient    Refund[]            @relation("ClientRefunds")
-  refundsAsExpert    Refund[]            @relation("ExpertRefunds")
-  favoriteServices   FavoriteService[]
-  favoriteExperts    FavoriteExpert[]    @relation("ClientFavoriteExperts")
-  favoritedByClients FavoriteExpert[]    @relation("ExpertFavoritedBy")
-  reportsAsClient    Report[]            @relation("ClientReports")
-  reportsAsExpert    Report[]            @relation("ExpertReports")
-  communityPosts     CommunityPost[]
-  comments           Comment[]
-  likes              Like[]
-  chatRoomsAsClient  ChatRoom[]          @relation("ClientChatRooms")
-  chatRoomsAsExpert  ChatRoom[]          @relation("ExpertChatRooms")
-  chatParticipants   ChatParticipant[]
-  messages           Message[]
-  csChatRooms        CsChatRoom[]
-  sentCsMessages     CsMessage[]
-  statisticsBySeller StatisticsBySeller?
-  notifications      Notification[]
+  clientProfile          ClientProfile?
+  expertProfile          ExpertProfile?
+  services               Service[]               @relation("ExpertServices")
+  reviews                Review[]
+  ordersAsClient         Order[]                 @relation("ClientOrders")
+  ordersAsExpert         Order[]                 @relation("ExpertOrders")
+  payments               Payment[]
+  refundsAsClient        Refund[]                @relation("ClientRefunds")
+  refundsAsExpert        Refund[]                @relation("ExpertRefunds")
+  favoriteServices       FavoriteService[]
+  favoriteExperts        FavoriteExpert[]        @relation("ClientFavoriteExperts")
+  favoritedByClients     FavoriteExpert[]        @relation("ExpertFavoritedBy")
+  recentlyViewedServices RecentlyViewedService[]
+  reportsAsClient        Report[]                @relation("ClientReports")
+  reportsAsExpert        Report[]                @relation("ExpertReports")
+  communityPosts         CommunityPost[]
+  comments               Comment[]
+  likes                  Like[]
+  chatRoomsAsClient      ChatRoom[]              @relation("ClientChatRooms")
+  chatRoomsAsExpert      ChatRoom[]              @relation("ExpertChatRooms")
+  chatParticipants       ChatParticipant[]
+  messages               Message[]
+  csChatRooms            CsChatRoom[]
+  sentCsMessages         CsMessage[]
+  statisticsBySeller     StatisticsBySeller?
+  notifications          Notification[]
 
   @@unique([provider, providerId])
   @@map("users")
@@ -496,6 +497,7 @@ model Service {
   orders           Order[]
   favoriteServices FavoriteService[]
   chatRooms        ChatRoom[]
+  recentlyViewedBy RecentlyViewedService[]
 
   @@map("services")
 }
@@ -665,6 +667,23 @@ model FavoriteExpert {
 
   @@unique([clientUserId, expertUserId])
   @@map("favorite_experts")
+}
+
+// =========================
+// 최근 본 서비스
+// =========================
+
+model RecentlyViewedService {
+  id           String   @id @default(uuid()) @db.Uuid
+  clientUserId String   @map("client_user_id") @db.Uuid
+  serviceId    String   @map("service_id") @db.Uuid
+  viewedAt     DateTime @default(now()) @map("viewed_at")
+
+  clientUser User    @relation(fields: [clientUserId], references: [id])
+  service    Service @relation(fields: [serviceId], references: [id])
+
+  @@unique([clientUserId, serviceId])
+  @@map("recently_viewed_services")
 }
 
 // =========================
