@@ -20,7 +20,6 @@ export class WsExceptionFilter extends BaseWsExceptionFilter {
       message,
       error: {
         code: isWsException ? 'WS_ERROR' : 'INTERNAL_SERVER_ERROR',
-        details: {},
       },
     });
   }

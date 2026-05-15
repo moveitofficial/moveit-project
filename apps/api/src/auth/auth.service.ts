@@ -31,9 +31,9 @@ import type {
   JwtOAuthStatePayload,
   JwtRefreshPayload,
 } from './auth.types';
-import type { OAuthProfile } from './oauth/oauth-user';
 import type { SignInRequestDto } from './dto/sign-in-request.dto';
 import type { SignUpRequestDto } from './dto/sign-up-request.dto';
+import type { OAuthProfile } from './oauth/oauth-user';
 import type { Response } from 'express';
 
 const BCRYPT_COST = 12;
@@ -191,10 +191,10 @@ export class AuthService {
     return this.config.getOrThrow<string>('OAUTH_SUCCESS_REDIRECT_URL');
   }
 
-  getOAuthFailureRedirectUrl(error: unknown): string {
+  getOAuthFailureRedirectUrl(err: unknown): string {
     const base = this.config.getOrThrow<string>('OAUTH_FAILURE_REDIRECT_URL');
     const code =
-      error instanceof AppException ? error.code : 'AUTH_OAUTH_FAILED';
+      err instanceof AppException && err.code ? err.code : 'AUTH_OAUTH_FAILED';
     const url = new URL(base);
     url.searchParams.set('code', code);
     return url.toString();

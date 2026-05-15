@@ -11,7 +11,9 @@ export class GoogleOAuthStartGuard extends AuthGuard('google') {
   }
 
   getAuthenticateOptions(context: ExecutionContext) {
-    const req = context.switchToHttp().getRequest<{ query: { role?: string } }>();
+    const req = context
+      .switchToHttp()
+      .getRequest<{ query: { role?: string } }>();
     const role = this.#parseRoleQuery(req.query.role);
     return { state: this.authService.createOAuthState(role) };
   }

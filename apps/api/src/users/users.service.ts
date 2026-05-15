@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { AuthProvider, type Role, type User } from '@prisma/client';
 
-import type { CreateOAuthUserParams, OAuthProfile } from '../auth/oauth/oauth-user';
-
 import { UsersRepository } from './users.repository';
+
+import type {
+  CreateOAuthUserParams,
+  OAuthProfile,
+} from '../auth/oauth/oauth-user';
 
 @Injectable()
 export class UsersService {

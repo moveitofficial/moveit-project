@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AuthProvider } from '@prisma/client';
 import { PassportStrategy } from '@nestjs/passport';
+import { AuthProvider } from '@prisma/client';
 import { Strategy, type Profile } from 'passport-google-oauth20';
 
 import type { OAuthProfile } from './oauth-user';
