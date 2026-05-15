@@ -1,11 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 class ErrorDetailDto {
-  @ApiProperty({ example: 'AUTH_DUPLICATE_EMAIL' })
-  declare code: string;
-
-  @ApiProperty({ example: {} })
-  declare details: Record<string, unknown>;
+  @ApiProperty({ example: 409 })
+  declare code: number;
 }
 
 export class ErrorResponseDto {
