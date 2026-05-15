@@ -78,23 +78,13 @@ export class AuthController {
     type: ErrorResponseDto,
     example: errorResponseExample(AUTH_ERRORS.BLOCKED),
   })
-  @ApiUnauthorizedResponse({
-    description: AUTH_ERRORS.TOKEN_EXPIRED.message,
-    type: ErrorResponseDto,
-    example: errorResponseExample(AUTH_ERRORS.TOKEN_EXPIRED),
-  })
-  @ApiUnauthorizedResponse({
-    description: AUTH_ERRORS.REFRESH_TOKEN_INVALID.message,
-    type: ErrorResponseDto,
-    example: errorResponseExample(AUTH_ERRORS.REFRESH_TOKEN_INVALID),
-  })
   @ApiNotFoundResponse({
     description: USER_ERRORS.NOT_FOUND.message,
     type: ErrorResponseDto,
     example: errorResponseExample(USER_ERRORS.NOT_FOUND),
   })
   @ApiInternalServerErrorResponse({
-    description: USER_ERRORS.INTERNAL_SERVER_ERROR.message,
+    description: AUTH_ERRORS.INTERNAL_SERVER_ERROR.message,
     type: ErrorResponseDto,
     example: errorResponseExample(USER_ERRORS.INTERNAL_SERVER_ERROR),
   })
