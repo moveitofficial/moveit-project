@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -17,8 +19,10 @@ import {
   ACCESS_JWT_EXPIRES_IN,
   ACCESS_MAX_AGE_MS,
   JWT_ACCESS_TYP,
+  JWT_OAUTH_SIGNUP_TYP,
   JWT_OAUTH_STATE_TYP,
   JWT_REFRESH_TYP,
+  OAUTH_SIGNUP_JWT_EXPIRES_IN,
   OAUTH_STATE_JWT_EXPIRES_IN,
   REFRESH_COOKIE_NAME,
   REFRESH_JWT_EXPIRES_IN,
@@ -28,8 +32,10 @@ import {
 import type {
   AuthPublicUser,
   JwtAccessPayload,
+  JwtOAuthSignupPayload,
   JwtOAuthStatePayload,
   JwtRefreshPayload,
+  OAuthCallbackResult,
 } from './auth.types';
 import type { SignInRequestDto } from './dto/sign-in-request.dto';
 import type { SignUpRequestDto } from './dto/sign-up-request.dto';
@@ -109,25 +115,55 @@ export class AuthService {
     };
   }
 
-  async signInWithOAuth(
+  async handleOAuthCallback(
     profile: OAuthProfile,
+  ): Promise<OAuthCallbackResult> {
+    const existing = await this.usersService.getUserByProviderId(
+      profile.provider,
+      profile.providerId,
+    );
+
+    if (existing !== null) {
+      this.#ensureUserCanLogin(existing);
+      const { accessToken, refreshToken } = this.#issueTokensForUser(existing);
+      return { kind: 'login', accessToken, refreshToken };
+    }
+
+    const emailUser = await this.usersService.getUserByEmail(profile.email);
+    if (emailUser !== null) {
+      throw new AppException(OAUTH_ERRORS.OAUTH_DUPLICATE_EMAIL);
+    }
+
+    const signupToken = this.#issueSignupToken(profile);
+    return { kind: 'signup_pending', signupToken };
+  }
+
+  async completeOAuthSignup(
+    signupToken: string,
     role: Role,
   ): Promise<{
     user: AuthPublicUser;
     accessToken: string;
     refreshToken: string;
   }> {
+    const pending = this.#parseSignupToken(signupToken);
+
+    const profile: OAuthProfile = {
+      provider: pending.provider,
+      providerId: pending.providerId,
+      email: pending.email,
+      name: pending.name,
+      profileImageUrl: pending.profileImageUrl,
+    };
+
     let user = await this.usersService.getUserByProviderId(
       profile.provider,
       profile.providerId,
     );
 
     if (user === null) {
-      const emailUserCheck = await this.usersService.getUserByEmail(
-        profile.email,
-      );
-
-      if (emailUserCheck !== null) {
+      const emailUser = await this.usersService.getUserByEmail(profile.email);
+      if (emailUser !== null) {
         throw new AppException(OAUTH_ERRORS.OAUTH_DUPLICATE_EMAIL);
       }
 
@@ -145,7 +181,6 @@ export class AuthService {
     }
 
     this.#ensureUserCanLogin(user);
-
     const { accessToken, refreshToken } = this.#issueTokensForUser(user);
 
     return {
@@ -155,9 +190,9 @@ export class AuthService {
     };
   }
 
-  createOAuthState(role: Role): string {
+  createOAuthState(): string {
     const payload: JwtOAuthStatePayload = {
-      role,
+      nonce: randomUUID(),
       typ: JWT_OAUTH_STATE_TYP,
     };
     return this.jwtService.sign(payload, {
@@ -165,7 +200,7 @@ export class AuthService {
     });
   }
 
-  parseOAuthState(state: string | undefined): Role {
+  parseOAuthState(state: string | undefined): void {
     if (state === undefined || state === '') {
       throw new UnauthorizedException();
     }
@@ -175,10 +210,6 @@ export class AuthService {
       if (payload.typ !== JWT_OAUTH_STATE_TYP) {
         throw new UnauthorizedException();
       }
-      if (!Object.values(Role).includes(payload.role)) {
-        throw new UnauthorizedException();
-      }
-      return payload.role;
     } catch (error: unknown) {
       if (error instanceof UnauthorizedException) {
         throw error;
@@ -189,6 +220,13 @@ export class AuthService {
 
   getOAuthSuccessRedirectUrl(): string {
     return this.config.getOrThrow<string>('OAUTH_SUCCESS_REDIRECT_URL');
+  }
+
+  getOAuthSignupRedirectUrl(signupToken: string): string {
+    const base = this.config.getOrThrow<string>('OAUTH_SIGNUP_REDIRECT_URL');
+    const url = new URL(base);
+    url.searchParams.set('signupToken', signupToken);
+    return url.toString();
   }
 
   getOAuthFailureRedirectUrl(err: unknown): string {
@@ -221,6 +259,35 @@ export class AuthService {
       ...base,
       maxAge: REFRESH_MAX_AGE_MS,
     });
+  }
+
+  #issueSignupToken(profile: OAuthProfile): string {
+    const payload: JwtOAuthSignupPayload = {
+      typ: JWT_OAUTH_SIGNUP_TYP,
+      provider: profile.provider,
+      providerId: profile.providerId,
+      email: profile.email,
+      name: profile.name,
+      profileImageUrl: profile.profileImageUrl ?? null,
+    };
+    return this.jwtService.sign(payload, {
+      expiresIn: OAUTH_SIGNUP_JWT_EXPIRES_IN,
+    });
+  }
+
+  #parseSignupToken(token: string): JwtOAuthSignupPayload {
+    try {
+      const payload = this.jwtService.verify<JwtOAuthSignupPayload>(token);
+      if (payload.typ !== JWT_OAUTH_SIGNUP_TYP) {
+        throw new AppException(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_INVALID);
+      }
+      return payload;
+    } catch (error: unknown) {
+      if (error instanceof AppException) {
+        throw error;
+      }
+      throw new AppException(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_INVALID);
+    }
   }
 
   #issueTokensForUser(user: User): {

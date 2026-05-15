@@ -15,7 +15,7 @@ export class OAuthController {
 
   @Get('google')
   @UseGuards(GoogleOAuthStartGuard)
-  @ApiOperation({ summary: '구글 OAuth 로그인 시작 (?role=CLIENT|EXPERT)' })
+  @ApiOperation({ summary: '구글 OAuth 로그인 시작' })
   googleStart(): void {
     // Guard가 Google authorize URL로 리다이렉트
   }
@@ -29,11 +29,22 @@ export class OAuthController {
     @Res() res: Response,
   ): Promise<void> {
     try {
-      const role = this.authService.parseOAuthState(state);
-      const { accessToken, refreshToken } =
-        await this.authService.signInWithOAuth(req.user, role);
-      this.authService.setAuthCookies(res, accessToken, refreshToken);
-      res.redirect(this.authService.getOAuthSuccessRedirectUrl());
+      this.authService.parseOAuthState(state);
+      const result = await this.authService.handleOAuthCallback(req.user);
+
+      if (result.kind === 'login') {
+        this.authService.setAuthCookies(
+          res,
+          result.accessToken,
+          result.refreshToken,
+        );
+        res.redirect(this.authService.getOAuthSuccessRedirectUrl());
+        return;
+      }
+
+      res.redirect(
+        this.authService.getOAuthSignupRedirectUrl(result.signupToken),
+      );
     } catch (error: unknown) {
       res.redirect(this.authService.getOAuthFailureRedirectUrl(error));
     }

@@ -24,6 +24,11 @@ export const OAUTH_ERRORS = {
     message: '이 이메일로 가입된 계정이 있습니다. (OAuth)',
     code: 'OAUTH_DUPLICATE_EMAIL',
   },
+  OAUTH_SIGNUP_TOKEN_INVALID: {
+    status: HttpStatus.UNAUTHORIZED,
+    message: '가입 토큰이 유효하지 않거나 만료되었습니다.',
+    code: 'OAUTH_SIGNUP_TOKEN_INVALID',
+  },
 } as const;
 
 export const AUTH_ERRORS = {

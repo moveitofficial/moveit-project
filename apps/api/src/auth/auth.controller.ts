@@ -11,12 +11,14 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   AUTH_ERRORS,
   COMMON_ERRORS,
+  OAUTH_ERRORS,
   USER_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 
 import { AuthService } from './auth.service';
+import { OAuthSignUpRequestDto } from './dto/oauth-signup-request.dto';
 import {
   signInHttpResponseDto,
   SignUpHttpResponseDto,
@@ -55,6 +57,24 @@ export class AuthController {
   ) {
     const { user, accessToken, refreshToken } =
       await this.authService.signInWithEmail(body);
+    this.authService.setAuthCookies(res, accessToken, refreshToken);
+    return { user };
+  }
+
+  @ApiOperation({ summary: 'OAuth 가입 완료 (role 확정)' })
+  @ApiSuccessResponse(HttpStatus.CREATED, signInHttpResponseDto)
+  @ApiErrorResponse(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_INVALID)
+  @ApiErrorResponse(OAUTH_ERRORS.OAUTH_DUPLICATE_EMAIL)
+  @ApiErrorResponse(AUTH_ERRORS.BLOCKED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.CREATED)
+  @Post('oauth/signup')
+  async oauthSignUp(
+    @Body() body: OAuthSignUpRequestDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { user, accessToken, refreshToken } =
+      await this.authService.completeOAuthSignup(body.signupToken, body.role);
     this.authService.setAuthCookies(res, accessToken, refreshToken);
     return { user };
   }

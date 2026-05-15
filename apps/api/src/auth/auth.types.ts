@@ -1,4 +1,4 @@
-import type { Role } from '@prisma/client';
+import type { AuthProvider, Role } from '@prisma/client';
 
 export interface AuthPublicUser {
   id: string;
@@ -32,6 +32,19 @@ export interface JwtRefreshPayload {
 }
 
 export interface JwtOAuthStatePayload {
-  role: Role;
+  nonce: string;
   typ: string;
 }
+
+export interface JwtOAuthSignupPayload {
+  typ: string;
+  provider: AuthProvider;
+  providerId: string;
+  email: string;
+  name: string | null;
+  profileImageUrl: string | null;
+}
+
+export type OAuthCallbackResult =
+  | { kind: 'login'; accessToken: string; refreshToken: string }
+  | { kind: 'signup_pending'; signupToken: string };
