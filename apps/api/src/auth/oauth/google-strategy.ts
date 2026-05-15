@@ -32,7 +32,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       provider: AuthProvider.GOOGLE,
       providerId: profile.id,
       email,
-      name: profile.displayName ?? null,
+      name: profile.displayName || null,
       profileImageUrl: profile.photos?.[0]?.value ?? null,
     };
   }
