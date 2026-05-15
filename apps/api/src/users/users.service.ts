@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { AuthProvider, type Role, type User } from '@prisma/client';
 
+import type { CreateOAuthUserParams, OAuthProfile } from '../auth/oauth/oauth-user';
+
 import { UsersRepository } from './users.repository';
 
 @Injectable()
@@ -13,6 +15,10 @@ export class UsersService {
 
   getUserByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findByEmail(email);
+  }
+
+  getUserByProviderId(provider: AuthProvider, providerId: string) {
+    return this.usersRepository.findByProviderId(provider, providerId);
   }
 
   createLocalUser(params: {
@@ -28,5 +34,10 @@ export class UsersService {
       role: params.role,
       provider: AuthProvider.LOCAL,
     });
+  }
+
+  createOAuthUser(profile: OAuthProfile, role: Role): Promise<User> {
+    const params: CreateOAuthUserParams = { ...profile, role };
+    return this.usersRepository.createOAuthUser(params);
   }
 }

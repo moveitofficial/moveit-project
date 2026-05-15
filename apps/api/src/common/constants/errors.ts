@@ -1,5 +1,13 @@
 import { HttpStatus } from '@nestjs/common';
 
+export const OAUTH_ERRORS = {
+  OAUTH_DUPLICATE_EMAIL: {
+    status: HttpStatus.CONFLICT,
+    message: '이 이메일로 가입된 계정이 있습니다. (OAuth)',
+    code: 'OAUTH_DUPLICATE_EMAIL',
+  },
+} as const;
+
 export const AUTH_ERRORS = {
   DUPLICATE_EMAIL: {
     status: HttpStatus.CONFLICT,

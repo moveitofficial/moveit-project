@@ -30,3 +30,8 @@ export interface JwtRefreshPayload {
   sub: string;
   typ: string;
 }
+
+export interface JwtOAuthStatePayload {
+  role: Role;
+  typ: string;
+}
