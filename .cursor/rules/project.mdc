@@ -1,0 +1,125 @@
+---
+description: moveit-project 모노레포 전역 LLM 행동 지침 및 핵심 컨벤션
+alwaysApply: true
+---
+
+# moveit-project 작업 지침
+
+Claude·Cursor 등 LLM 코딩 에이전트용 지침. 사람용 상세 가이드는 [ONBOARDING.md](mdc:ONBOARDING.md).
+
+---
+
+## 1. 행동 지침
+
+> 속도보다 신중함이 우선이다.
+
+**구현 전** — 가정 명시, 불확실하면 질문. 해석이 갈리면 대안 제시. 더 간단한 길이 보이면 제안.
+
+**단순성** — 최소한의 코드만. 요청 안 한 기능·추상화·유연성 추가 금지. 발생 불가능한 시나리오에 예외 처리 만들지 말 것. "시니어가 보기에 과한가?" → 그렇다면 단순화.
+
+**정밀한 수정** — 필요한 부분만. 인접 코드의 스타일·포맷·주석 임의 수정 금지. 본인 스타일과 달라도 기존 스타일 따른다. 무관한 데드 코드는 **보고만**, 직접 삭제 금지. 본인 수정으로 발생한 미사용 import/변수만 정리.
+
+**목표 중심** — "작동하게 만들기" 같은 모호한 기준 금지. 검증 가능한 목표(`[단계] → 검증: [확인 사항]`)로 변환해서 진행.
+
+---
+
+## 2. 프로젝트 컨텍스트
+
+- **moveit-project**는 IT 코칭·프로젝트 의뢰 플랫폼 컨셉의 **포트폴리오 단계 모노레포**. **6인 팀 협업**.
+- 프론트(`apps/web`, `apps/admin`)는 `src/mocks/`의 정적 데이터로 동작. **API 연동은 의도적으로 안 한다.**
+  → "이 하드코딩 값을 props로 빼자 / API에서 가져오자" 식 제안 **금지**. SVG 사이즈 의존 magic number 추상화 권장도 자제. 단, 접근성·네이밍·DRY·타입 안전성 지적은 유효.
+- 백엔드(`apps/api`, NestJS 11 + Prisma 6)는 실제로 구현 중. 위 "API 안 한다"는 프론트 연동 얘기.
+- **UI 카피·에러 메시지·Swagger description 전부 한국어.**
+- 6인이 적용하는 컨벤션이라 일관성 우선 — "1인이라 가볍게" 식 논리 금지, PR 리뷰가 있다고 가정하고 판단.
+
+### 협업 스타일
+
+- 명확하고 가역적인 요청은 재질문 없이 바로 실행한다.
+- 안전성 확인은 push/force/외부 전송 같은 **실제 위험 동작**에만. 코드 편집·파일 생성처럼 되돌리기 쉬운 작업엔 확인 없이 진행.
+
+---
+
+## 3. 반드시 따라야 할 컨벤션
+
+### 3.1 TypeScript / ESLint (엄격)
+
+[`@repo/eslint-config/base`](mdc:packages/eslint-config/base.js)는 **`strict-type-checked` + `stylistic-type-checked`**.
+
+- `any` 금지 → `unknown` 또는 정확한 타입
+- `!` non-null 단언 금지 → 옵셔널 체이닝·가드
+- `import type { ... }` 강제
+- floating promise 금지 → `await` 또는 `void` 명시
+- `no-console` (`warn`/`error`만 허용)
+- `pnpm lint`는 `--max-warnings 0`. **경고도 에러**.
+
+### 3.2 Import 별칭
+
+- `@/*` → 해당 앱의 `src/*`
+- `@public/*` → 해당 앱의 `public/*` (SVG는 `StaticImageData`로 들어옴)
+- `@repo/*` → `packages/*` 워크스페이스
+
+### 3.3 스타일 (vanilla-extract)
+
+- 색·폰트는 **인라인 금지**. 항상 토큰 참조:
+  - `vars.color.blue300` 등 → [packages/styles/src/tokens.css.ts](mdc:packages/styles/src/tokens.css.ts)
+  - `typography.f16R` 등 (size 8·12·14·16·18·20·24·32·40 × weight R·B·EB) → [packages/styles/src/typography.css.ts](mdc:packages/styles/src/typography.css.ts)
+- 새 색/사이즈가 필요하면 **토큰부터 추가**하고 사용. 컴포넌트에 raw 값(`#1B92FF`) 박지 않는다.
+- Next dev는 반드시 `--webpack` (Turbopack은 vanilla-extract 미지원, 이미 적용됨).
+
+### 3.4 컴포넌트 (web · admin 공통)
+
+- Server Component가 기본. 상태/이벤트 있는 컴포넌트만 `'use client'`.
+- `reactCompiler: true` — `useMemo`/`useCallback` 습관적으로 두르지 말 것.
+- 폴더 구조: `<Name>/Name.tsx` + `Name.css.ts` + `index.ts`. 컴포넌트는 `export default`, `index.ts`에서 `export { default as Name }`로 재export.
+- 전역 fetch가 필요할 땐 [`@repo/fetcher`](mdc:packages/fetcher/src/fetchClient.ts)의 `api`/`publicApi`만 사용. 직접 `fetch`/`axios` 금지.
+
+### 3.5 백엔드 (`apps/api`) — 실수하기 쉬운 것
+
+**응답 형식은 자동 래핑된다. 직접 감싸지 말 것.**
+- 성공: [TransformInterceptor](mdc:apps/api/src/common/interceptors/transform.interceptor.ts)가 `{ success: true, message, data }`로 감쌈 → 컨트롤러는 raw 데이터만 `return`
+- 실패: [HttpExceptionFilter](mdc:apps/api/src/common/filters/http-exception.filter.ts)가 `{ success: false, message, error: { code } }`로 감쌈
+
+**에러는 상수로 던진다.** 인라인 `throw new HttpException('...', 400)` 금지.
+```typescript
+throw new AppException(AUTH_ERRORS.DUPLICATE_EMAIL);
+```
+도메인별 상수: [apps/api/src/common/constants/errors.ts](mdc:apps/api/src/common/constants/errors.ts). 새 에러는 거기에 먼저 추가.
+
+**DTO는 `declare` 필드 패턴.**
+```typescript
+export class SignInRequestDto {
+  @ApiProperty({ example: 'a@b.com' })
+  @IsEmail()
+  declare email: string;
+}
+```
+런타임 프로퍼티 생성 막고 데코레이터 메타만 남기기 위함. 기존 [auth/dto](mdc:apps/api/src/auth/dto) 따르기.
+
+**Controller에 Swagger 데코레이터 풀세트:**
+```typescript
+@ApiOperation({ summary: '...' })
+@ApiSuccessResponse(HttpStatus.OK, ResponseDto)
+@ApiErrorResponse(AUTH_ERRORS.INVALID_CREDENTIALS, ...)
+```
+보호 라우트는 [`@JwtAuth(...추가에러)`](mdc:apps/api/src/common/decorators/jwt-auth.decorator.ts) 한 줄로 가드 + 401 문서화.
+
+**JWT는 쿠키(`moveit_access_token` 1h / `moveit_refresh_token` 7d, httpOnly + sameSite lax).** 응답 body에 토큰 노출 금지.
+
+**Prisma**는 `@Global()`이라 어디서든 `PrismaService` 주입. enum은 Prisma 정의 import해서 쓰고 TS에 재선언 금지. 스키마 수정 시 마이그레이션 함께 생성.
+
+---
+
+## 4. 자주 만나는 함정
+
+- ❌ 워크스페이스 폴더 안에서 `pnpm install` → 항상 루트에서 `pnpm --filter <name> add ...`
+- ❌ api 컨트롤러에서 응답 직접 래핑 → 인터셉터가 또 감싸서 이중 래핑됨
+- ❌ `console.log` → ESLint 에러. 디버깅 끝나면 지운다
+- ⚠️ TS 통과인데 IDE 빨간 줄 → `Cmd+Shift+P` → `TypeScript: Restart TS Server`
+
+환경 세팅·신규 앱 추가·명령어 치트시트는 [ONBOARDING.md](mdc:ONBOARDING.md).
+
+---
+
+## 7. 더 깊이 알아야 할 때
+
+작업 종류에 따라 [docs/README.md](mdc:docs/README.md) 라우팅 표를 보고 필요한 1~2개 가이드만 읽는다. 백엔드 컨벤션·Auth 흐름·Prisma 모델(ER 다이어그램 포함)·프론트 구조·디자인 토큰·tsconfig 프리셋이 있다.
