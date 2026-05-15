@@ -23,21 +23,41 @@ export class SignUpHttpResponseDto {
   declare data: SignUpResponseDataDto;
 }
 
-export class signInResponseDataDto {
+class SignInUserDto {
   @ApiProperty({ format: 'uuid' })
-  declare userId: string;
+  declare id: string;
+
+  @ApiProperty({ example: 'user@example.com' })
+  declare email: string;
+
+  @ApiProperty({ nullable: true, example: '킹한준' })
+  declare name: string | null;
 
   @ApiProperty({ enum: Role, example: Role.CLIENT })
   declare role: Role;
+
+  @ApiProperty({ nullable: true, example: null })
+  declare profileImageUrl: string | null;
+
+  @ApiProperty({ example: false })
+  declare isBlocked: boolean;
+
+  @ApiProperty({ example: false })
+  declare isDeleted: boolean;
+}
+
+class SignInResponseDataDto {
+  @ApiProperty({ type: SignInUserDto })
+  declare user: SignInUserDto;
 }
 
 export class signInHttpResponseDto {
   @ApiProperty({ example: true })
   declare success: boolean;
 
-  @ApiProperty({ example: '로그인 성공' })
+  @ApiProperty({ example: '요청 성공' })
   declare message: string;
 
-  @ApiProperty({ type: signInResponseDataDto })
-  declare data: signInResponseDataDto;
+  @ApiProperty({ type: SignInResponseDataDto })
+  declare data: SignInResponseDataDto;
 }
