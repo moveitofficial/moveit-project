@@ -3,8 +3,8 @@ import { ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 import { JwtAccessGuard } from '../../auth/jwt/jwt-access.guard';
 import { AUTH_ERRORS } from '../constants/errors';
-import { ErrorResponseDto } from '../dto/error-response.dto';
 import { errorResponseExample } from '../swagger/error-response-example';
+import { ErrorResponseDto } from '../swagger/error-response.dto';
 
 interface ErrorConstant {
   status: number;
