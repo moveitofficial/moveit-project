@@ -23,6 +23,8 @@ import {
   JWT_OAUTH_SIGNUP_TYP,
   JWT_OAUTH_STATE_TYP,
   JWT_REFRESH_TYP,
+  OAUTH_SIGNUP_COOKIE_MAX_AGE_MS,
+  OAUTH_SIGNUP_COOKIE_NAME,
   OAUTH_SIGNUP_JWT_EXPIRES_IN,
   OAUTH_STATE_JWT_EXPIRES_IN,
   REFRESH_COOKIE_NAME,
@@ -140,7 +142,7 @@ export class AuthService {
   }
 
   async completeOAuthSignup(
-    signupToken: string,
+    signupToken: string | undefined,
     role: Role,
   ): Promise<{
     user: AuthPublicUser;
@@ -223,11 +225,8 @@ export class AuthService {
     return this.config.getOrThrow<string>('OAUTH_SUCCESS_REDIRECT_URL');
   }
 
-  getOAuthSignupRedirectUrl(signupToken: string): string {
-    const base = this.config.getOrThrow<string>('OAUTH_SIGNUP_REDIRECT_URL');
-    const url = new URL(base);
-    url.searchParams.set('signupToken', signupToken);
-    return url.toString();
+  getOAuthSignupRedirectUrl(): string {
+    return this.config.getOrThrow<string>('OAUTH_SIGNUP_REDIRECT_URL');
   }
 
   getOAuthFailureRedirectUrl(err: unknown): string {
@@ -262,6 +261,27 @@ export class AuthService {
     });
   }
 
+  setOAuthSignupCookie(res: Response, signupToken: string): void {
+    const secure = this.config.get<string>('NODE_ENV') === 'production';
+    res.cookie(OAUTH_SIGNUP_COOKIE_NAME, signupToken, {
+      httpOnly: true,
+      secure,
+      sameSite: 'lax',
+      path: '/auth/oauth/signup',
+      maxAge: OAUTH_SIGNUP_COOKIE_MAX_AGE_MS,
+    });
+  }
+
+  clearOAuthSignupCookie(res: Response): void {
+    const secure = this.config.get<string>('NODE_ENV') === 'production';
+    res.clearCookie(OAUTH_SIGNUP_COOKIE_NAME, {
+      httpOnly: true,
+      secure,
+      sameSite: 'lax',
+      path: '/auth/oauth/signup',
+    });
+  }
+
   #issueSignupToken(profile: OAuthProfile): string {
     const payload: JwtOAuthSignupPayload = {
       typ: JWT_OAUTH_SIGNUP_TYP,
@@ -276,7 +296,11 @@ export class AuthService {
     });
   }
 
-  #parseSignupToken(token: string): JwtOAuthSignupPayload {
+  #parseSignupToken(token: string | undefined): JwtOAuthSignupPayload {
+    if (token === undefined || token === '') {
+      throw new AppException(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_INVALID);
+    }
+
     try {
       const payload = this.jwtService.verify<JwtOAuthSignupPayload>(token);
       if (payload.typ !== JWT_OAUTH_SIGNUP_TYP) {

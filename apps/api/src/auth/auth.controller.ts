@@ -4,6 +4,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Res,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -17,6 +18,7 @@ import {
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 
+import { OAUTH_SIGNUP_COOKIE_NAME } from './auth.constants';
 import { AuthService } from './auth.service';
 import { OAuthSignUpRequestDto } from './dto/oauth-signup-request.dto';
 import {
@@ -27,6 +29,10 @@ import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { SignUpRequestDto } from './dto/sign-up-request.dto';
 
 import type { Response } from 'express';
+
+interface OAuthSignupRequest {
+  cookies?: Record<string, string | undefined>;
+}
 
 @ApiTags('auth')
 @Controller('auth')
@@ -61,9 +67,14 @@ export class AuthController {
     return { user };
   }
 
-  @ApiOperation({ summary: 'OAuth 가입 완료 (role 확정)' })
+  @ApiOperation({
+    summary: 'OAuth 가입 완료 (role 확정)',
+    description:
+      'OAuth 콜백에서 httpOnly 쿠키로 저장된 signupToken과 요청 body의 role로 최종 가입을 완료합니다.',
+  })
   @ApiSuccessResponse(HttpStatus.CREATED, signInHttpResponseDto)
   @ApiErrorResponse(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_INVALID)
+  @ApiErrorResponse(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_EXPIRED)
   @ApiErrorResponse(OAUTH_ERRORS.OAUTH_DUPLICATE_EMAIL)
   @ApiErrorResponse(COMMON_ERRORS.BLOCKED)
   @ApiErrorResponse(USER_ERRORS.DELETED)
@@ -72,10 +83,14 @@ export class AuthController {
   @Post('oauth/signup')
   async oauthSignUp(
     @Body() body: OAuthSignUpRequestDto,
+    @Req()
+    req: OAuthSignupRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
+    const signupToken = req.cookies?.[OAUTH_SIGNUP_COOKIE_NAME];
     const { user, accessToken, refreshToken } =
-      await this.authService.completeOAuthSignup(body.signupToken, body.role);
+      await this.authService.completeOAuthSignup(signupToken, body.role);
+    this.authService.clearOAuthSignupCookie(res);
     this.authService.setAuthCookies(res, accessToken, refreshToken);
     return { user };
   }

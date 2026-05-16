@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 
-import type { CreateOAuthUserParams } from '../auth/oauth/oauth-user';
+import type { CreateOAuthUserParams } from '../auth/oauth/oauth.types';
 import type { AuthProvider, Prisma, User } from '@prisma/client';
 
 @Injectable()

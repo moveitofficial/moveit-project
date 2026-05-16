@@ -6,7 +6,7 @@ import { UsersRepository } from './users.repository';
 import type {
   CreateOAuthUserParams,
   OAuthProfile,
-} from '../auth/oauth/oauth-user';
+} from '../auth/oauth/oauth.types';
 
 @Injectable()
 export class UsersService {

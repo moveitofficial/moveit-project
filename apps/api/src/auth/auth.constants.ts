@@ -16,3 +16,5 @@ export const ACCESS_JWT_EXPIRES_IN = '1h' as const;
 export const REFRESH_JWT_EXPIRES_IN = '7d' as const;
 export const OAUTH_STATE_JWT_EXPIRES_IN = '10m' as const;
 export const OAUTH_SIGNUP_JWT_EXPIRES_IN = '30m' as const;
+export const OAUTH_SIGNUP_COOKIE_NAME = 'moveit_oauth_signup_token';
+export const OAUTH_SIGNUP_COOKIE_MAX_AGE_MS = 30 * 60 * 1000;
