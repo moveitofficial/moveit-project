@@ -47,3 +47,14 @@ export class UserResponseDto {
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
   declare createdAt: Date;
 }
+
+export class UserHttpResponseDto {
+  @ApiProperty({ example: true })
+  declare success: boolean;
+
+  @ApiProperty({ example: '요청 성공' })
+  declare message: string;
+
+  @ApiProperty({ type: UserResponseDto })
+  declare data: UserResponseDto;
+}

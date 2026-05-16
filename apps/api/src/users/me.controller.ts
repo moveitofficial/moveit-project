@@ -6,10 +6,12 @@ import { COMMON_ERRORS, USER_ERRORS } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
+import { EmptyDataHttpResponseDto } from '../common/swagger/empty-http-response.dto';
 
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserResponseDto } from './dto/user-response.dto';
+import { UserHttpResponseDto } from './dto/user-response.dto';
+import { WithdrawHttpResponseDto } from './dto/withdraw-response.dto';
 import { UsersService } from './users.service';
 
 import type { Request } from 'express';
@@ -21,7 +23,7 @@ export class MeController {
 
   @ApiOperation({ summary: '내 정보 조회하기' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.OK, UserResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, UserHttpResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
@@ -33,7 +35,7 @@ export class MeController {
 
   @ApiOperation({ summary: '내 정보 수정하기' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.OK, UserResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, UserHttpResponseDto)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Patch()
@@ -44,7 +46,7 @@ export class MeController {
 
   @ApiOperation({ summary: '비밀번호 변경하기' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiSuccessResponse(HttpStatus.OK, EmptyDataHttpResponseDto)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
     USER_ERRORS.INVALID_PASSWORD,
@@ -60,7 +62,7 @@ export class MeController {
 
   @ApiOperation({ summary: '회원 탈퇴' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiSuccessResponse(HttpStatus.OK, WithdrawHttpResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
