@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { AuthProvider } from '@prisma/client';
 import { Strategy, type Profile } from 'passport-google-oauth20';
 
-import type { OAuthProfile } from './oauth-user';
+import type { OAuthProfile } from './oauth.types';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {

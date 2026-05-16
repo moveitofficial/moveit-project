@@ -2,8 +2,8 @@ import { Controller, Get, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
-import { GoogleGuard } from './oauth/google-guard';
-import { GoogleOAuthStartGuard } from './oauth/google-oauth-start.guard';
+import { GoogleGuard } from './oauth/google.guard';
+import { GoogleOAuthStartGuard } from './oauth/google.oauth.start.guard';
 
 import type { OAuthProfile } from './oauth/oauth-user';
 import type { Request, Response } from 'express';

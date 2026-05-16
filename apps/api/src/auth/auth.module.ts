@@ -11,9 +11,9 @@ import { JwtAccessGuard } from './jwt/jwt-access.guard';
 import { JwtAccessStrategy } from './jwt/jwt-access.strategy';
 import { JwtRefreshGuard } from './jwt/jwt-refresh.guard';
 import { JwtRefreshStrategy } from './jwt/jwt-refresh.strategy';
-import { GoogleGuard } from './oauth/google-guard';
-import { GoogleOAuthStartGuard } from './oauth/google-oauth-start.guard';
-import { GoogleStrategy } from './oauth/google-strategy';
+import { GoogleGuard } from './oauth/google.guard';
+import { GoogleOAuthStartGuard } from './oauth/google.oauth.start.guard';
+import { GoogleStrategy } from './oauth/google.strategy';
 import { OAuthController } from './oauth.controller';
 
 @Module({
