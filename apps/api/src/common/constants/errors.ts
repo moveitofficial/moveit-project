@@ -16,6 +16,11 @@ export const COMMON_ERRORS = {
     message: '접근 권한이 없습니다.',
     code: 'FORBIDDEN',
   },
+  VALIDATION_ERROR: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '입력값이 올바르지 않습니다.',
+    code: 'VALIDATION_ERROR',
+  },
 } as const;
 
 export const AUTH_ERRORS = {
@@ -61,6 +66,14 @@ export const USER_ERRORS = {
   DELETED: {
     status: HttpStatus.UNAUTHORIZED,
     message: '탈퇴한 계정입니다.',
+  },
+  INVALID_PASSWORD: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '현재 비밀번호가 올바르지 않습니다.',
+  },
+  PASSWORD_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '새 비밀번호가 일치하지 않습니다.',
   },
 } as const;
 
