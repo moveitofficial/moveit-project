@@ -14,17 +14,17 @@ export class UsersRepository {
     });
   }
 
-  create(data: Prisma.UserCreateInput): Promise<User> {
-    return this.prisma.user.create({ data });
-  }
-
   findById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: { id },
     });
   }
 
-  updateById(id: string, data: Prisma.UserUpdateInput): Promise<User> {
+  create(data: Prisma.UserCreateInput): Promise<User> {
+    return this.prisma.user.create({ data });
+  }
+
+  update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
     return this.prisma.user.update({ where: { id }, data });
   }
 

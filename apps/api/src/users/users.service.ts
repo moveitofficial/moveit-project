@@ -17,6 +17,14 @@ export class UsersService {
     return 'all user';
   }
 
+  async getUserById(id: string): Promise<User> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new AppException(USER_ERRORS.NOT_FOUND);
+    }
+    return user;
+  }
+
   getUserByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findByEmail(email);
   }
@@ -36,14 +44,14 @@ export class UsersService {
     });
   }
 
-  async updateMe(id: string, dto: UpdateUserDto): Promise<User> {
+  async updateUser(id: string, dto: UpdateUserDto): Promise<User> {
     const user = await this.usersRepository.findById(id);
 
     if (!user) {
       throw new AppException(USER_ERRORS.NOT_FOUND);
     }
 
-    return this.usersRepository.updateById(id, dto);
+    return this.usersRepository.update(id, dto);
   }
 
   async updatePassword(id: string, dto: UpdatePasswordDto): Promise<object> {
@@ -67,6 +75,21 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 12);
     await this.usersRepository.updatePassword(id, hashedPassword);
+    return {};
+  }
+
+  async withdrawUser(id: string): Promise<object> {
+    const user = await this.usersRepository.findById(id);
+
+    if (!user) {
+      throw new AppException(USER_ERRORS.NOT_FOUND);
+    }
+
+    await this.usersRepository.update(id, {
+      isDeleted: true,
+      deletedAt: new Date(),
+    });
+
     return {};
   }
 }
