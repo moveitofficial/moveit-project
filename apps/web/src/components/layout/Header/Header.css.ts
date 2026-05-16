@@ -4,7 +4,7 @@ import { style } from '@vanilla-extract/css';
 export const wrapper = style({
   width: '100%',
   height: '72px',
-  backgroundColor: '#ffffff',
+  backgroundColor: vars.color.white,
   display: 'flex',
   flexDirection: 'row',
   justifyContent: 'center',
@@ -51,7 +51,7 @@ export const navLink = style({
 
 export const signUpButton = style({
   backgroundColor: vars.color.blue300,
-  color: '#ffffff',
+  color: vars.color.white,
   padding: '8px 16px',
   borderRadius: '8px',
 });

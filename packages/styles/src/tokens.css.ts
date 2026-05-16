@@ -10,6 +10,8 @@ export const [themeClass, vars] = createTheme({
     },
   },
   color: {
+    white: '#FFFFFF',
+
     black100: '#6B6B6B',
     black200: '#525252',
     black300: '#373737',
