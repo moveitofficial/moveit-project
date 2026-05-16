@@ -8,6 +8,7 @@ import bcrypt from 'bcrypt';
 
 import {
   AUTH_ERRORS,
+  COMMON_ERRORS,
   OAUTH_ERRORS,
   USER_ERRORS,
 } from '../common/constants/errors';
@@ -39,7 +40,7 @@ import type {
 } from './auth.types';
 import type { SignInRequestDto } from './dto/sign-in-request.dto';
 import type { SignUpRequestDto } from './dto/sign-up-request.dto';
-import type { OAuthProfile } from './oauth/oauth-user';
+import type { OAuthProfile } from './oauth/oauth.types';
 import type { Response } from 'express';
 
 const BCRYPT_COST = 12;
@@ -286,7 +287,7 @@ export class AuthService {
       if (error instanceof AppException) {
         throw error;
       }
-      throw new AppException(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_INVALID);
+      throw new AppException(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_EXPIRED);
     }
   }
 
@@ -317,7 +318,7 @@ export class AuthService {
 
   #ensureUserCanLogin(user: User): void {
     if (user.isBlocked) {
-      throw new AppException(USER_ERRORS.BLOCKED);
+      throw new AppException(COMMON_ERRORS.BLOCKED);
     }
     if (user.isDeleted) {
       throw new AppException(USER_ERRORS.DELETED);
