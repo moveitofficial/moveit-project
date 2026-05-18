@@ -38,6 +38,10 @@ export const OAUTH_ERRORS = {
     status: HttpStatus.UNAUTHORIZED,
     message: '역할 선택 시간 만료. 구글 로그인을 다시 시도해 주세요.',
     code: 'OAUTH_SIGNUP_TOKEN_EXPIRED',
+  VALIDATION_ERROR: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '입력값이 올바르지 않습니다.',
+    code: 'VALIDATION_ERROR',
   },
 } as const;
 
@@ -77,6 +81,14 @@ export const USER_ERRORS = {
     status: HttpStatus.UNAUTHORIZED,
     message: '탈퇴한 계정입니다.',
     code: 'DELETED',
+  },
+  INVALID_PASSWORD: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '현재 비밀번호가 올바르지 않습니다.',
+  },
+  PASSWORD_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '새 비밀번호가 일치하지 않습니다.',
   },
 } as const;
 
