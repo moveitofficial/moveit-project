@@ -1,8 +1,12 @@
 'use client';
 
+import clsx from 'clsx';
+import Image from 'next/image';
+
 import RectLabel from '../RectLabel/RectLabel';
 
 import * as styles from './Card.css';
+import starFill from './starFill.svg';
 
 import type { KeyboardEvent } from 'react';
 
@@ -61,20 +65,20 @@ export default function Card({
 
   return (
     <div
-      className={[
-        styles.card,
-        isClickable ? styles.clickable : '',
-        className ?? '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      className={clsx(styles.card, isClickable && styles.clickable, className)}
       onClick={onClick}
       onKeyDown={handleKeyDown}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
     >
       <div className={styles.thumbnailWrapper}>
-        <img src={imageSrc} alt={imageAlt} className={styles.thumbnail} />
+        <Image
+          src={imageSrc}
+          alt={imageAlt}
+          width={276}
+          height={176}
+          className={styles.thumbnail}
+        />
       </div>
 
       <div className={styles.content}>
@@ -89,13 +93,7 @@ export default function Card({
         <h3 className={styles.title}>{serviceTitle}</h3>
 
         <div className={styles.ratingRow}>
-          <img
-            src="/Card/star.svg"
-            alt=""
-            width={16}
-            height={16}
-            className={styles.starIcon}
-          />
+          <Image src={starFill} alt="" className={styles.starIcon} />
           <span className={styles.rating}>{rating.toFixed(1)}</span>
           <span className={styles.reviewCount}>({reviewCount})</span>
         </div>

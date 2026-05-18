@@ -115,6 +115,42 @@ const serviceSix: ServiceListItem = {
   isFavorite: false,
 };
 
+const serviceSeven: ServiceListItem = {
+  id: 'svc-007',
+  title: '쇼핑몰 웹사이트 제작 (Next.js)',
+  price: 600_000,
+  duration: 30,
+  revisionCount: 3,
+  thumbnailUrl: 'https://picsum.photos/seed/svc7/400/300',
+  expert: {
+    id: 'expert-002',
+    name: '웹스튜디오',
+    companyName: '주식회사 웹스튜디오',
+  },
+  category: { type: 'PROJECT_REQUEST', detail: 'WEB' },
+  rating: 4.8,
+  reviewCount: 96,
+  isFavorite: false,
+};
+
+const serviceEight: ServiceListItem = {
+  id: 'svc-008',
+  title: '데이터 분석 대시보드 구축',
+  price: 550_000,
+  duration: 25,
+  revisionCount: 2,
+  thumbnailUrl: 'https://picsum.photos/seed/svc8/400/300',
+  expert: {
+    id: 'expert-003',
+    name: '백엔드 마스터',
+    companyName: '백엔드 마스터',
+  },
+  category: { type: 'PROJECT_REQUEST', detail: 'DATA' },
+  rating: 4.7,
+  reviewCount: 62,
+  isFavorite: false,
+};
+
 export const mockServiceList: ServiceListItem[] = [
   serviceOne,
   serviceTwo,
@@ -122,6 +158,8 @@ export const mockServiceList: ServiceListItem[] = [
   serviceFour,
   serviceFive,
   serviceSix,
+  serviceSeven,
+  serviceEight,
 ];
 
 export const mockServiceDetail: ServiceDetail = {
