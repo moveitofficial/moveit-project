@@ -11,8 +11,8 @@ import { ApiSuccessResponse } from '../common/decorators/api-success-response.de
 import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
 
 import { ClientProfilesService } from './client-profiles.service';
+import { ClientProfileRequestDto } from './dto/client-profile-request.dto';
 import { ClientProfileHttpResponseDto } from './dto/client-profile-response.dto';
-import { CreateClientProfileDto } from './dto/create-client-profile.dto';
 
 import type { Request } from 'express';
 
@@ -33,7 +33,7 @@ export class ClientProfilesController {
   @Post()
   createClientProfile(
     @Req() req: Request,
-    @Body() dto: CreateClientProfileDto,
+    @Body() dto: ClientProfileRequestDto,
   ) {
     const user = req.user as JwtAccessUser;
     return this.clientProfilesService.createClientProfile(user.userId, dto);

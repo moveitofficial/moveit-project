@@ -146,6 +146,10 @@ export const REFUND_ERRORS = {
 } as const;
 
 export const CLIENT_PROFILE_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '의뢰인 프로필을 찾을 수 없습니다.',
+  },
   ALREADY_EXISTS: {
     status: HttpStatus.CONFLICT,
     message: '이미 클라이언트 프로필이 존재합니다.',

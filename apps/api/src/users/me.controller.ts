@@ -2,7 +2,14 @@ import { Body, Controller, Get, HttpStatus, Patch, Req } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
-import { COMMON_ERRORS, USER_ERRORS } from '../common/constants/errors';
+import { ClientProfilesService } from '../client-profiles/client-profiles.service';
+import { ClientProfileRequestDto } from '../client-profiles/dto/client-profile-request.dto';
+import { ClientProfileHttpResponseDto } from '../client-profiles/dto/client-profile-response.dto';
+import {
+  CLIENT_PROFILE_ERRORS,
+  COMMON_ERRORS,
+  USER_ERRORS,
+} from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
@@ -19,7 +26,10 @@ import type { Request } from 'express';
 @ApiTags('users/me')
 @Controller('users/me')
 export class MeController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly clientProfilesService: ClientProfilesService,
+  ) {}
 
   @ApiOperation({ summary: '내 정보 조회하기' })
   @JwtAuth()
@@ -70,5 +80,23 @@ export class MeController {
   withdrawMyAccount(@Req() req: Request) {
     const user = req.user as JwtAccessUser;
     return this.usersService.withdrawUser(user.userId);
+  }
+
+  @ApiOperation({ summary: '의뢰인 프로필 수정' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, ClientProfileHttpResponseDto)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    CLIENT_PROFILE_ERRORS.MIXED_SERVICE_GROUP,
+  )
+  @ApiErrorResponse(CLIENT_PROFILE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Patch('client-profiles')
+  updateClientProfile(
+    @Req() req: Request,
+    @Body() dto: ClientProfileRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.clientProfilesService.updateClientProfile(user.userId, dto);
   }
 }

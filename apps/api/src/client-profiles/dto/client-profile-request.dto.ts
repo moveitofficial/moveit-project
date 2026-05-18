@@ -23,7 +23,7 @@ class InterestCategoryDto {
   declare serviceCategoryId: string;
 }
 
-export class CreateClientProfileDto {
+export class ClientProfileRequestDto {
   @ApiPropertyOptional({ example: '한준님축지법쓰신다' })
   @IsOptional()
   @IsString()
