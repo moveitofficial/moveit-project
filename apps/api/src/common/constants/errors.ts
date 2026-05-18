@@ -21,6 +21,11 @@ export const COMMON_ERRORS = {
     message: '차단된 계정입니다.',
     code: 'BLOCKED',
   },
+  VALIDATION_ERROR: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '입력값이 올바르지 않습니다.',
+    code: 'VALIDATION_ERROR',
+  },
 } as const;
 
 export const OAUTH_ERRORS = {
@@ -38,11 +43,6 @@ export const OAUTH_ERRORS = {
     status: HttpStatus.UNAUTHORIZED,
     message: '역할 선택 시간 만료. 구글 로그인을 다시 시도해 주세요.',
     code: 'OAUTH_SIGNUP_TOKEN_EXPIRED',
-  },
-  VALIDATION_ERROR: {
-    status: HttpStatus.BAD_REQUEST,
-    message: '입력값이 올바르지 않습니다.',
-    code: 'VALIDATION_ERROR',
   },
 } as const;
 

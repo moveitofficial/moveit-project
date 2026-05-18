@@ -56,6 +56,8 @@ export class UsersService {
   createOAuthUser(profile: OAuthProfile, role: Role): Promise<User> {
     const params: CreateOAuthUserParams = { ...profile, role };
     return this.usersRepository.createOAuthUser(params);
+  }
+
   async updateUser(id: string, dto: UpdateUserDto): Promise<User> {
     const user = await this.usersRepository.findById(id);
 

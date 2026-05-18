@@ -23,6 +23,9 @@ export class UsersRepository {
           providerId,
         },
       },
+    });
+  }
+
   findById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: { id },
@@ -43,6 +46,9 @@ export class UsersRepository {
         profileImageUrl: params.profileImageUrl ?? null,
         role: params.role,
       },
+    });
+  }
+
   update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
     return this.prisma.user.update({ where: { id }, data });
   }
