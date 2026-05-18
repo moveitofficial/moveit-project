@@ -268,12 +268,19 @@ export interface ChatMessage {
   createdAt: string;
 }
 
-export interface MainSection {
-  sectionType: string;
-  title: string;
-  targetType: 'SERVICE' | 'EXPERT';
-  items: ServiceListItem[] | ExpertDetail[];
-}
+export type MainSection =
+  | {
+      sectionType: string;
+      title: string;
+      targetType: 'SERVICE';
+      items: ServiceListItem[];
+    }
+  | {
+      sectionType: string;
+      title: string;
+      targetType: 'EXPERT';
+      items: ExpertDetail[];
+    };
 
 export interface MainData {
   banners: { id: string; imageUrl: string; actionUrl: string }[];

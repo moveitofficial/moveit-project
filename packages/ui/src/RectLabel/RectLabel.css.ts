@@ -17,7 +17,7 @@ export const rectLabelContainer = recipe({
     color: {
       blue50: {
         color: vars.color.blue300,
-        backgroundColor: vars.color.blue50,
+        backgroundColor: vars.color.blue100,
       },
       yellow: {
         color: vars.color.blue400,
