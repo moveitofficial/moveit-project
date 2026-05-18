@@ -12,7 +12,7 @@ import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
 
 import { ClientProfilesService } from './client-profiles.service';
 import { ClientProfileRequestDto } from './dto/client-profile-request.dto';
-import { ClientProfileHttpResponseDto } from './dto/client-profile-response.dto';
+import { ClientProfileResponseDto } from './dto/client-profile-response.dto';
 
 import type { Request } from 'express';
 
@@ -23,7 +23,7 @@ export class ClientProfilesController {
 
   @ApiOperation({ summary: '의뢰인 프로필 등록' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.CREATED, ClientProfileHttpResponseDto)
+  @ApiSuccessResponse(HttpStatus.CREATED, ClientProfileResponseDto)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
     CLIENT_PROFILE_ERRORS.MIXED_SERVICE_GROUP,

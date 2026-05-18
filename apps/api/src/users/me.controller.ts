@@ -4,7 +4,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import { ClientProfilesService } from '../client-profiles/client-profiles.service';
 import { ClientProfileRequestDto } from '../client-profiles/dto/client-profile-request.dto';
-import { ClientProfileHttpResponseDto } from '../client-profiles/dto/client-profile-response.dto';
+import { ClientProfileResponseDto } from '../client-profiles/dto/client-profile-response.dto';
 import {
   CLIENT_PROFILE_ERRORS,
   COMMON_ERRORS,
@@ -13,12 +13,11 @@ import {
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
-import { EmptyDataHttpResponseDto } from '../common/swagger/empty-http-response.dto';
 
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserHttpResponseDto } from './dto/user-response.dto';
-import { WithdrawHttpResponseDto } from './dto/withdraw-response.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { WithdrawDataDto } from './dto/withdraw-response.dto';
 import { UsersService } from './users.service';
 
 import type { Request } from 'express';
@@ -33,7 +32,7 @@ export class MeController {
 
   @ApiOperation({ summary: '내 정보 조회하기' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.OK, UserHttpResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, UserResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
@@ -45,7 +44,7 @@ export class MeController {
 
   @ApiOperation({ summary: '내 정보 수정하기' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.OK, UserHttpResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, UserResponseDto)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Patch()
@@ -56,7 +55,7 @@ export class MeController {
 
   @ApiOperation({ summary: '비밀번호 변경하기' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.OK, EmptyDataHttpResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
     USER_ERRORS.INVALID_PASSWORD,
@@ -72,7 +71,7 @@ export class MeController {
 
   @ApiOperation({ summary: '회원 탈퇴' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.OK, WithdrawHttpResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, WithdrawDataDto)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
@@ -84,7 +83,7 @@ export class MeController {
 
   @ApiOperation({ summary: '의뢰인 프로필 수정' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.OK, ClientProfileHttpResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, ClientProfileResponseDto)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
     CLIENT_PROFILE_ERRORS.MIXED_SERVICE_GROUP,
