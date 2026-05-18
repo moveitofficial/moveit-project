@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthProvider, Prisma, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { TokenExpiredError } from 'jsonwebtoken';
 
 import {
   AUTH_ERRORS,
@@ -308,10 +309,11 @@ export class AuthService {
       }
       return payload;
     } catch (error: unknown) {
-      if (error instanceof AppException) {
-        throw error;
+      if (error instanceof AppException) throw error;
+      if (error instanceof TokenExpiredError) {
+        throw new AppException(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_EXPIRED);
       }
-      throw new AppException(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_EXPIRED);
+      throw new AppException(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_INVALID);
     }
   }
 

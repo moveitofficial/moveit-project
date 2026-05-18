@@ -44,7 +44,7 @@ export class AuthController {
   @ApiErrorResponse(AUTH_ERRORS.DUPLICATE_EMAIL)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
-  @Post('sign-up')
+  @Post('signup')
   async signUp(@Body() body: SignUpRequestDto) {
     return this.authService.signUpWithEmail(body);
   }
@@ -52,11 +52,11 @@ export class AuthController {
   @ApiOperation({ summary: '이메일 로그인 (LOCAL)' })
   @ApiSuccessResponse(HttpStatus.OK, signInHttpResponseDto)
   @ApiErrorResponse(AUTH_ERRORS.INVALID_CREDENTIALS)
-  @ApiErrorResponse(COMMON_ERRORS.BLOCKED)
+  @ApiErrorResponse(COMMON_ERRORS.BLOCKED, USER_ERRORS.DELETED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.OK)
-  @Post('sign-in')
+  @Post('signin')
   async signIn(
     @Body() body: SignInRequestDto,
     @Res({ passthrough: true }) res: Response,
@@ -73,11 +73,12 @@ export class AuthController {
       'OAuth 콜백에서 httpOnly 쿠키로 저장된 signupToken과 요청 body의 role로 최종 가입을 완료합니다.',
   })
   @ApiSuccessResponse(HttpStatus.CREATED, signInHttpResponseDto)
-  @ApiErrorResponse(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_INVALID)
-  @ApiErrorResponse(OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_EXPIRED)
+  @ApiErrorResponse(
+    OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_INVALID,
+    OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_EXPIRED,
+  )
   @ApiErrorResponse(OAUTH_ERRORS.OAUTH_DUPLICATE_EMAIL)
-  @ApiErrorResponse(COMMON_ERRORS.BLOCKED)
-  @ApiErrorResponse(USER_ERRORS.DELETED)
+  @ApiErrorResponse(COMMON_ERRORS.BLOCKED, USER_ERRORS.DELETED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
   @Post('oauth/signup')

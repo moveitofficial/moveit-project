@@ -78,7 +78,7 @@ export const USER_ERRORS = {
     message: '이미 존재하는 유저입니다.',
   },
   DELETED: {
-    status: HttpStatus.UNAUTHORIZED,
+    status: HttpStatus.FORBIDDEN,
     message: '탈퇴한 계정입니다.',
     code: 'DELETED',
   },
