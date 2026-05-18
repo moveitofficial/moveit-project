@@ -16,10 +16,33 @@ export const COMMON_ERRORS = {
     message: '접근 권한이 없습니다.',
     code: 'FORBIDDEN',
   },
+  BLOCKED: {
+    status: HttpStatus.FORBIDDEN,
+    message: '차단된 계정입니다.',
+    code: 'BLOCKED',
+  },
   VALIDATION_ERROR: {
     status: HttpStatus.BAD_REQUEST,
     message: '입력값이 올바르지 않습니다.',
     code: 'VALIDATION_ERROR',
+  },
+} as const;
+
+export const OAUTH_ERRORS = {
+  OAUTH_DUPLICATE_EMAIL: {
+    status: HttpStatus.CONFLICT,
+    message: '이 이메일로 가입된 계정이 있습니다. (OAuth)',
+    code: 'OAUTH_DUPLICATE_EMAIL',
+  },
+  OAUTH_SIGNUP_TOKEN_INVALID: {
+    status: HttpStatus.UNAUTHORIZED,
+    message: '가입 토큰이 유효하지 않습니다.',
+    code: 'OAUTH_SIGNUP_TOKEN_INVALID',
+  },
+  OAUTH_SIGNUP_TOKEN_EXPIRED: {
+    status: HttpStatus.UNAUTHORIZED,
+    message: '역할 선택 시간 만료. 구글 로그인을 다시 시도해 주세요.',
+    code: 'OAUTH_SIGNUP_TOKEN_EXPIRED',
   },
 } as const;
 
@@ -31,10 +54,6 @@ export const AUTH_ERRORS = {
   INVALID_CREDENTIALS: {
     status: HttpStatus.UNAUTHORIZED,
     message: '이메일 또는 비밀번호가 올바르지 않습니다.',
-  },
-  BLOCKED: {
-    status: HttpStatus.FORBIDDEN,
-    message: '차단된 계정입니다.',
   },
   TOKEN_EXPIRED: {
     status: HttpStatus.UNAUTHORIZED,
@@ -59,13 +78,10 @@ export const USER_ERRORS = {
     status: HttpStatus.CONFLICT,
     message: '이미 존재하는 유저입니다.',
   },
-  BLOCKED: {
-    status: HttpStatus.FORBIDDEN,
-    message: '차단된 계정입니다.',
-  },
   DELETED: {
-    status: HttpStatus.UNAUTHORIZED,
+    status: HttpStatus.FORBIDDEN,
     message: '탈퇴한 계정입니다.',
+    code: 'DELETED',
   },
   INVALID_PASSWORD: {
     status: HttpStatus.BAD_REQUEST,

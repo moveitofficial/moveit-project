@@ -9,6 +9,11 @@ import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersRepository } from './users.repository';
 
+import type {
+  CreateOAuthUserParams,
+  OAuthProfile,
+} from '../auth/oauth/oauth.types';
+
 @Injectable()
 export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
@@ -30,6 +35,10 @@ export class UsersService {
     return this.usersRepository.findByEmail(email);
   }
 
+  getUserByProviderId(provider: AuthProvider, providerId: string) {
+    return this.usersRepository.findByProviderId(provider, providerId);
+  }
+
   createLocalUser(params: {
     email: string;
     passwordHash: string;
@@ -43,6 +52,11 @@ export class UsersService {
       role: params.role,
       provider: AuthProvider.LOCAL,
     });
+  }
+
+  createOAuthUser(profile: OAuthProfile, role: Role): Promise<User> {
+    const params: CreateOAuthUserParams = { ...profile, role };
+    return this.usersRepository.createOAuthUser(params);
   }
 
   async updateUser(id: string, dto: UpdateUserDto) {
