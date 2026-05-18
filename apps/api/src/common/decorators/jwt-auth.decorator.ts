@@ -1,5 +1,5 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
-import { ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 import { JwtAccessGuard } from '../../auth/jwt/jwt-access.guard';
 import { AUTH_ERRORS } from '../constants/errors';
@@ -20,6 +20,7 @@ export function JwtAuth(...additionalErrors: ErrorConstant[]) {
 
   return applyDecorators(
     UseGuards(JwtAccessGuard),
+    ApiCookieAuth('cookieAuth'),
     ApiUnauthorizedResponse({
       type: ErrorResponseDto,
       examples: Object.fromEntries(

@@ -12,18 +12,7 @@ export class SignUpResponseDataDto {
   declare onboardingRequired: boolean;
 }
 
-export class SignUpHttpResponseDto {
-  @ApiProperty({ example: true })
-  declare success: boolean;
-
-  @ApiProperty({ example: '요청 성공' })
-  declare message: string;
-
-  @ApiProperty({ type: SignUpResponseDataDto })
-  declare data: SignUpResponseDataDto;
-}
-
-class SignInUserDto {
+export class SignInUserDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
 
@@ -46,18 +35,7 @@ class SignInUserDto {
   declare isDeleted: boolean;
 }
 
-class SignInResponseDataDto {
+export class SignInResponseDataDto {
   @ApiProperty({ type: SignInUserDto })
   declare user: SignInUserDto;
-}
-
-export class signInHttpResponseDto {
-  @ApiProperty({ example: true })
-  declare success: boolean;
-
-  @ApiProperty({ example: '요청 성공' })
-  declare message: string;
-
-  @ApiProperty({ type: SignInResponseDataDto })
-  declare data: SignInResponseDataDto;
 }

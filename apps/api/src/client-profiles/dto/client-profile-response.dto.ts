@@ -24,14 +24,3 @@ export class ClientProfileResponseDto {
   @ApiProperty({ type: [InterestCategoryResponseDto] })
   declare interestCategories: InterestCategoryResponseDto[];
 }
-
-export class ClientProfileHttpResponseDto {
-  @ApiProperty({ example: true })
-  declare success: boolean;
-
-  @ApiProperty({ example: '요청 성공' })
-  declare message: string;
-
-  @ApiProperty({ type: ClientProfileResponseDto })
-  declare data: ClientProfileResponseDto;
-}
