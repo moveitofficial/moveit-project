@@ -3,7 +3,7 @@
 > **다루는 범위**: NestJS 컨트롤러의 응답 형식 · 인증 · 에러 처리 · 리스트 응답 · Swagger 문서화
 > **관련 코드**: [apps/api/src/common/](../apps/api/src/common/)
 > **함께 보기**: [backend-auth-flow.md](backend-auth-flow.md), [backend-prisma-overview.md](backend-prisma-overview.md)
-> **최종 수정**: 2026-05-15
+> **최종 수정**: 2026-05-19
 
 API와 관련한 규칙(응답 형식, 인증, 에러, Swagger, 리스트 응답)을 한 문서에서 본다. 이 셋은 컨트롤러 하나 만들 때 항상 같이 적용되므로 분리해 두지 않는다.
 
@@ -51,8 +51,11 @@ getMe() { /* ... */ }
 `@JwtAuth()`는 **인증 + 문서화 통합 데코레이터**다:
 - `UseGuards(JwtAccessGuard)` — 실제 JWT 인증 가드 적용
 - `ApiUnauthorizedResponse(...)` — Swagger 401 문서화
+- `ApiBearerAuth()` — Swagger UI에 **자물쇠 아이콘 🔒** 표시
 
 → 인증 라우트에 `@UseGuards()`를 **따로 쓰지 않는다** (이중 처리됨).
+
+> Swagger에서 로그인 후 **Try it out** 실행 시 쿠키가 자동 첨부된다. 별도로 토큰을 입력할 필요 없음.
 
 ### 비즈니스 로직에서 추가 401이 필요한 경우
 
@@ -135,12 +138,26 @@ async findAllSomething() {
 
 ## 5. Swagger 문서화
 
-### 성공 응답 — `@ApiSuccessResponse(status, ResponseDto)`
+### 성공 응답 — `@ApiSuccessResponse(status, DataDto?)`
+
+**데이터가 있는 응답** — Data DTO를 **직접** 전달한다:
 
 ```typescript
-@ApiSuccessResponse(HttpStatus.OK, ResponseDto)
-@ApiSuccessResponse(HttpStatus.CREATED, ResponseDto)
+@ApiSuccessResponse(HttpStatus.OK, UserResponseDto)
+@ApiSuccessResponse(HttpStatus.CREATED, SignUpResponseDataDto)
 ```
+
+**반환 데이터가 없는 응답** — 두 번째 인자 없이 호출하면 `data: {}` 형태로 자동 처리된다:
+
+```typescript
+@ApiSuccessResponse(HttpStatus.OK)
+```
+
+> ⚠️ **Wrapper DTO 사용 금지 (사용 중단 예정)**
+> - ❌ `XxxHttpResponseDto` 형태의 Wrapper DTO (`success`/`message`/`data` 필드를 직접 선언한 DTO)
+> - ❌ `EmptyDataHttpResponseDto`
+>
+> 외곽 래핑은 [`TransformInterceptor`](../apps/api/src/common/interceptors/transform.interceptor.ts)가 처리하므로 Swagger 데코레이터에도 raw Data DTO만 넘긴다. 현재 사용 중인 곳은 PR 머지 전 교체.
 
 ### 에러 응답 — `@ApiErrorResponse(...errors)` 그룹화 규칙
 
@@ -237,6 +254,7 @@ common/
 - ❌ 보호 라우트의 `@ApiErrorResponse`에 401짜리 상수 넣기 → `@JwtAuth(...)` 가변인자로
 - ❌ `@UseGuards(JwtAccessGuard)` 직접 사용 → `@JwtAuth()`가 이미 포함
 - ❌ `@ApiNotFoundResponse` 같은 NestJS 기본 에러 데코레이터 → `@ApiErrorResponse(...)`
+- ❌ `@ApiSuccessResponse(status, XxxHttpResponseDto)` (Wrapper DTO) → Data DTO를 직접 전달, 데이터 없으면 두 번째 인자 생략
 - ❌ 응답 body에 `details` 필드, 문자열 `code` → 제거됨, 사용 금지
 - ❌ DTO 필드에 `declare` 빠뜨림 → 런타임 프로퍼티 생성돼 불필요한 메모리·혼동
 - ❌ `common/dto/` 폴더 만들기 → `common/swagger/`에 추가
