@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 
+import { userWithProfilesInclude } from './users.types';
+
+import type { UserWithProfiles } from './users.types';
 import type { CreateOAuthUserParams } from '../auth/oauth/oauth.types';
 import type { AuthProvider, Prisma, User } from '@prisma/client';
 
@@ -29,6 +32,13 @@ export class UsersRepository {
   findById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: { id },
+    });
+  }
+
+  findByIdWithProfiles(id: string): Promise<UserWithProfiles | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: userWithProfilesInclude,
     });
   }
 
