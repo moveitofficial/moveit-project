@@ -1,11 +1,10 @@
+import starFill from '@public/Card/starFill.svg';
+import { RectLabel } from '@repo/ui/RectLabel';
 import Image, { type StaticImageData } from 'next/image';
 
-import starFill from '../Card/starFill.svg';
-import RectLabel from '../RectLabel/RectLabel';
+import * as styles from './ExpertCard.css';
 
-import * as styles from './PopularCard.css';
-
-export interface PopularCardPopular {
+export interface ExpertCardExpert {
   name: string;
   description: string;
   profileImageUrl: string;
@@ -16,23 +15,23 @@ export interface PopularCardPopular {
   };
 }
 
-export interface PopularCardProps {
-  popular: PopularCardPopular;
+export interface ExpertCardProps {
+  expert: ExpertCardExpert;
   avatarImage: StaticImageData;
   className?: string;
 }
 
-export default function PopularCard({
-  popular,
+export default function ExpertCard({
+  expert,
   avatarImage,
   className,
-}: PopularCardProps) {
-  const name = popular.name;
-  const tags = popular.techStacks;
-  const rating = popular.stats.averageRating;
-  const reviewCount = popular.stats.totalReviews;
-  const subtitle = popular.description;
-  const avatarAlt = `${popular.name} 프로필 이미지`;
+}: ExpertCardProps) {
+  const name = expert.name;
+  const tags = expert.techStacks;
+  const rating = expert.stats.averageRating;
+  const reviewCount = expert.stats.totalReviews;
+  const subtitle = expert.description;
+  const avatarAlt = `${expert.name} 프로필 이미지`;
 
   return (
     <article
