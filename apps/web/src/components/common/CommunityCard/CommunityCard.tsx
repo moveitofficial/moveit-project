@@ -1,9 +1,9 @@
+import { vars } from '@repo/styles/tokens';
 import { RectLabel } from '@repo/ui/RectLabel';
 import { MessageCircle, ThumbsUp } from 'lucide-react';
 import Image from 'next/image';
 
 import * as styles from './CommunityCard.css';
-import { vars } from '@repo/styles/tokens';
 
 export default function CommunityCard() {
   return (
