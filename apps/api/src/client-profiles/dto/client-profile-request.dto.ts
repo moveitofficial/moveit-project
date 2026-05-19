@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Region } from '@prisma/client';
+import { Region, ServiceCategoryName, ServiceGroupName } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -7,20 +7,22 @@ import {
   IsEnum,
   IsOptional,
   IsString,
-  IsUUID,
   Length,
   Matches,
   ValidateNested,
 } from 'class-validator';
 
 class InterestCategoryDto {
-  @ApiProperty({ example: '2b25c45a-5c87-4caa-8872-34b501452c23' })
-  @IsUUID()
-  declare serviceGroupId: string;
+  @ApiProperty({
+    enum: ServiceGroupName,
+    example: ServiceGroupName.IT_COACHING,
+  })
+  @IsEnum(ServiceGroupName)
+  declare group: ServiceGroupName;
 
-  @ApiProperty({ example: 'b3e57c2a-e64b-47c7-99dd-a174ca2d4dac' })
-  @IsUUID()
-  declare serviceCategoryId: string;
+  @ApiProperty({ enum: ServiceCategoryName, example: ServiceCategoryName.WEB })
+  @IsEnum(ServiceCategoryName)
+  declare category: ServiceCategoryName;
 }
 
 export class ClientProfileRequestDto {

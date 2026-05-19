@@ -49,8 +49,13 @@ export class UsersRepository {
     });
   }
 
-  update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
-    return this.prisma.user.update({ where: { id }, data });
+  update(
+    id: string,
+    data: Prisma.UserUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User> {
+    const client = tx ?? this.prisma;
+    return client.user.update({ where: { id }, data });
   }
 
   updatePassword(id: string, hashedPassword: string): Promise<User> {

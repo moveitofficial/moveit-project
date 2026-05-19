@@ -2,7 +2,9 @@ import { Injectable } from '@nestjs/common';
 
 import { CLIENT_PROFILE_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
+import { mapServiceCategories } from '../common/utils/service-category.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { UsersRepository } from '../users/users.repository';
 
 import { ClientProfilesRepository } from './client-profiles.repository';
 import { ClientProfileRequestDto } from './dto/client-profile-request.dto';
@@ -11,6 +13,7 @@ import { ClientProfileRequestDto } from './dto/client-profile-request.dto';
 export class ClientProfilesService {
   constructor(
     private readonly clientProfilesRepository: ClientProfilesRepository,
+    private readonly usersRepository: UsersRepository,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -21,99 +24,92 @@ export class ClientProfilesService {
     }
 
     if (dto.interestCategories && dto.interestCategories.length > 0) {
-      const groupIds = new Set(
-        dto.interestCategories.map((c) => c.serviceGroupId),
-      );
-      if (groupIds.size > 1) {
+      const groupNames = new Set(dto.interestCategories.map((c) => c.group));
+      if (groupNames.size > 1) {
         throw new AppException(CLIENT_PROFILE_ERRORS.MIXED_SERVICE_GROUP);
       }
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      if (
-        dto.region !== undefined ||
-        dto.phoneNumber !== undefined ||
-        dto.bankName !== undefined ||
-        dto.bankAccount !== undefined
-      ) {
-        await tx.user.update({
-          where: { id: userId },
-          data: {
+    const hasUserFields =
+      dto.region !== undefined ||
+      dto.phoneNumber !== undefined ||
+      dto.bankName !== undefined ||
+      dto.bankAccount !== undefined;
+
+    const profile = await this.prisma.$transaction(async (tx) => {
+      if (hasUserFields) {
+        await this.usersRepository.update(
+          userId,
+          {
             region: dto.region,
             phoneNumber: dto.phoneNumber,
             bankName: dto.bankName,
             bankAccount: dto.bankAccount,
           },
-        });
+          tx,
+        );
       }
-
-      return tx.clientProfile.create({
-        data: {
-          userId,
+      return this.clientProfilesRepository.create(
+        userId,
+        {
           nickname: dto.nickname,
-          interestCategories: {
-            create:
-              dto.interestCategories?.map((c) => ({
-                serviceGroupId: c.serviceGroupId,
-                serviceCategoryId: c.serviceCategoryId,
-              })) ?? [],
-          },
+          interestCategories: dto.interestCategories,
         },
-        include: { interestCategories: true },
-      });
+        tx,
+      );
     });
+
+    return {
+      ...profile,
+      interestCategories: mapServiceCategories(profile.interestCategories),
+    };
   }
 
   async updateClientProfile(userId: string, dto: ClientProfileRequestDto) {
-    const user = await this.clientProfilesRepository.findByUserId(userId);
-    if (!user) {
+    const existing = await this.clientProfilesRepository.findByUserId(userId);
+    if (!existing) {
       throw new AppException(CLIENT_PROFILE_ERRORS.NOT_FOUND);
     }
 
     if (dto.interestCategories && dto.interestCategories.length > 0) {
-      const groupIds = new Set(
-        dto.interestCategories.map((c) => c.serviceGroupId),
-      );
-      if (groupIds.size > 1) {
+      const groupNames = new Set(dto.interestCategories.map((c) => c.group));
+      if (groupNames.size > 1) {
         throw new AppException(CLIENT_PROFILE_ERRORS.MIXED_SERVICE_GROUP);
       }
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      if (
-        dto.region !== undefined ||
-        dto.phoneNumber !== undefined ||
-        dto.bankName !== undefined ||
-        dto.bankAccount !== undefined
-      ) {
-        await tx.user.update({
-          where: { id: userId },
-          data: {
+    const hasUserFields =
+      dto.region !== undefined ||
+      dto.phoneNumber !== undefined ||
+      dto.bankName !== undefined ||
+      dto.bankAccount !== undefined;
+
+    const profile = await this.prisma.$transaction(async (tx) => {
+      if (hasUserFields) {
+        await this.usersRepository.update(
+          userId,
+          {
             region: dto.region,
             phoneNumber: dto.phoneNumber,
             bankName: dto.bankName,
             bankAccount: dto.bankAccount,
           },
-        });
+          tx,
+        );
       }
-
-      return tx.clientProfile.update({
-        where: { userId },
-        data: {
+      return this.clientProfilesRepository.update(
+        userId,
+        {
           nickname: dto.nickname,
-          interestCategories:
-            dto.interestCategories === undefined
-              ? undefined
-              : {
-                  deleteMany: {},
-                  create: dto.interestCategories.map((c) => ({
-                    serviceGroupId: c.serviceGroupId,
-                    serviceCategoryId: c.serviceCategoryId,
-                  })),
-                },
+          interestCategories: dto.interestCategories,
         },
-        include: { interestCategories: true },
-      });
+        tx,
+      );
     });
+
+    return {
+      ...profile,
+      interestCategories: mapServiceCategories(profile.interestCategories),
+    };
   }
 }
