@@ -10,10 +10,10 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
-import { GoogleGuard } from './oauth/google.guard';
-import { GoogleOAuthStartGuard } from './oauth/google.oauth.start.guard';
-import { KakaoGuard } from './oauth/kakao.guard';
-import { KakaoOAuthStartGuard } from './oauth/kakao.oauth.start.guard';
+import { GoogleGuard } from './oauth/google/google.guard';
+import { GoogleOAuthStartGuard } from './oauth/google/google.oauth.start.guard';
+import { KakaoGuard } from './oauth/kakao/kakao.guard';
+import { KakaoOAuthStartGuard } from './oauth/kakao/kakao.oauth.start.guard';
 
 import type { OAuthProfile } from './oauth/oauth.types';
 import type { Request, Response } from 'express';

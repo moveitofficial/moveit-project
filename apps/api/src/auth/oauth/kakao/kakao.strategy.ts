@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { AuthProvider } from '@prisma/client';
 import { type Profile, Strategy } from 'passport-kakao';
 
-import { OAuthProfile } from './oauth.types';
+import { OAuthProfile } from '../oauth.types';
 
 interface KakaoRawData {
   kakao_account?: {
