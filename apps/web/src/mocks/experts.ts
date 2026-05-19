@@ -21,10 +21,10 @@ const expertOne: ExpertDetail = {
     completionRate: 100,
   },
   specialtyCategories: [
-    { serviceTypeId: 'st-001', serviceCategoryId: 'sc-003' },
-    { serviceTypeId: 'st-002', serviceCategoryId: 'sc-006' },
+    { group: 'PROJECT_REQUEST', category: 'APP' },
+    { group: 'PROJECT_REQUEST', category: 'WEB' },
   ],
-  techStacks: ['React', 'TypeScript', 'Next.js', 'React Native', 'NestJS'],
+  techStacks: ['REACT', 'TYPESCRIPT', 'NEXTJS', 'REACT_NATIVE', 'NESTJS'],
   portfolios: mockPortfolios.slice(0, 3),
   services: mockServiceList.filter((s) => s.expert.id === 'expert-001'),
 };
@@ -42,8 +42,8 @@ const expertTwo: ExpertDetail = {
     purchaseRate: 72,
     completionRate: 98,
   },
-  specialtyCategories: [{ serviceTypeId: 'st-001', serviceCategoryId: 'sc-001' }],
-  techStacks: ['React', 'Vue', 'TypeScript', 'Tailwind'],
+  specialtyCategories: [{ group: 'PROJECT_REQUEST', category: 'WEB' }],
+  techStacks: ['REACT', 'VUE', 'TYPESCRIPT', 'NEXTJS'],
   portfolios: mockPortfolios.slice(2, 4),
   services: mockServiceList.filter((s) => s.expert.id === 'expert-002'),
 };
@@ -61,8 +61,11 @@ const expertThree: ExpertDetail = {
     purchaseRate: 95,
     completionRate: 100,
   },
-  specialtyCategories: [{ serviceTypeId: 'st-001', serviceCategoryId: 'sc-002' }],
-  techStacks: ['Node.js', 'NestJS', 'PostgreSQL', 'Redis', 'Docker'],
+  specialtyCategories: [
+    { group: 'IT_COACHING', category: 'WEB' },
+    { group: 'PROJECT_REQUEST', category: 'DATA_ANALYTICS' },
+  ],
+  techStacks: ['NODEJS', 'NESTJS', 'POSTGRESQL', 'DOCKER', 'AWS'],
   portfolios: mockPortfolios.slice(1, 3),
   services: mockServiceList.filter((s) => s.expert.id === 'expert-003'),
 };
@@ -71,7 +74,7 @@ export const mockExpertList: ExpertDetail[] = [expertOne, expertTwo, expertThree
 
 export const mockExpertListResponse: ApiSuccess<PaginatedResult<ExpertDetail>> = {
   success: true,
-  message: '전문가 목록을 조회했습니다.',
+  message: '요청 성공',
   data: {
     items: mockExpertList,
     pagination: { page: 1, pageSize: 20, totalCount: 45, hasNext: true },
@@ -80,6 +83,6 @@ export const mockExpertListResponse: ApiSuccess<PaginatedResult<ExpertDetail>> =
 
 export const mockExpertDetailResponse: ApiSuccess<ExpertDetail> = {
   success: true,
-  message: '전문가 상세를 조회했습니다.',
+  message: '요청 성공',
   data: expertOne,
 };

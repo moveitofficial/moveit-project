@@ -1,14 +1,38 @@
-import { Card } from '@repo/ui/Card';
+import { Card, type CardService } from '@repo/ui/Card';
 import { type Route } from 'next';
 
 import { mockMainData } from '../mocks/main';
 
 import * as styles from './page.css';
 
+import type { ServiceListItem } from '@/mocks/types';
+
+import { CommunityCard } from '@/components/common/CommunityCard';
 import { Browse } from '@/feature/main/components/Browse';
 import { Hero } from '@/feature/main/components/Hero';
 import { Showcase } from '@/feature/main/components/Showcase';
 import { StripBanner } from '@/feature/main/components/StripBanner';
+
+const toCardService = (s: ServiceListItem): CardService => ({
+  id: s.id,
+  title: s.title,
+  price: s.servicePrice,
+  duration: s.workDuration,
+  revisionCount: s.revisionCount,
+  thumbnailUrl: s.thumbnailUrl,
+  expert: {
+    id: s.expert.id,
+    name: s.expert.name,
+    companyName: s.expert.companyName,
+  },
+  category: {
+    type: s.categoryRef.group,
+    detail: s.categoryRef.category,
+  },
+  rating: s.rating,
+  reviewCount: s.reviewCount,
+  isFavorite: s.isFavorite,
+});
 
 export default function Home() {
   const itCoachingSection = mockMainData.sections.find(
@@ -27,13 +51,7 @@ export default function Home() {
       ? projectRequestSection.items
       : [];
 
-  const newServicesSection = mockMainData.sections.find(
-    (s) => s.sectionType === 'NEW_SERVICES',
-  );
-  const newServices =
-    newServicesSection?.targetType === 'SERVICE'
-      ? newServicesSection.items
-      : [];
+  const newServices = mockMainData.newServices;
 
   return (
     <main className={styles.container}>
@@ -48,7 +66,7 @@ export default function Home() {
           {itCoachingServices.map((service) => (
             <Card
               key={service.id}
-              service={service}
+              service={toCardService(service)}
               expertTechStacks={['React', 'Next.js', 'TypeScript']}
             />
           ))}
@@ -69,7 +87,7 @@ export default function Home() {
           {projectRequestServices.map((service) => (
             <Card
               key={service.id}
-              service={service}
+              service={toCardService(service)}
               expertTechStacks={['React', 'Next.js', 'TypeScript']}
             />
           ))}
@@ -86,7 +104,7 @@ export default function Home() {
               {newServices.map((service) => (
                 <Card
                   key={service.id}
-                  service={service}
+                  service={toCardService(service)}
                   expertTechStacks={['React', 'Next.js', 'TypeScript']}
                 />
               ))}
@@ -94,6 +112,9 @@ export default function Home() {
           </Showcase>
         </div>
       </div>
+      <Showcase title="MOVIT 인기 게시글" viewAllHref="/">
+        <CommunityCard />
+      </Showcase>
     </main>
   );
 }
