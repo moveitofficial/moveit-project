@@ -27,7 +27,11 @@ export class UsersService {
     if (!user) {
       throw new AppException(USER_ERRORS.NOT_FOUND);
     }
-    const { password: _password, ...userWithoutPassword } = user;
+    const {
+      password: _password,
+      blockedByAdminId: _blockedByAdminId,
+      ...userWithoutPassword
+    } = user;
     return userWithoutPassword;
   }
 
@@ -66,8 +70,11 @@ export class UsersService {
       throw new AppException(USER_ERRORS.NOT_FOUND);
     }
 
-    const { password: _password, ...userWithoutPassword } =
-      await this.usersRepository.update(id, dto);
+    const {
+      password: _password,
+      blockedByAdminId: _blockedByAdminId,
+      ...userWithoutPassword
+    } = await this.usersRepository.update(id, dto);
     return userWithoutPassword;
   }
 
