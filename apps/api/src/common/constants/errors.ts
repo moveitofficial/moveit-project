@@ -176,6 +176,21 @@ export const CLIENT_PROFILE_ERRORS = {
   },
 } as const;
 
+export const EXPERT_PROFILE_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '전문가 프로필을 찾을 수 없습니다.',
+  },
+  ALREADY_EXISTS: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 전문가 프로필이 존재합니다.',
+  },
+  MIXED_SERVICE_GROUP: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '전문 분야는 하나의 서비스 그룹에서만 선택할 수 있습니다.',
+  },
+} as const;
+
 export const EXPERT_ERRORS = {
   NOT_FOUND: {
     status: HttpStatus.NOT_FOUND,
