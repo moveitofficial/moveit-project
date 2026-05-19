@@ -14,6 +14,9 @@ import { JwtRefreshStrategy } from './jwt/jwt-refresh.strategy';
 import { GoogleGuard } from './oauth/google.guard';
 import { GoogleOAuthStartGuard } from './oauth/google.oauth.start.guard';
 import { GoogleStrategy } from './oauth/google.strategy';
+import { KakaoGuard } from './oauth/kakao.guard';
+import { KakaoOAuthStartGuard } from './oauth/kakao.oauth.start.guard';
+import { KakaoStrategy } from './oauth/kakao.strategy';
 import { OAuthController } from './oauth.controller';
 
 @Module({
@@ -34,6 +37,9 @@ import { OAuthController } from './oauth.controller';
     GoogleStrategy,
     GoogleOAuthStartGuard,
     GoogleGuard,
+    KakaoStrategy,
+    KakaoOAuthStartGuard,
+    KakaoGuard,
     JwtAccessStrategy,
     JwtRefreshStrategy,
     JwtAccessGuard,

@@ -3,7 +3,7 @@ import type { AuthProvider, Role } from '@prisma/client';
 export interface OAuthProfile {
   provider: AuthProvider;
   providerId: string;
-  email: string | null;
+  email: string;
   name: string | null;
   profileImageUrl?: string | null;
 }
