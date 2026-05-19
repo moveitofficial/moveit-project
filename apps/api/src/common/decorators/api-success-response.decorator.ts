@@ -1,8 +1,26 @@
-import { ApiResponse } from '@nestjs/swagger';
+import { applyDecorators } from '@nestjs/common';
+import { ApiExtraModels, ApiResponse, getSchemaPath } from '@nestjs/swagger';
 
 export function ApiSuccessResponse(
   status: number,
-  type?: new (...args: unknown[]) => unknown,
+  dataType?: new (...args: unknown[]) => unknown,
 ) {
-  return ApiResponse({ status, description: '요청 성공', type });
+  const dataSchema = dataType
+    ? { $ref: getSchemaPath(dataType) }
+    : { type: 'object', example: {} };
+
+  return applyDecorators(
+    ...(dataType ? [ApiExtraModels(dataType)] : []),
+    ApiResponse({
+      status,
+      description: '요청 성공',
+      schema: {
+        properties: {
+          success: { type: 'boolean', example: true },
+          message: { type: 'string', example: '요청 성공' },
+          data: dataSchema,
+        },
+      },
+    }),
+  );
 }

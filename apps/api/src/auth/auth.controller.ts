@@ -22,8 +22,8 @@ import { OAUTH_SIGNUP_COOKIE_NAME } from './auth.constants';
 import { AuthService } from './auth.service';
 import { OAuthSignUpRequestDto } from './dto/oauth-signup-request.dto';
 import {
-  signInHttpResponseDto,
-  SignUpHttpResponseDto,
+  SignInResponseDataDto,
+  SignUpResponseDataDto,
 } from './dto/response.dto';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { SignUpRequestDto } from './dto/sign-up-request.dto';
@@ -40,7 +40,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @ApiOperation({ summary: '이메일 회원가입 (LOCAL)' })
-  @ApiSuccessResponse(HttpStatus.CREATED, SignUpHttpResponseDto)
+  @ApiSuccessResponse(HttpStatus.CREATED, SignUpResponseDataDto)
   @ApiErrorResponse(AUTH_ERRORS.DUPLICATE_EMAIL)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
@@ -50,7 +50,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: '이메일 로그인 (LOCAL)' })
-  @ApiSuccessResponse(HttpStatus.OK, signInHttpResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, SignInResponseDataDto)
   @ApiErrorResponse(AUTH_ERRORS.INVALID_CREDENTIALS)
   @ApiErrorResponse(COMMON_ERRORS.BLOCKED, USER_ERRORS.DELETED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
@@ -72,7 +72,7 @@ export class AuthController {
     description:
       'OAuth 콜백에서 httpOnly 쿠키로 저장된 signupToken과 요청 body의 role로 최종 가입을 완료합니다.',
   })
-  @ApiSuccessResponse(HttpStatus.CREATED, signInHttpResponseDto)
+  @ApiSuccessResponse(HttpStatus.CREATED, SignInResponseDataDto)
   @ApiErrorResponse(
     OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_INVALID,
     OAUTH_ERRORS.OAUTH_SIGNUP_TOKEN_EXPIRED,

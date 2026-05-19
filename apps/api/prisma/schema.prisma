@@ -160,21 +160,28 @@ enum NotificationType {
 }
 
 enum NotificationCategory {
-  // COMMUNITY
-  POST_COMMENT
-  POST_REPLY
-  POST_LIKE
+  // 커뮤니티
+  POST_COMMENT // 내 게시글에 댓글이 달렸어요
+  POST_REPLY // 내 댓글에 답글이 달렸어요
+  POST_LIKE // 내 게시글에 좋아요가 달렸어요
 
-  // TRANSACTION -> 수정해야함 아직 대충만들었음
-  ORDER_CREATED
-  ORDER_CANCELLED
-  PAYMENT_SUCCESS
-  REFUND_REQUESTED
-  SETTLEMENT_DONE
-  PURCHASE_CONFIRM_REQUEST
+  // 거래
+  ORDER_CREATED // 새 주문이 생성되었어요
+  ORDER_CANCELLED // 주문이 취소되었어요
+  PAYMENT_SUCCESS // 결제가 완료되었어요
+  REFUND_REQUESTED // 환불 요청이 들어왔어요
+  PURCHASE_CONFIRM_REQUEST // 구매확정을 요청해주세요 (의뢰인에게)
+  PURCHASE_CONFIRMED // 구매확정이 완료되었어요 (전문가에게)
+  SETTLEMENT_REQUESTED // 정산 요청이 들어왔어요 (어드민에게)
+  SETTLEMENT_DONE // 정산이 완료되었어요
 
-  // SYSTEM / REMINDER
-  DEADLINE_REMINDER
+  // 일정
+  SCHEDULE_REGISTERED // 일정이 등록되었어요
+  SCHEDULE_CHANGE_REQUEST // 일정 변경 요청이 왔어요
+  SCHEDULE_REMINDER // 일정 시작·마감 리마인더 (무빗 알림)
+
+  // 리마인더
+  DEADLINE_REMINDER // 기한이 얼마 남지 않았어요
 }
 
 enum ReferenceType {
@@ -209,15 +216,16 @@ enum MessageType {
 }
 
 enum SystemMessageType {
-  TRADE_REQUEST_SENT
-  TRADE_REQUEST_RECEIVED
-  TRADE_CANCELED
-  PAYMENT_REQUEST
-  PAYMENT_HELD
-  PAYMENT_COMPLETED
-  SCHEDULE_REQUEST
-  SCHEDULE_REGISTERED
-  ORDER_COMPLETION_PENDING
+  TRADE_REQUEST_SENT // 고객에게 거래를 요청했어요 (전문가 측)
+  TRADE_REQUEST_RECEIVED // 전문가가 거래를 요청했어요 (고객 측)
+  TRADE_CANCELED // 거래 요청이 취소되었어요
+  PAYMENT_REQUEST // 결제 요청
+  PAYMENT_HELD // 무빗이 결제 금액을 안전하게 보관하고 있어요 (전문가 측)
+  PAYMENT_COMPLETED // 결제가 완료되었습니다 (고객 측)
+  SCHEDULE_REQUEST // 일정을 등록해주세요
+  SCHEDULE_REGISTERED // 일정 등록이 완료되었습니다
+  SCHEDULE_CHANGE_REQUEST // 일정 변경 요청
+  ORDER_COMPLETION_PENDING // 구매 확정 대기
 }
 
 enum SenderType {
@@ -236,23 +244,55 @@ enum MessageReferenceType {
   PAYMENT
 }
 
+enum AdminActionType {
+  EXPERT_APPROVED // 전문가 승인
+  EXPERT_REJECTED // 전문가 거절
+  MAIN_UPDATED // 메인 노출 수정
+  FAQ_CREATED // FAQ 등록
+  FAQ_UPDATED // FAQ 수정
+  FAQ_DELETED // FAQ 삭제
+  BLACKLIST_ADDED // 블랙리스트 등록
+  BLACKLIST_REMOVED // 블랙리스트 삭제
+  REFUND_APPROVED // 환불 승인
+  CANCEL_APPROVED // 취소 승인
+  CS_ASSIGNED // 문의 처리중
+  CS_CLOSED // 문의 처리 완료
+}
+
+enum ReportReason {
+  FALSE_INFORMATION // 허위·과장 정보
+  ABUSE // 욕설·비방
+  ILLEGAL_ACTIVITY // 불법 행위/사기 의심
+  EXTERNAL_CONTACT // 외부 연락처 유도
+  SPAM // 스팸/광고
+  OTHER // 기타
+}
+
+enum ReportStatus {
+  PENDING // 처리대기
+  COMPLETED // 처리완료
+}
+
 model User {
-  id              String       @id @default(uuid()) @db.Uuid
-  email           String       @unique
-  name            String?
-  password        String?
-  provider        AuthProvider
-  providerId      String?      @map("provider_id")
-  role            Role
-  profileImageUrl String?      @map("profile_image_url")
-  isBlocked       Boolean      @default(false) @map("is_blocked")
-  isDeleted       Boolean      @default(false) @map("is_deleted")
-  deletedAt       DateTime?    @map("deleted_at")
-  region          Region?
-  bankName        String?      @map("bank_name")
-  bankAccount     String?      @map("bank_account")
-  phoneNumber     String?      @map("phone_number")
-  createdAt       DateTime     @default(now()) @map("created_at")
+  id               String       @id @default(uuid()) @db.Uuid
+  email            String       @unique
+  name             String?
+  password         String?
+  provider         AuthProvider
+  providerId       String?      @map("provider_id")
+  role             Role
+  profileImageUrl  String?      @map("profile_image_url")
+  isBlocked        Boolean      @default(false) @map("is_blocked")
+  blockedAt        DateTime?    @map("blocked_at")
+  blockedByAdminId String?      @map("blocked_by_admin_id") @db.Uuid
+  isDeleted        Boolean      @default(false) @map("is_deleted")
+  deletedAt        DateTime?    @map("deleted_at")
+  deletionReason   String?      @map("deletion_reason")
+  region           Region?
+  bankName         String?      @map("bank_name")
+  bankAccount      String?      @map("bank_account")
+  phoneNumber      String?      @map("phone_number")
+  createdAt        DateTime     @default(now()) @map("created_at")
 
   clientProfile          ClientProfile?
   expertProfile          ExpertProfile?
@@ -267,8 +307,9 @@ model User {
   favoriteExperts        FavoriteExpert[]        @relation("ClientFavoriteExperts")
   favoritedByClients     FavoriteExpert[]        @relation("ExpertFavoritedBy")
   recentlyViewedServices RecentlyViewedService[]
-  reportsAsClient        Report[]                @relation("ClientReports")
-  reportsAsExpert        Report[]                @relation("ExpertReports")
+  sentReports            Report[]                @relation("SentReports")
+  receivedReports        Report[]                @relation("ReceivedReports")
+  mainSettings           MainSetting[]
   communityPosts         CommunityPost[]
   comments               Comment[]
   likes                  Like[]
@@ -278,8 +319,9 @@ model User {
   messages               Message[]
   csChatRooms            CsChatRoom[]
   sentCsMessages         CsMessage[]
-  statisticsBySeller     StatisticsBySeller?
+  statisticsBySeller     StatisticsBySeller[]
   notifications          Notification[]
+  blockedByAdmin         Admin?                  @relation("BlockedUsers", fields: [blockedByAdminId], references: [id])
 
   @@unique([provider, providerId])
   @@map("users")
@@ -298,7 +340,12 @@ model Admin {
   csChatRooms     CsChatRoom[]
   sentCsMessages  CsMessage[]
   approvedRefunds Refund[]
+  settledOrders   Order[]
   communityPosts  CommunityPost[]
+  expertApprovals ExpertProfile[]
+  blockedUsers    User[]             @relation("BlockedUsers")
+  activityLogs    AdminActivityLog[]
+  deletedComments Comment[]          @relation("DeletedComments")
 
   @@map("admins")
 }
@@ -319,25 +366,29 @@ model ClientProfile {
 }
 
 model ExpertProfile {
-  id               String    @id @default(uuid()) @db.Uuid
-  userId           String    @unique @map("user_id") @db.Uuid
-  isApproved       Boolean   @default(false) @map("is_approved")
-  approvedAt       DateTime? @map("approved_at")
-  rejectReason     String?   @map("reject_reason")
-  businessName     String?   @map("business_name")
-  businessNumber   String?   @map("business_number")
-  ceoName          String?   @map("ceo_name")
-  contactTimeStart String?   @map("contact_time_start")
-  contactTimeEnd   String?   @map("contact_time_end")
-  foundedYear      Int?      @map("founded_year")
-  employeeMin      Int?      @map("employee_min")
-  employeeMax      Int?      @map("employee_max")
-  description      String?
-  avgRating        Float?    @map("avg_rating")
-  reviewCount      Int       @default(0) @map("review_count")
-  createdAt        DateTime  @default(now()) @map("created_at")
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @unique @map("user_id") @db.Uuid
+  isApplied         Boolean   @default(false) @map("is_applied")
+  isApproved        Boolean   @default(false) @map("is_approved")
+  approvedAt        DateTime? @map("approved_at")
+  approvedByAdminId String?   @map("approved_by_admin_id") @db.Uuid
+  rejectedAt        DateTime? @map("rejected_at")
+  rejectReason      String?   @map("reject_reason")
+  businessName      String?   @map("business_name")
+  businessNumber    String?   @map("business_number")
+  ceoName           String?   @map("ceo_name")
+  contactTimeStart  String?   @map("contact_time_start")
+  contactTimeEnd    String?   @map("contact_time_end")
+  foundedYear       Int?      @map("founded_year")
+  employeeMin       Int?      @map("employee_min")
+  employeeMax       Int?      @map("employee_max")
+  description       String?
+  avgRating         Float?    @map("avg_rating")
+  reviewCount       Int       @default(0) @map("review_count")
+  createdAt         DateTime  @default(now()) @map("created_at")
 
   user                User                      @relation(fields: [userId], references: [id])
+  approvedByAdmin     Admin?                    @relation(fields: [approvedByAdminId], references: [id])
   specialtyCategories ExpertSpecialtyCategory[]
   techStacks          ExpertTechStack[]
   portfolios          Portfolio[]
@@ -367,6 +418,7 @@ model ServiceGroup {
   expertSpecialtyCategories ExpertSpecialtyCategory[]
   services                  Service[]
   statisticsByCategory      StatisticsByCategory[]
+  featuredServices          CategoryFeaturedService[]
 
   @@map("service_groups")
 }
@@ -479,6 +531,7 @@ model Service {
   serviceScope      String        @map("service_scope")
   servicePrice      Int           @map("service_price")
   description       String
+  preparationNotes  String?       @map("preparation_notes")
   refundPolicy      String        @map("refund_policy")
   status            ServiceStatus
   serviceGroupId    String        @map("service_group_id") @db.Uuid
@@ -498,6 +551,8 @@ model Service {
   favoriteServices FavoriteService[]
   chatRooms        ChatRoom[]
   recentlyViewedBy RecentlyViewedService[]
+  mainSettings     MainSetting[]
+  featuredIn       CategoryFeaturedService[]
 
   @@map("services")
 }
@@ -586,27 +641,31 @@ model Order {
   refundReason       String?     @map("refund_reason")
   createdAt          DateTime    @default(now()) @map("created_at")
   confirmedAt        DateTime?   @map("confirmed_at")
+  settledAt          DateTime?   @map("settled_at")
+  settledByAdminId   String?     @map("settled_by_admin_id") @db.Uuid
 
-  clientUser User     @relation("ClientOrders", fields: [clientUserId], references: [id])
-  expertUser User     @relation("ExpertOrders", fields: [expertUserId], references: [id])
-  service    Service  @relation(fields: [serviceId], references: [id])
-  payment    Payment?
-  review     Review?
+  clientUser     User     @relation("ClientOrders", fields: [clientUserId], references: [id])
+  expertUser     User     @relation("ExpertOrders", fields: [expertUserId], references: [id])
+  service        Service  @relation(fields: [serviceId], references: [id])
+  settledByAdmin Admin?   @relation(fields: [settledByAdminId], references: [id])
+  payment        Payment?
+  review         Review?
 
   @@map("orders")
 }
 
 model Payment {
-  id           String        @id @default(uuid()) @db.Uuid
-  orderId      String        @unique @map("order_id") @db.Uuid
-  clientUserId String        @map("client_user_id") @db.Uuid
-  paidAmount   Int           @map("paid_amount")
-  status       PaymentStatus
-  method       String
-  paymentKey   String?       @unique @map("payment_key")
-  rawData      Json?         @map("raw_data")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  approvedAt   DateTime?     @map("approved_at")
+  id                String        @id @default(uuid()) @db.Uuid
+  orderId           String        @unique @map("order_id") @db.Uuid
+  clientUserId      String        @map("client_user_id") @db.Uuid
+  paidAmount        Int           @map("paid_amount")
+  status            PaymentStatus
+  method            String
+  installmentMonths Int           @default(1) @map("installment_months") // 1 = 일시불, 2 이상 = 할부 개월 수
+  paymentKey        String?       @unique @map("payment_key")
+  rawData           Json?         @map("raw_data")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  approvedAt        DateTime?     @map("approved_at")
 
   order      Order   @relation(fields: [orderId], references: [id])
   clientUser User    @relation(fields: [clientUserId], references: [id])
@@ -623,7 +682,7 @@ model Refund {
   refundAmount    Int          @map("refund_amount")
   type            RefundType
   status          RefundStatus
-  reason          String
+  adminReason     String?      @map("admin_reason")
   approvedAdminId String?      @map("approved_admin_id") @db.Uuid
   requestedAt     DateTime     @map("requested_at")
   approvedAt      DateTime?    @map("approved_at")
@@ -691,16 +750,17 @@ model RecentlyViewedService {
 // =========================
 
 model Report {
-  id           String   @id @default(uuid()) @db.Uuid
-  clientUserId String   @map("client_user_id") @db.Uuid
-  expertUserId String   @map("expert_user_id") @db.Uuid
-  reason       String
-  detail       String
-  createdAt    DateTime @default(now()) @map("created_at")
+  id         String       @id @default(uuid()) @db.Uuid
+  reporterId String       @map("reporter_id") @db.Uuid
+  reportedId String       @map("reported_id") @db.Uuid
+  reason     ReportReason
+  status     ReportStatus @default(PENDING)
+  detail     String
+  createdAt  DateTime     @default(now()) @map("created_at")
 
-  clientUser User          @relation("ClientReports", fields: [clientUserId], references: [id])
-  expertUser User          @relation("ExpertReports", fields: [expertUserId], references: [id])
-  images     ReportImage[]
+  reporter User          @relation("SentReports", fields: [reporterId], references: [id])
+  reported User          @relation("ReceivedReports", fields: [reportedId], references: [id])
+  images   ReportImage[]
 
   @@map("reports")
 }
@@ -725,7 +785,6 @@ model CommunityPost {
   category CommunityCategory
   title    String
   content  String
-  likes    Int               @default(0)
 
   deletedAt        DateTime? @map("deleted_at")
   deleteReason     String?   @map("delete_reason")
@@ -742,17 +801,20 @@ model CommunityPost {
 }
 
 model Comment {
-  id              String   @id @default(uuid()) @db.Uuid
-  postId          String   @map("post_id") @db.Uuid
-  userId          String   @map("user_id") @db.Uuid
-  parentCommentId String?  @map("parent_comment_id") @db.Uuid
-  content         String
-  createdAt       DateTime @default(now()) @map("created_at")
+  id               String    @id @default(uuid()) @db.Uuid
+  postId           String    @map("post_id") @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  parentCommentId  String?   @map("parent_comment_id") @db.Uuid
+  content          String
+  deletedAt        DateTime? @map("deleted_at")
+  deletedByAdminId String?   @map("deleted_by_admin_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at")
 
-  post          CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user          User          @relation(fields: [userId], references: [id])
-  parentComment Comment?      @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
-  replies       Comment[]     @relation("CommentReplies")
+  post           CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id])
+  deletedByAdmin Admin?        @relation("DeletedComments", fields: [deletedByAdminId], references: [id])
+  parentComment  Comment?      @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies        Comment[]     @relation("CommentReplies")
 
   @@map("comments")
 }
@@ -815,7 +877,22 @@ model MainSetting {
   targetUserId    String? @map("target_user_id") @db.Uuid
   targetServiceId String? @map("target_service_id") @db.Uuid
 
+  targetUser    User?    @relation(fields: [targetUserId], references: [id])
+  targetService Service? @relation(fields: [targetServiceId], references: [id])
+
   @@map("main_settings")
+}
+
+model CategoryFeaturedService {
+  id             String @id @default(uuid()) @db.Uuid
+  serviceGroupId String @map("service_group_id") @db.Uuid
+  serviceId      String @map("service_id") @db.Uuid
+
+  serviceGroup ServiceGroup @relation(fields: [serviceGroupId], references: [id])
+  service      Service      @relation(fields: [serviceId], references: [id])
+
+  @@unique([serviceGroupId, serviceId])
+  @@map("category_featured_services")
 }
 
 model Faq {
@@ -825,6 +902,22 @@ model Faq {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("faqs")
+}
+
+// =========================
+// 어드민 활동 로그
+// =========================
+
+model AdminActivityLog {
+  id          String          @id @default(uuid()) @db.Uuid
+  adminId     String          @map("admin_id") @db.Uuid
+  actionType  AdminActionType @map("action_type")
+  referenceId String?         @map("reference_id") @db.Uuid
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  admin Admin @relation(fields: [adminId], references: [id])
+
+  @@map("admin_activity_logs")
 }
 
 // =========================
@@ -858,8 +951,9 @@ model ChatParticipant {
   lastReadMessageId String?  @map("last_read_message_id") @db.Uuid
   createdAt         DateTime @default(now()) @map("created_at")
 
-  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id])
+  chatRoom        ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id])
+  lastReadMessage Message? @relation("ParticipantLastRead", fields: [lastReadMessageId], references: [id])
 
   @@unique([chatRoomId, userId])
   @@map("chat_participants")
@@ -876,10 +970,11 @@ model Message {
   content       String
   createdAt     DateTime              @default(now()) @map("created_at")
 
-  chatRoom       ChatRoom            @relation("ChatRoomMessages", fields: [chatRoomId], references: [id])
-  chatRoomAsLast ChatRoom[]          @relation("ChatRoomLastMessage")
-  sender         User                @relation(fields: [senderId], references: [id])
-  attachments    MessageAttachment[]
+  chatRoom               ChatRoom            @relation("ChatRoomMessages", fields: [chatRoomId], references: [id])
+  chatRoomAsLast         ChatRoom[]          @relation("ChatRoomLastMessage")
+  sender                 User                @relation(fields: [senderId], references: [id])
+  participantsAsLastRead ChatParticipant[]   @relation("ParticipantLastRead")
+  attachments            MessageAttachment[]
 
   @@map("messages")
 }
@@ -920,9 +1015,9 @@ model CsChatRoom {
 model CsMessage {
   id            String     @id @default(uuid()) @db.Uuid
   chatRoomId    String     @map("chat_room_id") @db.Uuid
-  senderType    SenderType
-  senderUserId  String?    @db.Uuid
-  senderAdminId String?    @db.Uuid
+  senderType    SenderType @map("sender_type")
+  senderUserId  String?    @map("sender_user_id") @db.Uuid
+  senderAdminId String?    @map("sender_admin_id") @db.Uuid
 
   content   String
   type      MessageType
@@ -956,14 +1051,15 @@ model CsMessageAttachment {
 
 model StatisticsBySeller {
   id                     String   @id @default(uuid()) @db.Uuid
-  sellerUserId           String   @unique @map("seller_user_id") @db.Uuid
+  sellerUserId           String   @map("seller_user_id") @db.Uuid
+  date                   DateTime @db.Date
   totalTransactionAmount Int      @default(0) @map("total_transaction_amount")
   totalTransactionCount  Int      @default(0) @map("total_transaction_count")
   maxTransactionAmount   Int      @default(0) @map("max_transaction_amount")
-  updatedAt              DateTime @updatedAt @map("updated_at")
 
   sellerUser User @relation(fields: [sellerUserId], references: [id])
 
+  @@unique([sellerUserId, date])
   @@map("statistics_by_seller")
 }
 
@@ -971,14 +1067,14 @@ model StatisticsByCategory {
   id                     String   @id @default(uuid()) @db.Uuid
   serviceGroupId         String   @map("service_group_id") @db.Uuid
   serviceCategoryId      String   @map("service_category_id") @db.Uuid
+  date                   DateTime @db.Date
   totalTransactionAmount Int      @default(0) @map("total_transaction_amount")
   totalTransactionCount  Int      @default(0) @map("total_transaction_count")
   maxTransactionAmount   Int      @default(0) @map("max_transaction_amount")
-  updatedAt              DateTime @updatedAt @map("updated_at")
 
   serviceGroup    ServiceGroup    @relation(fields: [serviceGroupId], references: [id])
   serviceCategory ServiceCategory @relation(fields: [serviceCategoryId], references: [id])
 
-  @@unique([serviceGroupId, serviceCategoryId])
+  @@unique([serviceGroupId, serviceCategoryId, date])
   @@map("statistics_by_category")
 }

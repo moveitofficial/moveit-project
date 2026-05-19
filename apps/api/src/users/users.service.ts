@@ -22,12 +22,17 @@ export class UsersService {
     return 'all user';
   }
 
-  async getUserById(id: string): Promise<User> {
+  async getUserById(id: string) {
     const user = await this.usersRepository.findById(id);
     if (!user) {
       throw new AppException(USER_ERRORS.NOT_FOUND);
     }
-    return user;
+    const {
+      password: _password,
+      blockedByAdminId: _blockedByAdminId,
+      ...userWithoutPassword
+    } = user;
+    return userWithoutPassword;
   }
 
   getUserByEmail(email: string): Promise<User | null> {
@@ -58,14 +63,19 @@ export class UsersService {
     return this.usersRepository.createOAuthUser(params);
   }
 
-  async updateUser(id: string, dto: UpdateUserDto): Promise<User> {
+  async updateUser(id: string, dto: UpdateUserDto) {
     const user = await this.usersRepository.findById(id);
 
     if (!user) {
       throw new AppException(USER_ERRORS.NOT_FOUND);
     }
 
-    return this.usersRepository.update(id, dto);
+    const {
+      password: _password,
+      blockedByAdminId: _blockedByAdminId,
+      ...userWithoutPassword
+    } = await this.usersRepository.update(id, dto);
+    return userWithoutPassword;
   }
 
   async updatePassword(id: string, dto: UpdatePasswordDto): Promise<object> {
@@ -92,18 +102,18 @@ export class UsersService {
     return {};
   }
 
-  async withdrawUser(id: string): Promise<object> {
+  async withdrawUser(id: string) {
     const user = await this.usersRepository.findById(id);
 
     if (!user) {
       throw new AppException(USER_ERRORS.NOT_FOUND);
     }
 
-    await this.usersRepository.update(id, {
+    const { isDeleted, deletedAt } = await this.usersRepository.update(id, {
       isDeleted: true,
       deletedAt: new Date(),
     });
 
-    return {};
+    return { isDeleted, deletedAt };
   }
 }
