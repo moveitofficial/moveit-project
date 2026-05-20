@@ -1,12 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { BusinessSector, StackType } from '@prisma/client';
 
-class PortfolioImageItemDto {
+class PortfolioImageResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
-
-  @ApiProperty({ format: 'uuid' })
-  declare portfolioId: string;
 
   @ApiProperty({ example: 'https://exampleImgUrl.com' })
   declare imgUrl: string;
@@ -15,31 +12,34 @@ class PortfolioImageItemDto {
   declare isMain: boolean;
 }
 
-class portfolioSkillItemDto {
+class PortfolioSkillResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
-
-  @ApiProperty({ format: 'uuid' })
-  declare portfolioId: string;
 
   @ApiProperty({ example: 'NEST' })
   declare stackName: string;
 
-  @ApiProperty({
-    enum: StackType,
-    example: StackType.BACKEND,
-  })
+  @ApiProperty({ enum: StackType, example: StackType.BACKEND })
   declare stackType: StackType;
 }
 
-export class PortfolioDetailResponseDto {
+class PortfolioCreateImageResponseDto extends OmitType(
+  PortfolioImageResponseDto,
+  ['id'] as const,
+) {}
+class PortfolioCreateSkillResponseDto extends OmitType(
+  PortfolioSkillResponseDto,
+  ['id'] as const,
+) {}
+
+class PortfolioBaseResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
 
   @ApiProperty({ format: 'uuid' })
   declare expertProfileId: string;
 
-  @ApiProperty({ example: '우리 동네 제휴 멤버십 서비스 ' })
+  @ApiProperty({ example: '우리 동네 제휴 멤버십 서비스' })
   declare title: string;
 
   @ApiProperty({ example: '포트폴리오 서비스에 대한 설명을 위한 문장입니다.' })
@@ -59,10 +59,20 @@ export class PortfolioDetailResponseDto {
 
   @ApiProperty({ example: '2025-05-20T00:00:00.000Z' })
   declare updatedAt: Date;
+}
 
-  @ApiProperty({ type: [PortfolioImageItemDto] })
-  declare images: PortfolioImageItemDto[];
+export class PortfolioResponseDto extends PortfolioBaseResponseDto {
+  @ApiProperty({ type: [PortfolioImageResponseDto] })
+  declare images: PortfolioImageResponseDto[];
 
-  @ApiProperty({ type: [portfolioSkillItemDto] })
-  declare skills: portfolioSkillItemDto[];
+  @ApiProperty({ type: [PortfolioSkillResponseDto] })
+  declare skills: PortfolioSkillResponseDto[];
+}
+
+export class PortfolioCreateResponseDto extends PortfolioBaseResponseDto {
+  @ApiProperty({ type: [PortfolioCreateImageResponseDto] })
+  declare images: PortfolioCreateImageResponseDto[];
+
+  @ApiProperty({ type: [PortfolioCreateSkillResponseDto] })
+  declare skills: PortfolioCreateSkillResponseDto[];
 }

@@ -7,6 +7,6 @@ import { ExpertProfilesService } from './expert-profiles.service';
 
 @Module({
   providers: [ExpertProfilesService, ExpertProfilesRepository, UsersRepository],
-  exports: [ExpertProfilesService],
+  exports: [ExpertProfilesService, ExpertProfilesRepository],
 })
 export class ExpertProfilesModule {}

@@ -165,7 +165,7 @@ export class MeController {
     @Body() dto: UpdateClientProfileDto,
   ) {
     const user = req.user as JwtAccessUser;
-    return this.usersService.updateClientProfile(user.userId, dto);
+    return this.clientProfilesService.updateClientProfile(user.userId, dto);
   }
 
   @ApiOperation({ summary: '전문가 프로필 수정하기' })
@@ -183,6 +183,6 @@ export class MeController {
     @Body() dto: UpdateExpertProfileDto,
   ) {
     const user = req.user as JwtAccessUser;
-    return this.usersService.updateExpertProfile(user.userId, dto);
+    return this.expertProfilesService.updateExpertProfile(user.userId, dto);
   }
 }
