@@ -2,6 +2,7 @@
 import { vars } from '@repo/styles/tokens';
 import { typography } from '@repo/styles/typography';
 import { style } from '@vanilla-extract/css';
+import { recipe } from '@vanilla-extract/recipes';
 
 export const wrapper = style({
   display: 'flex',
@@ -41,12 +42,34 @@ export const contentText = style([
   },
 ]);
 
-export const communityInfoContainer = style({
-  display: 'flex',
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
+export const communityInfoContainer = recipe({
+  base: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  variants: {
+    flexRow: {
+      main: {
+        justifyContent: 'space-between',
+      },
+      mypage: {
+        gap: '24px',
+      },
+    },
+  },
+
+  defaultVariants: {
+    flexRow: 'main',
+  },
 });
+
+// export const communityInfoContainer = style({
+//   display: 'flex',
+//   flexDirection: 'row',
+//   alignItems: 'center',
+//   justifyContent: 'space-between',
+// });
 
 export const userInfoContainer = style({
   display: 'flex',
@@ -63,6 +86,13 @@ export const ImageContents = style({
   objectFit: 'cover',
   objectPosition: 'center',
   display: 'block',
+});
+
+export const profileFallback = style({
+  width: '16px',
+  height: '16px',
+  borderRadius: '50%',
+  backgroundColor: vars.color.gray200,
 });
 
 export const statsContainer = style({

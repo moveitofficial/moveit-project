@@ -1,1 +1,1 @@
-export { default as RectLabel } from './RectLabel';
+export { default as RectLabel, type RectLabelColor } from './RectLabel';

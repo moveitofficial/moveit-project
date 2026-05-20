@@ -1,12 +1,9 @@
 {
-  "name": "@repo/styles",
+  "name": "@repo/utils",
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./tokens": "./src/tokens.css.ts",
-    "./typography": "./src/typography.css.ts",
-    "./reset": "./src/reset.css.ts",
-    "./globals": "./src/globals.css.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
@@ -19,7 +16,6 @@
     "typescript": "5.9.2"
   },
   "dependencies": {
-    "@vanilla-extract/css": "^1.20.1",
-    "@vanilla-extract/recipes": "^0.5.7"
+    "date-fns": "^4.1.0"
   }
 }

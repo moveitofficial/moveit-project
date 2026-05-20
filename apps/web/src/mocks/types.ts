@@ -296,7 +296,7 @@ export interface ExpertDetail {
   name: string;
   companyName: string;
   description: string;
-  profileImageUrl: string;
+  profileImageUrl: string | null;
   isFavorite: boolean;
   stats: ExpertStats;
   specialtyCategories: ServiceCategoryRef[];

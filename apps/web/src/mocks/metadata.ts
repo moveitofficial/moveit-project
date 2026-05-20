@@ -3,6 +3,7 @@ import type {
   ServiceCategoryMeta,
   ServiceGroupMeta,
   TechStackMeta,
+  TechStackName,
 } from './types';
 
 export const mockServiceGroups: ServiceGroupMeta[] = [
@@ -40,6 +41,14 @@ export const mockTechStacks: TechStackMeta[] = [
   { id: 'ts-019', name: 'AWS', label: 'AWS' },
   { id: 'ts-020', name: 'DOCKER', label: 'Docker' },
 ];
+
+const techStackLabelMap = new Map<TechStackName, string>(
+  mockTechStacks.map((t) => [t.name, t.label]),
+);
+
+/** TechStackName enum 값을 표시용 라벨로 변환 (예: REACT → React) */
+export const getTechStackLabel = (name: TechStackName): string =>
+  techStackLabelMap.get(name) ?? name;
 
 export const mockServiceGroupsResponse: ApiSuccess<ServiceGroupMeta[]> = {
   success: true,
