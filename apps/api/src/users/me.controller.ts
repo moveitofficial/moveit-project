@@ -8,6 +8,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import { ClientProfilesService } from '../client-profiles/client-profiles.service';
@@ -27,7 +28,7 @@ import {
   ApiOneOfSuccessResponse,
   ApiSuccessResponse,
 } from '../common/decorators/api-success-response.decorator';
-import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
+import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
 import { ExpertProfileRequestDto } from '../expert-profiles/dto/expert-profile-request.dto';
 import {
   CreateExpertProfileResponseDto,
@@ -114,7 +115,7 @@ export class MeController {
   }
 
   @ApiOperation({ summary: '의뢰인 프로필 등록' })
-  @JwtAuth()
+  @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.CREATED, CreateClientProfileResponseDto)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
@@ -132,7 +133,7 @@ export class MeController {
   }
 
   @ApiOperation({ summary: '전문가 프로필 등록' })
-  @JwtAuth()
+  @RoleAuth(Role.EXPERT)
   @ApiSuccessResponse(HttpStatus.CREATED, CreateExpertProfileResponseDto)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
@@ -150,7 +151,7 @@ export class MeController {
   }
 
   @ApiOperation({ summary: '의뢰인 프로필 수정하기' })
-  @JwtAuth()
+  @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.OK, ClientProfileResponseDto)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
@@ -168,7 +169,7 @@ export class MeController {
   }
 
   @ApiOperation({ summary: '전문가 프로필 수정하기' })
-  @JwtAuth()
+  @RoleAuth(Role.EXPERT)
   @ApiSuccessResponse(HttpStatus.OK, ExpertProfileResponseDto)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
