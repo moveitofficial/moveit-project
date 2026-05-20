@@ -17,6 +17,7 @@ import {
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
+import { JwtRefresh } from '../common/decorators/jwt-refresh.decorator';
 
 import { OAUTH_SIGNUP_COOKIE_NAME } from './auth.constants';
 import { AuthService } from './auth.service';
@@ -28,7 +29,8 @@ import {
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { SignUpRequestDto } from './dto/sign-up-request.dto';
 
-import type { Response } from 'express';
+import type { JwtRefreshUser } from './jwt/jwt-refresh.strategy';
+import type { Request, Response } from 'express';
 
 interface OAuthSignupRequest {
   cookies?: Record<string, string | undefined>;
@@ -93,6 +95,32 @@ export class AuthController {
       await this.authService.completeOAuthSignup(signupToken, body.role);
     this.authService.clearOAuthSignupCookie(res);
     this.authService.setAuthCookies(res, accessToken, refreshToken);
+    return { user };
+  }
+
+  @ApiOperation({
+    summary: '액세스 토큰 갱신',
+    description:
+      'httpOnly 쿠키의 refresh 토큰으로 access 토큰을 재발급합니다. refresh 쿠키는 그대로 유지됩니다.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK, SignInResponseDataDto)
+  @ApiErrorResponse(
+    AUTH_ERRORS.TOKEN_EXPIRED,
+    AUTH_ERRORS.REFRESH_TOKEN_INVALID,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.BLOCKED, USER_ERRORS.DELETED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @JwtRefresh()
+  @Post('refresh')
+  async refresh(
+    @Req() req: Request & { user: JwtRefreshUser },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { user, accessToken } = await this.authService.refreshAccessToken(
+      req.user.userId,
+    );
+    this.authService.setAccessCookie(res, accessToken);
     return { user };
   }
 

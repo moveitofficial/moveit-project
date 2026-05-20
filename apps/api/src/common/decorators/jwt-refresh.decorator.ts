@@ -1,29 +1,20 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
-import { JwtAccessGuard } from '../../auth/jwt/jwt-access.guard';
-import { AUTH_ERRORS, COMMON_ERRORS, USER_ERRORS } from '../constants/errors';
+import { JwtRefreshGuard } from '../../auth/jwt/jwt-refresh.guard';
+import { AUTH_ERRORS } from '../constants/errors';
 import { errorResponseExample } from '../swagger/error-response-example';
 import { ErrorResponseDto } from '../swagger/error-response.dto';
 
-import { ApiErrorResponse } from './api-error-response.decorator';
-
-interface ErrorConstant {
-  status: number;
-  message: string;
-}
-
-export function JwtAuth(...additionalErrors: ErrorConstant[]) {
+export function JwtRefresh() {
   const allErrors = [
     AUTH_ERRORS.TOKEN_EXPIRED,
-    AUTH_ERRORS.ACCESS_TOKEN_INVALID,
-    ...additionalErrors,
+    AUTH_ERRORS.REFRESH_TOKEN_INVALID,
   ];
 
   return applyDecorators(
-    UseGuards(JwtAccessGuard),
+    UseGuards(JwtRefreshGuard),
     ApiCookieAuth('cookieAuth'),
-    ApiErrorResponse(COMMON_ERRORS.BLOCKED, USER_ERRORS.DELETED),
     ApiUnauthorizedResponse({
       type: ErrorResponseDto,
       examples: Object.fromEntries(
