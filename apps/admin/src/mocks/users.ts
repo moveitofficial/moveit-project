@@ -14,6 +14,8 @@ const adminUserOne: AdminUser = {
   isDeleted: false,
   createdAt: '2026-01-15T10:00:00.000Z',
   lastLoginAt: '2026-05-12T08:30:00.000Z',
+  orderCount: 2,
+  reportCount: 0,
 };
 
 export const mockAdminUsers: AdminUser[] = [
@@ -32,6 +34,8 @@ export const mockAdminUsers: AdminUser[] = [
     isDeleted: false,
     createdAt: '2026-02-20T14:30:00.000Z',
     lastLoginAt: '2026-05-11T19:00:00.000Z',
+    orderCount: 1,
+    reportCount: 0,
   },
   {
     id: 'user-003',
@@ -47,12 +51,14 @@ export const mockAdminUsers: AdminUser[] = [
     isDeleted: false,
     createdAt: '2026-03-01T09:00:00.000Z',
     lastLoginAt: '2026-04-30T11:00:00.000Z',
+    orderCount: 3,
+    reportCount: 5,
   },
   {
-    id: 'expert-001',
+    id: 'user-004',
     email: 'expert@example.com',
-    name: '박전문가',
-    role: 'EXPERT',
+    name: '박전문',
+    role: 'CLIENT',
     provider: 'LOCAL',
     region: 'SEOUL',
     phoneNumber: '010-2222-3333',
@@ -62,6 +68,8 @@ export const mockAdminUsers: AdminUser[] = [
     isDeleted: false,
     createdAt: '2025-12-01T10:00:00.000Z',
     lastLoginAt: '2026-05-12T09:00:00.000Z',
+    orderCount: 0,
+    reportCount: 0,
   },
 ];
 
