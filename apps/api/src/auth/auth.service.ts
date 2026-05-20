@@ -103,7 +103,7 @@ export class AuthService {
       throw new AppException(AUTH_ERRORS.INVALID_CREDENTIALS);
     }
 
-    this.#ensureUserCanLogin(user);
+    this.ensureUserCanLogin(user);
 
     const passwordOk = await bcrypt.compare(dto.password, user.password);
     if (!passwordOk) {
@@ -128,7 +128,7 @@ export class AuthService {
     );
 
     if (existing !== null) {
-      this.#ensureUserCanLogin(existing);
+      this.ensureUserCanLogin(existing);
       const { accessToken, refreshToken } = this.#issueTokensForUser(existing);
       return { kind: 'login', accessToken, refreshToken };
     }
@@ -184,7 +184,7 @@ export class AuthService {
       }
     }
 
-    this.#ensureUserCanLogin(user);
+    this.ensureUserCanLogin(user);
     const { accessToken, refreshToken } = this.#issueTokensForUser(user);
 
     return {
@@ -271,6 +271,8 @@ export class AuthService {
     if (user === null) {
       throw new AppException(AUTH_ERRORS.REFRESH_TOKEN_INVALID);
     }
+
+    this.ensureUserCanLogin(user);
 
     const accessToken = this.#issueAccessTokenForUser(user);
 
@@ -388,7 +390,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  #ensureUserCanLogin(user: User): void {
+  ensureUserCanLogin(user: User): void {
     if (user.isBlocked) {
       throw new AppException(COMMON_ERRORS.BLOCKED);
     }

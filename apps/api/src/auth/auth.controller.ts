@@ -108,6 +108,7 @@ export class AuthController {
     AUTH_ERRORS.TOKEN_EXPIRED,
     AUTH_ERRORS.REFRESH_TOKEN_INVALID,
   )
+  @ApiErrorResponse(COMMON_ERRORS.BLOCKED, USER_ERRORS.DELETED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.OK)
   @JwtRefresh()

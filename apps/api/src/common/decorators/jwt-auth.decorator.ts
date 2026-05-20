@@ -2,9 +2,11 @@ import { applyDecorators, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 import { JwtAccessGuard } from '../../auth/jwt/jwt-access.guard';
-import { AUTH_ERRORS } from '../constants/errors';
+import { AUTH_ERRORS, COMMON_ERRORS, USER_ERRORS } from '../constants/errors';
 import { errorResponseExample } from '../swagger/error-response-example';
 import { ErrorResponseDto } from '../swagger/error-response.dto';
+
+import { ApiErrorResponse } from './api-error-response.decorator';
 
 interface ErrorConstant {
   status: number;
@@ -21,6 +23,7 @@ export function JwtAuth(...additionalErrors: ErrorConstant[]) {
   return applyDecorators(
     UseGuards(JwtAccessGuard),
     ApiCookieAuth('cookieAuth'),
+    ApiErrorResponse(COMMON_ERRORS.BLOCKED, USER_ERRORS.DELETED),
     ApiUnauthorizedResponse({
       type: ErrorResponseDto,
       examples: Object.fromEntries(
