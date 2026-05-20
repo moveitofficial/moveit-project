@@ -11,9 +11,12 @@ import { JwtAccessGuard } from './jwt/jwt-access.guard';
 import { JwtAccessStrategy } from './jwt/jwt-access.strategy';
 import { JwtRefreshGuard } from './jwt/jwt-refresh.guard';
 import { JwtRefreshStrategy } from './jwt/jwt-refresh.strategy';
-import { GoogleGuard } from './oauth/google.guard';
-import { GoogleOAuthStartGuard } from './oauth/google.oauth.start.guard';
-import { GoogleStrategy } from './oauth/google.strategy';
+import { GoogleGuard } from './oauth/google/google.guard';
+import { GoogleOAuthStartGuard } from './oauth/google/google.oauth.start.guard';
+import { GoogleStrategy } from './oauth/google/google.strategy';
+import { KakaoGuard } from './oauth/kakao/kakao.guard';
+import { KakaoOAuthStartGuard } from './oauth/kakao/kakao.oauth.start.guard';
+import { KakaoStrategy } from './oauth/kakao/kakao.strategy';
 import { OAuthController } from './oauth.controller';
 
 @Module({
@@ -34,6 +37,9 @@ import { OAuthController } from './oauth.controller';
     GoogleStrategy,
     GoogleOAuthStartGuard,
     GoogleGuard,
+    KakaoStrategy,
+    KakaoOAuthStartGuard,
+    KakaoGuard,
     JwtAccessStrategy,
     JwtRefreshStrategy,
     JwtAccessGuard,
