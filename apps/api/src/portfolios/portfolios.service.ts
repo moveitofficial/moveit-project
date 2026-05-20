@@ -15,6 +15,10 @@ export class PortfoliosService {
     private readonly expertProfilesRepository: ExpertProfilesRepository,
   ) {}
 
+  findOneById(id: string) {
+    return this.portfoliosRepository.findById(id);
+  }
+
   async create(userId: string, dto: PortfolioRequestDto) {
     const expertProfile =
       await this.expertProfilesRepository.findByUserId(userId);
