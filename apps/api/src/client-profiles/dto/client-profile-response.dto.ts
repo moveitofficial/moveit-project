@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ServiceCategoryName, ServiceGroupName } from '@prisma/client';
+import { Region, ServiceCategoryName, ServiceGroupName } from '@prisma/client';
 
 class InterestCategoryResponseDto {
   @ApiProperty({
@@ -24,4 +24,21 @@ export class ClientProfileResponseDto {
 
   @ApiProperty({ type: [InterestCategoryResponseDto] })
   declare interestCategories: InterestCategoryResponseDto[];
+}
+
+export class CreateClientProfileResponseDto {
+  @ApiPropertyOptional({ enum: Region, example: Region.SEOUL })
+  declare region: Region | null;
+
+  @ApiPropertyOptional({ example: '01012345678' })
+  declare phoneNumber: string | null;
+
+  @ApiPropertyOptional({ example: '카카오뱅크' })
+  declare bankName: string | null;
+
+  @ApiPropertyOptional({ example: '3333123456789' })
+  declare bankAccount: string | null;
+
+  @ApiProperty({ type: ClientProfileResponseDto })
+  declare clientProfile: ClientProfileResponseDto;
 }

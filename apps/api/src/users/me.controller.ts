@@ -12,7 +12,10 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import { ClientProfilesService } from '../client-profiles/client-profiles.service';
 import { ClientProfileRequestDto } from '../client-profiles/dto/client-profile-request.dto';
-import { ClientProfileResponseDto } from '../client-profiles/dto/client-profile-response.dto';
+import {
+  ClientProfileResponseDto,
+  CreateClientProfileResponseDto,
+} from '../client-profiles/dto/client-profile-response.dto';
 import {
   CLIENT_PROFILE_ERRORS,
   COMMON_ERRORS,
@@ -26,16 +29,22 @@ import {
 } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
 import { ExpertProfileRequestDto } from '../expert-profiles/dto/expert-profile-request.dto';
-import { ExpertProfileResponseDto } from '../expert-profiles/dto/expert-profile-response.dto';
+import {
+  CreateExpertProfileResponseDto,
+  ExpertProfileResponseDto,
+} from '../expert-profiles/dto/expert-profile-response.dto';
 import { ExpertProfilesService } from '../expert-profiles/expert-profiles.service';
 
+import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
+import { UpdateExpertProfileDto } from './dto/update-expert-profile.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ClientUserResponseDto,
   ExpertUserResponseDto,
+  UserResponseDto,
 } from './dto/user-response.dto';
-import { WithdrawDataDto } from './dto/withdraw-response.dto';
+import { WithdrawDataDto, WithdrawRequestDto } from './dto/withdraw.dto';
 import { UsersService } from './users.service';
 
 import type { Request } from 'express';
@@ -56,7 +65,6 @@ export class MeController {
     ClientUserResponseDto,
     ExpertUserResponseDto,
   )
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get()
@@ -67,11 +75,8 @@ export class MeController {
 
   @ApiOperation({ summary: '내 정보 수정하기' })
   @JwtAuth()
-  @ApiOneOfSuccessResponse(
-    HttpStatus.OK,
-    ClientUserResponseDto,
-    ExpertUserResponseDto,
-  )
+  @ApiSuccessResponse(HttpStatus.OK, UserResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Patch()
@@ -103,14 +108,14 @@ export class MeController {
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Patch('withdraw')
-  withdrawMyAccount(@Req() req: Request) {
+  withdrawMyAccount(@Req() req: Request, @Body() dto: WithdrawRequestDto) {
     const user = req.user as JwtAccessUser;
-    return this.usersService.withdrawUser(user.userId);
+    return this.usersService.withdrawUser(user.userId, dto.deletionReason);
   }
 
   @ApiOperation({ summary: '의뢰인 프로필 등록' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.CREATED, ClientProfileResponseDto)
+  @ApiSuccessResponse(HttpStatus.CREATED, CreateClientProfileResponseDto)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
     CLIENT_PROFILE_ERRORS.MIXED_SERVICE_GROUP,
@@ -128,7 +133,7 @@ export class MeController {
 
   @ApiOperation({ summary: '전문가 프로필 등록' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.CREATED, ExpertProfileResponseDto)
+  @ApiSuccessResponse(HttpStatus.CREATED, CreateExpertProfileResponseDto)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
     EXPERT_PROFILE_ERRORS.MIXED_SERVICE_GROUP,
@@ -142,5 +147,41 @@ export class MeController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.expertProfilesService.createExpertProfile(user.userId, dto);
+  }
+
+  @ApiOperation({ summary: '의뢰인 프로필 수정하기' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, ClientProfileResponseDto)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    CLIENT_PROFILE_ERRORS.MIXED_SERVICE_GROUP,
+  )
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Patch('client-profile')
+  updateClientProfile(
+    @Req() req: Request,
+    @Body() dto: UpdateClientProfileDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.usersService.updateClientProfile(user.userId, dto);
+  }
+
+  @ApiOperation({ summary: '전문가 프로필 수정하기' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, ExpertProfileResponseDto)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    EXPERT_PROFILE_ERRORS.MIXED_SERVICE_GROUP,
+  )
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Patch('expert-profile')
+  updateExpertProfile(
+    @Req() req: Request,
+    @Body() dto: UpdateExpertProfileDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.usersService.updateExpertProfile(user.userId, dto);
   }
 }

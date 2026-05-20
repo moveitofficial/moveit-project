@@ -23,33 +23,25 @@ export class ClientProfilesService {
       throw new AppException(CLIENT_PROFILE_ERRORS.ALREADY_EXISTS);
     }
 
-    if (dto.interestCategories && dto.interestCategories.length > 0) {
+    if (dto.interestCategories.length > 0) {
       const groupNames = new Set(dto.interestCategories.map((c) => c.group));
       if (groupNames.size > 1) {
         throw new AppException(CLIENT_PROFILE_ERRORS.MIXED_SERVICE_GROUP);
       }
     }
 
-    const hasUserFields =
-      dto.region !== undefined ||
-      dto.phoneNumber !== undefined ||
-      dto.bankName !== undefined ||
-      dto.bankAccount !== undefined;
-
-    const profile = await this.prisma.$transaction(async (tx) => {
-      if (hasUserFields) {
-        await this.usersRepository.update(
-          userId,
-          {
-            region: dto.region,
-            phoneNumber: dto.phoneNumber,
-            bankName: dto.bankName,
-            bankAccount: dto.bankAccount,
-          },
-          tx,
-        );
-      }
-      return this.clientProfilesRepository.create(
+    const { user, profile } = await this.prisma.$transaction(async (tx) => {
+      const user = await this.usersRepository.update(
+        userId,
+        {
+          region: dto.region,
+          phoneNumber: dto.phoneNumber,
+          bankName: dto.bankName,
+          bankAccount: dto.bankAccount,
+        },
+        tx,
+      );
+      const profile = await this.clientProfilesRepository.create(
         userId,
         {
           nickname: dto.nickname,
@@ -57,11 +49,18 @@ export class ClientProfilesService {
         },
         tx,
       );
+      return { user, profile };
     });
 
     return {
-      ...profile,
-      interestCategories: mapServiceCategories(profile.interestCategories),
+      region: user.region,
+      phoneNumber: user.phoneNumber,
+      bankName: user.bankName,
+      bankAccount: user.bankAccount,
+      clientProfile: {
+        ...profile,
+        interestCategories: mapServiceCategories(profile.interestCategories),
+      },
     };
   }
 }

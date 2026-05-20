@@ -33,33 +33,25 @@ export class ExpertProfilesService {
       throw new AppException(EXPERT_PROFILE_ERRORS.ALREADY_EXISTS);
     }
 
-    if (dto.specialtyCategories && dto.specialtyCategories.length > 0) {
+    if (dto.specialtyCategories.length > 0) {
       const groupNames = new Set(dto.specialtyCategories.map((c) => c.group));
       if (groupNames.size > 1) {
         throw new AppException(EXPERT_PROFILE_ERRORS.MIXED_SERVICE_GROUP);
       }
     }
 
-    const hasUserFields =
-      dto.region !== undefined ||
-      dto.phoneNumber !== undefined ||
-      dto.bankName !== undefined ||
-      dto.bankAccount !== undefined;
-
-    const profile = await this.prisma.$transaction(async (tx) => {
-      if (hasUserFields) {
-        await this.usersRepository.update(
-          userId,
-          {
-            region: dto.region,
-            phoneNumber: dto.phoneNumber,
-            bankName: dto.bankName,
-            bankAccount: dto.bankAccount,
-          },
-          tx,
-        );
-      }
-      return this.expertProfilesRepository.create(
+    const { user, profile } = await this.prisma.$transaction(async (tx) => {
+      const user = await this.usersRepository.update(
+        userId,
+        {
+          region: dto.region,
+          phoneNumber: dto.phoneNumber,
+          bankName: dto.bankName,
+          bankAccount: dto.bankAccount,
+        },
+        tx,
+      );
+      const profile = await this.expertProfilesRepository.create(
         userId,
         {
           businessName: dto.businessName,
@@ -76,8 +68,15 @@ export class ExpertProfilesService {
         },
         tx,
       );
+      return { user, profile };
     });
 
-    return mapProfile(profile);
+    return {
+      region: user.region,
+      phoneNumber: user.phoneNumber,
+      bankName: user.bankName,
+      bankAccount: user.bankAccount,
+      expertProfile: mapProfile(profile),
+    };
   }
 }

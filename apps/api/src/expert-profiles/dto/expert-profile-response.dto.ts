@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   BusinessSector,
+  Region,
   ServiceCategoryName,
   ServiceGroupName,
   TechStackName,
@@ -76,10 +77,10 @@ export class ExpertProfileResponseDto {
   @ApiPropertyOptional({ example: '김코드' })
   declare ceoName: string | null;
 
-  @ApiPropertyOptional({ example: 'AM 09:00' })
+  @ApiPropertyOptional({ example: '09:00' })
   declare contactTimeStart: string | null;
 
-  @ApiPropertyOptional({ example: 'PM 06:00' })
+  @ApiPropertyOptional({ example: '18:00' })
   declare contactTimeEnd: string | null;
 
   @ApiPropertyOptional({ example: 2021 })
@@ -111,4 +112,21 @@ export class ExpertProfileResponseDto {
 
   @ApiProperty({ type: [PortfolioResponseDto] })
   declare portfolios: PortfolioResponseDto[];
+}
+
+export class CreateExpertProfileResponseDto {
+  @ApiPropertyOptional({ enum: Region, example: Region.SEOUL })
+  declare region: Region | null;
+
+  @ApiPropertyOptional({ example: '01012345678' })
+  declare phoneNumber: string | null;
+
+  @ApiPropertyOptional({ example: '카카오뱅크' })
+  declare bankName: string | null;
+
+  @ApiPropertyOptional({ example: '3333123456789' })
+  declare bankAccount: string | null;
+
+  @ApiProperty({ type: ExpertProfileResponseDto })
+  declare expertProfile: ExpertProfileResponseDto;
 }
