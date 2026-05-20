@@ -17,6 +17,9 @@ import { GoogleStrategy } from './oauth/google/google.strategy';
 import { KakaoGuard } from './oauth/kakao/kakao.guard';
 import { KakaoOAuthStartGuard } from './oauth/kakao/kakao.oauth.start.guard';
 import { KakaoStrategy } from './oauth/kakao/kakao.strategy';
+import { NaverGuard } from './oauth/naver/naver.guard';
+import { NaverOAuthStartGuard } from './oauth/naver/naver.oauth.start.guard';
+import { NaverStrategy } from './oauth/naver/naver.strategy';
 import { OAuthController } from './oauth.controller';
 
 @Module({
@@ -40,6 +43,9 @@ import { OAuthController } from './oauth.controller';
     KakaoStrategy,
     KakaoOAuthStartGuard,
     KakaoGuard,
+    NaverStrategy,
+    NaverOAuthStartGuard,
+    NaverGuard,
     JwtAccessStrategy,
     JwtRefreshStrategy,
     JwtAccessGuard,

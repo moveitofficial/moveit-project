@@ -156,6 +156,9 @@ importers:
       passport-kakao:
         specifier: ^1.0.1
         version: 1.0.1
+      passport-oauth2:
+        specifier: ^1.8.0
+        version: 1.8.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -220,6 +223,9 @@ importers:
       '@types/passport-kakao':
         specifier: ^1.0.3
         version: 1.0.3
+      '@types/passport-oauth2':
+        specifier: ^1.8.0
+        version: 1.8.0
       '@types/supertest':
         specifier: ^7.0.0
         version: 7.2.0
