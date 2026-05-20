@@ -1,8 +1,10 @@
 import * as styles from './RectLabel.css';
 
+export type RectLabelColor = 'blue50' | 'yellow' | 'blue400' | 'blue100' | 'red';
+
 interface LabelProps {
   text: string;
-  color: 'blue50' | 'yellow' | 'blue400' | 'blue100' | 'red';
+  color: RectLabelColor;
 }
 
 export default function RectLabel({ text, color }: LabelProps) {
