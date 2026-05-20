@@ -280,6 +280,9 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@repo/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@tanstack/react-query':
         specifier: ^5.100.9
         version: 5.100.9(react@19.2.4)
@@ -454,9 +457,6 @@ importers:
       '@vanilla-extract/recipes':
         specifier: ^0.5.7
         version: 0.5.7(@vanilla-extract/css@1.20.1)
-      date-fns:
-        specifier: ^4.1.0
-        version: 4.1.0
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -518,6 +518,25 @@ importers:
       next:
         specifier: 16.2.5
         version: 16.2.5(@babel/core@7.29.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4)(react@19.2.4)
+      typescript:
+        specifier: 5.9.2
+        version: 5.9.2
+
+  packages/utils:
+    dependencies:
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.4
       typescript:
         specifier: 5.9.2
         version: 5.9.2

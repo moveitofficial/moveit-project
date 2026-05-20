@@ -28,3 +28,9 @@ export const cardList = style({
   flexWrap: 'wrap',
   gap: '24px',
 });
+
+export const communityList = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '16px',
+});

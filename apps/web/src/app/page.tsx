@@ -1,6 +1,7 @@
 import { Card, type CardService } from '@repo/ui/Card';
 import { type Route } from 'next';
 
+import { mockCommunityPosts } from '../mocks/community';
 import { mockMainData } from '../mocks/main';
 
 import * as styles from './page.css';
@@ -52,6 +53,8 @@ export default function Home() {
       : [];
 
   const newServices = mockMainData.newServices;
+
+  const popularPosts = mockCommunityPosts.slice(0, 3);
 
   return (
     <main className={styles.container}>
@@ -113,7 +116,11 @@ export default function Home() {
         </div>
       </div>
       <Showcase title="MOVIT 인기 게시글" viewAllHref="/">
-        <CommunityCard />
+        <div className={styles.communityList}>
+          {popularPosts.map((post) => (
+            <CommunityCard key={post.id} post={post} />
+          ))}
+        </div>
       </Showcase>
     </main>
   );
