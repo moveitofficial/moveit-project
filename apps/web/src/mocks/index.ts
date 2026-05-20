@@ -11,3 +11,4 @@ export * from './community';
 export * from './notifications';
 export * from './chat';
 export * from './main';
+export * from './faqs';

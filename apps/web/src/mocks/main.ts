@@ -1,3 +1,4 @@
+import { mockExpertList } from './experts';
 import { mockServiceList } from './services';
 
 import type { ApiSuccess, MainData } from './types';
@@ -26,7 +27,7 @@ export const mockMainData: MainData = {
       title: '가장 많이 찾는 IT 코칭',
       targetType: 'SERVICE',
       items: mockServiceList
-        .filter((s) => s.category.type === 'IT_COACHING')
+        .filter((s) => s.categoryRef.group === 'IT_COACHING')
         .slice(0, 4),
     },
     {
@@ -34,20 +35,45 @@ export const mockMainData: MainData = {
       title: '가장 많이 찾는 프로젝트 의뢰',
       targetType: 'SERVICE',
       items: mockServiceList
-        .filter((s) => s.category.type === 'PROJECT_REQUEST')
+        .filter((s) => s.categoryRef.group === 'PROJECT_REQUEST')
         .slice(0, 4),
     },
     {
-      sectionType: 'NEW_SERVICES',
-      title: '새로 등록된 서비스',
+      sectionType: 'MOVEIT_POPULAR_COACHING',
+      title: '무빗 인기 코칭',
       targetType: 'SERVICE',
-      items: mockServiceList.slice(0, 4),
+      items: mockServiceList
+        .filter((s) => s.categoryRef.group === 'IT_COACHING')
+        .slice(0, 4),
+    },
+    {
+      sectionType: 'MOVEIT_POPULAR_PROJECT_EXPERT',
+      title: '무빗 인기 프로젝트 의뢰 전문가',
+      targetType: 'USER',
+      items: mockExpertList,
+    },
+    {
+      sectionType: 'RECOMMENDED_IT_COACHING',
+      title: '추천 IT 코칭',
+      targetType: 'SERVICE',
+      items: mockServiceList
+        .filter((s) => s.categoryRef.group === 'IT_COACHING')
+        .slice(0, 4),
+    },
+    {
+      sectionType: 'RECOMMENDED_PROJECT_REQUEST',
+      title: '추천 프로젝트 의뢰',
+      targetType: 'SERVICE',
+      items: mockServiceList
+        .filter((s) => s.categoryRef.group === 'PROJECT_REQUEST')
+        .slice(0, 4),
     },
   ],
+  newServices: mockServiceList.slice(0, 4),
 };
 
 export const mockMainDataResponse: ApiSuccess<MainData> = {
   success: true,
-  message: '메인 데이터를 조회했습니다.',
+  message: '요청 성공',
   data: mockMainData,
 };

@@ -95,4 +95,13 @@ export class AuthController {
     this.authService.setAuthCookies(res, accessToken, refreshToken);
     return { user };
   }
+
+  @ApiOperation({ summary: '로그아웃' })
+  @ApiSuccessResponse(HttpStatus.NO_CONTENT)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post('signout')
+  signOut(@Res({ passthrough: true }) res: Response): void {
+    this.authService.clearAuthCookies(res);
+  }
 }

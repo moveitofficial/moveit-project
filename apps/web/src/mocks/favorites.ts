@@ -13,7 +13,7 @@ export const mockFavoriteExperts: ExpertDetail[] = mockExpertList
 
 export const mockFavoriteServicesResponse: ApiSuccess<PaginatedResult<ServiceListItem>> = {
   success: true,
-  message: '찜한 서비스 목록을 조회했습니다.',
+  message: '요청 성공',
   data: {
     items: mockFavoriteServices,
     pagination: { page: 1, pageSize: 20, totalCount: mockFavoriteServices.length, hasNext: false },
@@ -22,7 +22,7 @@ export const mockFavoriteServicesResponse: ApiSuccess<PaginatedResult<ServiceLis
 
 export const mockFavoriteExpertsResponse: ApiSuccess<PaginatedResult<ExpertDetail>> = {
   success: true,
-  message: '찜한 전문가 목록을 조회했습니다.',
+  message: '요청 성공',
   data: {
     items: mockFavoriteExperts,
     pagination: { page: 1, pageSize: 20, totalCount: mockFavoriteExperts.length, hasNext: false },
