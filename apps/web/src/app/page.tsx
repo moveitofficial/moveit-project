@@ -2,13 +2,17 @@ import { Card, type CardService } from '@repo/ui/Card';
 import { type Route } from 'next';
 
 import { mockCommunityPosts } from '../mocks/community';
+import { mockExpertList } from '../mocks/experts';
 import { mockMainData } from '../mocks/main';
+import { getTechStackLabel } from '../mocks/metadata';
 
 import * as styles from './page.css';
 
 import type { ServiceListItem } from '@/mocks/types';
 
 import { CommunityCard } from '@/components/common/CommunityCard';
+import { ExpertCard } from '@/components/common/ExpertCard';
+import { BottomBanner } from '@/feature/main/components/BottomBanner';
 import { Browse } from '@/feature/main/components/Browse';
 import { Hero } from '@/feature/main/components/Hero';
 import { Showcase } from '@/feature/main/components/Showcase';
@@ -55,6 +59,9 @@ export default function Home() {
   const newServices = mockMainData.newServices;
 
   const popularPosts = mockCommunityPosts.slice(0, 3);
+
+  const projectExperts = mockExpertList.slice(0, 4);
+  const coachingExperts = mockExpertList.slice(4, 8);
 
   return (
     <main className={styles.container}>
@@ -122,6 +129,37 @@ export default function Home() {
           ))}
         </div>
       </Showcase>
+      <Showcase title="MOVIT 인기 프로젝트 의뢰 전문가">
+        <div className={styles.cardList}>
+          {projectExperts.map((expert) => (
+            <ExpertCard
+              key={expert.id}
+              expert={{
+                ...expert,
+                techStacks: expert.techStacks.map((name) =>
+                  getTechStackLabel(name),
+                ),
+              }}
+            />
+          ))}
+        </div>
+      </Showcase>
+      <Showcase title="MOVIT 인기 코칭">
+        <div className={styles.cardList}>
+          {coachingExperts.map((expert) => (
+            <ExpertCard
+              key={expert.id}
+              expert={{
+                ...expert,
+                techStacks: expert.techStacks.map((name) =>
+                  getTechStackLabel(name),
+                ),
+              }}
+            />
+          ))}
+        </div>
+      </Showcase>
+      <BottomBanner />
     </main>
   );
 }

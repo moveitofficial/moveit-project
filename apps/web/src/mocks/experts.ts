@@ -70,7 +70,111 @@ const expertThree: ExpertDetail = {
   services: mockServiceList.filter((s) => s.expert.id === 'expert-003'),
 };
 
-export const mockExpertList: ExpertDetail[] = [expertOne, expertTwo, expertThree];
+const expertFour: ExpertDetail = {
+  id: 'expert-004',
+  name: '디자인 랩',
+  companyName: '디자인 랩',
+  description: 'UI/UX 디자인 · 9년차',
+  profileImageUrl: 'https://i.pravatar.cc/300?img=22',
+  isFavorite: false,
+  stats: {
+    totalReviews: 212,
+    averageRating: 4.8,
+    purchaseRate: 76,
+    completionRate: 99,
+  },
+  specialtyCategories: [{ group: 'IT_COACHING', category: 'APP' }],
+  techStacks: ['REACT', 'TYPESCRIPT', 'VUE'],
+  portfolios: mockPortfolios.slice(0, 2),
+  services: mockServiceList.filter((s) => s.expert.id === 'expert-004'),
+};
+
+const expertFive: ExpertDetail = {
+  id: 'expert-005',
+  name: 'AI 스튜디오',
+  companyName: 'AI 스튜디오',
+  description: 'AI 엔지니어 · 9년차',
+  profileImageUrl: null,
+  isFavorite: false,
+  stats: {
+    totalReviews: 124,
+    averageRating: 4.9,
+    purchaseRate: 88,
+    completionRate: 100,
+  },
+  specialtyCategories: [{ group: 'PROJECT_REQUEST', category: 'AI' }],
+  techStacks: ['PYTHON', 'FASTAPI', 'DOCKER'],
+  portfolios: mockPortfolios.slice(1, 3),
+  services: mockServiceList.filter((s) => s.expert.id === 'expert-005'),
+};
+
+const expertSix: ExpertDetail = {
+  id: 'expert-006',
+  name: '게임 스튜디오',
+  companyName: '게임 스튜디오',
+  description: '게임 클라이언트 개발 · 9년차',
+  profileImageUrl: null,
+  isFavorite: false,
+  stats: {
+    totalReviews: 60,
+    averageRating: 4.5,
+    purchaseRate: 70,
+    completionRate: 96,
+  },
+  specialtyCategories: [{ group: 'PROJECT_REQUEST', category: 'GAME' }],
+  techStacks: ['JAVASCRIPT', 'KOTLIN', 'SWIFT'],
+  portfolios: mockPortfolios.slice(2, 4),
+  services: mockServiceList.filter((s) => s.expert.id === 'expert-006'),
+};
+
+const expertSeven: ExpertDetail = {
+  id: 'expert-007',
+  name: '데브멘토',
+  companyName: '데브멘토',
+  description: '웹사이트 강의 · 9년차',
+  profileImageUrl: null,
+  isFavorite: false,
+  stats: {
+    totalReviews: 124,
+    averageRating: 4.9,
+    purchaseRate: 82,
+    completionRate: 98,
+  },
+  specialtyCategories: [{ group: 'IT_COACHING', category: 'WEB' }],
+  techStacks: ['REACT', 'NEXTJS', 'TYPESCRIPT'],
+  portfolios: mockPortfolios.slice(0, 3),
+  services: mockServiceList.filter((s) => s.expert.id === 'expert-007'),
+};
+
+const expertEight: ExpertDetail = {
+  id: 'expert-008',
+  name: '클라우드웍스',
+  companyName: '클라우드웍스',
+  description: 'AWS 백엔드 강의 · 9년차',
+  profileImageUrl: null,
+  isFavorite: false,
+  stats: {
+    totalReviews: 124,
+    averageRating: 4.9,
+    purchaseRate: 90,
+    completionRate: 100,
+  },
+  specialtyCategories: [{ group: 'IT_COACHING', category: 'WEB' }],
+  techStacks: ['AWS', 'SPRING', 'NODEJS'],
+  portfolios: mockPortfolios.slice(1, 4),
+  services: mockServiceList.filter((s) => s.expert.id === 'expert-008'),
+};
+
+export const mockExpertList: ExpertDetail[] = [
+  expertOne,
+  expertTwo,
+  expertThree,
+  expertFour,
+  expertFive,
+  expertSix,
+  expertSeven,
+  expertEight,
+];
 
 export const mockExpertListResponse: ApiSuccess<PaginatedResult<ExpertDetail>> = {
   success: true,

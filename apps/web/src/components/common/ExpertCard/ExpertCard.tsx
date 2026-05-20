@@ -1,13 +1,14 @@
 import starFill from '@public/Card/starFill.svg';
+import expertImageFallback from '@public/profile.svg';
 import { RectLabel } from '@repo/ui/RectLabel';
-import Image, { type StaticImageData } from 'next/image';
+import Image from 'next/image';
 
 import * as styles from './ExpertCard.css';
 
 export interface ExpertCardExpert {
   name: string;
   description: string;
-  profileImageUrl: string;
+  profileImageUrl: string | null;
   techStacks: string[];
   stats: {
     averageRating: number;
@@ -17,15 +18,10 @@ export interface ExpertCardExpert {
 
 export interface ExpertCardProps {
   expert: ExpertCardExpert;
-  avatarImage: StaticImageData;
   className?: string;
 }
 
-export default function ExpertCard({
-  expert,
-  avatarImage,
-  className,
-}: ExpertCardProps) {
+export default function ExpertCard({ expert, className }: ExpertCardProps) {
   const name = expert.name;
   const tags = expert.techStacks;
   const rating = expert.stats.averageRating;
@@ -39,7 +35,21 @@ export default function ExpertCard({
     >
       <div className={styles.header}>
         <div className={styles.avatar}>
-          <Image src={avatarImage} alt={avatarAlt} className={styles.avatarImage} />
+          {expert.profileImageUrl ? (
+            <Image
+              src={expert.profileImageUrl}
+              alt={avatarAlt}
+              width={40}
+              height={40}
+              className={styles.avatarImage}
+            />
+          ) : (
+            <Image
+              src={expertImageFallback}
+              alt={avatarAlt}
+              className={styles.avatarImage}
+            />
+          )}
         </div>
 
         <div className={styles.headerText}>
