@@ -10,6 +10,7 @@ import { ClientProfilesModule } from './client-profiles/client-profiles.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { S3Module } from './s3/s3.module';
+import { ServicesModule } from './services/services.module';
 import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
 
@@ -28,6 +29,7 @@ import { UsersModule } from './users/users.module';
     UploadModule,
     CatalogsModule,
     ClientProfilesModule,
+    ServicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
