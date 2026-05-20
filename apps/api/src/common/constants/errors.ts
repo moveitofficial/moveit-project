@@ -106,6 +106,14 @@ export const SERVICE_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '이미 삭제된 서비스입니다.',
   },
+  EXPERT_ROLE_REQUIRED: {
+    status: HttpStatus.FORBIDDEN,
+    message: '전문가만 서비스를 등록할 수 있습니다.',
+  },
+  FORBIDDEN_NOT_OWNER: {
+    status: HttpStatus.FORBIDDEN,
+    message: '본인이 등록한 서비스만 수정, 상태 변경 또는 종료할 수 있습니다.',
+  },
 } as const;
 
 export const ORDER_ERRORS = {
