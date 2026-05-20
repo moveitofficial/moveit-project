@@ -35,6 +35,10 @@ export class UsersService {
     return userWithoutPassword;
   }
 
+  findUserById(id: string): Promise<User | null> {
+    return this.usersRepository.findById(id);
+  }
+
   getUserByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findByEmail(email);
   }

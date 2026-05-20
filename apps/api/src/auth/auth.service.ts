@@ -262,6 +262,35 @@ export class AuthService {
     });
   }
 
+  async refreshAccessToken(userId: string): Promise<{
+    user: AuthPublicUser;
+    accessToken: string;
+  }> {
+    const user = await this.usersService.findUserById(userId);
+
+    if (user === null) {
+      throw new AppException(AUTH_ERRORS.REFRESH_TOKEN_INVALID);
+    }
+
+    const accessToken = this.#issueAccessTokenForUser(user);
+
+    return {
+      user: this.#toPublicUser(user),
+      accessToken,
+    };
+  }
+
+  setAccessCookie(res: Response, accessToken: string): void {
+    const secure = this.config.get<string>('NODE_ENV') === 'production';
+    res.cookie(ACCESS_COOKIE_NAME, accessToken, {
+      httpOnly: true,
+      secure,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: ACCESS_MAX_AGE_MS,
+    });
+  }
+
   clearAuthCookies(res: Response): void {
     const secure = this.config.get<string>('NODE_ENV') === 'production';
     const base = {
@@ -330,19 +359,23 @@ export class AuthService {
     }
   }
 
-  #issueTokensForUser(user: User): {
-    accessToken: string;
-    refreshToken: string;
-  } {
+  #issueAccessTokenForUser(user: User): string {
     const accessPayload: JwtAccessPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
       typ: JWT_ACCESS_TYP,
     };
-    const accessToken = this.jwtService.sign(accessPayload, {
+    return this.jwtService.sign(accessPayload, {
       expiresIn: ACCESS_JWT_EXPIRES_IN,
     });
+  }
+
+  #issueTokensForUser(user: User): {
+    accessToken: string;
+    refreshToken: string;
+  } {
+    const accessToken = this.#issueAccessTokenForUser(user);
 
     const refreshPayload: JwtRefreshPayload = {
       sub: user.id,
