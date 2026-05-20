@@ -262,6 +262,19 @@ export class AuthService {
     });
   }
 
+  clearAuthCookies(res: Response): void {
+    const secure = this.config.get<string>('NODE_ENV') === 'production';
+    const base = {
+      httpOnly: true,
+      secure,
+      sameSite: 'lax' as const,
+      path: '/',
+    };
+
+    res.clearCookie(ACCESS_COOKIE_NAME, base);
+    res.clearCookie(REFRESH_COOKIE_NAME, base);
+  }
+
   setOAuthSignupCookie(res: Response, signupToken: string): void {
     const secure = this.config.get<string>('NODE_ENV') === 'production';
     res.cookie(OAUTH_SIGNUP_COOKIE_NAME, signupToken, {
