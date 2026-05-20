@@ -7,6 +7,6 @@ import { ClientProfilesService } from './client-profiles.service';
 
 @Module({
   providers: [ClientProfilesService, ClientProfilesRepository, UsersRepository],
-  exports: [ClientProfilesService],
+  exports: [ClientProfilesService, ClientProfilesRepository],
 })
 export class ClientProfilesModule {}

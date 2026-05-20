@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
-import { EXPERT_PROFILE_ERRORS } from '../common/constants/errors';
+import { EXPERT_PROFILE_ERRORS, USER_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { mapServiceCategories } from '../common/utils/service-category.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdateExpertProfileDto } from '../users/dto/update-expert-profile.dto';
 import { UsersRepository } from '../users/users.repository';
 
 import { ExpertProfileRequestDto } from './dto/expert-profile-request.dto';
@@ -78,5 +79,46 @@ export class ExpertProfilesService {
       bankAccount: user.bankAccount,
       expertProfile: mapProfile(profile),
     };
+  }
+
+  async updateExpertProfile(userId: string, dto: UpdateExpertProfileDto) {
+    const existing = await this.usersRepository.findByIdWithProfiles(userId);
+    if (!existing) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    if (dto.specialtyCategories && dto.specialtyCategories.length > 0) {
+      const groups = new Set(dto.specialtyCategories.map((c) => c.group));
+      if (groups.size > 1)
+        throw new AppException(EXPERT_PROFILE_ERRORS.MIXED_SERVICE_GROUP);
+    }
+
+    const profile = await (existing.expertProfile
+      ? this.expertProfilesRepository.update(userId, {
+          businessName: dto.businessName,
+          businessNumber: dto.businessNumber,
+          ceoName: dto.ceoName,
+          contactTimeStart: dto.contactTimeStart,
+          contactTimeEnd: dto.contactTimeEnd,
+          foundedYear: dto.foundedYear,
+          employeeMin: dto.employeeMin,
+          employeeMax: dto.employeeMax,
+          description: dto.description,
+          specialtyCategories: dto.specialtyCategories,
+          techStackNames: dto.techStackNames,
+        })
+      : this.expertProfilesRepository.create(userId, {
+          businessName: dto.businessName,
+          businessNumber: dto.businessNumber,
+          ceoName: dto.ceoName,
+          contactTimeStart: dto.contactTimeStart,
+          contactTimeEnd: dto.contactTimeEnd,
+          foundedYear: dto.foundedYear,
+          employeeMin: dto.employeeMin,
+          employeeMax: dto.employeeMax,
+          description: dto.description,
+          specialtyCategories: dto.specialtyCategories,
+          techStackNames: dto.techStackNames,
+        }));
+
+    return mapProfile(profile);
   }
 }

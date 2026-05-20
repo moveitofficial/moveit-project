@@ -2,18 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { AuthProvider, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
-import { ClientProfilesRepository } from '../client-profiles/client-profiles.repository';
-import {
-  CLIENT_PROFILE_ERRORS,
-  EXPERT_PROFILE_ERRORS,
-  USER_ERRORS,
-} from '../common/constants/errors';
+import { USER_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { mapServiceCategories } from '../common/utils/service-category.util';
-import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
 
-import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
-import { UpdateExpertProfileDto } from './dto/update-expert-profile.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersRepository } from './users.repository';
@@ -65,11 +57,7 @@ function mapUser(user: UserWithProfiles) {
 
 @Injectable()
 export class UsersService {
-  constructor(
-    private readonly usersRepository: UsersRepository,
-    private readonly clientProfilesRepository: ClientProfilesRepository,
-    private readonly expertProfilesRepository: ExpertProfilesRepository,
-  ) {}
+  constructor(private readonly usersRepository: UsersRepository) {}
 
   getAllUser() {
     return 'all user';
@@ -125,66 +113,6 @@ export class UsersService {
       bankName: dto.bankName,
       bankAccount: dto.bankAccount,
     });
-  }
-
-  async updateClientProfile(id: string, dto: UpdateClientProfileDto) {
-    const existing = await this.usersRepository.findByIdWithProfiles(id);
-    if (!existing) throw new AppException(USER_ERRORS.NOT_FOUND);
-
-    if (dto.interestCategories && dto.interestCategories.length > 0) {
-      const groups = new Set(dto.interestCategories.map((c) => c.group));
-      if (groups.size > 1)
-        throw new AppException(CLIENT_PROFILE_ERRORS.MIXED_SERVICE_GROUP);
-    }
-
-    const profileData = {
-      nickname: dto.nickname,
-      interestCategories: dto.interestCategories,
-    };
-
-    const profile = await (existing.clientProfile
-      ? this.clientProfilesRepository.update(id, profileData)
-      : this.clientProfilesRepository.create(id, profileData));
-
-    return {
-      ...profile,
-      interestCategories: mapServiceCategories(profile.interestCategories),
-    };
-  }
-
-  async updateExpertProfile(id: string, dto: UpdateExpertProfileDto) {
-    const existing = await this.usersRepository.findByIdWithProfiles(id);
-    if (!existing) throw new AppException(USER_ERRORS.NOT_FOUND);
-
-    if (dto.specialtyCategories && dto.specialtyCategories.length > 0) {
-      const groups = new Set(dto.specialtyCategories.map((c) => c.group));
-      if (groups.size > 1)
-        throw new AppException(EXPERT_PROFILE_ERRORS.MIXED_SERVICE_GROUP);
-    }
-
-    const profileData = {
-      businessName: dto.businessName,
-      businessNumber: dto.businessNumber,
-      ceoName: dto.ceoName,
-      contactTimeStart: dto.contactTimeStart,
-      contactTimeEnd: dto.contactTimeEnd,
-      foundedYear: dto.foundedYear,
-      employeeMin: dto.employeeMin,
-      employeeMax: dto.employeeMax,
-      description: dto.description,
-      specialtyCategories: dto.specialtyCategories,
-      techStackNames: dto.techStackNames,
-    };
-
-    const profile = await (existing.expertProfile
-      ? this.expertProfilesRepository.update(id, profileData)
-      : this.expertProfilesRepository.create(id, profileData));
-
-    return {
-      ...profile,
-      specialtyCategories: mapServiceCategories(profile.specialtyCategories),
-      techStacks: profile.techStacks.map((ts) => ({ name: ts.techStack.name })),
-    };
   }
 
   async updatePassword(id: string, dto: UpdatePasswordDto): Promise<object> {

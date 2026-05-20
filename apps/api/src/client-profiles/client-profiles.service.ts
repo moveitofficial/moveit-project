@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
-import { CLIENT_PROFILE_ERRORS } from '../common/constants/errors';
+import { CLIENT_PROFILE_ERRORS, USER_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { mapServiceCategories } from '../common/utils/service-category.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdateClientProfileDto } from '../users/dto/update-client-profile.dto';
 import { UsersRepository } from '../users/users.repository';
 
 import { ClientProfilesRepository } from './client-profiles.repository';
@@ -61,6 +62,32 @@ export class ClientProfilesService {
         ...profile,
         interestCategories: mapServiceCategories(profile.interestCategories),
       },
+    };
+  }
+
+  async updateClientProfile(userId: string, dto: UpdateClientProfileDto) {
+    const existing = await this.usersRepository.findByIdWithProfiles(userId);
+    if (!existing) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    if (dto.interestCategories && dto.interestCategories.length > 0) {
+      const groups = new Set(dto.interestCategories.map((c) => c.group));
+      if (groups.size > 1)
+        throw new AppException(CLIENT_PROFILE_ERRORS.MIXED_SERVICE_GROUP);
+    }
+
+    const profile = await (existing.clientProfile
+      ? this.clientProfilesRepository.update(userId, {
+          nickname: dto.nickname,
+          interestCategories: dto.interestCategories,
+        })
+      : this.clientProfilesRepository.create(userId, {
+          nickname: dto.nickname,
+          interestCategories: dto.interestCategories,
+        }));
+
+    return {
+      ...profile,
+      interestCategories: mapServiceCategories(profile.interestCategories),
     };
   }
 }
