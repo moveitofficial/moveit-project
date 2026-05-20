@@ -55,13 +55,26 @@ export class PortfolioRequestDto {
   @IsEnum(BusinessSector)
   declare businessSector: BusinessSector;
 
-  @ApiProperty({ type: [PortfolioImageRequestDto] })
+  @ApiProperty({
+    type: [PortfolioImageRequestDto],
+    example: [
+      { imgUrl: 'https://example.com/main.png', isMain: true },
+      { imgUrl: 'https://example.com/detail.png', isMain: false },
+    ],
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PortfolioImageRequestDto)
   declare images: PortfolioImageRequestDto[];
 
-  @ApiProperty({ type: [PortfolioSkillRequestDto] })
+  @ApiProperty({
+    type: [PortfolioSkillRequestDto],
+    example: [
+      { stackName: 'Figma', stackType: StackType.DESIGN },
+      { stackName: 'React', stackType: StackType.FRONTEND },
+      { stackName: 'NestJS', stackType: StackType.BACKEND },
+    ],
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PortfolioSkillRequestDto)

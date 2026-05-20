@@ -6,14 +6,14 @@ import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import {
   COMMON_ERRORS,
   EXPERT_PROFILE_ERRORS,
+  PORTFOLIO_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
+import { PortfolioRequestDto } from '../portfolios/dto/portfolio-request.dto';
+import { PortfolioCreateResponseDto } from '../portfolios/dto/portfolio-response.dto';
 import { PortfoliosService } from '../portfolios/portfolios.service';
-
-import { PortfolioRequestDto } from './dto/portfolio-request.dto';
-import { PortfolioResponseDto } from './dto/portfolio-response.dto';
 
 import type { Request } from 'express';
 
@@ -24,8 +24,13 @@ export class MePortfoliosController {
 
   @ApiOperation({ summary: '포트폴리오 등록' })
   @RoleAuth(Role.EXPERT)
-  @ApiSuccessResponse(HttpStatus.CREATED, PortfolioResponseDto)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiSuccessResponse(HttpStatus.CREATED, PortfolioCreateResponseDto)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    PORTFOLIO_ERRORS.MAIN_IMAGE_REQUIRED,
+    PORTFOLIO_ERRORS.DETAIL_IMAGE_INVALID,
+    PORTFOLIO_ERRORS.MISSING_STACK_TYPE,
+  )
   @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Post()
