@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 
+import { userWithProfilesInclude } from './users.types';
+
+import type { UserWithProfiles } from './users.types';
 import type { CreateOAuthUserParams } from '../auth/oauth/oauth.types';
 import type { AuthProvider, Prisma, User } from '@prisma/client';
 
@@ -32,6 +35,13 @@ export class UsersRepository {
     });
   }
 
+  findByIdWithProfiles(id: string): Promise<UserWithProfiles | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: userWithProfilesInclude,
+    });
+  }
+
   create(data: Prisma.UserCreateInput): Promise<User> {
     return this.prisma.user.create({ data });
   }
@@ -49,8 +59,13 @@ export class UsersRepository {
     });
   }
 
-  update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
-    return this.prisma.user.update({ where: { id }, data });
+  update(
+    id: string,
+    data: Prisma.UserUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User> {
+    const client = tx ?? this.prisma;
+    return client.user.update({ where: { id }, data });
   }
 
   updatePassword(id: string, hashedPassword: string): Promise<User> {
