@@ -1,14 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Region, ServiceCategoryName, ServiceGroupName } from '@prisma/client';
 
 class InterestCategoryResponseDto {
-  @ApiProperty({ example: 'b3e57c2a-e64b-47c7-99dd-a174ca2d4dac' })
-  declare id: string;
+  @ApiProperty({
+    enum: ServiceGroupName,
+    example: ServiceGroupName.IT_COACHING,
+  })
+  declare group: ServiceGroupName;
 
-  @ApiProperty({ example: '2b25c45a-5c87-4caa-8872-34b501452c23' })
-  declare serviceGroupId: string;
-
-  @ApiProperty({ example: 'b3e57c2a-e64b-47c7-99dd-a174ca2d4dac' })
-  declare serviceCategoryId: string;
+  @ApiProperty({ enum: ServiceCategoryName, example: ServiceCategoryName.WEB })
+  declare category: ServiceCategoryName;
 }
 
 export class ClientProfileResponseDto {
@@ -23,4 +24,21 @@ export class ClientProfileResponseDto {
 
   @ApiProperty({ type: [InterestCategoryResponseDto] })
   declare interestCategories: InterestCategoryResponseDto[];
+}
+
+export class CreateClientProfileResponseDto {
+  @ApiPropertyOptional({ enum: Region, example: Region.SEOUL })
+  declare region: Region | null;
+
+  @ApiPropertyOptional({ example: '01012345678' })
+  declare phoneNumber: string | null;
+
+  @ApiPropertyOptional({ example: '카카오뱅크' })
+  declare bankName: string | null;
+
+  @ApiPropertyOptional({ example: '3333123456789' })
+  declare bankAccount: string | null;
+
+  @ApiProperty({ type: ClientProfileResponseDto })
+  declare clientProfile: ClientProfileResponseDto;
 }
