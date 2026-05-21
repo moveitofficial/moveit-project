@@ -13,21 +13,21 @@ import { PortfoliosRepository } from './portfolios.repository';
 import type { PortfolioRequestDto } from './dto/portfolio-request.dto';
 import type { PortfolioWithRelations } from './portfolios.types';
 
-// GET 응답용 — image id 포함 (개별 삭제 시 필요). findOneById에 적용해서 사용.
-// function mapPortfolio(portfolio: PortfolioWithRelations) {
-//   return {
-//     ...portfolio,
-//     images: portfolio.images.map(({ id, imgUrl, isMain }) => ({
-//       id,
-//       imgUrl,
-//       isMain,
-//     })),
-//     skills: portfolio.skills.map(({ stackName, stackType }) => ({
-//       stackName,
-//       stackType,
-//     })),
-//   };
-// }
+//GET 응답용 — image id 포함 (개별 삭제 시 필요). findOneById에 적용해서 사용.
+function mapPortfolio(portfolio: PortfolioWithRelations) {
+  return {
+    ...portfolio,
+    images: portfolio.images.map(({ id, imgUrl, isMain }) => ({
+      id,
+      imgUrl,
+      isMain,
+    })),
+    skills: portfolio.skills.map(({ stackName, stackType }) => ({
+      stackName,
+      stackType,
+    })),
+  };
+}
 
 // CREATE 응답용 — image id 불필요
 function mapPortfolioCreate(portfolio: PortfolioWithRelations) {
@@ -51,8 +51,13 @@ export class PortfoliosService {
     private readonly expertProfilesRepository: ExpertProfilesRepository,
   ) {}
 
-  findOneById(id: string) {
-    return this.portfoliosRepository.findById(id);
+  async findOneById(id: string) {
+    const portfolio = await this.portfoliosRepository.findById(id);
+
+    if (portfolio === null) {
+      throw new AppException(PORTFOLIO_ERRORS.NOT_FOUND);
+    }
+    return mapPortfolio(portfolio);
   }
 
   async create(userId: string, dto: PortfolioRequestDto) {
