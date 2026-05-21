@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ServiceStatus, type Prisma, type Service } from '@prisma/client';
+import { ServiceStatus, type Prisma } from '@prisma/client';
 
-import { SERVICE_ERRORS } from '../common/constants/errors';
+import { COMMON_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { toListResponse } from '../common/utils/list-response.util';
 
@@ -9,6 +9,8 @@ import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import { ServicesRepository } from './services.repository';
+
+import type { ServiceWithRelations } from './services.types';
 
 @Injectable()
 export class ServicesService {
@@ -18,7 +20,7 @@ export class ServicesService {
     return this.servicesRepository.findMany().then(toListResponse);
   }
 
-  async getServiceById(serviceId: string): Promise<Service> {
+  async getServiceById(serviceId: string): Promise<ServiceWithRelations> {
     const service = await this.servicesRepository.findById(serviceId);
     if (!service) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
@@ -29,7 +31,7 @@ export class ServicesService {
   async createService(
     expertUserId: string,
     dto: CreateServiceRequestDto,
-  ): Promise<Service> {
+  ): Promise<ServiceWithRelations> {
     return this.servicesRepository.create({
       expertUserId,
       title: dto.title,
@@ -43,6 +45,25 @@ export class ServicesService {
       status: ServiceStatus.ACTIVE,
       serviceGroupId: dto.serviceGroupId,
       serviceCategoryId: dto.serviceCategoryId,
+      images: {
+        create: [
+          { imgUrl: dto.mainImageUrl, isMain: true },
+          ...dto.images.map((i) => ({ imgUrl: i.imgUrl, isMain: false })),
+        ],
+      },
+      steps: {
+        create: dto.steps.map((s, idx) => ({
+          title: s.title,
+          description: s.description,
+          order: idx + 1,
+        })),
+      },
+      faqs: {
+        create: dto.faqs.map((f) => ({
+          question: f.question,
+          answer: f.answer,
+        })),
+      },
     });
   }
 
@@ -50,7 +71,7 @@ export class ServicesService {
     expertUserId: string,
     serviceId: string,
     dto: UpdateServiceRequestDto,
-  ): Promise<Service> {
+  ): Promise<ServiceWithRelations> {
     const existing = await this.servicesRepository.findById(serviceId);
     if (!existing) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
@@ -60,6 +81,12 @@ export class ServicesService {
     }
     if (existing.status === ServiceStatus.CLOSED) {
       throw new AppException(SERVICE_ERRORS.ALREADY_DELETED);
+    }
+
+    const isPartialImages =
+      (dto.mainImageUrl !== undefined) !== (dto.images !== undefined);
+    if (isPartialImages) {
+      throw new AppException(COMMON_ERRORS.VALIDATION_ERROR);
     }
 
     const data: Prisma.ServiceUncheckedUpdateInput = {};
@@ -80,6 +107,34 @@ export class ServicesService {
     if (dto.serviceCategoryId !== undefined) {
       data.serviceCategoryId = dto.serviceCategoryId;
     }
+    if (dto.mainImageUrl !== undefined && dto.images !== undefined) {
+      data.images = {
+        deleteMany: {},
+        create: [
+          { imgUrl: dto.mainImageUrl, isMain: true },
+          ...dto.images.map((i) => ({ imgUrl: i.imgUrl, isMain: false })),
+        ],
+      };
+    }
+    if (dto.steps !== undefined) {
+      data.steps = {
+        deleteMany: {},
+        create: dto.steps.map((s, idx) => ({
+          title: s.title,
+          description: s.description,
+          order: idx + 1,
+        })),
+      };
+    }
+    if (dto.faqs !== undefined) {
+      data.faqs = {
+        deleteMany: {},
+        create: dto.faqs.map((f) => ({
+          question: f.question,
+          answer: f.answer,
+        })),
+      };
+    }
 
     if (Object.keys(data).length === 0) {
       return existing;
@@ -92,7 +147,7 @@ export class ServicesService {
     expertUserId: string,
     serviceId: string,
     dto: UpdateServiceStatusRequestDto,
-  ): Promise<Service> {
+  ): Promise<ServiceWithRelations> {
     const existing = await this.servicesRepository.findById(serviceId);
     if (!existing) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
@@ -112,7 +167,7 @@ export class ServicesService {
   async closeService(
     expertUserId: string,
     serviceId: string,
-  ): Promise<Service> {
+  ): Promise<ServiceWithRelations> {
     const existing = await this.servicesRepository.findById(serviceId);
     if (!existing) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);

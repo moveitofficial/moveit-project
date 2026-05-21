@@ -1,6 +1,42 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ServiceStatus } from '@prisma/client';
 
+class ServiceImageResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: 'https://cdn.example.com/img.jpg' })
+  declare imgUrl: string;
+
+  @ApiProperty({ example: true })
+  declare isMain: boolean;
+}
+
+class ServiceStepResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: 1 })
+  declare order: number;
+
+  @ApiProperty({ example: '환경 설정' })
+  declare title: string;
+
+  @ApiProperty({ example: 'Node.js 설치 후 실행' })
+  declare description: string;
+}
+
+class ServiceFaqResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: '환불은 어떻게 하나요?' })
+  declare question: string;
+
+  @ApiProperty({ example: '착수 전 전액 환불 가능합니다.' })
+  declare answer: string;
+}
+
 export class ServiceResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
@@ -40,6 +76,15 @@ export class ServiceResponseDto {
 
   @ApiProperty({ format: 'uuid' })
   declare serviceCategoryId: string;
+
+  @ApiProperty({ type: [ServiceImageResponseDto] })
+  declare images: ServiceImageResponseDto[];
+
+  @ApiProperty({ type: [ServiceStepResponseDto] })
+  declare steps: ServiceStepResponseDto[];
+
+  @ApiProperty({ type: [ServiceFaqResponseDto] })
+  declare faqs: ServiceFaqResponseDto[];
 
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
   declare createdAt: Date;

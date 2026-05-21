@@ -1,14 +1,56 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUrl,
   IsUUID,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
+
+export class ServiceDetailImageDto {
+  @ApiProperty({ example: 'https://cdn.example.com/detail.jpg' })
+  @IsUrl()
+  declare imgUrl: string;
+}
+
+export class ServiceStepDto {
+  @ApiProperty({ example: '환경 설정', description: '최대 10자' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(10)
+  declare title: string;
+
+  @ApiProperty({ example: 'Node.js 설치 후 실행', description: '최대 16자' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(16)
+  declare description: string;
+}
+
+export class ServiceFaqDto {
+  @ApiProperty({ example: '환불은 어떻게 하나요?', description: '최대 50자' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  declare question: string;
+
+  @ApiProperty({
+    example: '착수 전 전액 환불 가능합니다.',
+    description: '최대 500자',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  declare answer: string;
+}
 
 export class CreateServiceRequestDto {
   @ApiProperty({ example: 'React 초급 코칭 패키지' })
@@ -71,6 +113,45 @@ export class CreateServiceRequestDto {
   @IsNotEmpty()
   @MaxLength(500)
   declare refundPolicy: string;
+
+  @ApiProperty({
+    example: 'https://cdn.example.com/main.jpg',
+    description: '메인 이미지 URL',
+  })
+  @IsUrl()
+  declare mainImageUrl: string;
+
+  @ApiProperty({
+    type: [ServiceDetailImageDto],
+    description: '상세 이미지 1~10개',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => ServiceDetailImageDto)
+  declare images: ServiceDetailImageDto[];
+
+  @ApiProperty({
+    type: [ServiceStepDto],
+    description: '진행 단계 1~4개',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(4)
+  @ValidateNested({ each: true })
+  @Type(() => ServiceStepDto)
+  declare steps: ServiceStepDto[];
+
+  @ApiProperty({
+    type: [ServiceFaqDto],
+    description: '자주 묻는 질문 최소 1개',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => ServiceFaqDto)
+  declare faqs: ServiceFaqDto[];
 
   @ApiProperty({
     format: 'uuid',
