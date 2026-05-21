@@ -155,14 +155,14 @@ export class CreateServiceRequestDto {
 
   @ApiProperty({
     format: 'uuid',
-    example: '2b25c45a-5c87-4caa-8872-34b501452c23',
+    example: '8eb71393-f481-4c3a-b543-1251d4e837fe',
   })
   @IsUUID()
   declare serviceGroupId: string;
 
   @ApiProperty({
     format: 'uuid',
-    example: 'b3e57c2a-e64b-47c7-99dd-a174ca2d4dac',
+    example: '6e440417-d128-493f-8b8a-93474a6fe2b5',
   })
   @IsUUID()
   declare serviceCategoryId: string;

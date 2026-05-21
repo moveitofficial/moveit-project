@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ServiceStatus } from '@prisma/client';
+import {
+  ServiceCategoryName,
+  ServiceGroupName,
+  ServiceStatus,
+} from '@prisma/client';
 
 class ServiceImageResponseDto {
   @ApiProperty({ format: 'uuid' })
@@ -37,6 +41,17 @@ class ServiceFaqResponseDto {
   declare answer: string;
 }
 
+class ServiceCategoryRefResponseDto {
+  @ApiProperty({
+    enum: ServiceGroupName,
+    example: ServiceGroupName.IT_COACHING,
+  })
+  declare group: ServiceGroupName;
+
+  @ApiProperty({ enum: ServiceCategoryName, example: ServiceCategoryName.WEB })
+  declare category: ServiceCategoryName;
+}
+
 export class ServiceResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
@@ -71,11 +86,8 @@ export class ServiceResponseDto {
   @ApiProperty({ enum: ServiceStatus, example: ServiceStatus.ACTIVE })
   declare status: ServiceStatus;
 
-  @ApiProperty({ format: 'uuid' })
-  declare serviceGroupId: string;
-
-  @ApiProperty({ format: 'uuid' })
-  declare serviceCategoryId: string;
+  @ApiProperty({ type: ServiceCategoryRefResponseDto })
+  declare categoryRef: ServiceCategoryRefResponseDto;
 
   @ApiProperty({ type: [ServiceImageResponseDto] })
   declare images: ServiceImageResponseDto[];

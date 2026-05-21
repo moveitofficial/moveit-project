@@ -8,31 +8,34 @@ import { toListResponse } from '../common/utils/list-response.util';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
+import { mapService } from './services.mapper';
 import { ServicesRepository } from './services.repository';
 
-import type { ServiceWithRelations } from './services.types';
+import type { ServiceResponse } from './services.types';
 
 @Injectable()
 export class ServicesService {
   constructor(private readonly servicesRepository: ServicesRepository) {}
 
-  getServices() {
-    return this.servicesRepository.findMany().then(toListResponse);
+  getServices(): Promise<{ count: number; items: ServiceResponse[] }> {
+    return this.servicesRepository
+      .findMany()
+      .then((items) => toListResponse(items.map((item) => mapService(item))));
   }
 
-  async getServiceById(serviceId: string): Promise<ServiceWithRelations> {
+  async getServiceById(serviceId: string): Promise<ServiceResponse> {
     const service = await this.servicesRepository.findById(serviceId);
     if (!service) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
     }
-    return service;
+    return mapService(service);
   }
 
   async createService(
     expertUserId: string,
     dto: CreateServiceRequestDto,
-  ): Promise<ServiceWithRelations> {
-    return this.servicesRepository.create({
+  ): Promise<ServiceResponse> {
+    const service = await this.servicesRepository.create({
       expertUserId,
       title: dto.title,
       workDuration: dto.workDuration,
@@ -65,13 +68,14 @@ export class ServicesService {
         })),
       },
     });
+    return mapService(service);
   }
 
   async updateService(
     expertUserId: string,
     serviceId: string,
     dto: UpdateServiceRequestDto,
-  ): Promise<ServiceWithRelations> {
+  ): Promise<ServiceResponse> {
     const existing = await this.servicesRepository.findById(serviceId);
     if (!existing) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
@@ -137,17 +141,18 @@ export class ServicesService {
     }
 
     if (Object.keys(data).length === 0) {
-      return existing;
+      return mapService(existing);
     }
 
-    return this.servicesRepository.update(serviceId, data);
+    const updated = await this.servicesRepository.update(serviceId, data);
+    return mapService(updated);
   }
 
   async updateServiceStatus(
     expertUserId: string,
     serviceId: string,
     dto: UpdateServiceStatusRequestDto,
-  ): Promise<ServiceWithRelations> {
+  ): Promise<ServiceResponse> {
     const existing = await this.servicesRepository.findById(serviceId);
     if (!existing) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
@@ -159,15 +164,16 @@ export class ServicesService {
       throw new AppException(SERVICE_ERRORS.ALREADY_DELETED);
     }
 
-    return this.servicesRepository.update(serviceId, {
+    const updated = await this.servicesRepository.update(serviceId, {
       status: dto.status,
     });
+    return mapService(updated);
   }
 
   async closeService(
     expertUserId: string,
     serviceId: string,
-  ): Promise<ServiceWithRelations> {
+  ): Promise<ServiceResponse> {
     const existing = await this.servicesRepository.findById(serviceId);
     if (!existing) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
@@ -179,8 +185,9 @@ export class ServicesService {
       throw new AppException(SERVICE_ERRORS.ALREADY_DELETED);
     }
 
-    return this.servicesRepository.update(serviceId, {
+    const updated = await this.servicesRepository.update(serviceId, {
       status: ServiceStatus.CLOSED,
     });
+    return mapService(updated);
   }
 }
