@@ -1,9 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ServiceStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
-  IsEnum,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
@@ -14,6 +13,7 @@ import {
 export class CreateServiceRequestDto {
   @ApiProperty({ example: 'React 초급 코칭 패키지' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(200)
   declare title: string;
 
@@ -37,7 +37,8 @@ export class CreateServiceRequestDto {
     description: '제공 범위',
   })
   @IsString()
-  @MaxLength(2000)
+  @IsNotEmpty()
+  @MaxLength(30)
   declare serviceScope: string;
 
   @ApiProperty({ example: 120_000, description: '서비스 가격(원)' })
@@ -50,7 +51,8 @@ export class CreateServiceRequestDto {
     example: 'React 기초부터 프로젝트 배포까지 단계별로 안내합니다.',
   })
   @IsString()
-  @MaxLength(5000)
+  @IsNotEmpty()
+  @MaxLength(500)
   declare description: string;
 
   @ApiPropertyOptional({
@@ -58,14 +60,16 @@ export class CreateServiceRequestDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(2000)
+  @IsNotEmpty()
+  @MaxLength(500)
   declare preparationNotes?: string;
 
   @ApiProperty({
     example: '작업 착수 전 전액 환불, 착수 후 일할 계산 환불',
   })
   @IsString()
-  @MaxLength(2000)
+  @IsNotEmpty()
+  @MaxLength(500)
   declare refundPolicy: string;
 
   @ApiProperty({
