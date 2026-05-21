@@ -103,7 +103,7 @@ export const SERVICE_ERRORS = {
     message: '이용할 수 없는 서비스입니다.',
   },
   ALREADY_DELETED: {
-    status: HttpStatus.BAD_REQUEST,
+    status: HttpStatus.CONFLICT,
     message: '이미 삭제된 서비스입니다.',
   },
   EXPERT_ROLE_REQUIRED: {
