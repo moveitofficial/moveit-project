@@ -1,6 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AuthProvider, Region, Role } from '@prisma/client';
 
+import { ClientProfileResponseDto } from '../../client-profiles/dto/client-profile-response.dto';
+import { ExpertProfileResponseDto } from '../../expert-profiles/dto/expert-profile-response.dto';
+
 export class UserResponseDto {
   @ApiProperty({ example: '246f7925-b83c-4b14-b34d-07009d711301' })
   declare id: string;
@@ -52,4 +55,14 @@ export class UserResponseDto {
 
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
   declare createdAt: Date;
+}
+
+export class ClientUserResponseDto extends UserResponseDto {
+  @ApiPropertyOptional({ type: ClientProfileResponseDto, nullable: true })
+  declare clientProfile: ClientProfileResponseDto | null;
+}
+
+export class ExpertUserResponseDto extends UserResponseDto {
+  @ApiPropertyOptional({ type: ExpertProfileResponseDto, nullable: true })
+  declare expertProfile: ExpertProfileResponseDto | null;
 }

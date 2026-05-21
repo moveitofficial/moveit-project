@@ -1,18 +1,59 @@
 import { Injectable } from '@nestjs/common';
-import { AuthProvider, type Role, type User } from '@prisma/client';
+import { AuthProvider, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 import { USER_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
+import { mapServiceCategories } from '../common/utils/service-category.util';
 
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersRepository } from './users.repository';
 
+import type { UserWithProfiles } from './users.types';
 import type {
   CreateOAuthUserParams,
   OAuthProfile,
 } from '../auth/oauth/oauth.types';
+
+function mapUser(user: UserWithProfiles) {
+  const {
+    password: _p,
+    blockedByAdminId: _b,
+    clientProfile,
+    expertProfile,
+    ...rest
+  } = user;
+
+  if (rest.role === Role.CLIENT) {
+    return {
+      ...rest,
+      clientProfile: clientProfile
+        ? {
+            ...clientProfile,
+            interestCategories: mapServiceCategories(
+              clientProfile.interestCategories,
+            ),
+          }
+        : null,
+    };
+  }
+
+  return {
+    ...rest,
+    expertProfile: expertProfile
+      ? {
+          ...expertProfile,
+          specialtyCategories: mapServiceCategories(
+            expertProfile.specialtyCategories,
+          ),
+          techStacks: expertProfile.techStacks.map((ts) => ({
+            name: ts.techStack.name,
+          })),
+        }
+      : null,
+  };
+}
 
 @Injectable()
 export class UsersService {
@@ -23,16 +64,15 @@ export class UsersService {
   }
 
   async getUserById(id: string) {
-    const user = await this.usersRepository.findById(id);
+    const user = await this.usersRepository.findByIdWithProfiles(id);
     if (!user) {
       throw new AppException(USER_ERRORS.NOT_FOUND);
     }
-    const {
-      password: _password,
-      blockedByAdminId: _blockedByAdminId,
-      ...userWithoutPassword
-    } = user;
-    return userWithoutPassword;
+    return mapUser(user);
+  }
+
+  findUserById(id: string): Promise<User | null> {
+    return this.usersRepository.findById(id);
   }
 
   getUserByEmail(email: string): Promise<User | null> {
@@ -64,18 +104,15 @@ export class UsersService {
   }
 
   async updateUser(id: string, dto: UpdateUserDto) {
-    const user = await this.usersRepository.findById(id);
+    const existing = await this.usersRepository.findById(id);
+    if (!existing) throw new AppException(USER_ERRORS.NOT_FOUND);
 
-    if (!user) {
-      throw new AppException(USER_ERRORS.NOT_FOUND);
-    }
-
-    const {
-      password: _password,
-      blockedByAdminId: _blockedByAdminId,
-      ...userWithoutPassword
-    } = await this.usersRepository.update(id, dto);
-    return userWithoutPassword;
+    return this.usersRepository.update(id, {
+      region: dto.region,
+      phoneNumber: dto.phoneNumber,
+      bankName: dto.bankName,
+      bankAccount: dto.bankAccount,
+    });
   }
 
   async updatePassword(id: string, dto: UpdatePasswordDto): Promise<object> {
@@ -102,18 +139,20 @@ export class UsersService {
     return {};
   }
 
-  async withdrawUser(id: string) {
+  async withdrawUser(id: string, reason?: string) {
     const user = await this.usersRepository.findById(id);
 
     if (!user) {
       throw new AppException(USER_ERRORS.NOT_FOUND);
     }
 
-    const { isDeleted, deletedAt } = await this.usersRepository.update(id, {
-      isDeleted: true,
-      deletedAt: new Date(),
-    });
+    const { isDeleted, deletedAt, deletionReason } =
+      await this.usersRepository.update(id, {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletionReason: reason,
+      });
 
-    return { isDeleted, deletedAt };
+    return { isDeleted, deletedAt, deletionReason };
   }
 }
