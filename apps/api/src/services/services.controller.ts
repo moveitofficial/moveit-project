@@ -12,12 +12,13 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import { COMMON_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
-import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
+import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
 
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import {
@@ -53,28 +54,24 @@ export class ServicesController {
   }
 
   @ApiOperation({ summary: '전문가 서비스 등록' })
-  @JwtAuth()
+  @RoleAuth(Role.EXPERT)
   @ApiSuccessResponse(HttpStatus.CREATED, ServiceResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.EXPERT_ROLE_REQUIRED)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
   @Post()
   create(@Req() req: Request, @Body() dto: CreateServiceRequestDto) {
     const user = req.user as JwtAccessUser;
-    return this.servicesService.createService(user.userId, user.role, dto);
+    return this.servicesService.createService(user.userId, dto);
   }
 
   @ApiOperation({
     summary: '전문가 서비스 상태 변경',
     description: '서비스 상태 변경: ACTIVE(활성)/PAUSED(중지)',
   })
-  @JwtAuth()
+  @RoleAuth(Role.EXPERT)
   @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
-  @ApiErrorResponse(
-    SERVICE_ERRORS.EXPERT_ROLE_REQUIRED,
-    SERVICE_ERRORS.FORBIDDEN_NOT_OWNER,
-  )
+  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
@@ -88,19 +85,15 @@ export class ServicesController {
     const user = req.user as JwtAccessUser;
     return this.servicesService.updateServiceStatus(
       user.userId,
-      user.role,
       serviceId,
       dto,
     );
   }
 
   @ApiOperation({ summary: '전문가 서비스 수정 (상태 제외)' })
-  @JwtAuth()
+  @RoleAuth(Role.EXPERT)
   @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
-  @ApiErrorResponse(
-    SERVICE_ERRORS.EXPERT_ROLE_REQUIRED,
-    SERVICE_ERRORS.FORBIDDEN_NOT_OWNER,
-  )
+  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
@@ -112,30 +105,22 @@ export class ServicesController {
     @Body() dto: UpdateServiceRequestDto,
   ) {
     const user = req.user as JwtAccessUser;
-    return this.servicesService.updateService(
-      user.userId,
-      user.role,
-      serviceId,
-      dto,
-    );
+    return this.servicesService.updateService(user.userId, serviceId, dto);
   }
 
   @ApiOperation({
     summary: '전문가 서비스 종료',
     description: '서비스 상태: CLOSED - 종료 처리',
   })
-  @JwtAuth()
+  @RoleAuth(Role.EXPERT)
   @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
-  @ApiErrorResponse(
-    SERVICE_ERRORS.EXPERT_ROLE_REQUIRED,
-    SERVICE_ERRORS.FORBIDDEN_NOT_OWNER,
-  )
+  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Delete(':id')
-  remove(@Req() req: Request, @Param('id', ParseUUIDPipe) serviceId: string) {
+  close(@Req() req: Request, @Param('id', ParseUUIDPipe) serviceId: string) {
     const user = req.user as JwtAccessUser;
-    return this.servicesService.closeService(user.userId, user.role, serviceId);
+    return this.servicesService.closeService(user.userId, serviceId);
   }
 }

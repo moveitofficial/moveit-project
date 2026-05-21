@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Role, ServiceStatus, type Prisma, type Service } from '@prisma/client';
+import { ServiceStatus, type Prisma, type Service } from '@prisma/client';
 
 import { SERVICE_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
@@ -28,11 +28,8 @@ export class ServicesService {
 
   async createService(
     expertUserId: string,
-    role: Role,
     dto: CreateServiceRequestDto,
   ): Promise<Service> {
-    this.ensureExpert(role);
-
     return this.servicesRepository.create({
       expertUserId,
       title: dto.title,
@@ -51,12 +48,9 @@ export class ServicesService {
 
   async updateService(
     expertUserId: string,
-    role: Role,
     serviceId: string,
     dto: UpdateServiceRequestDto,
   ): Promise<Service> {
-    this.ensureExpert(role);
-
     const existing = await this.servicesRepository.findById(serviceId);
     if (!existing) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
@@ -96,12 +90,9 @@ export class ServicesService {
 
   async updateServiceStatus(
     expertUserId: string,
-    role: Role,
     serviceId: string,
     dto: UpdateServiceStatusRequestDto,
   ): Promise<Service> {
-    this.ensureExpert(role);
-
     const existing = await this.servicesRepository.findById(serviceId);
     if (!existing) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
@@ -120,11 +111,8 @@ export class ServicesService {
 
   async closeService(
     expertUserId: string,
-    role: Role,
     serviceId: string,
   ): Promise<Service> {
-    this.ensureExpert(role);
-
     const existing = await this.servicesRepository.findById(serviceId);
     if (!existing) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
@@ -139,11 +127,5 @@ export class ServicesService {
     return this.servicesRepository.update(serviceId, {
       status: ServiceStatus.CLOSED,
     });
-  }
-
-  private ensureExpert(role: Role): void {
-    if (role !== Role.EXPERT) {
-      throw new AppException(SERVICE_ERRORS.EXPERT_ROLE_REQUIRED);
-    }
   }
 }
