@@ -68,15 +68,6 @@ export class CreateServiceRequestDto {
   @MaxLength(2000)
   declare refundPolicy: string;
 
-  @ApiPropertyOptional({
-    enum: ServiceStatus,
-    example: ServiceStatus.ACTIVE,
-    description: '미입력 시 ACTIVE',
-  })
-  @IsOptional()
-  @IsEnum(ServiceStatus)
-  declare status?: ServiceStatus;
-
   @ApiProperty({
     format: 'uuid',
     example: '2b25c45a-5c87-4caa-8872-34b501452c23',

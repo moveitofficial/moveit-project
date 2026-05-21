@@ -67,7 +67,7 @@ export class ServicesController {
 
   @ApiOperation({
     summary: '전문가 서비스 상태 변경',
-    description: '서비스 상태 변경: ACTIVE(활성)/PAUSED(중지)/CLOSED(종료)',
+    description: '서비스 상태 변경: ACTIVE(활성)/PAUSED(중지)',
   })
   @JwtAuth()
   @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)

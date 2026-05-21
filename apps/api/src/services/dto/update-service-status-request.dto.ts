@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ServiceStatus } from '@prisma/client';
-import { IsEnum } from 'class-validator';
+import { IsIn } from 'class-validator';
 
 export class UpdateServiceStatusRequestDto {
   @ApiProperty({
-    enum: ServiceStatus,
+    enum: [ServiceStatus.ACTIVE, ServiceStatus.PAUSED],
     example: ServiceStatus.PAUSED,
-    description: '서비스 노출 상태 (ACTIVE / PAUSED / CLOSED)',
+    description: '서비스 노출 상태 (ACTIVE / PAUSED)',
   })
-  @IsEnum(ServiceStatus)
+  @IsIn([ServiceStatus.ACTIVE, ServiceStatus.PAUSED])
   declare status: ServiceStatus;
 }

@@ -33,8 +33,6 @@ export class ServicesService {
   ): Promise<Service> {
     this.ensureExpert(role);
 
-    const status = dto.status ?? ServiceStatus.ACTIVE;
-
     return this.servicesRepository.create({
       expertUserId,
       title: dto.title,
@@ -45,7 +43,7 @@ export class ServicesService {
       description: dto.description,
       preparationNotes: dto.preparationNotes ?? null,
       refundPolicy: dto.refundPolicy,
-      status,
+      status: ServiceStatus.ACTIVE,
       serviceGroupId: dto.serviceGroupId,
       serviceCategoryId: dto.serviceCategoryId,
     });
