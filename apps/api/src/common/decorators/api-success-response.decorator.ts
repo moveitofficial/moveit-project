@@ -24,3 +24,28 @@ export function ApiSuccessResponse(
     }),
   );
 }
+
+export function ApiOneOfSuccessResponse(
+  status: number,
+  ...dataTypes: [
+    new (...args: unknown[]) => unknown,
+    ...(new (...args: unknown[]) => unknown)[],
+  ]
+) {
+  return applyDecorators(
+    ApiExtraModels(...dataTypes),
+    ApiResponse({
+      status,
+      description: '요청 성공',
+      schema: {
+        properties: {
+          success: { type: 'boolean', example: true },
+          message: { type: 'string', example: '요청 성공' },
+          data: {
+            oneOf: dataTypes.map((type) => ({ $ref: getSchemaPath(type) })),
+          },
+        },
+      },
+    }),
+  );
+}

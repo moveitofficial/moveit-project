@@ -176,6 +176,45 @@ export const CLIENT_PROFILE_ERRORS = {
   },
 } as const;
 
+export const EXPERT_PROFILE_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '전문가 프로필을 찾을 수 없습니다.',
+  },
+  ALREADY_EXISTS: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 전문가 프로필이 존재합니다.',
+  },
+  MIXED_SERVICE_GROUP: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '전문 분야는 하나의 서비스 그룹에서만 선택할 수 있습니다.',
+  },
+} as const;
+
+export const PORTFOLIO_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '포트폴리오를 찾을 수 없습니다.',
+    code: 'PORTFOLIO_NOT_FOUND',
+  },
+  MAIN_IMAGE_REQUIRED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '메인 이미지는 정확히 1개여야 합니다.',
+    code: 'PORTFOLIO_MAIN_IMAGE_REQUIRED',
+  },
+  DETAIL_IMAGE_INVALID: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '상세 이미지는 최소 1개, 최대 10개까지 등록할 수 있습니다.',
+    code: 'PORTFOLIO_DETAIL_IMAGE_INVALID',
+  },
+  MISSING_STACK_TYPE: {
+    status: HttpStatus.BAD_REQUEST,
+    message:
+      '디자인, 프론트엔드, 백엔드 각 기술 유형별로 최소 1개씩 입력해 주세요.',
+    code: 'PORTFOLIO_MISSING_STACK_TYPE',
+  },
+} as const;
+
 export const EXPERT_ERRORS = {
   NOT_FOUND: {
     status: HttpStatus.NOT_FOUND,

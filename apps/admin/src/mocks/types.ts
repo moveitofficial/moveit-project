@@ -51,6 +51,8 @@ export interface AdminUser {
   isDeleted: boolean;
   createdAt: string;
   lastLoginAt: string | null;
+  orderCount: number;
+  reportCount: number;
 }
 
 export interface AdminExpert {
@@ -58,17 +60,21 @@ export interface AdminExpert {
   userId: string;
   email: string;
   name: string;
+  role: UserRole;
   companyName: string;
   companyNumber: string;
   bossName: string;
   region: string;
   phoneNumber: string;
+  provider: Provider;
+  serviceType: ServiceType;
   approvalStatus: ExpertApprovalStatus;
   rejectReason: string | null;
   techStacks: string[];
   totalRevenue: number;
   totalOrders: number;
   rating: number;
+  reportCount: number;
   createdAt: string;
 }
 
