@@ -1,19 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { BusinessSector, StackType, Portfolio } from '@prisma/client';
+import { BusinessSector, StackType } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
-import { portfolioInclude } from './portfolios.types';
+import { portfolioInclude, PortfolioListInclude } from './portfolios.types';
 
-import type { PortfolioWithRelations } from './portfolios.types';
+import type {
+  PortfolioListItem,
+  PortfolioWithRelations,
+} from './portfolios.types';
 
 @Injectable()
 export class PortfoliosRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findById(id: string): Promise<Portfolio | null> {
+  findById(id: string): Promise<PortfolioWithRelations | null> {
     return this.prisma.portfolio.findUnique({
       where: { id },
+      include: portfolioInclude,
+    });
+  }
+
+  findManyByExpertProfileId(
+    expertProfileId: string,
+  ): Promise<PortfolioListItem[]> {
+    return this.prisma.portfolio.findMany({
+      where: { expertProfileId },
+      include: PortfolioListInclude,
+      orderBy: { createdAt: 'desc' },
     });
   }
 

@@ -2,9 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { AuthProvider, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
-import { USER_ERRORS } from '../common/constants/errors';
+import {
+  EXPERT_ERRORS,
+  PORTFOLIO_ERRORS,
+  USER_ERRORS,
+} from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { mapServiceCategories } from '../common/utils/service-category.util';
+import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
+import { PortfoliosService } from '../portfolios/portfolios.service';
 
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -57,7 +63,28 @@ function mapUser(user: UserWithProfiles) {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    private readonly expertProfilesRepository: ExpertProfilesRepository,
+    private readonly portfoliosService: PortfoliosService,
+  ) {}
+
+  async getUserWithPortfolios(userId: string) {
+    const user = await this.usersRepository.findById(userId);
+
+    if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    if (user.role !== Role.EXPERT) {
+      throw new AppException(PORTFOLIO_ERRORS.NOT_EXPERT);
+    }
+
+    const expertProfile =
+      await this.expertProfilesRepository.findByUserId(userId);
+
+    if (expertProfile === null) throw new AppException(EXPERT_ERRORS.NOT_FOUND);
+
+    return this.portfoliosService.findManyByExpertProfileId(expertProfile.id);
+  }
 
   getAllUser() {
     return 'all user';
