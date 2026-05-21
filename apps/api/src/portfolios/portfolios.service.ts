@@ -11,7 +11,10 @@ import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.rep
 import { PortfoliosRepository } from './portfolios.repository';
 
 import type { PortfolioRequestDto } from './dto/portfolio-request.dto';
-import type { PortfolioWithRelations } from './portfolios.types';
+import type {
+  PortfolioListItem,
+  PortfolioWithRelations,
+} from './portfolios.types';
 
 //GET 응답용 — image id 포함 (개별 삭제 시 필요). findOneById에 적용해서 사용.
 function mapPortfolio(portfolio: PortfolioWithRelations) {
@@ -26,6 +29,14 @@ function mapPortfolio(portfolio: PortfolioWithRelations) {
       stackName,
       stackType,
     })),
+  };
+}
+
+function mapPortfolioListItem(portfolio: PortfolioListItem) {
+  return {
+    id: portfolio.id,
+    title: portfolio.title,
+    thumbnailUrl: portfolio.images[0]?.imgUrl ?? null,
   };
 }
 
@@ -50,6 +61,18 @@ export class PortfoliosService {
     private readonly portfoliosRepository: PortfoliosRepository,
     private readonly expertProfilesRepository: ExpertProfilesRepository,
   ) {}
+
+  async findManyByExpertProfileId(expertProfileId: string) {
+    const portfolios =
+      await this.portfoliosRepository.findManyByExpertProfileId(
+        expertProfileId,
+      );
+
+    return {
+      count: portfolios.length,
+      items: portfolios.map((portfolio) => mapPortfolioListItem(portfolio)),
+    };
+  }
 
   async findOneById(id: string) {
     const portfolio = await this.portfoliosRepository.findById(id);
