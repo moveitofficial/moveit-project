@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -7,7 +7,6 @@ import {
   IsArray,
   IsInt,
   IsNotEmpty,
-  IsOptional,
   IsString,
   IsUrl,
   IsUUID,
@@ -98,14 +97,13 @@ export class CreateServiceRequestDto {
   @MaxLength(500)
   declare description: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: '노트북 및 안정적인 인터넷 환경이 필요합니다.',
   })
-  @IsOptional()
   @IsString()
   @IsNotEmpty()
   @MaxLength(500)
-  declare preparationNotes?: string;
+  declare preparationNotes: string;
 
   @ApiProperty({
     example: '작업 착수 전 전액 환불, 착수 후 일할 계산 환불',

@@ -82,8 +82,8 @@ export class ServiceResponseDto {
   @ApiProperty({ example: 'React 기초부터 프로젝트 배포까지…' })
   declare description: string;
 
-  @ApiPropertyOptional({ example: '노트북이 필요합니다.' })
-  declare preparationNotes: string | null;
+  @ApiProperty({ example: '노트북이 필요합니다.' })
+  declare preparationNotes: string;
 
   @ApiProperty({ example: '작업 착수 전 전액 환불…' })
   declare refundPolicy: string;

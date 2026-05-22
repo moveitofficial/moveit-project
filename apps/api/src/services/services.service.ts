@@ -43,7 +43,7 @@ export class ServicesService {
       serviceScope: dto.serviceScope,
       servicePrice: dto.servicePrice,
       description: dto.description,
-      preparationNotes: dto.preparationNotes ?? null,
+      preparationNotes: dto.preparationNotes,
       refundPolicy: dto.refundPolicy,
       status: ServiceStatus.ACTIVE,
       serviceGroupId: dto.serviceGroupId,
