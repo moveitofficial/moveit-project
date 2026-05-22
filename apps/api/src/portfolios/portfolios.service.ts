@@ -6,6 +6,7 @@ import {
   PORTFOLIO_ERRORS,
 } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
+import { toListResponse } from '../common/utils/list-response.util';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
 
 import { PortfoliosRepository } from './portfolios.repository';
@@ -68,10 +69,7 @@ export class PortfoliosService {
         expertProfileId,
       );
 
-    return {
-      count: portfolios.length,
-      items: portfolios.map((portfolio) => mapPortfolioListItem(portfolio)),
-    };
+    return toListResponse(portfolios.map((p) => mapPortfolioListItem(p)));
   }
 
   async findOneById(id: string) {
