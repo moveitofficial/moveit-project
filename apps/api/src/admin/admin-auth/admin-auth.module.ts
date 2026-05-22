@@ -1,15 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 
 import { AdminAccountModule } from '../admin-account/admin-account.module';
 
 import { AdminAuthController } from './admin-auth.controller';
 import { AdminAuthService } from './admin-auth.service';
+import { AdminJwtAccessStrategy } from './jwt/admin-jwt-access.strategy';
 
 @Module({
   imports: [
     AdminAccountModule,
+    PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -19,6 +22,6 @@ import { AdminAuthService } from './admin-auth.service';
     }),
   ],
   controllers: [AdminAuthController],
-  providers: [AdminAuthService],
+  providers: [AdminAuthService, AdminJwtAccessStrategy],
 })
 export class AdminAuthModule {}
