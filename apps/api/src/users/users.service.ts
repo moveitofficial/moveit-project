@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AuthProvider, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
-import {
-  EXPERT_ERRORS,
-  PORTFOLIO_ERRORS,
-  USER_ERRORS,
-} from '../common/constants/errors';
+import { EXPERT_ERRORS, USER_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { mapServiceCategories } from '../common/utils/service-category.util';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
@@ -73,10 +69,6 @@ export class UsersService {
     const user = await this.usersRepository.findById(userId);
 
     if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
-
-    if (user.role !== Role.EXPERT) {
-      throw new AppException(PORTFOLIO_ERRORS.NOT_EXPERT);
-    }
 
     const expertProfile =
       await this.expertProfilesRepository.findByUserId(userId);
