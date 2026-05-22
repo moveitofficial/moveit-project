@@ -41,6 +41,11 @@ class ServiceFaqResponseDto {
   declare answer: string;
 }
 
+class ServiceTechStackResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare techStackId: string;
+}
+
 class ServiceCategoryRefResponseDto {
   @ApiProperty({
     enum: ServiceGroupName,
@@ -98,8 +103,8 @@ export class ServiceResponseDto {
   @ApiProperty({ type: [ServiceFaqResponseDto] })
   declare faqs: ServiceFaqResponseDto[];
 
-  @ApiProperty({ type: [String], description: '기술 스택 UUID 배열' })
-  declare techStacks: { techStackId: string }[];
+  @ApiProperty({ type: [ServiceTechStackResponseDto] })
+  declare techStacks: ServiceTechStackResponseDto[];
 
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
   declare createdAt: Date;

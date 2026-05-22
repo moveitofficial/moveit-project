@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
+  ArrayUnique,
   IsArray,
   IsInt,
   IsNotEmpty,
@@ -167,10 +168,14 @@ export class CreateServiceRequestDto {
   @IsUUID()
   declare serviceCategoryId: string;
 
-  @ApiProperty({ description: '기술 스택 UUID 배열, 최소 1개 최대 3개' })
+  @ApiProperty({
+    description: '기술 스택 UUID 배열, 최소 1개 최대 3개',
+    example: ['09f0d304-4b2b-4e65-9fe3-119291377aa5'],
+  })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(3)
+  @ArrayUnique()
   @IsUUID('all', { each: true })
   declare techStackIds: string[];
 }

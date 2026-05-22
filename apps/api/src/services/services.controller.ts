@@ -96,7 +96,10 @@ export class ServicesController {
   @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    SERVICE_ERRORS.IMAGE_PARTIAL_UPDATE,
+  )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Patch(':id')
   update(
