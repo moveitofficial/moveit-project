@@ -10,7 +10,9 @@ import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import {
   mapService,
+  mapServiceDetail,
   mapServiceListItem,
+  type ServiceDetailResponse,
   type ServiceListItemResponse,
 } from './services.mapper';
 import { ServicesRepository } from './services.repository';
@@ -157,12 +159,42 @@ export class ServicesService {
     }
   }
 
-  async getServiceById(serviceId: string): Promise<ServiceResponse> {
-    const service = await this.servicesRepository.findById(serviceId);
+  async getServiceById(serviceId: string): Promise<ServiceDetailResponse> {
+    const service = await this.servicesRepository.findDetailById(serviceId);
     if (!service) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
     }
-    return mapService(service);
+
+    const [reviewPreview, statsMap, recommended] = await Promise.all([
+      this.servicesRepository.findReviewsPreview(serviceId, 4),
+      this.servicesRepository.getReviewStatsByServiceIds([serviceId]),
+      this.servicesRepository.findRecommended({
+        serviceCategoryId: service.serviceCategoryId,
+        excludeServiceId: serviceId,
+        take: 4,
+      }),
+    ]);
+
+    const stats = statsMap.get(serviceId) ?? { reviewCount: 0, rating: 0 };
+    const recommendedStatsMap =
+      await this.servicesRepository.getReviewStatsByServiceIds(
+        recommended.map((item) => item.id),
+      );
+
+    return mapServiceDetail(
+      service,
+      {
+        items: reviewPreview,
+        totalCount: stats.reviewCount,
+        averageRating: stats.rating,
+      },
+      recommended.map((item) =>
+        mapServiceListItem(
+          item,
+          recommendedStatsMap.get(item.id) ?? { reviewCount: 0, rating: 0 },
+        ),
+      ),
+    );
   }
 
   async createService(

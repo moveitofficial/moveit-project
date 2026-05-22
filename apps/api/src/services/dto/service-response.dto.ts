@@ -279,3 +279,134 @@ export class ServiceListPaginatedResponseDto {
   @ApiProperty({ type: PaginationResponseDto })
   declare pagination: PaginationResponseDto;
 }
+
+class ServiceDetailImageResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: 'https://picsum.photos/seed/svcdetail1/800/600' })
+  declare url: string;
+
+  @ApiProperty({ example: true })
+  declare isMain: boolean;
+}
+
+class ServiceDetailStepResponseDto {
+  @ApiProperty({ example: 1 })
+  declare order: number;
+
+  @ApiProperty({ example: '요구사항 분석' })
+  declare title: string;
+
+  @ApiProperty({ example: '클라이언트의 요구사항을 명확히 정리합니다.' })
+  declare description: string;
+}
+
+class ServiceDetailFaqResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty()
+  declare question: string;
+
+  @ApiProperty()
+  declare answer: string;
+}
+
+class ReviewerResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty()
+  declare name: string;
+
+  @ApiProperty({ nullable: true })
+  declare profileImageUrl: string | null;
+}
+
+class ReviewResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty()
+  declare rating: number;
+
+  @ApiProperty()
+  declare content: string;
+
+  @ApiProperty()
+  declare createdAt: string;
+
+  @ApiProperty({ type: ReviewerResponseDto })
+  declare reviewer: ReviewerResponseDto;
+}
+
+class ServiceDetailReviewsResponseDto {
+  @ApiProperty({ type: [ReviewResponseDto] })
+  declare items: ReviewResponseDto[];
+
+  @ApiProperty()
+  declare totalCount: number;
+
+  @ApiProperty()
+  declare averageRating: number;
+}
+
+export class ServiceDetailResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty()
+  declare title: string;
+
+  @ApiProperty()
+  declare workDuration: number;
+
+  @ApiProperty()
+  declare revisionCount: number;
+
+  @ApiProperty()
+  declare serviceScope: string;
+
+  @ApiProperty()
+  declare servicePrice: number;
+
+  @ApiProperty()
+  declare description: string;
+
+  @ApiProperty({ nullable: true })
+  declare preparationNotes: string | null;
+
+  @ApiProperty()
+  declare refundPolicy: string;
+
+  @ApiProperty({ enum: ServiceStatus })
+  declare status: ServiceStatus;
+
+  @ApiProperty({ type: ServiceCategoryRefResponseDto })
+  declare categoryRef: ServiceCategoryRefResponseDto;
+
+  @ApiProperty({ example: false })
+  declare isFavorite: boolean;
+
+  @ApiProperty({ type: ServiceListExpertResponseDto })
+  declare expert: ServiceListExpertResponseDto;
+
+  @ApiProperty({ type: [ServiceDetailImageResponseDto] })
+  declare images: ServiceDetailImageResponseDto[];
+
+  @ApiProperty({ enum: TechStackName, isArray: true })
+  declare techStacks: TechStackName[];
+
+  @ApiProperty({ type: [ServiceDetailStepResponseDto] })
+  declare steps: ServiceDetailStepResponseDto[];
+
+  @ApiProperty({ type: [ServiceDetailFaqResponseDto] })
+  declare faqs: ServiceDetailFaqResponseDto[];
+
+  @ApiProperty({ type: ServiceDetailReviewsResponseDto })
+  declare reviews: ServiceDetailReviewsResponseDto;
+
+  @ApiProperty({ type: [ServiceListItemResponseDto] })
+  declare recommendedServices: ServiceListItemResponseDto[];
+}

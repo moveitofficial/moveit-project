@@ -1,11 +1,27 @@
 import { mapServiceCategoryRef } from '../common/utils/service-category.util';
 
 import type {
+  ReviewWithUser,
+  ServiceDetail,
   ServiceListItem,
   ServiceResponse,
   ServiceReviewStats,
   ServiceWithRelations,
 } from './services.types';
+
+export function mapReview(review: ReviewWithUser) {
+  return {
+    id: review.id,
+    rating: review.rating,
+    content: review.content,
+    createdAt: review.createdAt.toISOString(),
+    reviewer: {
+      id: review.user.id,
+      name: review.user.name ?? '',
+      profileImageUrl: review.user.profileImageUrl,
+    },
+  };
+}
 
 export function mapServiceListItem(
   service: ServiceListItem,
@@ -45,6 +61,73 @@ export function mapServiceListItem(
 }
 
 export type ServiceListItemResponse = ReturnType<typeof mapServiceListItem>;
+
+export function mapServiceDetail(
+  service: ServiceDetail,
+  reviews: {
+    items: ReviewWithUser[];
+    totalCount: number;
+    averageRating: number;
+  },
+  recommendedServices: ServiceListItemResponse[],
+) {
+  const {
+    serviceGroup,
+    serviceCategory,
+    images,
+    steps,
+    faqs,
+    techStacks,
+    expertUser,
+    serviceGroupId: _serviceGroupId,
+    serviceCategoryId: _serviceCategoryId,
+    expertUserId: _expertUserId,
+    ...rest
+  } = service;
+
+  return {
+    id: rest.id,
+    title: rest.title,
+    workDuration: rest.workDuration,
+    revisionCount: rest.revisionCount,
+    serviceScope: rest.serviceScope,
+    servicePrice: rest.servicePrice,
+    description: rest.description,
+    preparationNotes: rest.preparationNotes,
+    refundPolicy: rest.refundPolicy,
+    status: rest.status,
+    categoryRef: mapServiceCategoryRef({ serviceGroup, serviceCategory }),
+    isFavorite: false,
+    expert: {
+      id: expertUser.id,
+      name: expertUser.name ?? '',
+      companyName:
+        expertUser.expertProfile?.businessName ?? expertUser.name ?? '',
+      profileImageUrl: expertUser.profileImageUrl,
+      region: expertUser.region,
+    },
+    images: images.map(({ id, imgUrl, isMain }) => ({
+      id,
+      url: imgUrl,
+      isMain,
+    })),
+    techStacks: techStacks.map(({ techStack }) => techStack.name),
+    steps: steps.map(({ order, title, description }) => ({
+      order,
+      title,
+      description,
+    })),
+    faqs,
+    reviews: {
+      items: reviews.items.map((review) => mapReview(review)),
+      totalCount: reviews.totalCount,
+      averageRating: reviews.averageRating,
+    },
+    recommendedServices,
+  };
+}
+
+export type ServiceDetailResponse = ReturnType<typeof mapServiceDetail>;
 
 export function mapService(service: ServiceWithRelations): ServiceResponse {
   const {

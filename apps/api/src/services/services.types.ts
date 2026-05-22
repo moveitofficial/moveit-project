@@ -71,3 +71,50 @@ export interface ServiceReviewStats {
   reviewCount: number;
   rating: number;
 }
+
+/** GET /services/:id 상세 조회 */
+export const serviceDetailInclude = {
+  images: {
+    select: { id: true, imgUrl: true, isMain: true },
+    orderBy: { isMain: 'desc' as const },
+  },
+  steps: {
+    select: { order: true, title: true, description: true },
+    orderBy: { order: 'asc' as const },
+  },
+  faqs: {
+    select: { id: true, question: true, answer: true },
+  },
+  techStacks: {
+    select: { techStack: { select: { name: true } } },
+  },
+  serviceGroup: { select: { name: true } },
+  serviceCategory: { select: { name: true } },
+  expertUser: {
+    select: {
+      id: true,
+      name: true,
+      profileImageUrl: true,
+      region: true,
+      expertProfile: { select: { businessName: true } },
+    },
+  },
+} satisfies Prisma.ServiceInclude;
+
+export type ServiceDetail = Prisma.ServiceGetPayload<{
+  include: typeof serviceDetailInclude;
+}>;
+
+export const reviewWithUserSelect = {
+  id: true,
+  rating: true,
+  content: true,
+  createdAt: true,
+  user: {
+    select: { id: true, name: true, profileImageUrl: true },
+  },
+} satisfies Prisma.ReviewSelect;
+
+export type ReviewWithUser = Prisma.ReviewGetPayload<{
+  select: typeof reviewWithUserSelect;
+}>;

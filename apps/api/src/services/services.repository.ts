@@ -1,10 +1,18 @@
 import { Injectable } from '@nestjs/common';
+import { ServiceStatus } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
-import { serviceInclude, serviceListInclude } from './services.types';
+import {
+  reviewWithUserSelect,
+  serviceDetailInclude,
+  serviceInclude,
+  serviceListInclude,
+} from './services.types';
 
 import type {
+  ReviewWithUser,
+  ServiceDetail,
   ServiceListItem,
   ServiceReviewStats,
   ServiceWithRelations,
@@ -25,6 +33,42 @@ export class ServicesRepository {
     return this.prisma.service.findUnique({
       where: { id },
       include: serviceInclude,
+    });
+  }
+
+  findDetailById(id: string): Promise<ServiceDetail | null> {
+    return this.prisma.service.findUnique({
+      where: { id },
+      include: serviceDetailInclude,
+    });
+  }
+
+  findReviewsPreview(
+    serviceId: string,
+    take: number,
+  ): Promise<ReviewWithUser[]> {
+    return this.prisma.review.findMany({
+      where: { order: { serviceId } },
+      select: reviewWithUserSelect,
+      orderBy: { createdAt: 'desc' },
+      take,
+    });
+  }
+
+  findRecommended(args: {
+    serviceCategoryId: string;
+    excludeServiceId: string;
+    take: number;
+  }): Promise<ServiceListItem[]> {
+    return this.prisma.service.findMany({
+      where: {
+        id: { not: args.excludeServiceId },
+        serviceCategoryId: args.serviceCategoryId,
+        status: ServiceStatus.ACTIVE,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: args.take,
+      include: serviceListInclude,
     });
   }
 

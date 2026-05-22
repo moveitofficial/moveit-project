@@ -23,6 +23,7 @@ import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
 
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import {
+  ServiceDetailResponseDto,
   ServiceListPaginatedResponseDto,
   ServiceListQueryDto,
   ServiceResponseDto,
@@ -47,7 +48,7 @@ export class ServicesController {
   }
 
   @ApiOperation({ summary: '서비스 상세 조회' })
-  @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, ServiceDetailResponseDto)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get(':id')
