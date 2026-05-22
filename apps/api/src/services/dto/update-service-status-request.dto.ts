@@ -9,5 +9,5 @@ export class UpdateServiceStatusRequestDto {
     description: '서비스 노출 상태 (ACTIVE / PAUSED)',
   })
   @IsIn([ServiceStatus.ACTIVE, ServiceStatus.PAUSED])
-  declare status: ServiceStatus;
+  declare status: Exclude<ServiceStatus, typeof ServiceStatus.CLOSED>;
 }
