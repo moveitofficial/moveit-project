@@ -13,9 +13,6 @@ class PortfolioImageResponseDto {
 }
 
 class PortfolioSkillResponseDto {
-  @ApiProperty({ format: 'uuid' })
-  declare id: string;
-
   @ApiProperty({ example: 'NEST' })
   declare stackName: string;
 
@@ -25,10 +22,6 @@ class PortfolioSkillResponseDto {
 
 class PortfolioCreateImageResponseDto extends OmitType(
   PortfolioImageResponseDto,
-  ['id'] as const,
-) {}
-class PortfolioCreateSkillResponseDto extends OmitType(
-  PortfolioSkillResponseDto,
   ['id'] as const,
 ) {}
 
@@ -73,8 +66,8 @@ export class PortfolioCreateResponseDto extends PortfolioBaseResponseDto {
   @ApiProperty({ type: [PortfolioCreateImageResponseDto] })
   declare images: PortfolioCreateImageResponseDto[];
 
-  @ApiProperty({ type: [PortfolioCreateSkillResponseDto] })
-  declare skills: PortfolioCreateSkillResponseDto[];
+  @ApiProperty({ type: [PortfolioSkillResponseDto] })
+  declare skills: PortfolioSkillResponseDto[];
 }
 
 export class PortfolioListItemResponseDto {
