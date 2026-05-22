@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceStatus, type Prisma } from '@prisma/client';
 
-import { COMMON_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
+import { SERVICE_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { toListResponse } from '../common/utils/list-response.util';
 
@@ -93,7 +93,7 @@ export class ServicesService {
     const isPartialImages =
       (dto.mainImageUrl !== undefined) !== (dto.images !== undefined);
     if (isPartialImages) {
-      throw new AppException(COMMON_ERRORS.VALIDATION_ERROR);
+      throw new AppException(SERVICE_ERRORS.IMAGE_PARTIAL_UPDATE);
     }
 
     const data: Prisma.ServiceUncheckedUpdateInput = {};

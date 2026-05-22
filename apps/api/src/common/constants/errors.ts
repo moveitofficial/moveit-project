@@ -110,6 +110,10 @@ export const SERVICE_ERRORS = {
     status: HttpStatus.FORBIDDEN,
     message: '본인이 등록한 서비스만 수정, 상태 변경 또는 종료할 수 있습니다.',
   },
+  IMAGE_PARTIAL_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '메인 이미지와 상세 이미지는 함께 수정해야 합니다.',
+  },
 } as const;
 
 export const ORDER_ERRORS = {
