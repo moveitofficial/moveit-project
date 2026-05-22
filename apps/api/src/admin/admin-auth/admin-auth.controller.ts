@@ -29,7 +29,7 @@ export class AdminAuthController {
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.OK)
   @Post('signin')
-  async login(
+  async signin(
     @Body() body: AdminSignInRequestDto,
     @Res({ passthrough: true }) res: Response,
   ) {
@@ -37,5 +37,14 @@ export class AdminAuthController {
       await this.adminAuthService.signIn(body);
     this.adminAuthService.setAuthCookies(res, accessToken, refreshToken);
     return { admin };
+  }
+
+  @ApiOperation({ summary: '관리자 로그아웃' })
+  @ApiSuccessResponse(HttpStatus.NO_CONTENT)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post('signout')
+  signout(@Res({ passthrough: true }) res: Response): void {
+    this.adminAuthService.clearAuthCookies(res);
   }
 }

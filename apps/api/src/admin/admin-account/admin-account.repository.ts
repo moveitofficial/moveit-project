@@ -11,4 +11,11 @@ export class AdminAccountRepository {
   findByEmail(email: string): Promise<Admin | null> {
     return this.prisma.admin.findUnique({ where: { email } });
   }
+
+  async updateLastLoginAt(id: string): Promise<void> {
+    await this.prisma.admin.update({
+      where: { id },
+      data: { lastLoginAt: new Date() },
+    });
+  }
 }

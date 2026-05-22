@@ -45,6 +45,8 @@ export class AdminAuthService {
       throw new AppException(AUTH_ERRORS.INVALID_CREDENTIALS);
     }
 
+    await this.adminAccountService.updateLastLoginAt(admin.id);
+
     const { accessToken, refreshToken } = this.#issueTokens(admin);
     return { admin: this.#toPublic(admin), accessToken, refreshToken };
   }
@@ -69,6 +71,18 @@ export class AdminAuthService {
       ...base,
       maxAge: ADMIN_REFRESH_MAX_AGE_MS,
     });
+  }
+
+  clearAuthCookies(res: Response): void {
+    const secure = this.config.get<string>('NODE_ENV') === 'production';
+    const base = {
+      httpOnly: true,
+      secure,
+      sameSite: 'lax' as const,
+      path: '/',
+    };
+    res.clearCookie(ADMIN_ACCESS_COOKIE_NAME, base);
+    res.clearCookie(ADMIN_REFRESH_COOKIE_NAME, base);
   }
 
   #issueTokens(admin: Admin) {
