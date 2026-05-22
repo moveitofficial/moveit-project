@@ -13,7 +13,7 @@ const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 export class UploadService {
   constructor(private readonly s3Service: S3Service) {}
 
-  // async uploadPortfolioImage(
+  // async uploadImage(
   //   file: Express.Multer.File | undefined,
   // ): Promise<{ key: string; url: string }> {
   //   if (!file) {
@@ -45,6 +45,7 @@ export class UploadService {
 
   async uploadPortfolioImages(
     files: Express.Multer.File[] | undefined,
+    portfolioId?: string,
   ): Promise<{ key: string; url: string }[]> {
     if (!files || files.length === 0) {
       throw new AppException(UPLOAD_ERRORS.FILE_NOT_ATTACHED);
