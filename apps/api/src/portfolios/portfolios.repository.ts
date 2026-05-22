@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BusinessSector, StackType, Portfolio } from '@prisma/client';
+import { BusinessSector, StackType } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -11,9 +11,10 @@ import type { PortfolioWithRelations } from './portfolios.types';
 export class PortfoliosRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findById(id: string): Promise<Portfolio | null> {
+  findById(id: string): Promise<PortfolioWithRelations | null> {
     return this.prisma.portfolio.findUnique({
       where: { id },
+      include: portfolioInclude,
     });
   }
 
