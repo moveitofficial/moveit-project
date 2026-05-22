@@ -67,6 +67,9 @@ export class ServicesService {
           answer: f.answer,
         })),
       },
+      techStacks: {
+        create: dto.techStackIds.map((id) => ({ techStackId: id })),
+      },
     });
     return mapService(service);
   }
@@ -137,6 +140,12 @@ export class ServicesService {
           question: f.question,
           answer: f.answer,
         })),
+      };
+    }
+    if (dto.techStackIds !== undefined) {
+      data.techStacks = {
+        deleteMany: {},
+        create: dto.techStackIds.map((id) => ({ techStackId: id })),
       };
     }
 

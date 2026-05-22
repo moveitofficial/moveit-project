@@ -166,4 +166,11 @@ export class CreateServiceRequestDto {
   })
   @IsUUID()
   declare serviceCategoryId: string;
+
+  @ApiProperty({ description: '기술 스택 UUID 배열, 최소 1개 최대 3개' })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(3)
+  @IsUUID('all', { each: true })
+  declare techStackIds: string[];
 }

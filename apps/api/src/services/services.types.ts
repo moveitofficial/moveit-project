@@ -14,6 +14,9 @@ export const serviceInclude = {
   faqs: {
     select: { id: true, question: true, answer: true },
   },
+  techStacks: {
+    select: { techStackId: true },
+  },
   serviceGroup: {
     select: { name: true },
   },

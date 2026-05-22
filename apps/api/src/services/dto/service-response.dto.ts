@@ -98,6 +98,9 @@ export class ServiceResponseDto {
   @ApiProperty({ type: [ServiceFaqResponseDto] })
   declare faqs: ServiceFaqResponseDto[];
 
+  @ApiProperty({ type: [String], description: '기술 스택 UUID 배열' })
+  declare techStacks: { techStackId: string }[];
+
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
   declare createdAt: Date;
 
