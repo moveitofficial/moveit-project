@@ -213,6 +213,11 @@ export const PORTFOLIO_ERRORS = {
       '디자인, 프론트엔드, 백엔드 각 기술 유형별로 최소 1개씩 입력해 주세요.',
     code: 'PORTFOLIO_MISSING_STACK_TYPE',
   },
+  NOT_EXPERT: {
+    status: HttpStatus.UNAUTHORIZED,
+    message: '전문가만 포트폴리오를 등록할 수 있습니다.',
+    code: 'PORTFOLIO_NOT_EXPERT',
+  },
 } as const;
 
 export const EXPERT_ERRORS = {

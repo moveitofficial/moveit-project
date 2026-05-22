@@ -69,3 +69,25 @@ export class PortfolioCreateResponseDto extends PortfolioBaseResponseDto {
   @ApiProperty({ type: [PortfolioSkillResponseDto] })
   declare skills: PortfolioSkillResponseDto[];
 }
+
+export class PortfolioListItemResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: '우리 동네 제휴 멤버십 서비스' })
+  declare title: string;
+
+  @ApiProperty({
+    nullable: true,
+    example: 'https://img_example.url',
+  })
+  declare thumbnailUrl: string | null;
+}
+
+export class PortfolioListResponseDto {
+  @ApiProperty({ example: 5 })
+  declare count: number;
+
+  @ApiProperty({ type: [PortfolioListItemResponseDto] })
+  declare items: PortfolioListItemResponseDto[];
+}
