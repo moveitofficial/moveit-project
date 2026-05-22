@@ -196,6 +196,21 @@ export interface AdminManager {
   createdAt: string;
 }
 
+export type PendingTaskType = 'EXPERT_APPROVAL' | 'REPORT' | 'CS' | 'SETTLEMENT';
+export type ActivityType =
+  | 'EXPERT_APPROVED'
+  | 'EXPERT_REJECTED'
+  | 'MAIN_UPDATED'
+  | 'FAQ_CREATED'
+  | 'FAQ_UPDATED'
+  | 'FAQ_DELETED'
+  | 'BLACKLIST_ADDED'
+  | 'BLACKLIST_REMOVED'
+  | 'REFUND_APPROVED'
+  | 'CANCEL_APPROVED'
+  | 'CS_ASSIGNED'
+  | 'CS_CLOSED';
+
 export interface AdminDashboard {
   summary: {
     pendingExpertCount: number;
@@ -203,8 +218,8 @@ export interface AdminDashboard {
     pendingSettlementCount: number;
     activeOrderCount: number;
   };
-  pendingTasks: { type: string; title: string; createdAt: string }[];
-  recentActivities: { type: string; message: string; createdAt: string }[];
+  pendingTasks: { type: PendingTaskType; title: string; requester: string; createdAt: string }[];
+  recentActivities: { type: ActivityType; message: string; adminName: string; createdAt: string }[];
 }
 
 export interface SalesStatistics {
