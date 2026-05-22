@@ -531,7 +531,7 @@ model Service {
   serviceScope      String        @map("service_scope")
   servicePrice      Int           @map("service_price")
   description       String
-  preparationNotes  String?       @map("preparation_notes")
+  preparationNotes  String        @map("preparation_notes")
   refundPolicy      String        @map("refund_policy")
   status            ServiceStatus
   serviceGroupId    String        @map("service_group_id") @db.Uuid

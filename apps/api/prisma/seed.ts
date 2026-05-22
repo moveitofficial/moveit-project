@@ -543,6 +543,8 @@ class Seeder {
             serviceScope: faker.lorem.sentence(),
             servicePrice: rand(500_000, 5_000_000),
             description: faker.lorem.paragraphs(3),
+            preparationNotes:
+              '작업 시작 전 기획서와 참고 자료를 준비해 주세요.',
             refundPolicy:
               '작업 시작 전 100% 환불, 작업 중 50% 환불, 작업 완료 후 환불 불가',
             status: pick(statuses),

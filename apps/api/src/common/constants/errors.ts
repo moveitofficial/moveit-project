@@ -103,8 +103,16 @@ export const SERVICE_ERRORS = {
     message: '이용할 수 없는 서비스입니다.',
   },
   ALREADY_DELETED: {
-    status: HttpStatus.BAD_REQUEST,
+    status: HttpStatus.CONFLICT,
     message: '이미 삭제된 서비스입니다.',
+  },
+  FORBIDDEN_NOT_OWNER: {
+    status: HttpStatus.FORBIDDEN,
+    message: '본인이 등록한 서비스만 수정, 상태 변경 또는 종료할 수 있습니다.',
+  },
+  IMAGE_PARTIAL_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '메인 이미지와 상세 이미지는 함께 수정해야 합니다.',
   },
 } as const;
 
@@ -212,6 +220,11 @@ export const PORTFOLIO_ERRORS = {
     message:
       '디자인, 프론트엔드, 백엔드 각 기술 유형별로 최소 1개씩 입력해 주세요.',
     code: 'PORTFOLIO_MISSING_STACK_TYPE',
+  },
+  NOT_EXPERT: {
+    status: HttpStatus.UNAUTHORIZED,
+    message: '전문가만 포트폴리오를 등록할 수 있습니다.',
+    code: 'PORTFOLIO_NOT_EXPERT',
   },
 } as const;
 
