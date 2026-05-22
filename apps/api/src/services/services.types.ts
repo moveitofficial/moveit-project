@@ -5,11 +5,21 @@ import type {
 } from '@prisma/client';
 
 export const serviceInclude = {
-  images: true,
-  steps: true,
-  faqs: true,
-  serviceGroup: { select: { name: true } },
-  serviceCategory: { select: { name: true } },
+  images: {
+    select: { id: true, imgUrl: true, isMain: true },
+  },
+  steps: {
+    select: { id: true, order: true, title: true, description: true },
+  },
+  faqs: {
+    select: { id: true, question: true, answer: true },
+  },
+  serviceGroup: {
+    select: { name: true },
+  },
+  serviceCategory: {
+    select: { name: true },
+  },
 } satisfies Prisma.ServiceInclude;
 
 export type ServiceWithRelations = Prisma.ServiceGetPayload<{
