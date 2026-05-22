@@ -13,4 +13,8 @@ export class AdminAccountService {
   getAdminByEmail(email: string): Promise<Admin | null> {
     return this.adminAccountRepository.findByEmail(email);
   }
+
+  updateLastLoginAt(id: string): Promise<void> {
+    return this.adminAccountRepository.updateLastLoginAt(id);
+  }
 }
