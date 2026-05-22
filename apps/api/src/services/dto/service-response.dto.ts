@@ -1,9 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  Region,
   ServiceCategoryName,
   ServiceGroupName,
   ServiceStatus,
+  TechStackName,
 } from '@prisma/client';
+import { Transform, Type } from 'class-transformer';
+import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 class ServiceImageResponseDto {
   @ApiProperty({ format: 'uuid' })
@@ -113,10 +119,163 @@ export class ServiceResponseDto {
   declare updatedAt: Date;
 }
 
-export class ServiceListDataDto {
-  @ApiProperty()
-  declare count: number;
+/** GET /services — api-spec-web.md §5 sort */
+export const SERVICE_LIST_SORT = [
+  'latest',
+  'popular',
+  'price_asc',
+  'price_desc',
+  'rating',
+] as const;
 
-  @ApiProperty({ type: [ServiceResponseDto] })
-  declare items: ServiceResponseDto[];
+export type ServiceListSort = (typeof SERVICE_LIST_SORT)[number];
+
+export class ServiceListQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({
+    enum: ServiceGroupName,
+    example: ServiceGroupName.IT_COACHING,
+  })
+  @IsOptional()
+  @IsEnum(ServiceGroupName)
+  declare group: ServiceGroupName | undefined;
+
+  @ApiPropertyOptional({
+    enum: ServiceCategoryName,
+    example: ServiceCategoryName.WEB,
+  })
+  @IsOptional()
+  @IsEnum(ServiceCategoryName)
+  declare category: ServiceCategoryName | undefined;
+
+  @ApiPropertyOptional({ enum: Region, example: Region.SEOUL })
+  @IsOptional()
+  @IsEnum(Region)
+  declare region: Region | undefined;
+
+  @ApiPropertyOptional({ example: 100_000 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  declare priceMin: number | undefined;
+
+  @ApiPropertyOptional({ example: 500_000 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  declare priceMax: number | undefined;
+
+  @ApiPropertyOptional({
+    description: 'TechStackName CSV',
+    example: 'REACT,TYPESCRIPT',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' && value.length > 0
+      ? value.split(',').map((s) => s.trim())
+      : undefined,
+  )
+  @IsEnum(TechStackName, { each: true })
+  declare techStacks: TechStackName[] | undefined;
+
+  @ApiPropertyOptional({
+    enum: SERVICE_LIST_SORT,
+    example: 'popular',
+  })
+  @IsOptional()
+  @IsEnum(SERVICE_LIST_SORT)
+  declare sort: ServiceListSort | undefined;
+
+  @ApiPropertyOptional({ maximum: 50 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  declare pageSize: number | undefined;
+}
+
+class ServiceListExpertResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: '코드잇 에이전시' })
+  declare name: string;
+
+  @ApiProperty({ example: '코드잇 에이전시' })
+  declare companyName: string;
+
+  @ApiProperty({ nullable: true })
+  declare profileImageUrl: string | null;
+
+  @ApiProperty({ enum: Region, nullable: true, example: Region.SEOUL })
+  declare region: Region | null;
+}
+
+export class ServiceListItemResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: '안드로이드 / iOS 앱 개발' })
+  declare title: string;
+
+  @ApiProperty({ example: 380_000 })
+  declare servicePrice: number;
+
+  @ApiProperty({ example: 30 })
+  declare workDuration: number;
+
+  @ApiProperty({ example: 3 })
+  declare revisionCount: number;
+
+  @ApiProperty({ example: 'https://...' })
+  declare thumbnailUrl: string;
+
+  @ApiProperty({ enum: ServiceStatus })
+  declare status: ServiceStatus;
+
+  @ApiProperty({ type: ServiceListExpertResponseDto })
+  declare expert: ServiceListExpertResponseDto;
+
+  @ApiProperty({ type: ServiceCategoryRefResponseDto })
+  declare categoryRef: ServiceCategoryRefResponseDto;
+
+  @ApiProperty({
+    enum: TechStackName,
+    isArray: true,
+    example: [TechStackName.REACT],
+  })
+  declare techStacks: TechStackName[];
+
+  @ApiProperty({ example: 4.9 })
+  declare rating: number;
+
+  @ApiProperty({ example: 328 })
+  declare reviewCount: number;
+
+  @ApiProperty({ example: false })
+  declare isFavorite: boolean;
+}
+
+class PaginationResponseDto {
+  @ApiProperty({ example: 1 })
+  declare page: number;
+
+  @ApiProperty({ example: 20 })
+  declare pageSize: number;
+
+  @ApiProperty({ example: 125 })
+  declare totalCount: number;
+
+  @ApiProperty({ example: true })
+  declare hasNext: boolean;
+}
+
+export class ServiceListPaginatedResponseDto {
+  @ApiProperty({ type: [ServiceListItemResponseDto] })
+  declare items: ServiceListItemResponseDto[];
+
+  @ApiProperty({ type: PaginationResponseDto })
+  declare pagination: PaginationResponseDto;
 }

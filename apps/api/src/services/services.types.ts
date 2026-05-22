@@ -4,6 +4,7 @@ import type {
   ServiceGroupName,
 } from '@prisma/client';
 
+/** CRUD · 상세 */
 export const serviceInclude = {
   images: {
     select: { id: true, imgUrl: true, isMain: true },
@@ -38,3 +39,35 @@ export type ServiceResponse = Omit<
     category: ServiceCategoryName;
   };
 };
+
+/** GET /services 목록 조회 */
+export const serviceListInclude = {
+  images: {
+    where: { isMain: true },
+    take: 1,
+    select: { imgUrl: true },
+  },
+  serviceGroup: { select: { name: true } },
+  serviceCategory: { select: { name: true } },
+  expertUser: {
+    select: {
+      id: true,
+      name: true,
+      profileImageUrl: true,
+      region: true,
+      expertProfile: { select: { businessName: true } },
+    },
+  },
+  techStacks: {
+    select: { techStack: { select: { name: true } } },
+  },
+} satisfies Prisma.ServiceInclude;
+
+export type ServiceListItem = Prisma.ServiceGetPayload<{
+  include: typeof serviceListInclude;
+}>;
+
+export interface ServiceReviewStats {
+  reviewCount: number;
+  rating: number;
+}

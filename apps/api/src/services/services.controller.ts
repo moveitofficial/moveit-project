@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -22,7 +23,8 @@ import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
 
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import {
-  ServiceListDataDto,
+  ServiceListPaginatedResponseDto,
+  ServiceListQueryDto,
   ServiceResponseDto,
 } from './dto/service-response.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
@@ -37,11 +39,11 @@ export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @ApiOperation({ summary: '서비스 목록 조회' })
-  @ApiSuccessResponse(HttpStatus.OK, ServiceListDataDto)
+  @ApiSuccessResponse(HttpStatus.OK, ServiceListPaginatedResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get()
-  findAll() {
-    return this.servicesService.getServices();
+  findAll(@Query() query: ServiceListQueryDto) {
+    return this.servicesService.getServices(query);
   }
 
   @ApiOperation({ summary: '서비스 상세 조회' })
