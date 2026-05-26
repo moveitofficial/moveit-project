@@ -228,6 +228,19 @@ export const PORTFOLIO_ERRORS = {
   },
 } as const;
 
+export const REVIEW_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '존재하지 않는 리뷰입니다.',
+    code: 'REVIEW_NOT_FOUND',
+  },
+  ALREADY_EXISTS: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 리뷰를 작성한 주문입니다.',
+    code: 'REVIEW_ALREADY_EXISTS',
+  },
+};
+
 export const UPLOAD_ERRORS = {
   FILE_NOT_ATTACHED: {
     status: HttpStatus.BAD_REQUEST,
