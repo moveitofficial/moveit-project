@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Req,
 } from '@nestjs/common';
@@ -12,16 +13,18 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
-import {
-  COMMON_ERRORS,
-  EXPERT_PROFILE_ERRORS,
-  PORTFOLIO_ERRORS,
-} from '../common/constants/errors';
+import { COMMON_ERRORS, PORTFOLIO_ERRORS } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
-import { PortfolioRequestDto } from '../portfolios/dto/portfolio-request.dto';
-import { PortfolioCreateResponseDto } from '../portfolios/dto/portfolio-response.dto';
+import {
+  PortfolioRequestDto,
+  PortfolioUpdateDto,
+} from '../portfolios/dto/portfolio-request.dto';
+import {
+  PortfolioCreateResponseDto,
+  PortfolioResponseDto,
+} from '../portfolios/dto/portfolio-response.dto';
 import { PortfoliosService } from '../portfolios/portfolios.service';
 
 import type { Request } from 'express';
@@ -40,7 +43,6 @@ export class MePortfoliosController {
     PORTFOLIO_ERRORS.DETAIL_IMAGE_INVALID,
     PORTFOLIO_ERRORS.MISSING_STACK_TYPE,
   )
-  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Post()
   create(@Req() req: Request, @Body() dto: PortfolioRequestDto) {
@@ -48,9 +50,33 @@ export class MePortfoliosController {
     return this.portfoliosService.create(user.userId, dto);
   }
 
+  @ApiOperation({ summary: '포트폴리오 수정' })
+  @RoleAuth(Role.EXPERT)
+  @ApiSuccessResponse(HttpStatus.OK, PortfolioResponseDto)
+  @ApiErrorResponse(PORTFOLIO_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    PORTFOLIO_ERRORS.MAIN_IMAGE_REQUIRED,
+    PORTFOLIO_ERRORS.DETAIL_IMAGE_INVALID,
+    PORTFOLIO_ERRORS.MISSING_STACK_TYPE,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Patch(':id')
+  patch(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() dto: PortfolioUpdateDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.portfoliosService.update(id, user.userId, dto);
+  }
+
   @ApiOperation({ summary: '포트폴리오 삭제' })
   @RoleAuth(Role.EXPERT)
-  @ApiErrorResponse(PORTFOLIO_ERRORS.NOT_FOUND, PORTFOLIO_ERRORS.FORBIDDEN)
+  @ApiSuccessResponse(HttpStatus.NO_CONTENT)
+  @ApiErrorResponse(PORTFOLIO_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
