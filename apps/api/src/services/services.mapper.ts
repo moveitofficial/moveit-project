@@ -1,27 +1,12 @@
 import { mapServiceCategoryRef } from '../common/utils/service-category.util';
 
 import type {
-  ReviewWithUser,
   ServiceDetail,
   ServiceListItem,
   ServiceResponse,
   ServiceReviewStats,
   ServiceWithRelations,
 } from './services.types';
-
-export function mapReview(review: ReviewWithUser) {
-  return {
-    id: review.id,
-    rating: review.rating,
-    content: review.content,
-    createdAt: review.createdAt.toISOString(),
-    reviewer: {
-      id: review.user.id,
-      name: review.user.name ?? '',
-      profileImageUrl: review.user.profileImageUrl,
-    },
-  };
-}
 
 export function mapServiceListItem(
   service: ServiceListItem,
@@ -62,14 +47,7 @@ export function mapServiceListItem(
 
 export type ServiceListItemResponse = ReturnType<typeof mapServiceListItem>;
 
-export function mapServiceDetail(
-  service: ServiceDetail,
-  reviews: {
-    items: ReviewWithUser[];
-    totalCount: number;
-    averageRating: number;
-  },
-) {
+export function mapServiceDetail(service: ServiceDetail) {
   const {
     serviceGroup,
     serviceCategory,
@@ -113,11 +91,6 @@ export function mapServiceDetail(
       description,
     })),
     faqs,
-    reviews: {
-      items: reviews.items.map((review) => mapReview(review)),
-      totalCount: reviews.totalCount,
-      averageRating: reviews.averageRating,
-    },
   };
 }
 

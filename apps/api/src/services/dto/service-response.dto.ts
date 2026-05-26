@@ -302,45 +302,6 @@ class ServiceDetailFaqResponseDto {
   declare answer: string;
 }
 
-class ReviewerResponseDto {
-  @ApiProperty({ format: 'uuid' })
-  declare id: string;
-
-  @ApiProperty()
-  declare name: string;
-
-  @ApiProperty({ nullable: true })
-  declare profileImageUrl: string | null;
-}
-
-class ReviewResponseDto {
-  @ApiProperty({ format: 'uuid' })
-  declare id: string;
-
-  @ApiProperty()
-  declare rating: number;
-
-  @ApiProperty()
-  declare content: string;
-
-  @ApiProperty()
-  declare createdAt: string;
-
-  @ApiProperty({ type: ReviewerResponseDto })
-  declare reviewer: ReviewerResponseDto;
-}
-
-class ServiceDetailReviewsResponseDto {
-  @ApiProperty({ type: [ReviewResponseDto] })
-  declare items: ReviewResponseDto[];
-
-  @ApiProperty()
-  declare totalCount: number;
-
-  @ApiProperty()
-  declare averageRating: number;
-}
-
 export class ServiceDetailResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
@@ -392,7 +353,4 @@ export class ServiceDetailResponseDto {
 
   @ApiProperty({ type: [ServiceDetailFaqResponseDto] })
   declare faqs: ServiceDetailFaqResponseDto[];
-
-  @ApiProperty({ type: ServiceDetailReviewsResponseDto })
-  declare reviews: ServiceDetailReviewsResponseDto;
 }

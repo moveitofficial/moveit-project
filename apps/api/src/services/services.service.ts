@@ -165,18 +165,7 @@ export class ServicesService {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
     }
 
-    const [reviewPreview, statsMap] = await Promise.all([
-      this.servicesRepository.findReviewsPreview(serviceId, 4),
-      this.servicesRepository.getReviewStatsByServiceIds([serviceId]),
-    ]);
-
-    const stats = statsMap.get(serviceId) ?? { reviewCount: 0, rating: 0 };
-
-    return mapServiceDetail(service, {
-      items: reviewPreview,
-      totalCount: stats.reviewCount,
-      averageRating: stats.rating,
-    });
+    return mapServiceDetail(service);
   }
 
   async createService(
