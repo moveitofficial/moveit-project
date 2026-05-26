@@ -1,4 +1,13 @@
-import { Body, Controller, HttpStatus, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
@@ -37,5 +46,16 @@ export class MePortfoliosController {
   create(@Req() req: Request, @Body() dto: PortfolioRequestDto) {
     const user = req.user as JwtAccessUser;
     return this.portfoliosService.create(user.userId, dto);
+  }
+
+  @ApiOperation({ summary: '포트폴리오 삭제' })
+  @RoleAuth(Role.EXPERT)
+  @ApiErrorResponse(PORTFOLIO_ERRORS.NOT_FOUND, PORTFOLIO_ERRORS.FORBIDDEN)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':id')
+  delete(@Req() req: Request, @Param('id') id: string) {
+    const user = req.user as JwtAccessUser;
+    return this.portfoliosService.delete(id, user.userId);
   }
 }

@@ -8,6 +8,7 @@ import {
 import { AppException } from '../common/exceptions/app.exception';
 import { toListResponse } from '../common/utils/list-response.util';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
+import { UploadService } from '../upload/upload.service';
 
 import { PortfoliosRepository } from './portfolios.repository';
 
@@ -61,6 +62,7 @@ export class PortfoliosService {
   constructor(
     private readonly portfoliosRepository: PortfoliosRepository,
     private readonly expertProfilesRepository: ExpertProfilesRepository,
+    private readonly uploadService: UploadService,
   ) {}
 
   async findManyByExpertProfileId(expertProfileId: string) {
@@ -117,5 +119,24 @@ export class PortfoliosService {
     });
 
     return mapPortfolioCreate(portfolio);
+  }
+
+  async delete(portfolioId: string, userId: string): Promise<void> {
+    const portfolio = await this.portfoliosRepository.findById(portfolioId);
+    if (!portfolio) {
+      throw new AppException(PORTFOLIO_ERRORS.NOT_FOUND);
+    }
+
+    const expertProfile =
+      await this.expertProfilesRepository.findByUserId(userId);
+    if (expertProfile?.id !== portfolio.expertProfileId) {
+      throw new AppException(PORTFOLIO_ERRORS.FORBIDDEN);
+    }
+
+    const keys = portfolio.images.map((img) =>
+      new URL(img.imgUrl).pathname.slice(1),
+    );
+    await this.uploadService.deletePortfolioImages(keys);
+    await this.portfoliosRepository.deleteById(portfolioId);
   }
 }

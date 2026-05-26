@@ -59,4 +59,8 @@ export class PortfoliosRepository {
       include: portfolioInclude,
     });
   }
+
+  async deleteById(id: string): Promise<void> {
+    await this.prisma.portfolio.delete({ where: { id } });
+  }
 }
