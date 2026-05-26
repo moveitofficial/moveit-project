@@ -120,7 +120,7 @@ export class ServicesService {
 
     return {
       status: ServiceStatus.ACTIVE,
-      ...(query.group ? { serviceGroup: { name: query.group } } : {}),
+      serviceGroup: { name: query.group },
       ...(query.category ? { serviceCategory: { name: query.category } } : {}),
       ...(query.region ? { expertUser: { region: query.region } } : {}),
       ...(price ? { servicePrice: price } : {}),

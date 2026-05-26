@@ -7,7 +7,7 @@ import {
   TechStackName,
 } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
 
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
@@ -131,11 +131,10 @@ export const SERVICE_LIST_SORT = [
 export type ServiceListSort = (typeof SERVICE_LIST_SORT)[number];
 
 export class ServiceListQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional({
+  @ApiProperty({
     enum: ServiceGroupName,
     example: ServiceGroupName.IT_COACHING,
   })
-  @IsOptional()
   @IsEnum(ServiceGroupName)
   declare group: ServiceGroupName | undefined;
 
@@ -178,6 +177,11 @@ export class ServiceListQueryDto extends PaginationQueryDto {
   )
   @IsEnum(TechStackName, { each: true })
   declare techStacks: TechStackName[] | undefined;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  declare expertUserId: string | undefined;
 
   @ApiPropertyOptional({
     enum: SERVICE_LIST_SORT,
