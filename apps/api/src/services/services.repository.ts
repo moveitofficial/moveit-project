@@ -69,6 +69,16 @@ export class ServicesRepository {
     });
   }
 
+  async isFavorite(clientUserId: string, serviceId: string): Promise<boolean> {
+    const row = await this.prisma.favoriteService.findUnique({
+      where: {
+        clientUserId_serviceId: { clientUserId, serviceId },
+      },
+      select: { id: true },
+    });
+    return row !== null;
+  }
+
   update(
     id: string,
     data: Prisma.ServiceUncheckedUpdateInput,

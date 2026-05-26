@@ -56,7 +56,6 @@ export function mapServiceListItem(
     categoryRef: mapServiceCategoryRef({ serviceGroup, serviceCategory }),
     rating: stats.rating,
     reviewCount: stats.reviewCount,
-    isFavorite: false,
     orderCount: service._count.orders,
     favoriteCount: service._count.favoriteServices,
   };
@@ -64,7 +63,7 @@ export function mapServiceListItem(
 
 export type ServiceListItemResponse = ReturnType<typeof mapServiceListItem>;
 
-export function mapServiceDetail(service: ServiceDetail) {
+export function mapServiceDetail(service: ServiceDetail, isFavorite: boolean) {
   const {
     serviceGroup,
     serviceCategory,
@@ -91,7 +90,7 @@ export function mapServiceDetail(service: ServiceDetail) {
     refundPolicy: rest.refundPolicy,
     status: rest.status,
     categoryRef: mapServiceCategoryRef({ serviceGroup, serviceCategory }),
-    isFavorite: false,
+    isFavorite,
     expert: {
       id: expertUser.id,
       name: expertUser.name ?? '',

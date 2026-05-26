@@ -169,13 +169,20 @@ export class ServicesService {
     }
   }
 
-  async getServiceById(serviceId: string): Promise<ServiceDetailResponse> {
+  async getServiceById(
+    serviceId: string,
+    userId?: string,
+  ): Promise<ServiceDetailResponse> {
     const service = await this.servicesRepository.findDetailById(serviceId);
     if (!service) {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
     }
 
-    return mapServiceDetail(service);
+    const isFavorite = userId
+      ? await this.servicesRepository.isFavorite(userId, serviceId)
+      : false;
+
+    return mapServiceDetail(service, isFavorite);
   }
 
   async getServiceReviews(serviceId: string, query: ServiceReviewsQueryDto) {

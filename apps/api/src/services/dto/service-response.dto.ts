@@ -274,9 +274,6 @@ export class ServiceListItemResponseDto {
   @ApiProperty({ example: 328 })
   declare reviewCount: number;
 
-  @ApiProperty({ example: false })
-  declare isFavorite: boolean;
-
   @ApiProperty({ example: 120 })
   declare orderCount: number;
 

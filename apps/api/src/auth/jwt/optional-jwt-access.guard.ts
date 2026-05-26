@@ -1,0 +1,31 @@
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { TokenExpiredError } from 'jsonwebtoken';
+
+import { AUTH_ERRORS } from '../../common/constants/errors';
+import { AppException } from '../../common/exceptions/app.exception';
+
+import type { JwtAccessUser } from './jwt-access.strategy';
+
+@Injectable()
+export class OptionalJwtAccessGuard extends AuthGuard('jwt-access') {
+  handleRequest(
+    err: Error | null,
+    user: JwtAccessUser | false,
+    info: Error | undefined,
+  ): JwtAccessUser | undefined {
+    if (err instanceof AppException) {
+      throw err;
+    }
+
+    if (info instanceof TokenExpiredError) {
+      throw new AppException(AUTH_ERRORS.TOKEN_EXPIRED);
+    }
+
+    if (err !== null) {
+      throw new AppException(AUTH_ERRORS.ACCESS_TOKEN_INVALID);
+    }
+
+    return user === false ? undefined : user;
+  }
+}

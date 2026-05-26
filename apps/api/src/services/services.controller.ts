@@ -19,7 +19,10 @@ import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import { COMMON_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
-import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
+import {
+  OptionalJwtAuth,
+  RoleAuth,
+} from '../common/decorators/jwt-auth.decorator';
 
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import {
@@ -63,13 +66,15 @@ export class ServicesController {
     return this.servicesService.getServiceReviews(serviceId, query);
   }
 
+  @OptionalJwtAuth()
   @ApiOperation({ summary: '서비스 상세 조회' })
   @ApiSuccessResponse(HttpStatus.OK, ServiceDetailResponseDto)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) serviceId: string) {
-    return this.servicesService.getServiceById(serviceId);
+  findOne(@Req() req: Request, @Param('id', ParseUUIDPipe) serviceId: string) {
+    const user = req.user as JwtAccessUser | undefined;
+    return this.servicesService.getServiceById(serviceId, user?.userId);
   }
 
   @ApiOperation({ summary: '전문가 서비스 등록' })

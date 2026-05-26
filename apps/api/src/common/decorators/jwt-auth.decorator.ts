@@ -2,6 +2,7 @@ import { applyDecorators, SetMetadata, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 import { JwtAccessGuard } from '../../auth/jwt/jwt-access.guard';
+import { OptionalJwtAccessGuard } from '../../auth/jwt/optional-jwt-access.guard';
 import { AUTH_ERRORS, COMMON_ERRORS, USER_ERRORS } from '../constants/errors';
 import { RolesGuard } from '../guards/roles.guard';
 import { errorResponseExample } from '../swagger/error-response-example';
@@ -38,6 +39,13 @@ export function JwtAuth(...additionalErrors: ErrorConstant[]) {
         ]),
       ),
     }),
+  );
+}
+
+export function OptionalJwtAuth() {
+  return applyDecorators(
+    UseGuards(OptionalJwtAccessGuard),
+    ApiCookieAuth('cookieAuth'),
   );
 }
 
