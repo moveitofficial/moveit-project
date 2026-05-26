@@ -2,6 +2,7 @@
 
 import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import * as styles from './Pagination.css';
 
@@ -10,7 +11,7 @@ const DEFAULT_MAX_VISIBLE_PAGES = 5;
 export interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  onPageChange: (page: number) => void;
+  onPageChange?: (page: number) => void;
   maxVisiblePages?: number;
   className?: string;
   ariaLabel?: string;
@@ -53,6 +54,17 @@ export default function Pagination({
   className,
   ariaLabel = '페이지네이션',
 }: PaginationProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handlePageChange =
+    onPageChange ??
+    ((page: number) => {
+      const next = new URLSearchParams(searchParams.toString());
+      next.set('page', String(page));
+      router.push(`?${next.toString()}`);
+    });
+
   const safeTotalPages = Math.max(1, totalPages);
   const safeCurrentPage = Math.min(Math.max(1, currentPage), safeTotalPages);
   const visiblePages = getVisiblePages(
@@ -75,7 +87,7 @@ export default function Pagination({
         disabled={isPrevDisabled}
         aria-label="이전 페이지"
         onClick={() => {
-          onPageChange(safeCurrentPage - 1);
+          handlePageChange(safeCurrentPage - 1);
         }}
       >
         <ChevronLeft size={12} strokeWidth={2.5} aria-hidden />
@@ -95,7 +107,7 @@ export default function Pagination({
             aria-current={isActive ? 'page' : undefined}
             aria-label={`${page}페이지`}
             onClick={() => {
-              onPageChange(page);
+              handlePageChange(page);
             }}
           >
             {page}
@@ -112,7 +124,7 @@ export default function Pagination({
         disabled={isNextDisabled}
         aria-label="다음 페이지"
         onClick={() => {
-          onPageChange(safeCurrentPage + 1);
+          handlePageChange(safeCurrentPage + 1);
         }}
       >
         <ChevronRight size={12} strokeWidth={2.5} aria-hidden />
