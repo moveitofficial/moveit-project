@@ -11,6 +11,7 @@ import { ClientProfilesModule } from './client-profiles/client-profiles.module';
 import { RolesGuard } from './common/guards/roles.guard';
 import { ExpertProfilesModule } from './expert-profiles/expert-profiles.module';
 import { HealthModule } from './health/health.module';
+import { MailerModule } from './mailer/mailer.module';
 import { PortfoliosModule } from './portfolios/portfolios.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { S3Module } from './s3/s3.module';
@@ -37,6 +38,7 @@ import { UsersModule } from './users/users.module';
     AdminModule,
     ExpertProfilesModule,
     PortfoliosModule,
+    MailerModule,
   ],
   controllers: [AppController],
   providers: [AppService, RolesGuard],
