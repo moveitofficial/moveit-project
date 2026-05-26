@@ -41,6 +41,7 @@ export class ServicesController {
 
   @ApiOperation({ summary: '서비스 목록 조회' })
   @ApiSuccessResponse(HttpStatus.OK, ServiceListPaginatedResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get()
   findAll(@Query() query: ServiceListQueryDto) {
