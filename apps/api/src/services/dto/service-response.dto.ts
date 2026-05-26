@@ -196,7 +196,7 @@ export class ServiceListQueryDto extends PaginationQueryDto {
   declare pageSize: number | undefined;
 }
 
-class ServiceListExpertResponseDto {
+class ServiceExpertSummaryResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
 
@@ -235,8 +235,8 @@ export class ServiceListItemResponseDto {
   @ApiProperty({ enum: ServiceStatus })
   declare status: ServiceStatus;
 
-  @ApiProperty({ type: ServiceListExpertResponseDto })
-  declare expert: ServiceListExpertResponseDto;
+  @ApiProperty({ type: ServiceExpertSummaryResponseDto })
+  declare expert: ServiceExpertSummaryResponseDto;
 
   @ApiProperty({ type: ServiceCategoryRefResponseDto })
   declare categoryRef: ServiceCategoryRefResponseDto;
@@ -378,8 +378,8 @@ export class ServiceDetailResponseDto {
   @ApiProperty({ example: false })
   declare isFavorite: boolean;
 
-  @ApiProperty({ type: ServiceListExpertResponseDto })
-  declare expert: ServiceListExpertResponseDto;
+  @ApiProperty({ type: ServiceExpertSummaryResponseDto })
+  declare expert: ServiceExpertSummaryResponseDto;
 
   @ApiProperty({ type: [ServiceImageResponseDto] })
   declare images: ServiceImageResponseDto[];
