@@ -45,7 +45,7 @@ export class UploadService {
 
   async uploadPortfolioImages(
     files: Express.Multer.File[] | undefined,
-    portfolioId?: string,
+    portfolioId: string,
   ): Promise<{ key: string; url: string }[]> {
     if (!files || files.length === 0) {
       throw new AppException(UPLOAD_ERRORS.FILE_NOT_ATTACHED);
@@ -72,7 +72,7 @@ export class UploadService {
 
         return this.s3Service.upload({
           buffer: file.buffer,
-          folder: 'portfolios',
+          folder: `portfolios/${portfolioId}`,
           contentType: file.mimetype,
           originalName: file.originalname,
         });
