@@ -8,6 +8,7 @@ import {
 } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsEnum,
   IsInt,
   IsOptional,
@@ -186,6 +187,7 @@ export class ServiceListQueryDto extends PaginationQueryDto {
       ? value.split(',').map((s) => s.trim())
       : undefined,
   )
+  @ArrayMaxSize(3)
   @IsEnum(TechStackName, { each: true })
   declare techStacks: TechStackName[] | undefined;
 
