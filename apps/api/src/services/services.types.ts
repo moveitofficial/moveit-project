@@ -130,3 +130,7 @@ export const reviewWithUserSelect = {
 export type ReviewWithUser = Prisma.ReviewGetPayload<{
   select: typeof reviewWithUserSelect;
 }>;
+
+export const SERVICE_REVIEW_SORT = ['latest', 'rating'] as const;
+
+export type ServiceReviewSort = (typeof SERVICE_REVIEW_SORT)[number];

@@ -9,6 +9,7 @@ import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import {
+  mapReview,
   mapService,
   mapServiceDetail,
   mapServiceListItem,
@@ -20,6 +21,7 @@ import { ServicesRepository } from './services.repository';
 import type {
   ServiceListQueryDto,
   ServiceListSort,
+  ServiceReviewsQueryDto,
 } from './dto/service-response.dto';
 import type {
   ServiceListItem,
@@ -174,6 +176,39 @@ export class ServicesService {
     }
 
     return mapServiceDetail(service);
+  }
+
+  async getServiceReviews(serviceId: string, query: ServiceReviewsQueryDto) {
+    const service = await this.servicesRepository.findById(serviceId);
+    if (!service) {
+      throw new AppException(SERVICE_ERRORS.NOT_FOUND);
+    }
+
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 5;
+    const sort = query.sort ?? 'latest';
+    const skip = (page - 1) * pageSize;
+
+    const [items, totalCount, statsMap] = await Promise.all([
+      this.servicesRepository.findReviews({
+        serviceId,
+        skip,
+        take: pageSize,
+        sort,
+      }),
+      this.servicesRepository.countReviews(serviceId),
+      this.servicesRepository.getReviewStatsByServiceIds([serviceId]),
+    ]);
+
+    const stats = statsMap.get(serviceId) ?? { reviewCount: 0, rating: 0 };
+
+    return {
+      ...toPaginatedResponse(
+        items.map((review) => mapReview(review)),
+        { page, pageSize, totalCount },
+      ),
+      averageRating: stats.rating,
+    };
   }
 
   async createService(

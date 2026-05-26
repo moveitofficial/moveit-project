@@ -18,6 +18,9 @@ import {
 } from 'class-validator';
 
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { SERVICE_REVIEW_SORT } from '../services.types';
+
+import type { ServiceReviewSort } from '../services.types';
 
 class ServiceImageResponseDto {
   @ApiProperty({ format: 'uuid' })
@@ -301,6 +304,60 @@ export class ServiceListPaginatedResponseDto {
 
   @ApiProperty({ type: PaginationResponseDto })
   declare pagination: PaginationResponseDto;
+}
+
+export class ServiceReviewsQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ enum: SERVICE_REVIEW_SORT, example: 'latest' })
+  @IsOptional()
+  @IsEnum(SERVICE_REVIEW_SORT)
+  declare sort: ServiceReviewSort | undefined;
+
+  @ApiPropertyOptional({ maximum: 50, default: 5 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  declare pageSize: number | undefined;
+}
+
+class ReviewerResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty()
+  declare name: string;
+
+  @ApiProperty({ nullable: true })
+  declare profileImageUrl: string | null;
+}
+
+class ReviewResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty()
+  declare rating: number;
+
+  @ApiProperty()
+  declare content: string;
+
+  @ApiProperty()
+  declare createdAt: string;
+
+  @ApiProperty({ type: ReviewerResponseDto })
+  declare reviewer: ReviewerResponseDto;
+}
+
+export class ServiceReviewsPaginatedResponseDto {
+  @ApiProperty({ type: [ReviewResponseDto] })
+  declare items: ReviewResponseDto[];
+
+  @ApiProperty({ type: PaginationResponseDto })
+  declare pagination: PaginationResponseDto;
+
+  @ApiProperty({ example: 4.9 })
+  declare averageRating: number;
 }
 
 class ServiceDetailStepResponseDto {

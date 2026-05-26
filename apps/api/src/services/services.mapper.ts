@@ -1,12 +1,27 @@
 import { mapServiceCategoryRef } from '../common/utils/service-category.util';
 
 import type {
+  ReviewWithUser,
   ServiceDetail,
   ServiceListItem,
   ServiceResponse,
   ServiceReviewStats,
   ServiceWithRelations,
 } from './services.types';
+
+export function mapReview(review: ReviewWithUser) {
+  return {
+    id: review.id,
+    rating: review.rating,
+    content: review.content,
+    createdAt: review.createdAt.toISOString(),
+    reviewer: {
+      id: review.user.id,
+      name: review.user.name ?? '',
+      profileImageUrl: review.user.profileImageUrl,
+    },
+  };
+}
 
 export function mapServiceListItem(
   service: ServiceListItem,

@@ -27,6 +27,8 @@ import {
   ServiceListPaginatedResponseDto,
   ServiceListQueryDto,
   ServiceResponseDto,
+  ServiceReviewsPaginatedResponseDto,
+  ServiceReviewsQueryDto,
 } from './dto/service-response.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
@@ -46,6 +48,19 @@ export class ServicesController {
   @Get()
   findAll(@Query() query: ServiceListQueryDto) {
     return this.servicesService.getServices(query);
+  }
+
+  @ApiOperation({ summary: '서비스 리뷰 목록 조회' })
+  @ApiSuccessResponse(HttpStatus.OK, ServiceReviewsPaginatedResponseDto)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get(':id/reviews')
+  findReviews(
+    @Param('id', ParseUUIDPipe) serviceId: string,
+    @Query() query: ServiceReviewsQueryDto,
+  ) {
+    return this.servicesService.getServiceReviews(serviceId, query);
   }
 
   @ApiOperation({ summary: '서비스 상세 조회' })

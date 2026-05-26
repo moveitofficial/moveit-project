@@ -13,6 +13,7 @@ import type {
   ReviewWithUser,
   ServiceDetail,
   ServiceListItem,
+  ServiceReviewSort,
   ServiceReviewStats,
   ServiceWithRelations,
 } from './services.types';
@@ -42,15 +43,29 @@ export class ServicesRepository {
     });
   }
 
-  findReviewsPreview(
-    serviceId: string,
-    take: number,
-  ): Promise<ReviewWithUser[]> {
+  findReviews(args: {
+    serviceId: string;
+    skip: number;
+    take: number;
+    sort: ServiceReviewSort;
+  }): Promise<ReviewWithUser[]> {
+    const orderBy =
+      args.sort === 'rating'
+        ? { rating: 'desc' as const }
+        : { createdAt: 'desc' as const };
+
     return this.prisma.review.findMany({
-      where: { order: { serviceId } },
+      where: { order: { serviceId: args.serviceId } },
       select: reviewWithUserSelect,
-      orderBy: { createdAt: 'desc' },
-      take,
+      orderBy,
+      skip: args.skip,
+      take: args.take,
+    });
+  }
+
+  countReviews(serviceId: string): Promise<number> {
+    return this.prisma.review.count({
+      where: { order: { serviceId } },
     });
   }
 
