@@ -31,6 +31,6 @@ export class CreateReviewRequestDto {
   @ApiProperty({ example: '리뷰 내용' })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(100)
+  @MaxLength(500)
   declare content: string;
 }
