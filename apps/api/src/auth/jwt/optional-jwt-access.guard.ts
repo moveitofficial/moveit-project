@@ -9,11 +9,11 @@ import type { JwtAccessUser } from './jwt-access.strategy';
 
 @Injectable()
 export class OptionalJwtAccessGuard extends AuthGuard('jwt-access') {
-  handleRequest(
+  handleRequest<TUser = JwtAccessUser>(
     err: Error | null,
-    user: JwtAccessUser | false,
+    user: TUser | false,
     info: Error | undefined,
-  ): JwtAccessUser | undefined {
+  ): TUser {
     if (err instanceof AppException) {
       throw err;
     }
@@ -26,6 +26,10 @@ export class OptionalJwtAccessGuard extends AuthGuard('jwt-access') {
       throw new AppException(AUTH_ERRORS.ACCESS_TOKEN_INVALID);
     }
 
-    return user === false ? undefined : user;
+    if (user === false) {
+      return undefined as TUser;
+    }
+
+    return user;
   }
 }
