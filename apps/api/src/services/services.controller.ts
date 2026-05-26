@@ -16,7 +16,12 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
-import { COMMON_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
+import {
+  COMMON_ERRORS,
+  ORDER_ERRORS,
+  REVIEW_ERRORS,
+  SERVICE_ERRORS,
+} from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import {
@@ -24,8 +29,10 @@ import {
   RoleAuth,
 } from '../common/decorators/jwt-auth.decorator';
 
+import { CreateReviewRequestDto } from './dto/create-review-request.dto';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import {
+  ReviewResponseDto,
   ServiceDetailResponseDto,
   ServiceListPaginatedResponseDto,
   ServiceListQueryDto,
@@ -33,6 +40,7 @@ import {
   ServiceReviewsPaginatedResponseDto,
   ServiceReviewsQueryDto,
 } from './dto/service-response.dto';
+import { UpdateReviewRequestDto } from './dto/update-review-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import { ServicesService } from './services.service';
@@ -64,6 +72,75 @@ export class ServicesController {
     @Query() query: ServiceReviewsQueryDto,
   ) {
     return this.servicesService.getServiceReviews(serviceId, query);
+  }
+
+  @ApiOperation({ summary: '서비스 리뷰 작성' })
+  @RoleAuth(Role.CLIENT)
+  @ApiSuccessResponse(HttpStatus.CREATED, ReviewResponseDto)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE)
+  @ApiErrorResponse(REVIEW_ERRORS.ORDER_SERVICE_MISMATCH)
+  @ApiErrorResponse(REVIEW_ERRORS.ALREADY_EXISTS)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.CREATED)
+  @Post(':id/reviews')
+  createReview(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) serviceId: string,
+    @Body() dto: CreateReviewRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.servicesService.createServiceReview(
+      user.userId,
+      serviceId,
+      dto,
+    );
+  }
+
+  @ApiOperation({ summary: '서비스 리뷰 수정' })
+  @RoleAuth(Role.CLIENT)
+  @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
+  @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Patch(':id/reviews/:reviewId')
+  patchReview(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) serviceId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+    @Body() dto: UpdateReviewRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.servicesService.updateServiceReview(
+      user.userId,
+      serviceId,
+      reviewId,
+      dto,
+    );
+  }
+
+  @ApiOperation({ summary: '서비스 리뷰 삭제' })
+  @RoleAuth(Role.CLIENT)
+  @ApiSuccessResponse(HttpStatus.NO_CONTENT, ReviewResponseDto)
+  @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':id/reviews/:reviewId')
+  deleteReview(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) serviceId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.servicesService.deleteServiceReview(
+      user.userId,
+      serviceId,
+      reviewId,
+    );
   }
 
   @OptionalJwtAuth()

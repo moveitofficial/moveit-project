@@ -90,7 +90,7 @@ export class ServicesRepository {
     reviewId: string,
     serviceId: string,
   ): Promise<ReviewWithUser | null> {
-    return this.prisma.review.findUnique({
+    return this.prisma.review.findFirst({
       where: {
         id: reviewId,
         order: { serviceId },
@@ -130,8 +130,8 @@ export class ServicesRepository {
     });
   }
 
-  deleteReview(reviewId: string): Promise<void> {
-    return this.prisma.review.delete({
+  async deleteReview(reviewId: string): Promise<void> {
+    await this.prisma.review.delete({
       where: { id: reviewId },
     });
   }
