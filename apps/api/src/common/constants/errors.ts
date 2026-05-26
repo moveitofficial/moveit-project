@@ -239,6 +239,14 @@ export const REVIEW_ERRORS = {
     message: '이미 리뷰를 작성한 주문입니다.',
     code: 'REVIEW_ALREADY_EXISTS',
   },
+  ORDER_NOT_REVIEWABLE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '리뷰를 작성할 수 없는 주문 상태입니다.',
+  },
+  ORDER_SERVICE_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '주문과 서비스가 일치하지 않습니다.',
+  },
 };
 
 export const UPLOAD_ERRORS = {
