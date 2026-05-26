@@ -374,8 +374,8 @@ export class ServiceDetailResponseDto {
   @ApiProperty()
   declare description: string;
 
-  @ApiProperty({ nullable: true })
-  declare preparationNotes: string | null;
+  @ApiProperty({ example: '노트북이 필요합니다.' })
+  declare preparationNotes: string;
 
   @ApiProperty()
   declare refundPolicy: string;
