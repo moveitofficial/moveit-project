@@ -106,11 +106,7 @@ export function mapServiceDetail(
       profileImageUrl: expertUser.profileImageUrl,
       region: expertUser.region,
     },
-    images: images.map(({ id, imgUrl, isMain }) => ({
-      id,
-      url: imgUrl,
-      isMain,
-    })),
+    images,
     techStacks: techStacks.map(({ techStack }) => techStack.name),
     steps: steps.map(({ order, title, description }) => ({
       order,

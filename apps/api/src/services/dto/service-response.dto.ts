@@ -280,17 +280,6 @@ export class ServiceListPaginatedResponseDto {
   declare pagination: PaginationResponseDto;
 }
 
-class ServiceDetailImageResponseDto {
-  @ApiProperty({ format: 'uuid' })
-  declare id: string;
-
-  @ApiProperty({ example: 'https://picsum.photos/seed/svcdetail1/800/600' })
-  declare url: string;
-
-  @ApiProperty({ example: true })
-  declare isMain: boolean;
-}
-
 class ServiceDetailStepResponseDto {
   @ApiProperty({ example: 1 })
   declare order: number;
@@ -392,8 +381,8 @@ export class ServiceDetailResponseDto {
   @ApiProperty({ type: ServiceListExpertResponseDto })
   declare expert: ServiceListExpertResponseDto;
 
-  @ApiProperty({ type: [ServiceDetailImageResponseDto] })
-  declare images: ServiceDetailImageResponseDto[];
+  @ApiProperty({ type: [ServiceImageResponseDto] })
+  declare images: ServiceImageResponseDto[];
 
   @ApiProperty({ enum: TechStackName, isArray: true })
   declare techStacks: TechStackName[];
