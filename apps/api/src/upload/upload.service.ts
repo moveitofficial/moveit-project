@@ -79,4 +79,8 @@ export class UploadService {
       }),
     );
   }
+
+  async deletePortfolioImages(keys: string[]): Promise<void> {
+    await Promise.all(keys.map((key) => this.s3Service.delete(key)));
+  }
 }
