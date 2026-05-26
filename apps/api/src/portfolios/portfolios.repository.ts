@@ -32,6 +32,7 @@ export class PortfoliosRepository {
   }
 
   create(data: {
+    id: string;
     expertProfileId: string;
     title: string;
     description: string;
@@ -42,6 +43,7 @@ export class PortfoliosRepository {
   }): Promise<PortfolioWithRelations> {
     return this.prisma.portfolio.create({
       data: {
+        id: data.id,
         expertProfileId: data.expertProfileId,
         title: data.title,
         description: data.description,

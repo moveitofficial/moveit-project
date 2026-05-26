@@ -7,6 +7,7 @@ import {
   IsEnum,
   IsString,
   IsUrl,
+  IsUUID,
   Length,
   ValidateNested,
 } from 'class-validator';
@@ -33,6 +34,10 @@ export class PortfolioSkillRequestDto {
 }
 
 export class PortfolioRequestDto {
+  @ApiProperty({ example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' })
+  @IsUUID()
+  declare portfolioId: string;
+
   @ApiProperty({ example: '코드잇 포트폴리오' })
   @IsString()
   @Length(2, 20)

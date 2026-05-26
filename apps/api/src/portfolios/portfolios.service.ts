@@ -106,6 +106,7 @@ export class PortfoliosService {
     }
 
     const portfolio = await this.portfoliosRepository.create({
+      id: dto.portfolioId,
       expertProfileId: expertProfile.id,
       title: dto.title,
       description: dto.description,

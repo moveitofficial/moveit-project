@@ -228,6 +228,34 @@ export const PORTFOLIO_ERRORS = {
   },
 } as const;
 
+export const UPLOAD_ERRORS = {
+  FILE_NOT_ATTACHED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '파일이 첨부되지 않았습니다.',
+    code: 'UPLOAD_FILE_NOT_ATTACHED',
+  },
+  INVALID_FILE_TYPE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '허용되지 않는 파일 형식입니다. (jpeg, png, webp만 허용)',
+    code: 'UPLOAD_INVALID_FILE_TYPE',
+  },
+  IMAGE_METADATA_UNREADABLE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '이미지 메타데이터를 읽을 수 없습니다. 손상된 파일일 수 있습니다.',
+    code: 'UPLOAD_IMAGE_METADATA_UNREADABLE',
+  },
+  PORTFOLIO_IMAGE_WIDTH_TOO_SMALL: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '포트폴리오 이미지 가로는 최소 600px 이상이어야 합니다.',
+    code: 'UPLOAD_PORTFOLIO_IMAGE_WIDTH_TOO_SMALL',
+  },
+  PORTFOLIO_IMAGE_HEIGHT_TOO_LARGE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '포트폴리오 이미지 세로는 최대 3000px 이하여야 합니다.',
+    code: 'UPLOAD_PORTFOLIO_IMAGE_HEIGHT_TOO_LARGE',
+  },
+} as const;
+
 export const EXPERT_ERRORS = {
   NOT_FOUND: {
     status: HttpStatus.NOT_FOUND,
