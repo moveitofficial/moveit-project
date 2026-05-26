@@ -3,7 +3,7 @@
 import { typography } from '@repo/styles/typography';
 import clsx from 'clsx';
 import { Search } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import * as styles from './SearchBar.css';
 
@@ -33,6 +33,18 @@ export default function SearchBar({
       onChange(newValue);
     }, 500);
   };
+
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className={styles.wrapper}>
