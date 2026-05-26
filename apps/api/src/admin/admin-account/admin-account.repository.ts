@@ -20,6 +20,20 @@ export class AdminAccountRepository {
     });
   }
 
+  findById(id: string): Promise<Admin | null> {
+    return this.prisma.admin.findUnique({ where: { id } });
+  }
+
+  async resetPassword(id: string, hashedPassword: string): Promise<void> {
+    await this.prisma.admin.update({
+      where: { id },
+      data: {
+        password: hashedPassword,
+        mustChangePassword: true,
+      },
+    });
+  }
+
   create(data: CreateAdminParams): Promise<Admin> {
     return this.prisma.admin.create({ data });
   }
