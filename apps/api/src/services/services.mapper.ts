@@ -42,6 +42,8 @@ export function mapServiceListItem(
     rating: stats.rating,
     reviewCount: stats.reviewCount,
     isFavorite: false,
+    orderCount: service._count.orders,
+    favoriteCount: service._count.favoriteServices,
   };
 }
 
@@ -91,6 +93,8 @@ export function mapServiceDetail(service: ServiceDetail) {
       description,
     })),
     faqs,
+    orderCount: service._count.orders,
+    favoriteCount: service._count.favoriteServices,
   };
 }
 

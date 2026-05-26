@@ -260,6 +260,12 @@ export class ServiceListItemResponseDto {
 
   @ApiProperty({ example: false })
   declare isFavorite: boolean;
+
+  @ApiProperty({ example: 120 })
+  declare orderCount: number;
+
+  @ApiProperty({ example: 45 })
+  declare favoriteCount: number;
 }
 
 class PaginationResponseDto {
@@ -357,4 +363,10 @@ export class ServiceDetailResponseDto {
 
   @ApiProperty({ type: [ServiceDetailFaqResponseDto] })
   declare faqs: ServiceDetailFaqResponseDto[];
+
+  @ApiProperty({ example: 120 })
+  declare orderCount: number;
+
+  @ApiProperty({ example: 45 })
+  declare favoriteCount: number;
 }

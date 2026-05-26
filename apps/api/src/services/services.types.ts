@@ -61,6 +61,12 @@ export const serviceListInclude = {
   techStacks: {
     select: { techStack: { select: { name: true } } },
   },
+  _count: {
+    select: {
+      orders: true,
+      favoriteServices: true,
+    },
+  },
 } satisfies Prisma.ServiceInclude;
 
 export type ServiceListItem = Prisma.ServiceGetPayload<{
@@ -97,6 +103,12 @@ export const serviceDetailInclude = {
       profileImageUrl: true,
       region: true,
       expertProfile: { select: { businessName: true } },
+    },
+  },
+  _count: {
+    select: {
+      orders: true,
+      favoriteServices: true,
     },
   },
 } satisfies Prisma.ServiceInclude;
