@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ServiceStatus } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -52,23 +51,6 @@ export class ServicesRepository {
       select: reviewWithUserSelect,
       orderBy: { createdAt: 'desc' },
       take,
-    });
-  }
-
-  findRecommended(args: {
-    serviceCategoryId: string;
-    excludeServiceId: string;
-    take: number;
-  }): Promise<ServiceListItem[]> {
-    return this.prisma.service.findMany({
-      where: {
-        id: { not: args.excludeServiceId },
-        serviceCategoryId: args.serviceCategoryId,
-        status: ServiceStatus.ACTIVE,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: args.take,
-      include: serviceListInclude,
     });
   }
 

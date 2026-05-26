@@ -69,7 +69,6 @@ export function mapServiceDetail(
     totalCount: number;
     averageRating: number;
   },
-  recommendedServices: ServiceListItemResponse[],
 ) {
   const {
     serviceGroup,
@@ -119,7 +118,6 @@ export function mapServiceDetail(
       totalCount: reviews.totalCount,
       averageRating: reviews.averageRating,
     },
-    recommendedServices,
   };
 }
 

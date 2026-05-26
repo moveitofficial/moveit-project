@@ -395,7 +395,4 @@ export class ServiceDetailResponseDto {
 
   @ApiProperty({ type: ServiceDetailReviewsResponseDto })
   declare reviews: ServiceDetailReviewsResponseDto;
-
-  @ApiProperty({ type: [ServiceListItemResponseDto] })
-  declare recommendedServices: ServiceListItemResponseDto[];
 }
