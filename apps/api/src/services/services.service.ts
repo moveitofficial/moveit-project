@@ -131,6 +131,14 @@ export class ServicesService {
             },
           }
         : {}),
+      ...(query.search
+        ? {
+            title: {
+              contains: query.search,
+              mode: 'insensitive',
+            },
+          }
+        : {}),
     };
   }
 

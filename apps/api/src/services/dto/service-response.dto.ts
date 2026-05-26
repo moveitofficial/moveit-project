@@ -7,7 +7,15 @@ import {
   TechStackName,
 } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
 
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
@@ -182,6 +190,11 @@ export class ServiceListQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsUUID()
   declare expertUserId: string | undefined;
+
+  @ApiPropertyOptional({ example: 'React 코칭' })
+  @IsOptional()
+  @IsString()
+  declare search: string | undefined;
 
   @ApiPropertyOptional({
     enum: SERVICE_LIST_SORT,
