@@ -121,17 +121,33 @@ export const ORDER_ERRORS = {
     status: HttpStatus.NOT_FOUND,
     message: '주문을 찾을 수 없습니다.',
   },
+  FORBIDDEN_NOT_OWNER: {
+    status: HttpStatus.FORBIDDEN,
+    message: '본인의 주문만 결제하거나 조회할 수 있습니다.',
+  },
+  FORBIDDEN_SELF_ORDER: {
+    status: HttpStatus.FORBIDDEN,
+    message: '본인의 서비스는 구매할 수 없습니다.',
+  },
   INVALID_STATUS: {
     status: HttpStatus.BAD_REQUEST,
     message: '유효하지 않은 주문 상태입니다.',
   },
-  ALREADY_CANCELED: {
+  AMOUNT_MISMATCH: {
     status: HttpStatus.BAD_REQUEST,
+    message: '결제 요청 금액이 실제 주문 금액과 일치하지 않습니다.',
+  },
+  ALREADY_CANCELED: {
+    status: HttpStatus.CONFLICT,
     message: '이미 취소된 주문입니다.',
   },
   ALREADY_REFUNDED: {
-    status: HttpStatus.BAD_REQUEST,
+    status: HttpStatus.CONFLICT,
     message: '이미 환불된 주문입니다.',
+  },
+  ALREADY_PROCESSED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 결제가 완료되었거나 취소된 주문건입니다.',
   },
 } as const;
 
