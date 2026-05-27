@@ -1,10 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  ServiceCategoryName,
+  ServiceGroupName,
+  TechStackName,
+} from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
   ArrayUnique,
   IsArray,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsString,
@@ -157,27 +163,26 @@ export class CreateServiceRequestDto {
   declare faqs: ServiceFaqDto[];
 
   @ApiProperty({
-    format: 'uuid',
-    example: '8eb71393-f481-4c3a-b543-1251d4e837fe',
+    enum: ServiceGroupName,
+    example: ServiceGroupName.IT_COACHING,
   })
-  @IsUUID()
-  declare serviceGroupId: string;
+  @IsEnum(ServiceGroupName)
+  declare serviceGroup: ServiceGroupName;
+
+  @ApiProperty({ enum: ServiceCategoryName, example: ServiceCategoryName.WEB })
+  @IsEnum(ServiceCategoryName)
+  declare serviceCategory: ServiceCategoryName;
 
   @ApiProperty({
-    format: 'uuid',
-    example: '6e440417-d128-493f-8b8a-93474a6fe2b5',
-  })
-  @IsUUID()
-  declare serviceCategoryId: string;
-
-  @ApiProperty({
-    description: '기술 스택 UUID 배열, 최소 1개 최대 3개',
-    example: ['09f0d304-4b2b-4e65-9fe3-119291377aa5'],
+    enum: TechStackName,
+    isArray: true,
+    description: '기술 스택 이름 배열, 최소 1개 최대 3개',
+    example: [TechStackName.TYPESCRIPT],
   })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(3)
   @ArrayUnique()
-  @IsUUID('all', { each: true })
-  declare techStackIds: string[];
+  @IsEnum(TechStackName, { each: true })
+  declare techStackNames: TechStackName[];
 }

@@ -235,19 +235,9 @@ export class ServicesService {
     expertUserId: string,
     dto: CreateServiceRequestDto,
   ): Promise<ServiceResponse> {
-    const mainImages = dto.mainImageUrl;
-    if (mainImages.length !== 1) {
-      throw new AppException(SERVICE_ERRORS.MAIN_IMAGE_REQUIRED);
-    }
-
-    const detailImages = dto.images;
-    if (detailImages.length === 0 || detailImages.length > 10) {
-      throw new AppException(SERVICE_ERRORS.DETAIL_IMAGE_INVALID);
-    }
-
     const service = await this.servicesRepository.create({
       id: dto.serviceId,
-      expertUserId,
+      expertUser: { connect: { id: expertUserId } },
       title: dto.title,
       workDuration: dto.workDuration,
       revisionCount: dto.revisionCount,
@@ -257,8 +247,8 @@ export class ServicesService {
       preparationNotes: dto.preparationNotes,
       refundPolicy: dto.refundPolicy,
       status: ServiceStatus.ACTIVE,
-      serviceGroupId: dto.serviceGroupId,
-      serviceCategoryId: dto.serviceCategoryId,
+      serviceGroup: { connect: { name: dto.serviceGroup } },
+      serviceCategory: { connect: { name: dto.serviceCategory } },
       images: {
         create: [
           { imgUrl: dto.mainImageUrl, isMain: true },
@@ -279,7 +269,9 @@ export class ServicesService {
         })),
       },
       techStacks: {
-        create: dto.techStackIds.map((id) => ({ techStackId: id })),
+        create: dto.techStackNames.map((name) => ({
+          techStack: { connect: { name } },
+        })),
       },
     });
     return mapService(service);
@@ -307,7 +299,7 @@ export class ServicesService {
       throw new AppException(SERVICE_ERRORS.IMAGE_PARTIAL_UPDATE);
     }
 
-    const data: Prisma.ServiceUncheckedUpdateInput = {};
+    const data: Prisma.ServiceUpdateInput = {};
 
     if (dto.title !== undefined) data.title = dto.title;
     if (dto.workDuration !== undefined) data.workDuration = dto.workDuration;
@@ -319,11 +311,11 @@ export class ServicesService {
       data.preparationNotes = dto.preparationNotes;
     }
     if (dto.refundPolicy !== undefined) data.refundPolicy = dto.refundPolicy;
-    if (dto.serviceGroupId !== undefined) {
-      data.serviceGroupId = dto.serviceGroupId;
+    if (dto.serviceGroup !== undefined) {
+      data.serviceGroup = { connect: { name: dto.serviceGroup } };
     }
-    if (dto.serviceCategoryId !== undefined) {
-      data.serviceCategoryId = dto.serviceCategoryId;
+    if (dto.serviceCategory !== undefined) {
+      data.serviceCategory = { connect: { name: dto.serviceCategory } };
     }
     const oldImageKeys =
       dto.mainImageUrl !== undefined && dto.images !== undefined
@@ -358,10 +350,12 @@ export class ServicesService {
         })),
       };
     }
-    if (dto.techStackIds !== undefined) {
+    if (dto.techStackNames !== undefined) {
       data.techStacks = {
         deleteMany: {},
-        create: dto.techStackIds.map((id) => ({ techStackId: id })),
+        create: dto.techStackNames.map((name) => ({
+          techStack: { connect: { name } },
+        })),
       };
     }
 
