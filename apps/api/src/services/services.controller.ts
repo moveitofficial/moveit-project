@@ -40,7 +40,7 @@ import {
   OptionalJwtAuth,
   RoleAuth,
 } from '../common/decorators/jwt-auth.decorator';
-import { UploadImagesResponseDto } from '../upload/dto/upload-response.dto';
+import { UploadServiceImagesResponseDto } from '../upload/dto/upload-response.dto';
 import { UploadService } from '../upload/upload.service';
 
 import { CreateReviewRequestDto } from './dto/create-review-request.dto';
@@ -274,7 +274,7 @@ export class ServicesController {
     { name: 'mainImage' },
     { name: 'detailImages', multiple: true },
   ])
-  @ApiSuccessResponse(HttpStatus.CREATED, UploadImagesResponseDto)
+  @ApiSuccessResponse(HttpStatus.CREATED, UploadServiceImagesResponseDto)
   @ApiErrorResponse(
     UPLOAD_ERRORS.FILE_NOT_ATTACHED,
     UPLOAD_ERRORS.INVALID_FILE_TYPE,

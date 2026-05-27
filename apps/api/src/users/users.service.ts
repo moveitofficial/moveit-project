@@ -7,6 +7,7 @@ import { AppException } from '../common/exceptions/app.exception';
 import { mapServiceCategories } from '../common/utils/service-category.util';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
 import { PortfoliosService } from '../portfolios/portfolios.service';
+import { UploadService } from '../upload/upload.service';
 
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -63,6 +64,7 @@ export class UsersService {
     private readonly usersRepository: UsersRepository,
     private readonly expertProfilesRepository: ExpertProfilesRepository,
     private readonly portfoliosService: PortfoliosService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async getUserWithPortfolios(userId: string) {
@@ -132,6 +134,33 @@ export class UsersService {
       bankName: dto.bankName,
       bankAccount: dto.bankAccount,
     });
+  }
+
+  async updateProfileImage(
+    userId: string,
+    file: Express.Multer.File | undefined,
+  ) {
+    const user = await this.usersRepository.findById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    const oldKey = user.profileImageUrl
+      ? new URL(user.profileImageUrl).pathname.slice(1)
+      : null;
+
+    const { url } = await this.uploadService.uploadImage(
+      file,
+      `profiles/${userId}`,
+    );
+
+    const updated = await this.usersRepository.update(userId, {
+      profileImageUrl: url,
+    });
+
+    if (oldKey) {
+      await this.uploadService.deleteImages([oldKey]);
+    }
+
+    return updated;
   }
 
   async updatePassword(id: string, dto: UpdatePasswordDto): Promise<object> {
