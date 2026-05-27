@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { TokenExpiredError } from 'jsonwebtoken';
+import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
 import { AUTH_ERRORS } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
@@ -22,7 +22,7 @@ export class OptionalJwtAccessGuard extends AuthGuard('jwt-access') {
       throw new AppException(AUTH_ERRORS.TOKEN_EXPIRED);
     }
 
-    if (err !== null) {
+    if (info instanceof JsonWebTokenError) {
       throw new AppException(AUTH_ERRORS.ACCESS_TOKEN_INVALID);
     }
 
