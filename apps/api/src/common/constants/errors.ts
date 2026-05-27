@@ -254,6 +254,11 @@ export const REVIEW_ERRORS = {
     message: '주문과 서비스가 일치하지 않습니다.',
     code: 'REVIEW_ORDER_SERVICE_MISMATCH',
   },
+  NOTHING_TO_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '수정된 내용이 없습니다.',
+    code: 'REVIEW_NOTHING_TO_UPDATE',
+  },
 };
 
 export const UPLOAD_ERRORS = {
