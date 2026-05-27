@@ -9,6 +9,7 @@ import {
 } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
+import { UploadService } from '../upload/upload.service';
 
 import { CreateReviewRequestDto } from './dto/create-review-request.dto';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
@@ -39,7 +40,10 @@ import type {
 
 @Injectable()
 export class ServicesService {
-  constructor(private readonly servicesRepository: ServicesRepository) {}
+  constructor(
+    private readonly servicesRepository: ServicesRepository,
+    private readonly uploadService: UploadService,
+  ) {}
 
   async getServices(query: ServiceListQueryDto) {
     const page = query.page ?? 1;
@@ -231,7 +235,18 @@ export class ServicesService {
     expertUserId: string,
     dto: CreateServiceRequestDto,
   ): Promise<ServiceResponse> {
+    const mainImages = dto.mainImageUrl;
+    if (mainImages.length !== 1) {
+      throw new AppException(SERVICE_ERRORS.MAIN_IMAGE_REQUIRED);
+    }
+
+    const detailImages = dto.images;
+    if (detailImages.length === 0 || detailImages.length > 10) {
+      throw new AppException(SERVICE_ERRORS.DETAIL_IMAGE_INVALID);
+    }
+
     const service = await this.servicesRepository.create({
+      id: dto.serviceId,
       expertUserId,
       title: dto.title,
       workDuration: dto.workDuration,
@@ -310,6 +325,11 @@ export class ServicesService {
     if (dto.serviceCategoryId !== undefined) {
       data.serviceCategoryId = dto.serviceCategoryId;
     }
+    const oldImageKeys =
+      dto.mainImageUrl !== undefined && dto.images !== undefined
+        ? existing.images.map((img) => new URL(img.imgUrl).pathname.slice(1))
+        : [];
+
     if (dto.mainImageUrl !== undefined && dto.images !== undefined) {
       data.images = {
         deleteMany: {},
@@ -350,6 +370,11 @@ export class ServicesService {
     }
 
     const updated = await this.servicesRepository.update(serviceId, data);
+
+    if (oldImageKeys.length > 0) {
+      await this.uploadService.deleteImages(oldImageKeys);
+    }
+
     return mapService(updated);
   }
 
@@ -390,9 +415,16 @@ export class ServicesService {
       throw new AppException(SERVICE_ERRORS.ALREADY_DELETED);
     }
 
+    const keys = existing.images.map((img) =>
+      new URL(img.imgUrl).pathname.slice(1),
+    );
+
     const updated = await this.servicesRepository.update(serviceId, {
       status: ServiceStatus.CLOSED,
     });
+
+    await this.uploadService.deleteImages(keys);
+
     return mapService(updated);
   }
 

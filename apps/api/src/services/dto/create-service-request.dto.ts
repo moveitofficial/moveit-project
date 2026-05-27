@@ -53,6 +53,10 @@ export class ServiceFaqDto {
 }
 
 export class CreateServiceRequestDto {
+  @ApiProperty({ format: 'uuid' })
+  @IsUUID()
+  declare serviceId: string;
+
   @ApiProperty({ example: 'React 초급 코칭 패키지' })
   @IsString()
   @IsNotEmpty()
