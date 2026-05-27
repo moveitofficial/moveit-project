@@ -106,7 +106,10 @@ export class ServicesController {
   @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
   @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    REVIEW_ERRORS.NOTHING_TO_UPDATE,
+  )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Patch(':id/reviews/:reviewId')
   patchReview(
