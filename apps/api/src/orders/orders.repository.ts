@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 
-import { ORDER_ERRORS } from '../common/constants/errors';
+import { ORDER_ERRORS, PAYMENT_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -64,35 +64,45 @@ export class OrdersRepository {
     paidAmount: number,
     rawData: Prisma.InputJsonValue,
   ) {
-    return this.prisma.$transaction(async (tx) => {
-      const { count: paymentCount } = await tx.payment.updateMany({
-        where: {
-          orderId,
-          status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
-        },
-        data: {
-          status: PaymentStatus.PAID,
-          paidAmount,
-          paymentKey,
-          rawData,
-          approvedAt: new Date(),
-        },
-      });
-      if (paymentCount === 0) return null;
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const { count: paymentCount } = await tx.payment.updateMany({
+          where: {
+            orderId,
+            status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+          },
+          data: {
+            status: PaymentStatus.PAID,
+            paidAmount,
+            paymentKey,
+            rawData,
+            approvedAt: new Date(),
+          },
+        });
+        if (paymentCount === 0) return null;
 
-      const { count: orderCount } = await tx.order.updateMany({
-        where: { id: orderId, status: OrderStatus.NEGOTIATING },
-        data: { status: OrderStatus.IN_PROGRESS },
+        const { count: orderCount } = await tx.order.updateMany({
+          where: { id: orderId, status: OrderStatus.NEGOTIATING },
+          data: { status: OrderStatus.IN_PROGRESS },
+        });
+        if (orderCount === 0) {
+          throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+        }
+
+        return tx.order.findUnique({
+          where: { id: orderId },
+          include: { payment: true },
+        });
       });
-      if (orderCount === 0) {
-        throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new AppException(PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY);
       }
-
-      return tx.order.findUnique({
-        where: { id: orderId },
-        include: { payment: true },
-      });
-    });
+      throw error;
+    }
   }
 
   async updateOrderStatusOnly(

@@ -175,8 +175,12 @@ export const PAYMENT_ERRORS = {
     message: '결제 금액이 일치하지 않습니다.',
   },
   ALREADY_CONFIRMED: {
-    status: HttpStatus.BAD_REQUEST,
+    status: HttpStatus.CONFLICT,
     message: '이미 승인된 결제입니다.',
+  },
+  DUPLICATE_PAYMENT_KEY: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 사용된 결제 키입니다.',
   },
 } as const;
 
