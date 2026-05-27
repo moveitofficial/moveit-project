@@ -849,12 +849,13 @@ class Seeder {
       safety++;
       const client = pick(clients);
       const expert = pick(experts);
-      const key = `${client.id}-${expert.id}`;
-      if (pairs.has(key)) continue;
-      pairs.add(key);
 
       const service = services.find((s) => s.expertUserId === expert.id);
       if (!service) continue;
+
+      const key = `${client.id}-${expert.id}-${service.id}`;
+      if (pairs.has(key)) continue;
+      pairs.add(key);
 
       const room = await this.#prisma.chatRoom.create({
         data: {
