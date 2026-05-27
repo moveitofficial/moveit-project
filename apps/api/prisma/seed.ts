@@ -23,6 +23,7 @@ import {
   RefundType,
   Region,
   ReportReason,
+  ReportStatus,
   Role,
   SenderType,
   ServiceCategoryName,
@@ -184,7 +185,7 @@ class Seeder {
     console.warn(`✅ 최근 본 서비스 (CLIENT 전용)`);
 
     await this.#seedReports(clients, experts);
-    console.warn(`✅ 신고 10건 (증거 이미지 포함)`);
+    console.warn(`✅ 신고 30건 (PENDING 15 / COMPLETED 15)`);
 
     await this.#seedCommunity(clients, experts, superAdmin);
     console.warn(`✅ 게시판 10개 (댓글/좋아요 포함)`);
@@ -193,7 +194,7 @@ class Seeder {
     console.warn(`✅ 1:1 채팅 5방`);
 
     await this.#seedCsChatRooms(clients, superAdmin);
-    console.warn(`✅ CS 채팅 3방`);
+    console.warn(`✅ CS 채팅 25방 (OPEN 12 / ASSIGNED 8 / CLOSED 5)`);
 
     await this.#seedNotifications(clients, experts);
     console.warn(`✅ 알림 10개`);
@@ -209,8 +210,8 @@ class Seeder {
     console.warn('\n────────────────────────────');
     console.warn(`🔑 테스트 계정 (공통 비밀번호: ${SEED_PASSWORD})`);
     console.warn(`   admin@moveit.com         (ADMIN)`);
-    console.warn(`   client1~10@moveit.com    (CLIENT)`);
-    console.warn(`   expert1~10@moveit.com    (EXPERT)`);
+    console.warn(`   client1~20@moveit.com    (CLIENT)`);
+    console.warn(`   expert1~20@moveit.com    (EXPERT, expert1~8 신청 대기)`);
     console.warn('────────────────────────────');
     console.warn('✅ 시딩 완료');
   }
@@ -349,7 +350,7 @@ class Seeder {
     const regions = Object.values(Region);
 
     const clients = await Promise.all(
-      range(10).map((i) =>
+      range(20).map((i) =>
         this.#prisma.user.create({
           data: {
             email: `client${(i + 1).toString()}@moveit.com`,
@@ -366,7 +367,7 @@ class Seeder {
     );
 
     const experts = await Promise.all(
-      range(10).map((i) =>
+      range(20).map((i) =>
         this.#prisma.user.create({
           data: {
             email: `expert${(i + 1).toString()}@moveit.com`,
@@ -396,12 +397,18 @@ class Seeder {
   ): Promise<ExpertProfile[]> {
     const profiles: ExpertProfile[] = [];
 
-    for (const expert of experts) {
+    // 앞 8명은 isApplied=true, isApproved=false (신청 대기) — 대시보드 카드용
+    // 나머지는 isApplied=true, isApproved=true (승인 완료)
+    const PENDING_COUNT = 8;
+
+    for (const [index, expert] of experts.entries()) {
+      const isPending = index < PENDING_COUNT;
       const profile = await this.#prisma.expertProfile.create({
         data: {
           userId: expert.id,
-          isApproved: true,
-          approvedAt: faker.date.recent({ days: 60 }),
+          isApplied: true,
+          isApproved: !isPending,
+          approvedAt: isPending ? null : faker.date.recent({ days: 60 }),
           businessName: faker.company.name(),
           businessNumber: faker.string.numeric(10),
           ceoName: expert.name ?? faker.person.fullName(),
@@ -531,6 +538,8 @@ class Seeder {
     for (const expert of experts) {
       const profile = expertProfiles.find((p) => p.userId === expert.id);
       if (!profile) continue;
+      // 미승인(신청 대기) 전문가는 서비스 생성 안 함 — 승인 후에야 서비스 등록 가능
+      if (!profile.isApproved) continue;
 
       const count = rand(1, 2);
       for (let i = 0; i < count; i++) {
@@ -606,22 +615,29 @@ class Seeder {
     services: Service[],
     admin: Admin,
   ): Promise<void> {
-    const orderStatuses: OrderStatus[] = [
-      OrderStatus.IN_PROGRESS,
-      OrderStatus.WORK_COMPLETED,
-      OrderStatus.PURCHASE_CONFIRMED,
-      OrderStatus.SETTLEMENT_COMPLETED,
-      OrderStatus.REFUND_REQUESTED,
+    // 상태별 분포 — 대시보드 카드 카운트 검증용
+    // 서비스 진행중(NEG+IP+DL+WC) = 8+12+6+6 = 32, 정산 요청 = 12
+    const orderStatusPlan: OrderStatus[] = [
+      ...Array<OrderStatus>(8).fill(OrderStatus.NEGOTIATING),
+      ...Array<OrderStatus>(12).fill(OrderStatus.IN_PROGRESS),
+      ...Array<OrderStatus>(6).fill(OrderStatus.DEADLINE_IMMINENT),
+      ...Array<OrderStatus>(6).fill(OrderStatus.WORK_COMPLETED),
+      ...Array<OrderStatus>(5).fill(OrderStatus.PURCHASE_CONFIRMED),
+      ...Array<OrderStatus>(12).fill(OrderStatus.SETTLEMENT_REQUESTED),
+      ...Array<OrderStatus>(6).fill(OrderStatus.SETTLEMENT_COMPLETED),
+      ...Array<OrderStatus>(5).fill(OrderStatus.REFUND_REQUESTED),
     ];
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < orderStatusPlan.length; i++) {
       const client = pick(clients);
       const service = pick(services);
-      const status = orderStatuses[i % orderStatuses.length]!;
+      const status = orderStatusPlan[i]!;
       const isConfirmed =
         status === OrderStatus.PURCHASE_CONFIRMED ||
+        status === OrderStatus.SETTLEMENT_REQUESTED ||
         status === OrderStatus.SETTLEMENT_COMPLETED;
 
+      const isSettled = status === OrderStatus.SETTLEMENT_COMPLETED;
       const platformFee = Math.floor(service.servicePrice * 0.1);
       const order = await this.#prisma.order.create({
         data: {
@@ -635,6 +651,8 @@ class Seeder {
           startDate: faker.date.recent({ days: 30 }),
           endDate: faker.date.soon({ days: 30 }),
           confirmedAt: isConfirmed ? faker.date.recent({ days: 30 }) : null,
+          settledAt: isSettled ? faker.date.recent({ days: 10 }) : null,
+          settledByAdminId: isSettled ? admin.id : null,
         },
       });
 
@@ -643,10 +661,7 @@ class Seeder {
           orderId: order.id,
           clientUserId: client.id,
           paidAmount: order.totalAmount,
-          status:
-            status === OrderStatus.REFUND_REQUESTED
-              ? PaymentStatus.PAID
-              : PaymentStatus.PAID,
+          status: PaymentStatus.PAID,
           method: pick(['카드', '계좌이체', '간편결제']),
           paymentKey: faker.string.uuid(),
           rawData: { provider: 'toss', mock: true },
@@ -654,9 +669,10 @@ class Seeder {
         },
       });
 
-      // 구매확정된 건만 리뷰
+      // 구매확정 이후 단계는 리뷰 작성 가능
       if (
         status === OrderStatus.PURCHASE_CONFIRMED ||
+        status === OrderStatus.SETTLEMENT_REQUESTED ||
         status === OrderStatus.SETTLEMENT_COMPLETED
       ) {
         await this.#prisma.review.create({
@@ -767,12 +783,17 @@ class Seeder {
 
   // ─── 11. Reports + 증거 이미지 ───────────────────────────────────────
   async #seedReports(clients: User[], experts: User[]): Promise<void> {
-    for (let i = 0; i < 10; i++) {
+    // 30건 — 15 PENDING(처리 대기) + 15 COMPLETED(처리 완료)
+    const total = 30;
+    const pendingCount = 15;
+    for (let i = 0; i < total; i++) {
+      const isPending = i < pendingCount;
       const report = await this.#prisma.report.create({
         data: {
           reporterId: pick(clients).id,
           reportedId: pick(experts).id,
           reason: pick(REPORT_REASONS),
+          status: isPending ? ReportStatus.PENDING : ReportStatus.COMPLETED,
           detail: faker.lorem.paragraph(),
         },
       });
@@ -911,11 +932,16 @@ class Seeder {
 
   // ─── 14. CS 채팅 ──────────────────────────────────────────────────────
   async #seedCsChatRooms(clients: User[], admin: Admin): Promise<void> {
-    const statuses = Object.values(CsChatStatus);
+    // 25건 — 12 OPEN(처리 대기) + 8 ASSIGNED + 5 CLOSED
+    const statusPlan: CsChatStatus[] = [
+      ...Array<CsChatStatus>(12).fill(CsChatStatus.OPEN),
+      ...Array<CsChatStatus>(8).fill(CsChatStatus.ASSIGNED),
+      ...Array<CsChatStatus>(5).fill(CsChatStatus.CLOSED),
+    ];
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < statusPlan.length; i++) {
       const client = pick(clients);
-      const status = statuses[i % statuses.length]!;
+      const status = statusPlan[i]!;
       const room = await this.#prisma.csChatRoom.create({
         data: {
           userId: client.id,
@@ -1102,25 +1128,50 @@ class Seeder {
 
   // ─── 21. AdminActivityLogs ─────────────────────────────────────────
   async #seedAdminActivityLogs(admins: Admin[]): Promise<void> {
+    // 실제로 가리킬 수 있는 id 후보 미리 조회 → enrich 시 매칭되도록
+    const [users, faqs] = await Promise.all([
+      this.#prisma.user.findMany({ select: { id: true } }),
+      this.#prisma.faq.findMany({ select: { id: true } }),
+    ]);
+
+    const USER_ACTIONS = new Set<AdminActionType>([
+      AdminActionType.EXPERT_APPROVED,
+      AdminActionType.EXPERT_REJECTED,
+      AdminActionType.BLACKLIST_ADDED,
+      AdminActionType.BLACKLIST_REMOVED,
+    ]);
+    const FAQ_ACTIONS = new Set<AdminActionType>([
+      AdminActionType.FAQ_CREATED,
+      AdminActionType.FAQ_UPDATED,
+      AdminActionType.FAQ_DELETED,
+    ]);
+
+    const pickRefId = (actionType: AdminActionType): string | null => {
+      if (USER_ACTIONS.has(actionType)) return pick(users).id;
+      if (FAQ_ACTIONS.has(actionType)) return pick(faqs).id;
+      return null;
+    };
+
     const actionTypes = Object.values(AdminActionType);
-    // 각 actionType 1건씩 (12건) — 모든 종류 노출 확인용
+    // 각 actionType 1건씩 (모든 종류 노출 확인용)
     for (const actionType of actionTypes) {
       await this.#prisma.adminActivityLog.create({
         data: {
           adminId: pick(admins).id,
           actionType,
-          referenceId: faker.string.uuid(),
+          referenceId: pickRefId(actionType),
           createdAt: faker.date.recent({ days: 30 }),
         },
       });
     }
-    // 추가 랜덤 5건 — 일부는 referenceId null
-    for (let i = 0; i < 5; i++) {
+    // 추가 랜덤 100건 — 무한스크롤 테스트용
+    for (let i = 0; i < 100; i++) {
+      const actionType = pick(actionTypes);
       await this.#prisma.adminActivityLog.create({
         data: {
           adminId: pick(admins).id,
-          actionType: pick(actionTypes),
-          referenceId: i % 2 === 0 ? faker.string.uuid() : null,
+          actionType,
+          referenceId: pickRefId(actionType),
           createdAt: faker.date.recent({ days: 30 }),
         },
       });
