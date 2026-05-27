@@ -148,7 +148,7 @@ export class ServiceListQueryDto extends PaginationQueryDto {
     example: ServiceGroupName.IT_COACHING,
   })
   @IsEnum(ServiceGroupName)
-  declare group: ServiceGroupName | undefined;
+  declare group: ServiceGroupName;
 
   @ApiPropertyOptional({
     enum: ServiceCategoryName,
