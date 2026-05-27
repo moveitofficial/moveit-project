@@ -77,12 +77,14 @@ export class ServicesController {
   @ApiOperation({ summary: '서비스 리뷰 작성' })
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.CREATED, ReviewResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE)
-  @ApiErrorResponse(REVIEW_ERRORS.ORDER_SERVICE_MISMATCH)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND, ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    REVIEW_ERRORS.ORDER_NOT_REVIEWABLE,
+    REVIEW_ERRORS.ORDER_SERVICE_MISMATCH,
+  )
   @ApiErrorResponse(REVIEW_ERRORS.ALREADY_EXISTS)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
   @Post(':id/reviews')
