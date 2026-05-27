@@ -48,6 +48,7 @@ import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import {
   ReviewResponseDto,
   ServiceDetailResponseDto,
+  ServiceListItemResponseDto,
   ServiceListPaginatedResponseDto,
   ServiceListQueryDto,
   ServiceResponseDto,
@@ -165,6 +166,15 @@ export class ServicesController {
   close(@Req() req: Request, @Param('id', ParseUUIDPipe) serviceId: string) {
     const user = req.user as JwtAccessUser;
     return this.servicesService.closeService(user.userId, serviceId);
+  }
+
+  @ApiOperation({ summary: '이 전문가의 다른 서비스 조회' })
+  @ApiSuccessResponse(HttpStatus.OK, ServiceListItemResponseDto)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get(':id/others')
+  findOthers(@Param('id', ParseUUIDPipe) serviceId: string) {
+    return this.servicesService.getOtherServicesByExpertId(serviceId);
   }
 
   @ApiOperation({ summary: '서비스 리뷰 목록 조회' })

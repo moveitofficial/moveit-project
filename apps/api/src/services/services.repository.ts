@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ServiceStatus, type Prisma } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -17,7 +18,6 @@ import type {
   ServiceReviewStats,
   ServiceWithRelations,
 } from './services.types';
-import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ServicesRepository {
@@ -227,5 +227,24 @@ export class ServicesRepository {
         },
       ]),
     );
+  }
+
+  findManyByExpertUserId(args: {
+    expertUserId: string;
+    currentServiceId: string;
+    take: number;
+  }): Promise<ServiceListItem[]> {
+    return this.prisma.service.findMany({
+      where: {
+        expertUserId: args.expertUserId,
+        status: ServiceStatus.ACTIVE,
+        id: { not: args.currentServiceId },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: args.take,
+      include: serviceListInclude,
+    });
   }
 }
