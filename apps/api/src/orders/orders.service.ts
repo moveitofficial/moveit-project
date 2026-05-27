@@ -1,12 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { ServiceStatus } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentStatus,
+  Role,
+  ServiceStatus,
+  type Prisma,
+} from '@prisma/client';
 
-import { ORDER_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
+import {
+  COMMON_ERRORS,
+  ORDER_ERRORS,
+  PAYMENT_ERRORS,
+  SERVICE_ERRORS,
+} from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 
 import { CreateOrderRequestDto } from './dto/create-order-request.dto';
-import { PLATFORM_FEE_RATE } from './orders.constants';
+import { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
+import {
+  PAYMENT_AMOUNT_VALIDATION_FAILED_REASON,
+  PG_STUB_PROVIDER,
+  PG_STUB_RECEIPT_URL,
+  PLATFORM_FEE_RATE,
+} from './orders.constants';
 import { OrdersRepository } from './orders.repository';
+
+type OrderWithPayment = Prisma.OrderGetPayload<{
+  include: { payment: true };
+}>;
 
 @Injectable()
 export class OrdersService {
@@ -39,5 +60,150 @@ export class OrdersService {
       endDate: new Date(dto.endDate),
       paymentMethod: dto.paymentMethod,
     });
+  }
+
+  async updateOrderStatus(
+    userId: string,
+    userRole: Role,
+    orderId: string,
+    dto: UpdateOrderStatusRequestDto,
+  ) {
+    const order = await this.ordersRepository.findOrderWithPayment(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    if (dto.status === OrderStatus.IN_PROGRESS) {
+      if (dto.paymentKey === undefined || dto.paidAmount === undefined) {
+        throw new AppException(COMMON_ERRORS.VALIDATION_ERROR);
+      }
+      if (order.clientUserId !== userId) {
+        throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+      }
+      if (
+        order.status === OrderStatus.CANCEL_REQUESTED ||
+        order.status === OrderStatus.PAYMENT_CANCELLED
+      ) {
+        throw new AppException(ORDER_ERRORS.ALREADY_CANCELED);
+      }
+      return this.verifyAndApprovePayment(
+        order,
+        dto.paymentKey,
+        dto.paidAmount,
+      );
+    }
+
+    this.validateStatusTransition(order, dto.status, userId, userRole);
+    const updated = await this.ordersRepository.updateOrderStatusOnly(
+      orderId,
+      order.status,
+      dto.status,
+    );
+    if (!updated) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+    return updated;
+  }
+
+  private async verifyAndApprovePayment(
+    order: OrderWithPayment,
+    paymentKey: string,
+    paidAmount: number,
+  ) {
+    if (!order.payment) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+    const canVerify =
+      order.status === OrderStatus.NEGOTIATING &&
+      (order.payment.status === PaymentStatus.PENDING ||
+        order.payment.status === PaymentStatus.FAILED);
+    if (!canVerify) {
+      throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+    }
+
+    const pgVerifiedAmount = await this.fetchAmountFromExternalPG(
+      paymentKey,
+      paidAmount,
+    );
+
+    if (
+      order.totalAmount !== paidAmount ||
+      pgVerifiedAmount !== order.totalAmount
+    ) {
+      await this.ordersRepository.updatePaymentToFailed(order.id, {
+        reason: PAYMENT_AMOUNT_VALIDATION_FAILED_REASON,
+        orderId: order.id,
+        clientPaidAmount: paidAmount,
+        pgVerifiedAmount,
+        paymentKey,
+      });
+      throw new AppException(ORDER_ERRORS.AMOUNT_MISMATCH);
+    }
+
+    const mockRawData = {
+      provider: PG_STUB_PROVIDER,
+      receiptUrl: PG_STUB_RECEIPT_URL,
+      approvedAt: new Date().toISOString(),
+    };
+
+    const result = await this.ordersRepository.updateOrderAndPaymentToPaid(
+      order.id,
+      paymentKey,
+      paidAmount,
+      mockRawData,
+    );
+    if (!result) throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
+    return result;
+  }
+
+  private validateStatusTransition(
+    order: OrderWithPayment,
+    nextStatus: OrderStatus,
+    userId: string,
+    userRole: Role,
+  ): void {
+    const current = order.status;
+
+    if (
+      current === OrderStatus.PURCHASE_CONFIRMED ||
+      current === OrderStatus.SETTLEMENT_COMPLETED ||
+      current === OrderStatus.REFUND_COMPLETED
+    ) {
+      throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+    }
+
+    if (
+      current === OrderStatus.NEGOTIATING &&
+      nextStatus === OrderStatus.CANCEL_REQUESTED
+    ) {
+      if (order.clientUserId !== userId) {
+        throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+      }
+      return;
+    }
+
+    if (
+      current === OrderStatus.IN_PROGRESS &&
+      nextStatus === OrderStatus.WORK_COMPLETED
+    ) {
+      if (order.expertUserId !== userId || userRole !== Role.EXPERT) {
+        throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+      }
+      return;
+    }
+
+    if (
+      current === OrderStatus.WORK_COMPLETED &&
+      nextStatus === OrderStatus.PURCHASE_CONFIRMED
+    ) {
+      if (order.clientUserId !== userId || userRole !== Role.CLIENT) {
+        throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+      }
+      return;
+    }
+
+    throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+  }
+
+  private fetchAmountFromExternalPG(
+    _paymentKey: string,
+    paidAmount: number,
+  ): Promise<number> {
+    return Promise.resolve(paidAmount);
   }
 }
