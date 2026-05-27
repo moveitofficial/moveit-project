@@ -141,6 +141,7 @@ export class ServicesService {
             },
           }
         : {}),
+      ...(query.expertUserId ? { expertUserId: query.expertUserId } : {}),
     };
   }
 
