@@ -472,7 +472,7 @@ export class ServicesService {
     dto: UpdateReviewRequestDto,
   ) {
     if (dto.rating === undefined && dto.content === undefined) {
-      throw new AppException(COMMON_ERRORS.VALIDATION_ERROR);
+      throw new AppException(REVIEW_ERRORS.NOTHING_TO_UPDATE);
     }
 
     const review = await this.servicesRepository.findReviewById(

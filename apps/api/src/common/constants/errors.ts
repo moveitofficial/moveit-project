@@ -257,10 +257,17 @@ export const REVIEW_ERRORS = {
   ORDER_NOT_REVIEWABLE: {
     status: HttpStatus.BAD_REQUEST,
     message: '리뷰를 작성할 수 없는 주문 상태입니다.',
+    code: 'REVIEW_ORDER_NOT_REVIEWABLE',
   },
   ORDER_SERVICE_MISMATCH: {
     status: HttpStatus.BAD_REQUEST,
     message: '주문과 서비스가 일치하지 않습니다.',
+    code: 'REVIEW_ORDER_SERVICE_MISMATCH',
+  },
+  NOTHING_TO_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '수정된 내용이 없습니다.',
+    code: 'REVIEW_NOTHING_TO_UPDATE',
   },
 };
 

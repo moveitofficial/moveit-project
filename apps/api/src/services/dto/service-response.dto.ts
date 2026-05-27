@@ -324,10 +324,13 @@ class ReviewerResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: '홍길동' })
   declare name: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({
+    nullable: true,
+    example: 'https://example.img.com/image.jpg',
+  })
   declare profileImageUrl: string | null;
 }
 
@@ -335,13 +338,22 @@ export class ReviewResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: 5,
+    minimum: 1,
+    maximum: 5,
+    description: 'rating',
+  })
   declare rating: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: '리뷰 내용',
+  })
   declare content: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: '2024-01-01T00:00:00.000Z',
+  })
   declare createdAt: string;
 
   @ApiProperty({ type: ReviewerResponseDto })

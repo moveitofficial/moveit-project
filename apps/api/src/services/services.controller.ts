@@ -17,7 +17,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
@@ -178,12 +183,14 @@ export class ServicesController {
   @ApiOperation({ summary: '서비스 리뷰 작성' })
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.CREATED, ReviewResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE)
-  @ApiErrorResponse(REVIEW_ERRORS.ORDER_SERVICE_MISMATCH)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND, ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    REVIEW_ERRORS.ORDER_NOT_REVIEWABLE,
+    REVIEW_ERRORS.ORDER_SERVICE_MISMATCH,
+  )
   @ApiErrorResponse(REVIEW_ERRORS.ALREADY_EXISTS)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
   @Post(':id/reviews')
@@ -205,7 +212,10 @@ export class ServicesController {
   @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
   @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    REVIEW_ERRORS.NOTHING_TO_UPDATE,
+  )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Patch(':id/reviews/:reviewId')
   patchReview(
@@ -225,7 +235,10 @@ export class ServicesController {
 
   @ApiOperation({ summary: '서비스 리뷰 삭제' })
   @RoleAuth(Role.CLIENT)
-  @ApiSuccessResponse(HttpStatus.NO_CONTENT, ReviewResponseDto)
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: '리뷰 삭제 성공',
+  })
   @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
