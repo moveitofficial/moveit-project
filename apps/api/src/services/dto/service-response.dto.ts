@@ -331,7 +331,7 @@ class ReviewerResponseDto {
   declare profileImageUrl: string | null;
 }
 
-class ReviewResponseDto {
+export class ReviewResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
 

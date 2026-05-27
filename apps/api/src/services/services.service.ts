@@ -1,11 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceStatus, type Prisma } from '@prisma/client';
 
-import { SERVICE_ERRORS } from '../common/constants/errors';
+import {
+  COMMON_ERRORS,
+  ORDER_ERRORS,
+  REVIEW_ERRORS,
+  SERVICE_ERRORS,
+} from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 
+import { CreateReviewRequestDto } from './dto/create-review-request.dto';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
+import { UpdateReviewRequestDto } from './dto/update-review-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import {
@@ -17,17 +24,18 @@ import {
   type ServiceListItemResponse,
 } from './services.mapper';
 import { ServicesRepository } from './services.repository';
+import {
+  type ServiceListItem,
+  type ServiceReviewStats,
+  type ServiceResponse,
+  REVIEWABLE_ORDER_STATUSES,
+} from './services.types';
 
 import type {
   ServiceListQueryDto,
   ServiceListSort,
   ServiceReviewsQueryDto,
 } from './dto/service-response.dto';
-import type {
-  ServiceListItem,
-  ServiceReviewStats,
-  ServiceResponse,
-} from './services.types';
 
 @Injectable()
 export class ServicesService {
@@ -386,5 +394,108 @@ export class ServicesService {
       status: ServiceStatus.CLOSED,
     });
     return mapService(updated);
+  }
+
+  async createServiceReview(
+    userId: string,
+    serviceId: string,
+    dto: CreateReviewRequestDto,
+  ) {
+    const service = await this.servicesRepository.findById(serviceId);
+
+    if (service === null) {
+      throw new AppException(SERVICE_ERRORS.NOT_FOUND);
+    }
+
+    const order = await this.servicesRepository.findOrderForReview(dto.orderId);
+
+    if (order === null) {
+      throw new AppException(ORDER_ERRORS.NOT_FOUND);
+    }
+
+    if (order.serviceId !== serviceId) {
+      throw new AppException(REVIEW_ERRORS.ORDER_SERVICE_MISMATCH);
+    }
+
+    if (order.clientUserId !== userId) {
+      throw new AppException(COMMON_ERRORS.FORBIDDEN);
+    }
+
+    if (!REVIEWABLE_ORDER_STATUSES.includes(order.status)) {
+      throw new AppException(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE);
+    }
+
+    if (order.review !== null) {
+      throw new AppException(REVIEW_ERRORS.ALREADY_EXISTS);
+    }
+
+    const review = await this.servicesRepository.createReview({
+      orderId: dto.orderId,
+      userId,
+      rating: dto.rating,
+      content: dto.content,
+    });
+
+    return mapReview(review);
+  }
+
+  async updateServiceReview(
+    userId: string,
+    serviceId: string,
+    reviewId: string,
+    dto: UpdateReviewRequestDto,
+  ) {
+    if (dto.rating === undefined && dto.content === undefined) {
+      throw new AppException(COMMON_ERRORS.VALIDATION_ERROR);
+    }
+
+    const review = await this.servicesRepository.findReviewById(
+      reviewId,
+      serviceId,
+    );
+
+    if (review === null) {
+      throw new AppException(REVIEW_ERRORS.NOT_FOUND);
+    }
+
+    if (review.user.id !== userId) {
+      throw new AppException(COMMON_ERRORS.FORBIDDEN);
+    }
+
+    const updateData: { rating?: number; content?: string } = {};
+    if (dto.rating !== undefined) {
+      updateData.rating = dto.rating;
+    }
+    if (dto.content !== undefined) {
+      updateData.content = dto.content;
+    }
+
+    const updated = await this.servicesRepository.updateReview(
+      reviewId,
+      updateData,
+    );
+
+    return mapReview(updated);
+  }
+
+  async deleteServiceReview(
+    userId: string,
+    serviceId: string,
+    reviewId: string,
+  ): Promise<void> {
+    const review = await this.servicesRepository.findReviewById(
+      reviewId,
+      serviceId,
+    );
+
+    if (review === null) {
+      throw new AppException(REVIEW_ERRORS.NOT_FOUND);
+    }
+
+    if (review.user.id !== userId) {
+      throw new AppException(COMMON_ERRORS.FORBIDDEN);
+    }
+
+    await this.servicesRepository.deleteReview(reviewId);
   }
 }
