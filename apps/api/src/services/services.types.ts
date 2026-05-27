@@ -1,3 +1,5 @@
+import { OrderStatus } from '@prisma/client';
+
 import type {
   Prisma,
   ServiceCategoryName,
@@ -134,3 +136,9 @@ export type ReviewWithUser = Prisma.ReviewGetPayload<{
 export const SERVICE_REVIEW_SORT = ['latest', 'rating'] as const;
 
 export type ServiceReviewSort = (typeof SERVICE_REVIEW_SORT)[number];
+
+export const REVIEWABLE_ORDER_STATUSES: OrderStatus[] = [
+  OrderStatus.PURCHASE_CONFIRMED,
+  OrderStatus.SETTLEMENT_REQUESTED,
+  OrderStatus.SETTLEMENT_COMPLETED,
+];

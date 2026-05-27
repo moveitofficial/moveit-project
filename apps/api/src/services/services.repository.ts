@@ -69,6 +69,73 @@ export class ServicesRepository {
     });
   }
 
+  findOrderForReview(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        clientUserId: true,
+        serviceId: true,
+        status: true,
+        review: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+  }
+
+  findReviewById(
+    reviewId: string,
+    serviceId: string,
+  ): Promise<ReviewWithUser | null> {
+    return this.prisma.review.findFirst({
+      where: {
+        id: reviewId,
+        order: { serviceId },
+      },
+      select: reviewWithUserSelect,
+    });
+  }
+
+  createReview(data: {
+    orderId: string;
+    userId: string;
+    rating: number;
+    content: string;
+  }): Promise<ReviewWithUser> {
+    return this.prisma.review.create({
+      data: {
+        orderId: data.orderId,
+        userId: data.userId,
+        rating: data.rating,
+        content: data.content,
+      },
+      select: reviewWithUserSelect,
+    });
+  }
+
+  updateReview(
+    reviewId: string,
+    data: {
+      rating?: number;
+      content?: string;
+    },
+  ): Promise<ReviewWithUser> {
+    return this.prisma.review.update({
+      where: { id: reviewId },
+      data,
+      select: reviewWithUserSelect,
+    });
+  }
+
+  async deleteReview(reviewId: string): Promise<void> {
+    await this.prisma.review.delete({
+      where: { id: reviewId },
+    });
+  }
+
   async isFavorite(clientUserId: string, serviceId: string): Promise<boolean> {
     const row = await this.prisma.favoriteService.findUnique({
       where: {
