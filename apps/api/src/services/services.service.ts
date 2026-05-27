@@ -219,6 +219,33 @@ export class ServicesService {
     };
   }
 
+  async getOtherServicesByExpertId(
+    serviceId: string,
+  ): Promise<ServiceListItemResponse[]> {
+    const service = await this.servicesRepository.findById(serviceId);
+
+    if (service === null) {
+      throw new AppException(SERVICE_ERRORS.NOT_FOUND);
+    }
+
+    const others = await this.servicesRepository.findManyByExpertUserId({
+      expertUserId: service.expertUserId,
+      currentServiceId: serviceId,
+      take: 4,
+    });
+
+    if (others.length === 0) return [];
+
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      others.map((s) => s.id),
+    );
+
+    return others.map((s) => {
+      const stats = statsMap.get(s.id) ?? { reviewCount: 0, rating: 0 };
+      return mapServiceListItem(s, stats);
+    });
+  }
+
   async createService(
     expertUserId: string,
     dto: CreateServiceRequestDto,
