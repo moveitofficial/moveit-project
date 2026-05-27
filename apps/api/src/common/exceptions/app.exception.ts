@@ -1,12 +1,16 @@
 import { HttpException } from '@nestjs/common';
 
+interface AppError {
+  status: number;
+  message: string;
+  code?: string;
+}
+
 export class AppException extends HttpException {
-  constructor(
-    status: number,
-    message: string,
-    public readonly code: string,
-    public readonly details?: Record<string, unknown>,
-  ) {
-    super(message, status);
+  readonly code?: string;
+
+  constructor(error: AppError) {
+    super(error.message, error.status);
+    this.code = error.code;
   }
 }

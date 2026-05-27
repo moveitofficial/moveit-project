@@ -49,7 +49,7 @@ export const mockReviews: Review[] = [
 
 export const mockServiceReviewsResponse: ApiSuccess<PaginatedResult<Review>> = {
   success: true,
-  message: '리뷰 목록을 조회했습니다.',
+  message: '요청 성공',
   data: {
     items: mockReviews,
     pagination: { page: 1, pageSize: 20, totalCount: 4, hasNext: false },

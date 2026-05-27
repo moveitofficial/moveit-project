@@ -2,25 +2,35 @@ import { vars } from '@repo/styles/tokens';
 import { style } from '@vanilla-extract/css';
 
 export const container = style({
-  padding: '40px',
   display: 'flex',
   flexDirection: 'column',
-  gap: '12px',
+  marginTop: '112px',
 });
 
-export const fontGroup = style({
-  fontWeight: vars.font.weight.regular,
-  color: vars.color.gray500,
+export const newService = style({
+  width: '100vw',
+  marginLeft: 'calc(-50vw + 50%)', // 부모 중앙 기준으로 좌측까지 밀어냄
+  backgroundColor: vars.color.blue50,
+  padding: '80px 0',
+  marginTop: '88px',
+  display: 'flex',
+  justifyContent: 'center',
 });
 
-export const heading = style({
-  color: vars.color.black500,
+export const newServiceInner = style({
+  width: '100%',
+  maxWidth: '1176px',
 });
 
-export const accent = style({
-  color: vars.color.blue300,
+export const cardList = style({
+  display: 'flex',
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: '24px',
 });
 
-export const danger = style({
-  color: vars.color.red200,
+export const communityList = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '16px',
 });

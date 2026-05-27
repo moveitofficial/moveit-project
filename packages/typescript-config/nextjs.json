@@ -7,6 +7,16 @@
     "moduleResolution": "Bundler",
     "allowJs": true,
     "jsx": "preserve",
-    "noEmit": true
-  }
+    "noEmit": true,
+    "incremental": true
+  },
+  "include": [
+    "${configDir}/next-env.d.ts",
+    "${configDir}/**/*.ts",
+    "${configDir}/**/*.tsx",
+    "${configDir}/**/*.mts",
+    "${configDir}/.next/types/**/*.ts",
+    "${configDir}/.next/dev/types/**/*.ts"
+  ],
+  "exclude": ["${configDir}/node_modules"]
 }

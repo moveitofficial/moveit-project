@@ -2,6 +2,7 @@
 import { fakerKO as faker } from '@faker-js/faker';
 import {
   type Admin,
+  AdminActionType,
   AuthProvider,
   BusinessSector,
   CommunityCategory,
@@ -21,6 +22,7 @@ import {
   RefundStatus,
   RefundType,
   Region,
+  ReportReason,
   Role,
   SenderType,
   ServiceCategoryName,
@@ -70,13 +72,13 @@ const BANNER_IMAGES = [
   'https://picsum.photos/seed/banner-3/1920/600',
 ];
 
-const REPORT_REASONS = [
-  '허위·과장 정보',
-  '욕설·비방',
-  '불법 행위/사기 의심',
-  '외부 연락처 유도',
-  '스팸/광고',
-  '기타',
+const REPORT_REASONS: ReportReason[] = [
+  ReportReason.FALSE_INFORMATION,
+  ReportReason.ABUSE,
+  ReportReason.ILLEGAL_ACTIVITY,
+  ReportReason.EXTERNAL_CONTACT,
+  ReportReason.SPAM,
+  ReportReason.OTHER,
 ];
 
 const COMMENT_TEMPLATES = [
@@ -178,6 +180,9 @@ class Seeder {
     await this.#seedFavorites(clients, experts, services);
     console.warn(`✅ 즐겨찾기`);
 
+    await this.#seedRecentlyViewedServices(clients, services);
+    console.warn(`✅ 최근 본 서비스 (CLIENT 전용)`);
+
     await this.#seedReports(clients, experts);
     console.warn(`✅ 신고 10건 (증거 이미지 포함)`);
 
@@ -197,7 +202,9 @@ class Seeder {
     await this.#seedMainSettings(experts, services);
     await this.#seedFaqs();
     await this.#seedStatistics(experts, serviceGroups, serviceCategories);
-    console.warn(`✅ 배너/메인설정/FAQ/통계`);
+    await this.#seedCategoryFeaturedServices(serviceGroups, services);
+    await this.#seedAdminActivityLogs([superAdmin, ...staffAdmins]);
+    console.warn(`✅ 배너/메인설정/FAQ/통계/카테고리추천/어드민로그`);
 
     console.warn('\n────────────────────────────');
     console.warn(`🔑 테스트 계정 (공통 비밀번호: ${SEED_PASSWORD})`);
@@ -211,6 +218,8 @@ class Seeder {
   // ─── 1. Reset ─────────────────────────────────────────────────────────
   async #resetDb(): Promise<void> {
     // 외래키 의존성 역순으로 삭제
+    await this.#prisma.adminActivityLog.deleteMany();
+    await this.#prisma.categoryFeaturedService.deleteMany();
     await this.#prisma.notification.deleteMany();
     await this.#prisma.mainSetting.deleteMany();
     await this.#prisma.banner.deleteMany();
@@ -233,6 +242,7 @@ class Seeder {
     await this.#prisma.report.deleteMany();
     await this.#prisma.favoriteService.deleteMany();
     await this.#prisma.favoriteExpert.deleteMany();
+    await this.#prisma.recentlyViewedService.deleteMany();
     await this.#prisma.review.deleteMany();
     await this.#prisma.refund.deleteMany();
     await this.#prisma.payment.deleteMany();
@@ -533,6 +543,8 @@ class Seeder {
             serviceScope: faker.lorem.sentence(),
             servicePrice: rand(500_000, 5_000_000),
             description: faker.lorem.paragraphs(3),
+            preparationNotes:
+              '작업 시작 전 기획서와 참고 자료를 준비해 주세요.',
             refundPolicy:
               '작업 시작 전 100% 환불, 작업 중 50% 환불, 작업 완료 후 환불 불가',
             status: pick(statuses),
@@ -667,7 +679,7 @@ class Seeder {
             refundAmount: order.totalAmount,
             type: RefundType.CANCEL,
             status: RefundStatus.REQUESTED,
-            reason: '서비스 진행 어려움',
+            adminReason: '서비스 진행 어려움',
             approvedAdminId: admin.id,
             requestedAt: new Date(),
             paymentKey: payment.paymentKey,
@@ -731,13 +743,35 @@ class Seeder {
     }
   }
 
+  // ─── 10-2. Recently Viewed Services (CLIENT 전용) ─────────────────────
+  async #seedRecentlyViewedServices(
+    clients: User[],
+    services: Service[],
+  ): Promise<void> {
+    const pairs = new Set<string>();
+    for (let i = 0; i < 30; i++) {
+      const client = pick(clients);
+      const service = pick(services);
+      const key = `${client.id}-${service.id}`;
+      if (pairs.has(key)) continue;
+      pairs.add(key);
+      await this.#prisma.recentlyViewedService.create({
+        data: {
+          clientUserId: client.id,
+          serviceId: service.id,
+          viewedAt: faker.date.recent({ days: 14 }),
+        },
+      });
+    }
+  }
+
   // ─── 11. Reports + 증거 이미지 ───────────────────────────────────────
   async #seedReports(clients: User[], experts: User[]): Promise<void> {
     for (let i = 0; i < 10; i++) {
       const report = await this.#prisma.report.create({
         data: {
-          clientUserId: pick(clients).id,
-          expertUserId: pick(experts).id,
+          reporterId: pick(clients).id,
+          reportedId: pick(experts).id,
           reason: pick(REPORT_REASONS),
           detail: faker.lorem.paragraph(),
         },
@@ -792,15 +826,10 @@ class Seeder {
 
       // 좋아요 0~8명
       const likers = shuffle(allUsers).slice(0, rand(0, 8));
-      const likeCount = likers.length;
-      if (likeCount > 0) {
+      if (likers.length > 0) {
         await this.#prisma.like.createMany({
           data: likers.map((u) => ({ postId: post.id, userId: u.id })),
           skipDuplicates: true,
-        });
-        await this.#prisma.communityPost.update({
-          where: { id: post.id },
-          data: { likes: likeCount },
         });
       }
     }
@@ -820,12 +849,13 @@ class Seeder {
       safety++;
       const client = pick(clients);
       const expert = pick(experts);
-      const key = `${client.id}-${expert.id}`;
-      if (pairs.has(key)) continue;
-      pairs.add(key);
 
       const service = services.find((s) => s.expertUserId === expert.id);
       if (!service) continue;
+
+      const key = `${client.id}-${expert.id}-${service.id}`;
+      if (pairs.has(key)) continue;
+      pairs.add(key);
 
       const room = await this.#prisma.chatRoom.create({
         data: {
@@ -1006,29 +1036,94 @@ class Seeder {
     serviceGroups: { id: string; name: ServiceGroupName }[],
     serviceCategories: { id: string; name: ServiceCategoryName }[],
   ): Promise<void> {
+    // 최근 7일치 일별 통계
+    const statsDates = range(7).map((daysAgo) => {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - daysAgo);
+      d.setUTCHours(0, 0, 0, 0);
+      return d;
+    });
+
     for (const expert of experts) {
-      await this.#prisma.statisticsBySeller.create({
-        data: {
-          sellerUserId: expert.id,
-          totalTransactionAmount: rand(1_000_000, 50_000_000),
-          totalTransactionCount: rand(1, 30),
-          maxTransactionAmount: rand(500_000, 5_000_000),
-        },
-      });
+      for (const date of statsDates) {
+        await this.#prisma.statisticsBySeller.create({
+          data: {
+            sellerUserId: expert.id,
+            date,
+            totalTransactionAmount: rand(1_000_000, 50_000_000),
+            totalTransactionCount: rand(1, 30),
+            maxTransactionAmount: rand(500_000, 5_000_000),
+          },
+        });
+      }
     }
 
     for (const group of serviceGroups) {
       for (const category of serviceCategories) {
-        await this.#prisma.statisticsByCategory.create({
+        for (const date of statsDates) {
+          await this.#prisma.statisticsByCategory.create({
+            data: {
+              serviceGroupId: group.id,
+              serviceCategoryId: category.id,
+              date,
+              totalTransactionAmount: rand(1_000_000, 100_000_000),
+              totalTransactionCount: rand(1, 100),
+              maxTransactionAmount: rand(500_000, 10_000_000),
+            },
+          });
+        }
+      }
+    }
+  }
+
+  // ─── 20. CategoryFeaturedServices (그룹별 추천 서비스) ─────────────
+  async #seedCategoryFeaturedServices(
+    serviceGroups: { id: string; name: ServiceGroupName }[],
+    services: Service[],
+  ): Promise<void> {
+    for (const group of serviceGroups) {
+      const groupServices = services.filter(
+        (s) => s.serviceGroupId === group.id,
+      );
+      const picked = shuffle(groupServices).slice(
+        0,
+        Math.min(3, groupServices.length),
+      );
+      for (const service of picked) {
+        await this.#prisma.categoryFeaturedService.create({
           data: {
             serviceGroupId: group.id,
-            serviceCategoryId: category.id,
-            totalTransactionAmount: rand(1_000_000, 100_000_000),
-            totalTransactionCount: rand(1, 100),
-            maxTransactionAmount: rand(500_000, 10_000_000),
+            serviceId: service.id,
           },
         });
       }
+    }
+  }
+
+  // ─── 21. AdminActivityLogs ─────────────────────────────────────────
+  async #seedAdminActivityLogs(admins: Admin[]): Promise<void> {
+    const actionTypes = Object.values(AdminActionType);
+    // 각 actionType 1건씩 (12건) — 모든 종류 노출 확인용
+    for (const actionType of actionTypes) {
+      await this.#prisma.adminActivityLog.create({
+        data: {
+          adminId: pick(admins).id,
+          actionType,
+          referenceId: faker.string.uuid(),
+          createdAt: faker.date.recent({ days: 30 }),
+        },
+      });
+    }
+    // 추가 랜덤 5건 — 일부는 referenceId null
+    for (let i = 0; i < 5; i++) {
+      await this.#prisma.adminActivityLog.create({
+        data: {
+          adminId: pick(admins).id,
+          actionType: pick(actionTypes),
+          referenceId: i % 2 === 0 ? faker.string.uuid() : null,
+          createdAt: faker.date.recent({ days: 30 }),
+        },
+      });
     }
   }
 }

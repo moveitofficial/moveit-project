@@ -10,7 +10,7 @@ const portfolioOne: PortfolioListItem = {
   title: 'The CNM 교육 플랫폼',
   thumbnailUrl: 'https://picsum.photos/seed/port1/400/300',
   clientName: 'CNM',
-  industry: '교육',
+  businessSector: 'PUBLIC_INSTITUTION',
 };
 
 export const mockPortfolios: PortfolioListItem[] = [
@@ -20,28 +20,28 @@ export const mockPortfolios: PortfolioListItem[] = [
     title: '핀테크 모바일 앱',
     thumbnailUrl: 'https://picsum.photos/seed/port2/400/300',
     clientName: 'FinTechCo',
-    industry: '금융',
+    businessSector: 'LEGAL_TAX',
   },
   {
     id: 'port-003',
     title: '커머스 어드민 대시보드',
     thumbnailUrl: 'https://picsum.photos/seed/port3/400/300',
     clientName: 'CommerceX',
-    industry: '커머스',
+    businessSector: 'ECOMMERCE',
   },
   {
     id: 'port-004',
     title: '헬스케어 환자 관리 시스템',
     thumbnailUrl: 'https://picsum.photos/seed/port4/400/300',
     clientName: 'HealthCare+',
-    industry: '의료',
+    businessSector: 'MEDICAL_PHARMA',
   },
   {
     id: 'port-005',
-    title: '여행 예약 플랫폼',
+    title: '아파트 분양 관리 플랫폼',
     thumbnailUrl: 'https://picsum.photos/seed/port5/400/300',
-    clientName: 'TravelEasy',
-    industry: '여행',
+    clientName: 'PropertyHub',
+    businessSector: 'REAL_ESTATE',
   },
 ];
 
@@ -52,10 +52,10 @@ export const mockPortfolioDetail: PortfolioDetail = {
   Next.js + NestJS 풀스택으로 개발했습니다.
   실시간 강의실, 결제, 학생 관리 기능 포함.`,
   skills: [
-    { stackName: 'React', stackType: 'FRONTEND' },
-    { stackName: 'Next.js', stackType: 'FRONTEND' },
-    { stackName: 'NestJS', stackType: 'BACKEND' },
-    { stackName: 'PostgreSQL', stackType: 'BACKEND' },
+    { stackName: 'REACT', stackType: 'FRONTEND' },
+    { stackName: 'NEXTJS', stackType: 'FRONTEND' },
+    { stackName: 'NESTJS', stackType: 'BACKEND' },
+    { stackName: 'POSTGRESQL', stackType: 'BACKEND' },
   ],
   images: [
     { id: 'pimg-001', url: 'https://picsum.photos/seed/portimg1/800/600', isMain: true },
@@ -66,7 +66,7 @@ export const mockPortfolioDetail: PortfolioDetail = {
 
 export const mockPortfolioListResponse: ApiSuccess<PaginatedResult<PortfolioListItem>> = {
   success: true,
-  message: '포트폴리오 목록을 조회했습니다.',
+  message: '요청 성공',
   data: {
     items: mockPortfolios,
     pagination: { page: 1, pageSize: 20, totalCount: 5, hasNext: false },
@@ -75,6 +75,6 @@ export const mockPortfolioListResponse: ApiSuccess<PaginatedResult<PortfolioList
 
 export const mockPortfolioDetailResponse: ApiSuccess<PortfolioDetail> = {
   success: true,
-  message: '포트폴리오 상세를 조회했습니다.',
+  message: '요청 성공',
   data: mockPortfolioDetail,
 };

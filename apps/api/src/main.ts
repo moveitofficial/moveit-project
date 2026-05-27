@@ -1,15 +1,19 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import basicAuth from 'express-basic-auth';
 
 import { AppModule } from './app.module';
+import { ACCESS_COOKIE_NAME } from './auth/auth.constants';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(cookieParser());
 
   // Request 유효성 검사
   app.useGlobalPipes(
@@ -34,6 +38,11 @@ async function bootstrap() {
     .setTitle('moveit API')
     .setDescription('moveit API 문서')
     .setVersion('1.0')
+    .addCookieAuth(
+      ACCESS_COOKIE_NAME,
+      { type: 'apiKey', in: 'cookie', name: ACCESS_COOKIE_NAME },
+      'cookieAuth',
+    )
     .build();
   app.use(
     '/docs',
@@ -49,7 +58,11 @@ async function bootstrap() {
     }),
   );
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: {
+      withCredentials: true,
+    },
+  });
 
   // CORS
   app.enableCors({
@@ -58,6 +71,8 @@ async function bootstrap() {
     ),
     credentials: true,
   });
+
+  app.enableShutdownHooks();
 
   await app.listen(process.env.PORT ?? 8000);
 }
