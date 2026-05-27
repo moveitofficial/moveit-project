@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -18,12 +19,19 @@ import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import { COMMON_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
-import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
+import {
+  OptionalJwtAuth,
+  RoleAuth,
+} from '../common/decorators/jwt-auth.decorator';
 
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import {
-  ServiceListDataDto,
+  ServiceDetailResponseDto,
+  ServiceListPaginatedResponseDto,
+  ServiceListQueryDto,
   ServiceResponseDto,
+  ServiceReviewsPaginatedResponseDto,
+  ServiceReviewsQueryDto,
 } from './dto/service-response.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
@@ -37,20 +45,36 @@ export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @ApiOperation({ summary: '서비스 목록 조회' })
-  @ApiSuccessResponse(HttpStatus.OK, ServiceListDataDto)
+  @ApiSuccessResponse(HttpStatus.OK, ServiceListPaginatedResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get()
-  findAll() {
-    return this.servicesService.getServices();
+  findAll(@Query() query: ServiceListQueryDto) {
+    return this.servicesService.getServices(query);
   }
 
+  @ApiOperation({ summary: '서비스 리뷰 목록 조회' })
+  @ApiSuccessResponse(HttpStatus.OK, ServiceReviewsPaginatedResponseDto)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get(':id/reviews')
+  findReviews(
+    @Param('id', ParseUUIDPipe) serviceId: string,
+    @Query() query: ServiceReviewsQueryDto,
+  ) {
+    return this.servicesService.getServiceReviews(serviceId, query);
+  }
+
+  @OptionalJwtAuth()
   @ApiOperation({ summary: '서비스 상세 조회' })
-  @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, ServiceDetailResponseDto)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) serviceId: string) {
-    return this.servicesService.getServiceById(serviceId);
+  findOne(@Req() req: Request, @Param('id', ParseUUIDPipe) serviceId: string) {
+    const user = req.user as JwtAccessUser | undefined;
+    return this.servicesService.getServiceById(serviceId, user?.userId);
   }
 
   @ApiOperation({ summary: '전문가 서비스 등록' })

@@ -11,6 +11,7 @@ import { JwtAccessGuard } from './jwt/jwt-access.guard';
 import { JwtAccessStrategy } from './jwt/jwt-access.strategy';
 import { JwtRefreshGuard } from './jwt/jwt-refresh.guard';
 import { JwtRefreshStrategy } from './jwt/jwt-refresh.strategy';
+import { OptionalJwtAccessGuard } from './jwt/optional-jwt-access.guard';
 import { GoogleGuard } from './oauth/google/google.guard';
 import { GoogleOAuthStartGuard } from './oauth/google/google.oauth.start.guard';
 import { GoogleStrategy } from './oauth/google/google.strategy';
@@ -49,8 +50,9 @@ import { OAuthController } from './oauth.controller';
     JwtAccessStrategy,
     JwtRefreshStrategy,
     JwtAccessGuard,
+    OptionalJwtAccessGuard,
     JwtRefreshGuard,
   ],
-  exports: [JwtAccessGuard, JwtRefreshGuard],
+  exports: [JwtAccessGuard, OptionalJwtAccessGuard, JwtRefreshGuard],
 })
 export class AuthModule {}
