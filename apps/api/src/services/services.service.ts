@@ -9,6 +9,7 @@ import {
 } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
+import { UploadService } from '../upload/upload.service';
 
 import { CreateReviewRequestDto } from './dto/create-review-request.dto';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
@@ -39,7 +40,10 @@ import type {
 
 @Injectable()
 export class ServicesService {
-  constructor(private readonly servicesRepository: ServicesRepository) {}
+  constructor(
+    private readonly servicesRepository: ServicesRepository,
+    private readonly uploadService: UploadService,
+  ) {}
 
   async getServices(query: ServiceListQueryDto) {
     const page = query.page ?? 1;
@@ -259,7 +263,8 @@ export class ServicesService {
     dto: CreateServiceRequestDto,
   ): Promise<ServiceResponse> {
     const service = await this.servicesRepository.create({
-      expertUserId,
+      id: dto.serviceId,
+      expertUser: { connect: { id: expertUserId } },
       title: dto.title,
       workDuration: dto.workDuration,
       revisionCount: dto.revisionCount,
@@ -269,8 +274,8 @@ export class ServicesService {
       preparationNotes: dto.preparationNotes,
       refundPolicy: dto.refundPolicy,
       status: ServiceStatus.ACTIVE,
-      serviceGroupId: dto.serviceGroupId,
-      serviceCategoryId: dto.serviceCategoryId,
+      serviceGroup: { connect: { name: dto.serviceGroup } },
+      serviceCategory: { connect: { name: dto.serviceCategory } },
       images: {
         create: [
           { imgUrl: dto.mainImageUrl, isMain: true },
@@ -291,7 +296,9 @@ export class ServicesService {
         })),
       },
       techStacks: {
-        create: dto.techStackIds.map((id) => ({ techStackId: id })),
+        create: dto.techStackNames.map((name) => ({
+          techStack: { connect: { name } },
+        })),
       },
     });
     return mapService(service);
@@ -319,7 +326,7 @@ export class ServicesService {
       throw new AppException(SERVICE_ERRORS.IMAGE_PARTIAL_UPDATE);
     }
 
-    const data: Prisma.ServiceUncheckedUpdateInput = {};
+    const data: Prisma.ServiceUpdateInput = {};
 
     if (dto.title !== undefined) data.title = dto.title;
     if (dto.workDuration !== undefined) data.workDuration = dto.workDuration;
@@ -331,12 +338,17 @@ export class ServicesService {
       data.preparationNotes = dto.preparationNotes;
     }
     if (dto.refundPolicy !== undefined) data.refundPolicy = dto.refundPolicy;
-    if (dto.serviceGroupId !== undefined) {
-      data.serviceGroupId = dto.serviceGroupId;
+    if (dto.serviceGroup !== undefined) {
+      data.serviceGroup = { connect: { name: dto.serviceGroup } };
     }
-    if (dto.serviceCategoryId !== undefined) {
-      data.serviceCategoryId = dto.serviceCategoryId;
+    if (dto.serviceCategory !== undefined) {
+      data.serviceCategory = { connect: { name: dto.serviceCategory } };
     }
+    const oldImageKeys =
+      dto.mainImageUrl !== undefined && dto.images !== undefined
+        ? existing.images.map((img) => new URL(img.imgUrl).pathname.slice(1))
+        : [];
+
     if (dto.mainImageUrl !== undefined && dto.images !== undefined) {
       data.images = {
         deleteMany: {},
@@ -365,10 +377,12 @@ export class ServicesService {
         })),
       };
     }
-    if (dto.techStackIds !== undefined) {
+    if (dto.techStackNames !== undefined) {
       data.techStacks = {
         deleteMany: {},
-        create: dto.techStackIds.map((id) => ({ techStackId: id })),
+        create: dto.techStackNames.map((name) => ({
+          techStack: { connect: { name } },
+        })),
       };
     }
 
@@ -377,6 +391,11 @@ export class ServicesService {
     }
 
     const updated = await this.servicesRepository.update(serviceId, data);
+
+    if (oldImageKeys.length > 0) {
+      await this.uploadService.deleteImages(oldImageKeys);
+    }
+
     return mapService(updated);
   }
 
@@ -417,9 +436,16 @@ export class ServicesService {
       throw new AppException(SERVICE_ERRORS.ALREADY_DELETED);
     }
 
+    const keys = existing.images.map((img) =>
+      new URL(img.imgUrl).pathname.slice(1),
+    );
+
     const updated = await this.servicesRepository.update(serviceId, {
       status: ServiceStatus.CLOSED,
     });
+
+    await this.uploadService.deleteImages(keys);
+
     return mapService(updated);
   }
 
@@ -473,7 +499,7 @@ export class ServicesService {
     dto: UpdateReviewRequestDto,
   ) {
     if (dto.rating === undefined && dto.content === undefined) {
-      throw new AppException(COMMON_ERRORS.VALIDATION_ERROR);
+      throw new AppException(REVIEW_ERRORS.NOTHING_TO_UPDATE);
     }
 
     const review = await this.servicesRepository.findReviewById(

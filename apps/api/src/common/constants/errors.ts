@@ -114,6 +114,16 @@ export const SERVICE_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '메인 이미지와 상세 이미지는 함께 수정해야 합니다.',
   },
+  MAIN_IMAGE_REQUIRED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '메인 이미지는 정확히 1개여야 합니다.',
+    code: 'PORTFOLIO_MAIN_IMAGE_REQUIRED',
+  },
+  DETAIL_IMAGE_INVALID: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '상세 이미지는 최소 1개, 최대 10개까지 등록할 수 있습니다.',
+    code: 'PORTFOLIO_DETAIL_IMAGE_INVALID',
+  },
 } as const;
 
 export const ORDER_ERRORS = {
@@ -247,10 +257,17 @@ export const REVIEW_ERRORS = {
   ORDER_NOT_REVIEWABLE: {
     status: HttpStatus.BAD_REQUEST,
     message: '리뷰를 작성할 수 없는 주문 상태입니다.',
+    code: 'REVIEW_ORDER_NOT_REVIEWABLE',
   },
   ORDER_SERVICE_MISMATCH: {
     status: HttpStatus.BAD_REQUEST,
     message: '주문과 서비스가 일치하지 않습니다.',
+    code: 'REVIEW_ORDER_SERVICE_MISMATCH',
+  },
+  NOTHING_TO_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '수정된 내용이 없습니다.',
+    code: 'REVIEW_NOTHING_TO_UPDATE',
   },
 };
 
@@ -270,14 +287,14 @@ export const UPLOAD_ERRORS = {
     message: '이미지 메타데이터를 읽을 수 없습니다. 손상된 파일일 수 있습니다.',
     code: 'UPLOAD_IMAGE_METADATA_UNREADABLE',
   },
-  PORTFOLIO_IMAGE_WIDTH_TOO_SMALL: {
+  IMAGE_WIDTH_TOO_SMALL: {
     status: HttpStatus.BAD_REQUEST,
-    message: '포트폴리오 이미지 가로는 최소 600px 이상이어야 합니다.',
-    code: 'UPLOAD_PORTFOLIO_IMAGE_WIDTH_TOO_SMALL',
+    message: '이미지 가로는 최소 600px 이상이어야 합니다.',
+    code: 'UPLOAD_IMAGE_WIDTH_TOO_SMALL',
   },
-  PORTFOLIO_IMAGE_HEIGHT_TOO_LARGE: {
+  IMAGE_HEIGHT_TOO_LARGE: {
     status: HttpStatus.BAD_REQUEST,
-    message: '포트폴리오 이미지 세로는 최대 3000px 이하여야 합니다.',
+    message: '이미지 세로는 최대 3000px 이하여야 합니다.',
     code: 'UPLOAD_PORTFOLIO_IMAGE_HEIGHT_TOO_LARGE',
   },
 } as const;
