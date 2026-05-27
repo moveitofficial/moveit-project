@@ -31,6 +31,16 @@ export class PortfoliosRepository {
     });
   }
 
+  findByIdAndUserId(
+    id: string,
+    userId: string,
+  ): Promise<PortfolioWithRelations | null> {
+    return this.prisma.portfolio.findFirst({
+      where: { id, expertProfile: { userId } },
+      include: portfolioInclude,
+    });
+  }
+
   create(data: {
     id: string;
     expertProfileId: string;
@@ -58,5 +68,40 @@ export class PortfoliosRepository {
       },
       include: portfolioInclude,
     });
+  }
+
+  update(data: {
+    id: string;
+    title?: string;
+    description?: string;
+    clientName?: string;
+    businessSector?: BusinessSector;
+    images?: { imgUrl: string; isMain: boolean }[];
+    skills?: { stackName: string; stackType: StackType }[];
+  }): Promise<PortfolioWithRelations> {
+    return this.prisma.portfolio.update({
+      where: { id: data.id },
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
+        ...(data.clientName !== undefined && { clientName: data.clientName }),
+        ...(data.businessSector !== undefined && {
+          businessSector: data.businessSector,
+        }),
+        ...(data.images !== undefined && {
+          images: { deleteMany: {}, create: data.images },
+        }),
+        ...(data.skills !== undefined && {
+          skills: { deleteMany: {}, create: data.skills },
+        }),
+      },
+      include: portfolioInclude,
+    });
+  }
+
+  async deleteById(id: string): Promise<void> {
+    await this.prisma.portfolio.delete({ where: { id } });
   }
 }

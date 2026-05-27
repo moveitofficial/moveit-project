@@ -940,7 +940,7 @@ model ChatRoom {
   messages    Message[] @relation("ChatRoomMessages")
   lastMessage Message?  @relation("ChatRoomLastMessage", fields: [lastMessageId], references: [id])
 
-  @@unique([clientUserId, expertUserId])
+  @@unique([clientUserId, expertUserId, currentServiceId])
   @@map("chat_rooms")
 }
 
