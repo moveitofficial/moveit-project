@@ -22,7 +22,7 @@ import { ApiErrorResponse } from '../common/decorators/api-error-response.decora
 import { ApiFileBody } from '../common/decorators/api-file-body.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
-import { UploadImagesResponseDto } from '../upload/dto/upload-response.dto';
+import { UploadPortfolioImagesResponseDto } from '../upload/dto/upload-response.dto';
 import { UploadService } from '../upload/upload.service';
 
 import { PortfolioResponseDto } from './dto/portfolio-response.dto';
@@ -52,7 +52,7 @@ export class PortfoliosController {
     { name: 'mainImage' },
     { name: 'detailImages', multiple: true },
   ])
-  @ApiSuccessResponse(HttpStatus.CREATED, UploadImagesResponseDto)
+  @ApiSuccessResponse(HttpStatus.CREATED, UploadPortfolioImagesResponseDto)
   @ApiErrorResponse(
     UPLOAD_ERRORS.FILE_NOT_ATTACHED,
     UPLOAD_ERRORS.INVALID_FILE_TYPE,

@@ -6,8 +6,11 @@ import {
   Patch,
   Post,
   Req,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
@@ -21,9 +24,11 @@ import {
   CLIENT_PROFILE_ERRORS,
   COMMON_ERRORS,
   EXPERT_PROFILE_ERRORS,
+  UPLOAD_ERRORS,
   USER_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
+import { ApiFileBody } from '../common/decorators/api-file-body.decorator';
 import {
   ApiOneOfSuccessResponse,
   ApiSuccessResponse,
@@ -84,6 +89,29 @@ export class MeController {
   updateMe(@Req() req: Request, @Body() dto: UpdateUserDto) {
     const user = req.user as JwtAccessUser;
     return this.usersService.updateUser(user.userId, dto);
+  }
+
+  @ApiOperation({ summary: '프로필 이미지 변경' })
+  @JwtAuth()
+  @ApiConsumes('multipart/form-data')
+  @ApiFileBody('profileImage')
+  @ApiSuccessResponse(HttpStatus.OK, UserResponseDto)
+  @ApiErrorResponse(
+    UPLOAD_ERRORS.FILE_NOT_ATTACHED,
+    UPLOAD_ERRORS.INVALID_FILE_TYPE,
+    UPLOAD_ERRORS.IMAGE_METADATA_UNREADABLE,
+    UPLOAD_ERRORS.PROFILE_IMAGE_TOO_LARGE,
+  )
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Patch('profile-image')
+  @UseInterceptors(FileInterceptor('profileImage'))
+  updateProfileImage(
+    @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.usersService.updateProfileImage(user.userId, file);
   }
 
   @ApiOperation({ summary: '비밀번호 변경하기' })
