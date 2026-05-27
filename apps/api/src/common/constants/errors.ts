@@ -226,6 +226,11 @@ export const PORTFOLIO_ERRORS = {
     message: '전문가만 포트폴리오를 등록할 수 있습니다.',
     code: 'PORTFOLIO_NOT_EXPERT',
   },
+  FORBIDDEN: {
+    status: HttpStatus.FORBIDDEN,
+    message: '본인이 등록한 포트폴리오만 수정하거나 삭제할 수 있습니다.',
+    code: 'PORTFOLIO_FORBIDDEN',
+  },
 } as const;
 
 export const UPLOAD_ERRORS = {

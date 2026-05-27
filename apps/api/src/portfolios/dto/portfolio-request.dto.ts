@@ -1,10 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BusinessSector, StackType } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
   IsEnum,
+  IsOptional,
   IsString,
   IsUrl,
   IsUUID,
@@ -84,4 +85,62 @@ export class PortfolioRequestDto {
   @ValidateNested({ each: true })
   @Type(() => PortfolioSkillRequestDto)
   declare skills: PortfolioSkillRequestDto[];
+}
+
+export class PortfolioUpdateDto {
+  @ApiPropertyOptional({ example: '코드잇 포트폴리오' })
+  @IsOptional()
+  @IsString()
+  @Length(2, 20)
+  declare title?: string;
+
+  @ApiPropertyOptional({
+    example:
+      '고품질의 IT 코칭 서비스를 제공하는 전문 플랫폼으로, 다양한 요구에 맞춘 맞춤형 솔루션을 제공합니다.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 500)
+  declare description?: string;
+
+  @ApiPropertyOptional({ example: '코드잇' })
+  @IsOptional()
+  @IsString()
+  @Length(2, 20)
+  declare clientName?: string;
+
+  @ApiPropertyOptional({
+    enum: BusinessSector,
+    example: BusinessSector.ECOMMERCE,
+  })
+  @IsOptional()
+  @IsEnum(BusinessSector)
+  declare businessSector?: BusinessSector;
+
+  @ApiPropertyOptional({
+    type: [PortfolioImageRequestDto],
+    example: [
+      { imgUrl: 'https://example.com/main.png', isMain: true },
+      { imgUrl: 'https://example.com/detail.png', isMain: false },
+    ],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PortfolioImageRequestDto)
+  declare images?: PortfolioImageRequestDto[];
+
+  @ApiPropertyOptional({
+    type: [PortfolioSkillRequestDto],
+    example: [
+      { stackName: 'Figma', stackType: StackType.DESIGN },
+      { stackName: 'React', stackType: StackType.FRONTEND },
+      { stackName: 'NestJS', stackType: StackType.BACKEND },
+    ],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PortfolioSkillRequestDto)
+  declare skills?: PortfolioSkillRequestDto[];
 }
