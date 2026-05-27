@@ -23,9 +23,7 @@ import type { Prisma } from '@prisma/client';
 export class ServicesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(
-    data: Prisma.ServiceUncheckedCreateInput,
-  ): Promise<ServiceWithRelations> {
+  create(data: Prisma.ServiceCreateInput): Promise<ServiceWithRelations> {
     return this.prisma.service.create({ data, include: serviceInclude });
   }
 
@@ -148,7 +146,7 @@ export class ServicesRepository {
 
   update(
     id: string,
-    data: Prisma.ServiceUncheckedUpdateInput,
+    data: Prisma.ServiceUpdateInput,
   ): Promise<ServiceWithRelations> {
     return this.prisma.service.update({
       where: { id },

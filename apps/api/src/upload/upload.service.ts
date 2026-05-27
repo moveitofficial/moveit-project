@@ -5,8 +5,8 @@ import { UPLOAD_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { S3Service } from '../s3/s3.service';
 
-const PORTFOLIO_MIN_WIDTH = 600;
-const PORTFOLIO_MAX_HEIGHT = 3000;
+const MIN_WIDTH = 600;
+const MAX_HEIGHT = 3000;
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 @Injectable()
@@ -28,11 +28,11 @@ export class UploadService {
   //   if (!width || !height) {
   //     throw new AppException(UPLOAD_ERRORS.IMAGE_METADATA_UNREADABLE);
   //   }
-  //   if (width < PORTFOLIO_MIN_WIDTH) {
-  //     throw new AppException(UPLOAD_ERRORS.PORTFOLIO_IMAGE_WIDTH_TOO_SMALL);
+  //   if (width < MIN_WIDTH) {
+  //     throw new AppException(UPLOAD_ERRORS.IMAGE_WIDTH_TOO_SMALL);
   //   }
-  //   if (height > PORTFOLIO_MAX_HEIGHT) {
-  //     throw new AppException(UPLOAD_ERRORS.PORTFOLIO_IMAGE_HEIGHT_TOO_LARGE);
+  //   if (height > MAX_HEIGHT) {
+  //     throw new AppException(UPLOAD_ERRORS.IMAGE_HEIGHT_TOO_LARGE);
   //   }
 
   //   return this.s3Service.upload({
@@ -43,9 +43,9 @@ export class UploadService {
   //   });
   // }
 
-  async uploadPortfolioImages(
+  async uploadImages(
     files: Express.Multer.File[] | undefined,
-    portfolioId: string,
+    folder: string,
   ): Promise<{ key: string; url: string }[]> {
     if (!files || files.length === 0) {
       throw new AppException(UPLOAD_ERRORS.FILE_NOT_ATTACHED);
@@ -61,18 +61,16 @@ export class UploadService {
         if (!width || !height) {
           throw new AppException(UPLOAD_ERRORS.IMAGE_METADATA_UNREADABLE);
         }
-        if (width < PORTFOLIO_MIN_WIDTH) {
-          throw new AppException(UPLOAD_ERRORS.PORTFOLIO_IMAGE_WIDTH_TOO_SMALL);
+        if (width < MIN_WIDTH) {
+          throw new AppException(UPLOAD_ERRORS.IMAGE_WIDTH_TOO_SMALL);
         }
-        if (height > PORTFOLIO_MAX_HEIGHT) {
-          throw new AppException(
-            UPLOAD_ERRORS.PORTFOLIO_IMAGE_HEIGHT_TOO_LARGE,
-          );
+        if (height > MAX_HEIGHT) {
+          throw new AppException(UPLOAD_ERRORS.IMAGE_HEIGHT_TOO_LARGE);
         }
 
         return this.s3Service.upload({
           buffer: file.buffer,
-          folder: `portfolios/${portfolioId}`,
+          folder,
           contentType: file.mimetype,
           originalName: file.originalname,
         });
@@ -80,7 +78,7 @@ export class UploadService {
     );
   }
 
-  async deletePortfolioImages(keys: string[]): Promise<void> {
+  async deleteImages(keys: string[]): Promise<void> {
     await Promise.all(keys.map((key) => this.s3Service.delete(key)));
   }
 }

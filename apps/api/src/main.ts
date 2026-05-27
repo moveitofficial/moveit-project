@@ -43,6 +43,16 @@ async function bootstrap() {
       { type: 'apiKey', in: 'cookie', name: ACCESS_COOKIE_NAME },
       'cookieAuth',
     )
+    .addTag('health')
+    .addTag('auth')
+    .addTag('users')
+    .addTag('users/me')
+    .addTag('users/me/portfolios')
+    .addTag('portfolios')
+    .addTag('services')
+    .addTag('admin-auth')
+    .addTag('admin-account')
+    .addTag('catalogs')
     .build();
   app.use(
     '/docs',

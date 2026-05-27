@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import {
   Body,
   Controller,
@@ -11,8 +13,16 @@ import {
   Post,
   Query,
   Req,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import {
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
@@ -21,13 +31,17 @@ import {
   ORDER_ERRORS,
   REVIEW_ERRORS,
   SERVICE_ERRORS,
+  UPLOAD_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
+import { ApiFileBody } from '../common/decorators/api-file-body.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import {
   OptionalJwtAuth,
   RoleAuth,
 } from '../common/decorators/jwt-auth.decorator';
+import { UploadImagesResponseDto } from '../upload/dto/upload-response.dto';
+import { UploadService } from '../upload/upload.service';
 
 import { CreateReviewRequestDto } from './dto/create-review-request.dto';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
@@ -50,7 +64,10 @@ import type { Request } from 'express';
 @ApiTags('services')
 @Controller('services')
 export class ServicesController {
-  constructor(private readonly servicesService: ServicesService) {}
+  constructor(
+    private readonly servicesService: ServicesService,
+    private readonly uploadService: UploadService,
+  ) {}
 
   @ApiOperation({ summary: '서비스 목록 조회' })
   @ApiSuccessResponse(HttpStatus.OK, ServiceListPaginatedResponseDto)
@@ -59,6 +76,95 @@ export class ServicesController {
   @Get()
   findAll(@Query() query: ServiceListQueryDto) {
     return this.servicesService.getServices(query);
+  }
+
+  @OptionalJwtAuth()
+  @ApiOperation({ summary: '서비스 상세 조회' })
+  @ApiSuccessResponse(HttpStatus.OK, ServiceDetailResponseDto)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get(':id')
+  findOne(@Req() req: Request, @Param('id', ParseUUIDPipe) serviceId: string) {
+    const user = req.user as JwtAccessUser | undefined;
+    return this.servicesService.getServiceById(serviceId, user?.userId);
+  }
+
+  @ApiOperation({ summary: '전문가 서비스 등록' })
+  @RoleAuth(Role.EXPERT)
+  @ApiSuccessResponse(HttpStatus.CREATED, ServiceResponseDto)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    SERVICE_ERRORS.MAIN_IMAGE_REQUIRED,
+    SERVICE_ERRORS.DETAIL_IMAGE_INVALID,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.CREATED)
+  @Post()
+  create(@Req() req: Request, @Body() dto: CreateServiceRequestDto) {
+    const user = req.user as JwtAccessUser;
+    return this.servicesService.createService(user.userId, dto);
+  }
+
+  @ApiOperation({
+    summary: '전문가 서비스 상태 변경',
+    description: '서비스 상태 변경: ACTIVE(활성)/PAUSED(중지)',
+  })
+  @RoleAuth(Role.EXPERT)
+  @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
+  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Patch(':id/status')
+  patchStatus(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) serviceId: string,
+    @Body() dto: UpdateServiceStatusRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.servicesService.updateServiceStatus(
+      user.userId,
+      serviceId,
+      dto,
+    );
+  }
+
+  @ApiOperation({ summary: '전문가 서비스 수정 (상태 제외)' })
+  @RoleAuth(Role.EXPERT)
+  @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
+  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    SERVICE_ERRORS.IMAGE_PARTIAL_UPDATE,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Patch(':id')
+  update(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) serviceId: string,
+    @Body() dto: UpdateServiceRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.servicesService.updateService(user.userId, serviceId, dto);
+  }
+
+  @ApiOperation({
+    summary: '전문가 서비스 종료',
+    description: '서비스 상태: CLOSED - 종료 처리',
+  })
+  @RoleAuth(Role.EXPERT)
+  @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
+  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Delete(':id')
+  close(@Req() req: Request, @Param('id', ParseUUIDPipe) serviceId: string) {
+    const user = req.user as JwtAccessUser;
+    return this.servicesService.closeService(user.userId, serviceId);
   }
 
   @ApiOperation({ summary: '서비스 리뷰 목록 조회' })
@@ -151,88 +257,49 @@ export class ServicesController {
     );
   }
 
-  @OptionalJwtAuth()
-  @ApiOperation({ summary: '서비스 상세 조회' })
-  @ApiSuccessResponse(HttpStatus.OK, ServiceDetailResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Get(':id')
-  findOne(@Req() req: Request, @Param('id', ParseUUIDPipe) serviceId: string) {
-    const user = req.user as JwtAccessUser | undefined;
-    return this.servicesService.getServiceById(serviceId, user?.userId);
-  }
-
-  @ApiOperation({ summary: '전문가 서비스 등록' })
+  @ApiOperation({ summary: '서비스 이미지 업로드' })
   @RoleAuth(Role.EXPERT)
-  @ApiSuccessResponse(HttpStatus.CREATED, ServiceResponseDto)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @HttpCode(HttpStatus.CREATED)
-  @Post()
-  create(@Req() req: Request, @Body() dto: CreateServiceRequestDto) {
-    const user = req.user as JwtAccessUser;
-    return this.servicesService.createService(user.userId, dto);
-  }
-
-  @ApiOperation({
-    summary: '전문가 서비스 상태 변경',
-    description: '서비스 상태 변경: ACTIVE(활성)/PAUSED(중지)',
-  })
-  @RoleAuth(Role.EXPERT)
-  @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Patch(':id/status')
-  patchStatus(
-    @Req() req: Request,
-    @Param('id', ParseUUIDPipe) serviceId: string,
-    @Body() dto: UpdateServiceStatusRequestDto,
-  ) {
-    const user = req.user as JwtAccessUser;
-    return this.servicesService.updateServiceStatus(
-      user.userId,
-      serviceId,
-      dto,
-    );
-  }
-
-  @ApiOperation({ summary: '전문가 서비스 수정 (상태 제외)' })
-  @RoleAuth(Role.EXPERT)
-  @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
+  @ApiConsumes('multipart/form-data')
+  @ApiFileBody([
+    { name: 'mainImage' },
+    { name: 'detailImages', multiple: true },
+  ])
+  @ApiSuccessResponse(HttpStatus.CREATED, UploadImagesResponseDto)
   @ApiErrorResponse(
-    COMMON_ERRORS.VALIDATION_ERROR,
-    SERVICE_ERRORS.IMAGE_PARTIAL_UPDATE,
+    UPLOAD_ERRORS.FILE_NOT_ATTACHED,
+    UPLOAD_ERRORS.INVALID_FILE_TYPE,
+    UPLOAD_ERRORS.IMAGE_METADATA_UNREADABLE,
+    UPLOAD_ERRORS.IMAGE_WIDTH_TOO_SMALL,
+    UPLOAD_ERRORS.IMAGE_HEIGHT_TOO_LARGE,
   )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Patch(':id')
-  update(
-    @Req() req: Request,
-    @Param('id', ParseUUIDPipe) serviceId: string,
-    @Body() dto: UpdateServiceRequestDto,
+  @Post('upload')
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'mainImage', maxCount: 1 },
+      { name: 'detailImages', maxCount: 10 },
+    ]),
+  )
+  async uploadServiceImages(
+    @UploadedFiles()
+    files:
+      | {
+          mainImage?: Express.Multer.File[];
+          detailImages?: Express.Multer.File[];
+        }
+      | undefined,
   ) {
-    const user = req.user as JwtAccessUser;
-    return this.servicesService.updateService(user.userId, serviceId, dto);
-  }
-
-  @ApiOperation({
-    summary: '전문가 서비스 종료',
-    description: '서비스 상태: CLOSED - 종료 처리',
-  })
-  @RoleAuth(Role.EXPERT)
-  @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Delete(':id')
-  close(@Req() req: Request, @Param('id', ParseUUIDPipe) serviceId: string) {
-    const user = req.user as JwtAccessUser;
-    return this.servicesService.closeService(user.userId, serviceId);
+    const serviceId = randomUUID();
+    const [mainImage, detailImages] = await Promise.all([
+      this.uploadService.uploadImages(
+        files?.mainImage,
+        `services/${serviceId}`,
+      ),
+      this.uploadService.uploadImages(
+        files?.detailImages,
+        `services/${serviceId}`,
+      ),
+    ]);
+    return { serviceId, mainImage: mainImage[0], detailImages };
   }
 }
