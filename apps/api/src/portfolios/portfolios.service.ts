@@ -168,7 +168,7 @@ export class PortfoliosService {
     });
 
     if (oldImageKeys.length > 0) {
-      await this.uploadService.deletePortfolioImages(oldImageKeys);
+      await this.uploadService.deleteImages(oldImageKeys);
     }
 
     return mapPortfolio(updated);
@@ -190,7 +190,7 @@ export class PortfoliosService {
     const keys = portfolio.images.map((img) =>
       new URL(img.imgUrl).pathname.slice(1),
     );
-    await this.uploadService.deletePortfolioImages(keys);
+    await this.uploadService.deleteImages(keys);
     await this.portfoliosRepository.deleteById(portfolioId);
   }
 }
