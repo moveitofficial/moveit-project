@@ -114,6 +114,16 @@ export const SERVICE_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '메인 이미지와 상세 이미지는 함께 수정해야 합니다.',
   },
+  MAIN_IMAGE_REQUIRED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '메인 이미지는 정확히 1개여야 합니다.',
+    code: 'PORTFOLIO_MAIN_IMAGE_REQUIRED',
+  },
+  DETAIL_IMAGE_INVALID: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '상세 이미지는 최소 1개, 최대 10개까지 등록할 수 있습니다.',
+    code: 'PORTFOLIO_DETAIL_IMAGE_INVALID',
+  },
 } as const;
 
 export const ORDER_ERRORS = {
@@ -121,17 +131,33 @@ export const ORDER_ERRORS = {
     status: HttpStatus.NOT_FOUND,
     message: '주문을 찾을 수 없습니다.',
   },
+  FORBIDDEN_NOT_OWNER: {
+    status: HttpStatus.FORBIDDEN,
+    message: '본인의 주문만 결제하거나 조회할 수 있습니다.',
+  },
+  FORBIDDEN_SELF_ORDER: {
+    status: HttpStatus.FORBIDDEN,
+    message: '본인의 서비스는 구매할 수 없습니다.',
+  },
   INVALID_STATUS: {
     status: HttpStatus.BAD_REQUEST,
     message: '유효하지 않은 주문 상태입니다.',
   },
-  ALREADY_CANCELED: {
+  AMOUNT_MISMATCH: {
     status: HttpStatus.BAD_REQUEST,
+    message: '결제 요청 금액이 실제 주문 금액과 일치하지 않습니다.',
+  },
+  ALREADY_CANCELED: {
+    status: HttpStatus.CONFLICT,
     message: '이미 취소된 주문입니다.',
   },
   ALREADY_REFUNDED: {
-    status: HttpStatus.BAD_REQUEST,
+    status: HttpStatus.CONFLICT,
     message: '이미 환불된 주문입니다.',
+  },
+  ALREADY_PROCESSED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 결제가 완료되었거나 취소된 주문건입니다.',
   },
 } as const;
 
@@ -233,31 +259,58 @@ export const PORTFOLIO_ERRORS = {
   },
 } as const;
 
+export const REVIEW_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '존재하지 않는 리뷰입니다.',
+    code: 'REVIEW_NOT_FOUND',
+  },
+  ALREADY_EXISTS: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 리뷰를 작성한 주문입니다.',
+    code: 'REVIEW_ALREADY_EXISTS',
+  },
+  ORDER_NOT_REVIEWABLE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '리뷰를 작성할 수 없는 주문 상태입니다.',
+    code: 'REVIEW_ORDER_NOT_REVIEWABLE',
+  },
+  ORDER_SERVICE_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '주문과 서비스가 일치하지 않습니다.',
+    code: 'REVIEW_ORDER_SERVICE_MISMATCH',
+  },
+  NOTHING_TO_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '수정된 내용이 없습니다.',
+    code: 'REVIEW_NOTHING_TO_UPDATE',
+  },
+};
+
 export const UPLOAD_ERRORS = {
   FILE_NOT_ATTACHED: {
     status: HttpStatus.BAD_REQUEST,
     message: '파일이 첨부되지 않았습니다.',
-    code: 'UPLOAD_FILE_NOT_ATTACHED',
   },
   INVALID_FILE_TYPE: {
     status: HttpStatus.BAD_REQUEST,
     message: '허용되지 않는 파일 형식입니다. (jpeg, png, webp만 허용)',
-    code: 'UPLOAD_INVALID_FILE_TYPE',
   },
   IMAGE_METADATA_UNREADABLE: {
     status: HttpStatus.BAD_REQUEST,
     message: '이미지 메타데이터를 읽을 수 없습니다. 손상된 파일일 수 있습니다.',
-    code: 'UPLOAD_IMAGE_METADATA_UNREADABLE',
   },
-  PORTFOLIO_IMAGE_WIDTH_TOO_SMALL: {
+  IMAGE_WIDTH_TOO_SMALL: {
     status: HttpStatus.BAD_REQUEST,
-    message: '포트폴리오 이미지 가로는 최소 600px 이상이어야 합니다.',
-    code: 'UPLOAD_PORTFOLIO_IMAGE_WIDTH_TOO_SMALL',
+    message: '이미지 가로는 최소 600px 이상이어야 합니다.',
   },
-  PORTFOLIO_IMAGE_HEIGHT_TOO_LARGE: {
+  IMAGE_HEIGHT_TOO_LARGE: {
     status: HttpStatus.BAD_REQUEST,
-    message: '포트폴리오 이미지 세로는 최대 3000px 이하여야 합니다.',
-    code: 'UPLOAD_PORTFOLIO_IMAGE_HEIGHT_TOO_LARGE',
+    message: '이미지 세로는 최대 3000px 이하여야 합니다.',
+  },
+  PROFILE_IMAGE_TOO_LARGE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '프로필 이미지의 가로와 세로는 각각 500px 이하여야 합니다.',
   },
 } as const;
 

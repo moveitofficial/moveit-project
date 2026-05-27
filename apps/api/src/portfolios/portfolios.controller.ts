@@ -22,7 +22,7 @@ import { ApiErrorResponse } from '../common/decorators/api-error-response.decora
 import { ApiFileBody } from '../common/decorators/api-file-body.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
-import { UploadPortfoliosResponseDto } from '../upload/dto/upload-response.dto';
+import { UploadPortfolioImagesResponseDto } from '../upload/dto/upload-response.dto';
 import { UploadService } from '../upload/upload.service';
 
 import { PortfolioResponseDto } from './dto/portfolio-response.dto';
@@ -52,13 +52,13 @@ export class PortfoliosController {
     { name: 'mainImage' },
     { name: 'detailImages', multiple: true },
   ])
-  @ApiSuccessResponse(HttpStatus.CREATED, UploadPortfoliosResponseDto)
+  @ApiSuccessResponse(HttpStatus.CREATED, UploadPortfolioImagesResponseDto)
   @ApiErrorResponse(
     UPLOAD_ERRORS.FILE_NOT_ATTACHED,
     UPLOAD_ERRORS.INVALID_FILE_TYPE,
     UPLOAD_ERRORS.IMAGE_METADATA_UNREADABLE,
-    UPLOAD_ERRORS.PORTFOLIO_IMAGE_WIDTH_TOO_SMALL,
-    UPLOAD_ERRORS.PORTFOLIO_IMAGE_HEIGHT_TOO_LARGE,
+    UPLOAD_ERRORS.IMAGE_WIDTH_TOO_SMALL,
+    UPLOAD_ERRORS.IMAGE_HEIGHT_TOO_LARGE,
   )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Post('upload')
@@ -68,7 +68,7 @@ export class PortfoliosController {
       { name: 'detailImages', maxCount: 10 },
     ]),
   )
-  async uploadPortfolios(
+  async uploadPortfolioImages(
     @UploadedFiles()
     files:
       | {
@@ -79,10 +79,13 @@ export class PortfoliosController {
   ) {
     const portfolioId = randomUUID();
     const [mainImage, detailImages] = await Promise.all([
-      this.uploadService.uploadPortfolioImages(files?.mainImage, portfolioId),
-      this.uploadService.uploadPortfolioImages(
+      this.uploadService.uploadImages(
+        files?.mainImage,
+        `portfolios/${portfolioId}`,
+      ),
+      this.uploadService.uploadImages(
         files?.detailImages,
-        portfolioId,
+        `portfolios/${portfolioId}`,
       ),
     ]);
     return { portfolioId, mainImage: mainImage[0], detailImages };

@@ -5,47 +5,46 @@ import { UPLOAD_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { S3Service } from '../s3/s3.service';
 
-const PORTFOLIO_MIN_WIDTH = 600;
-const PORTFOLIO_MAX_HEIGHT = 3000;
+const MIN_WIDTH = 600;
+const MAX_HEIGHT = 3000;
+const PROFILE_MAX_SIZE = 500;
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 @Injectable()
 export class UploadService {
   constructor(private readonly s3Service: S3Service) {}
 
-  // async uploadImage(
-  //   file: Express.Multer.File | undefined,
-  // ): Promise<{ key: string; url: string }> {
-  //   if (!file) {
-  //     throw new AppException(UPLOAD_ERRORS.FILE_NOT_ATTACHED);
-  //   }
+  async uploadImage(
+    file: Express.Multer.File | undefined,
+    folder: string,
+  ): Promise<{ key: string; url: string }> {
+    if (!file) {
+      throw new AppException(UPLOAD_ERRORS.FILE_NOT_ATTACHED);
+    }
 
-  //   if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
-  //     throw new AppException(UPLOAD_ERRORS.INVALID_FILE_TYPE);
-  //   }
+    if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
+      throw new AppException(UPLOAD_ERRORS.INVALID_FILE_TYPE);
+    }
 
-  //   const { width, height } = await sharp(file.buffer).metadata();
-  //   if (!width || !height) {
-  //     throw new AppException(UPLOAD_ERRORS.IMAGE_METADATA_UNREADABLE);
-  //   }
-  //   if (width < PORTFOLIO_MIN_WIDTH) {
-  //     throw new AppException(UPLOAD_ERRORS.PORTFOLIO_IMAGE_WIDTH_TOO_SMALL);
-  //   }
-  //   if (height > PORTFOLIO_MAX_HEIGHT) {
-  //     throw new AppException(UPLOAD_ERRORS.PORTFOLIO_IMAGE_HEIGHT_TOO_LARGE);
-  //   }
+    const { width, height } = await sharp(file.buffer).metadata();
+    if (!width || !height) {
+      throw new AppException(UPLOAD_ERRORS.IMAGE_METADATA_UNREADABLE);
+    }
+    if (width > PROFILE_MAX_SIZE || height > PROFILE_MAX_SIZE) {
+      throw new AppException(UPLOAD_ERRORS.PROFILE_IMAGE_TOO_LARGE);
+    }
 
-  //   return this.s3Service.upload({
-  //     buffer: file.buffer,
-  //     folder: 'portfolios',
-  //     contentType: file.mimetype,
-  //     originalName: file.originalname,
-  //   });
-  // }
+    return this.s3Service.upload({
+      buffer: file.buffer,
+      folder,
+      contentType: file.mimetype,
+      originalName: file.originalname,
+    });
+  }
 
-  async uploadPortfolioImages(
+  async uploadImages(
     files: Express.Multer.File[] | undefined,
-    portfolioId: string,
+    folder: string,
   ): Promise<{ key: string; url: string }[]> {
     if (!files || files.length === 0) {
       throw new AppException(UPLOAD_ERRORS.FILE_NOT_ATTACHED);
@@ -61,18 +60,16 @@ export class UploadService {
         if (!width || !height) {
           throw new AppException(UPLOAD_ERRORS.IMAGE_METADATA_UNREADABLE);
         }
-        if (width < PORTFOLIO_MIN_WIDTH) {
-          throw new AppException(UPLOAD_ERRORS.PORTFOLIO_IMAGE_WIDTH_TOO_SMALL);
+        if (width < MIN_WIDTH) {
+          throw new AppException(UPLOAD_ERRORS.IMAGE_WIDTH_TOO_SMALL);
         }
-        if (height > PORTFOLIO_MAX_HEIGHT) {
-          throw new AppException(
-            UPLOAD_ERRORS.PORTFOLIO_IMAGE_HEIGHT_TOO_LARGE,
-          );
+        if (height > MAX_HEIGHT) {
+          throw new AppException(UPLOAD_ERRORS.IMAGE_HEIGHT_TOO_LARGE);
         }
 
         return this.s3Service.upload({
           buffer: file.buffer,
-          folder: `portfolios/${portfolioId}`,
+          folder,
           contentType: file.mimetype,
           originalName: file.originalname,
         });
@@ -80,7 +77,7 @@ export class UploadService {
     );
   }
 
-  async deletePortfolioImages(keys: string[]): Promise<void> {
+  async deleteImages(keys: string[]): Promise<void> {
     await Promise.all(keys.map((key) => this.s3Service.delete(key)));
   }
 }
