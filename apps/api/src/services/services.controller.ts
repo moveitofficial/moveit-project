@@ -169,7 +169,7 @@ export class ServicesController {
   }
 
   @ApiOperation({ summary: '이 전문가의 다른 서비스 조회' })
-  @ApiSuccessResponse(HttpStatus.OK, ServiceListItemResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, [ServiceListItemResponseDto])
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get(':id/others')

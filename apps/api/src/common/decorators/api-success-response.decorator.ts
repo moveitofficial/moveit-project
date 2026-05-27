@@ -1,16 +1,23 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiExtraModels, ApiResponse, getSchemaPath } from '@nestjs/swagger';
 
+type DtoType = new (...args: unknown[]) => unknown;
+
 export function ApiSuccessResponse(
   status: number,
-  dataType?: new (...args: unknown[]) => unknown,
+  dataType?: DtoType | [DtoType],
 ) {
-  const dataSchema = dataType
-    ? { $ref: getSchemaPath(dataType) }
+  const isArray = Array.isArray(dataType);
+  const actualType = isArray ? dataType[0] : dataType;
+
+  const dataSchema = actualType
+    ? isArray
+      ? { type: 'array', items: { $ref: getSchemaPath(actualType) } }
+      : { $ref: getSchemaPath(actualType) }
     : { type: 'object', example: {} };
 
   return applyDecorators(
-    ...(dataType ? [ApiExtraModels(dataType)] : []),
+    ...(actualType ? [ApiExtraModels(actualType)] : []),
     ApiResponse({
       status,
       description: '요청 성공',
