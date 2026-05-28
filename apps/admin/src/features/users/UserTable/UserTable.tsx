@@ -3,7 +3,7 @@ import { formatDate } from '@repo/utils';
 import * as styles from './UserTable.css';
 
 import type { ColDef } from '@/components/common/AdminTable';
-import type { UserTabType } from '@/features/users/types';
+import type { UserTabType } from '@/components/common/UserTabs';
 import type { AdminExpert, AdminUser } from '@/mocks/types';
 
 import { AdminTable } from '@/components/common/AdminTable';
@@ -12,21 +12,13 @@ import {
   PROVIDER_LABEL,
   REGION_LABEL,
   SERVICE_TYPE_LABEL,
-} from '@/features/users/constants';
+} from '@/utils/constants';
 
 function renderReportCount(count: number) {
   const className =
     count === 0 ? styles.reportGray : count >= 4 ? styles.reportRed : undefined;
 
   return <span className={className}>{count}</span>;
-}
-
-interface Props {
-  tab: UserTabType;
-  clients?: AdminUser[];
-  experts?: AdminExpert[];
-  page: number;
-  pageSize: number;
 }
 
 const CLIENT_COLS: ColDef<AdminUser>[] = [
@@ -173,20 +165,21 @@ const EXPERT_COLS: ColDef<AdminExpert>[] = [
   },
 ];
 
-export default function UserTable({
-  tab,
-  clients,
-  experts,
-  page,
-  pageSize,
-}: Props) {
+interface Props {
+  tab: UserTabType;
+  items: (AdminUser | AdminExpert)[];
+  page: number;
+  pageSize: number;
+}
+
+export default function UserTable({ tab, items, page, pageSize }: Props) {
   if (tab === 'CLIENT') {
     return (
       <AdminTable
         cols={CLIENT_COLS}
-        items={clients ?? []}
-        getKey={(client) => client.id}
-        getHref={(client) => `/users/${client.id}`}
+        items={items as AdminUser[]}
+        getKey={(item) => item.id}
+        getHref={(item) => `/users/${item.id}`}
         page={page}
         pageSize={pageSize}
       />
@@ -196,9 +189,9 @@ export default function UserTable({
   return (
     <AdminTable
       cols={EXPERT_COLS}
-      items={experts ?? []}
-      getKey={(expert) => expert.id}
-      getHref={(expert) => `/users/${expert.id}`}
+      items={items as AdminExpert[]}
+      getKey={(item) => item.id}
+      getHref={(item) => `/users/${item.id}`}
       page={page}
       pageSize={pageSize}
     />

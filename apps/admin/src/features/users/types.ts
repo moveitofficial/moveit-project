@@ -4,8 +4,6 @@ import type {
   ServiceType,
 } from '@/mocks/types';
 
-export type UserTabType = 'CLIENT' | 'EXPERT';
-
 export interface ClientUserFilterParams {
   tab: 'CLIENT';
   search?: string;
