@@ -6,10 +6,60 @@ import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
 
 import { INITIAL_PAID_AMOUNT } from './orders.constants';
+import { orderDetailSelect, orderListSelect } from './orders.types';
 
 @Injectable()
 export class OrdersRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findOrdersByUser(params: {
+    userId: string;
+    field: 'clientUserId' | 'expertUserId';
+    statuses?: OrderStatus[];
+    skip: number;
+    take: number;
+  }) {
+    const { userId, field, statuses, skip, take } = params;
+    const userWhere: Prisma.OrderWhereInput =
+      field === 'clientUserId'
+        ? { clientUserId: userId }
+        : { expertUserId: userId };
+    const statusWhere: Prisma.OrderWhereInput = statuses?.length
+      ? { status: { in: statuses } }
+      : {};
+
+    return this.prisma.order.findMany({
+      where: { ...userWhere, ...statusWhere },
+      select: orderListSelect,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+    });
+  }
+
+  async countOrdersByUser(params: {
+    userId: string;
+    field: 'clientUserId' | 'expertUserId';
+    statuses?: OrderStatus[];
+  }) {
+    const { userId, field, statuses } = params;
+    const userWhere: Prisma.OrderWhereInput =
+      field === 'clientUserId'
+        ? { clientUserId: userId }
+        : { expertUserId: userId };
+    const statusWhere: Prisma.OrderWhereInput = statuses?.length
+      ? { status: { in: statuses } }
+      : {};
+
+    return this.prisma.order.count({ where: { ...userWhere, ...statusWhere } });
+  }
+
+  async findOrderDetail(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: orderDetailSelect,
+    });
+  }
 
   findServiceById(serviceId: string) {
     return this.prisma.service.findUnique({
