@@ -618,20 +618,19 @@ class Seeder {
     // 상태별 분포 — 대시보드 카드 카운트 검증용
     // 서비스 진행중(NEG+IP+DL+WC) = 8+12+6+6 = 32, 정산 요청 = 12
     const orderStatusPlan: OrderStatus[] = [
-      ...Array<OrderStatus>(8).fill(OrderStatus.NEGOTIATING),
-      ...Array<OrderStatus>(12).fill(OrderStatus.IN_PROGRESS),
-      ...Array<OrderStatus>(6).fill(OrderStatus.DEADLINE_IMMINENT),
-      ...Array<OrderStatus>(6).fill(OrderStatus.WORK_COMPLETED),
-      ...Array<OrderStatus>(5).fill(OrderStatus.PURCHASE_CONFIRMED),
-      ...Array<OrderStatus>(12).fill(OrderStatus.SETTLEMENT_REQUESTED),
-      ...Array<OrderStatus>(6).fill(OrderStatus.SETTLEMENT_COMPLETED),
-      ...Array<OrderStatus>(5).fill(OrderStatus.REFUND_REQUESTED),
+      ...Array.from({ length: 8 }, () => OrderStatus.NEGOTIATING),
+      ...Array.from({ length: 12 }, () => OrderStatus.IN_PROGRESS),
+      ...Array.from({ length: 6 }, () => OrderStatus.DEADLINE_IMMINENT),
+      ...Array.from({ length: 6 }, () => OrderStatus.WORK_COMPLETED),
+      ...Array.from({ length: 5 }, () => OrderStatus.PURCHASE_CONFIRMED),
+      ...Array.from({ length: 12 }, () => OrderStatus.SETTLEMENT_REQUESTED),
+      ...Array.from({ length: 6 }, () => OrderStatus.SETTLEMENT_COMPLETED),
+      ...Array.from({ length: 5 }, () => OrderStatus.REFUND_REQUESTED),
     ];
 
-    for (let i = 0; i < orderStatusPlan.length; i++) {
+    for (const status of orderStatusPlan) {
       const client = pick(clients);
       const service = pick(services);
-      const status = orderStatusPlan[i]!;
       const isConfirmed =
         status === OrderStatus.PURCHASE_CONFIRMED ||
         status === OrderStatus.SETTLEMENT_REQUESTED ||
@@ -934,14 +933,13 @@ class Seeder {
   async #seedCsChatRooms(clients: User[], admin: Admin): Promise<void> {
     // 25건 — 12 OPEN(처리 대기) + 8 ASSIGNED + 5 CLOSED
     const statusPlan: CsChatStatus[] = [
-      ...Array<CsChatStatus>(12).fill(CsChatStatus.OPEN),
-      ...Array<CsChatStatus>(8).fill(CsChatStatus.ASSIGNED),
-      ...Array<CsChatStatus>(5).fill(CsChatStatus.CLOSED),
+      ...Array.from({ length: 12 }, () => CsChatStatus.OPEN),
+      ...Array.from({ length: 8 }, () => CsChatStatus.ASSIGNED),
+      ...Array.from({ length: 5 }, () => CsChatStatus.CLOSED),
     ];
 
-    for (let i = 0; i < statusPlan.length; i++) {
+    for (const status of statusPlan) {
       const client = pick(clients);
-      const status = statusPlan[i]!;
       const room = await this.#prisma.csChatRoom.create({
         data: {
           userId: client.id,
