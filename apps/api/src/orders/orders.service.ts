@@ -238,6 +238,16 @@ export class OrdersService {
       return;
     }
 
+    if (
+      current === OrderStatus.PURCHASE_CONFIRMED &&
+      nextStatus === OrderStatus.SETTLEMENT_REQUESTED
+    ) {
+      if (order.expertUserId !== userId || userRole !== Role.EXPERT) {
+        throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+      }
+      return;
+    }
+
     throw new AppException(ORDER_ERRORS.INVALID_STATUS);
   }
 
