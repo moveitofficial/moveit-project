@@ -1,22 +1,16 @@
-import { Pagination } from '@repo/ui/Pagination';
-import { Suspense } from 'react';
-
-import * as styles from './page.css';
-
 import type { UserFilterParams } from '@/features/users/types';
-import type { AdminExpert, AdminUser } from '@/mocks/types';
 
+import { TabListLayout } from '@/components/common/TabListLayout';
 import { getPagedUsers, getUserTabCounts } from '@/features/users/api';
 import { UserFilter } from '@/features/users/UserFilter';
 import { UserTable } from '@/features/users/UserTable';
-import { UserTabs } from '@/features/users/UserTabs';
 import {
   isApprovalStatus,
   isProvider,
   isServiceType,
-  param,
-  validated,
-} from '@/features/users/utils';
+} from '@/utils/filterValidators';
+import { calcTotalPages, parsePage, parsePageSize } from '@/utils/paging';
+import { param, parseTab, validated } from '@/utils/queryParams';
 
 interface Props {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -25,19 +19,12 @@ interface Props {
 export default async function UsersPage({ searchParams }: Props) {
   const rawParams = await searchParams;
 
-  const tab = param(rawParams.tab) === 'EXPERT' ? 'EXPERT' : 'CLIENT';
+  const tab = parseTab(rawParams.tab);
   const search = param(rawParams.search);
   const provider = validated(param(rawParams.provider), isProvider);
   const region = param(rawParams.region);
-  const page = Math.max(
-    1,
-    Number.parseInt(param(rawParams.page) ?? '', 10) || 1,
-  );
-  const rawPageSize = param(rawParams.pageSize);
-  const pageSize =
-    rawPageSize === undefined
-      ? 50
-      : Math.max(1, Number.parseInt(rawPageSize, 10) || 50);
+  const page = parsePage(rawParams.page);
+  const pageSize = parsePageSize(rawParams.pageSize);
   const approvalStatus =
     tab === 'EXPERT'
       ? validated(param(rawParams.approvalStatus), isApprovalStatus)
@@ -64,12 +51,7 @@ export default async function UsersPage({ searchParams }: Props) {
   const { clientCount, expertCount } = tabCounts;
   const { items, pagination: paginationMeta } = pagedResult.data;
 
-  const totalPages =
-    paginationMeta.totalCount <= 0
-      ? 1
-      : Math.ceil(paginationMeta.totalCount / pageSize);
-  const currentClients = tab === 'CLIENT' ? (items as AdminUser[]) : [];
-  const currentExperts = tab === 'EXPERT' ? (items as AdminExpert[]) : [];
+  const totalPages = calcTotalPages(paginationMeta.totalCount, pageSize);
 
   const filterParams: UserFilterParams =
     tab === 'CLIENT'
@@ -85,37 +67,16 @@ export default async function UsersPage({ searchParams }: Props) {
         };
 
   return (
-    <div className={styles.container}>
-      <UserTabs
-        currentTab={tab}
-        clientCount={clientCount}
-        expertCount={expertCount}
-      />
-
-      <div className={styles.filterSection}>
-        <Suspense fallback={null}>
-          <UserFilter params={filterParams} />
-        </Suspense>
-      </div>
-
-      <div className={styles.tableSection}>
-        <UserTable
-          tab={tab}
-          clients={currentClients}
-          experts={currentExperts}
-          page={page}
-          pageSize={pageSize}
-        />
-      </div>
-
-      <Suspense fallback={null}>
-        <div className={styles.pagination}>
-          <Pagination
-            currentPage={paginationMeta.page}
-            totalPages={totalPages}
-          />
-        </div>
-      </Suspense>
-    </div>
+    <TabListLayout
+      tab={tab}
+      clientCount={clientCount}
+      expertCount={expertCount}
+      filterSlot={<UserFilter params={filterParams} />}
+      tableSlot={
+        <UserTable tab={tab} items={items} page={page} pageSize={pageSize} />
+      }
+      page={page}
+      totalPages={totalPages}
+    />
   );
 }
