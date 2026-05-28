@@ -1,8 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { AdminActionType } from '@prisma/client';
 
-import { PaginationDto } from '../../../common/dto/pagination-response.dto';
-
 export class ActivityItemDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
@@ -33,12 +31,4 @@ export class ActivityItemDto {
 
   @ApiProperty({ example: '2026-05-27T05:02:46.228Z' })
   declare createdAt: Date;
-}
-
-export class ActivitiesResponseDataDto {
-  @ApiProperty({ type: [ActivityItemDto] })
-  declare items: ActivityItemDto[];
-
-  @ApiProperty({ type: PaginationDto })
-  declare pagination: PaginationDto;
 }
