@@ -162,7 +162,12 @@ export class OrdersRepository {
   ) {
     const { count } = await this.prisma.order.updateMany({
       where: { id: orderId, status: fromStatus },
-      data: { status: toStatus },
+      data: {
+        status: toStatus,
+        ...(toStatus === OrderStatus.PURCHASE_CONFIRMED && {
+          confirmedAt: new Date(),
+        }),
+      },
     });
     if (count === 0) return null;
 
