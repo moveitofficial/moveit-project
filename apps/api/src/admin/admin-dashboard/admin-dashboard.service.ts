@@ -5,6 +5,7 @@ import { toPaginatedResponse } from '../../common/utils/list-response.util';
 
 import { AdminDashboardRepository } from './admin-dashboard.repository';
 import {
+  CS_TARGET_ACTIONS,
   FAQ_TARGET_ACTIONS,
   type Paginated,
   PendingType,
@@ -109,22 +110,27 @@ export class AdminDashboardService {
     // referenceId를 카테고리별로 묶어서 한 번에 batch 조회 → N+1 회피
     const userIds: string[] = [];
     const faqIds: string[] = [];
+    const csIds: string[] = [];
     for (const r of rows) {
       if (r.referenceId === null) continue;
       if (USER_TARGET_ACTIONS.has(r.actionType)) {
         userIds.push(r.referenceId);
       } else if (FAQ_TARGET_ACTIONS.has(r.actionType)) {
         faqIds.push(r.referenceId);
+      } else if (CS_TARGET_ACTIONS.has(r.actionType)) {
+        csIds.push(r.referenceId);
       }
     }
 
-    const [users, faqs] = await Promise.all([
+    const [users, faqs, csRooms] = await Promise.all([
       this.adminDashboardRepository.findUsersByIds(userIds),
       this.adminDashboardRepository.findFaqsByIds(faqIds),
+      this.adminDashboardRepository.findCsChatRoomsByIds(csIds),
     ]);
 
     const userNameMap = new Map(users.map((u) => [u.id, u.name]));
     const faqTitleMap = new Map(faqs.map((f) => [f.id, f.title]));
+    const csUserNameMap = new Map(csRooms.map((c) => [c.id, c.user.name]));
 
     const items: ActivityItemDto[] = rows.map((r) => {
       let targetName: string | null = null;
@@ -133,6 +139,8 @@ export class AdminDashboardService {
           targetName = userNameMap.get(r.referenceId) ?? null;
         } else if (FAQ_TARGET_ACTIONS.has(r.actionType)) {
           targetName = faqTitleMap.get(r.referenceId) ?? null;
+        } else if (CS_TARGET_ACTIONS.has(r.actionType)) {
+          targetName = csUserNameMap.get(r.referenceId) ?? null;
         }
       }
       return {

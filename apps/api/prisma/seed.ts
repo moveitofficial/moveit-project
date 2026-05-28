@@ -1129,14 +1129,28 @@ class Seeder {
   // ─── 21. AdminActivityLogs ─────────────────────────────────────────
   async #seedAdminActivityLogs(admins: Admin[]): Promise<void> {
     // 실제로 가리킬 수 있는 id 후보 미리 조회 → enrich 시 매칭되도록
-    const [users, faqs] = await Promise.all([
-      this.#prisma.user.findMany({ select: { id: true } }),
+    const [users, faqs, csChatRooms] = await Promise.all([
+      this.#prisma.user.findMany({ select: { id: true, role: true } }),
       this.#prisma.faq.findMany({ select: { id: true } }),
+      this.#prisma.csChatRoom.findMany({ select: { id: true } }),
     ]);
 
-    const USER_ACTIONS = new Set<AdminActionType>([
+    // 액션의 의미에 맞게 user 풀 분리
+    // - 전문가 승인/거절 → expert role
+    // - 취소/환불 승인 → client role (구매자가 요청한 거니까)
+    // - 블랙리스트 등록/해제 → 어떤 role이든 가능 (전체)
+    const expertUsers = users.filter((u) => u.role === Role.EXPERT);
+    const clientUsers = users.filter((u) => u.role === Role.CLIENT);
+
+    const EXPERT_TARGET_ACTIONS = new Set<AdminActionType>([
       AdminActionType.EXPERT_APPROVED,
       AdminActionType.EXPERT_REJECTED,
+    ]);
+    const CLIENT_TARGET_ACTIONS = new Set<AdminActionType>([
+      AdminActionType.CANCEL_APPROVED,
+      AdminActionType.REFUND_APPROVED,
+    ]);
+    const BLACKLIST_ACTIONS = new Set<AdminActionType>([
       AdminActionType.BLACKLIST_ADDED,
       AdminActionType.BLACKLIST_REMOVED,
     ]);
@@ -1145,10 +1159,17 @@ class Seeder {
       AdminActionType.FAQ_UPDATED,
       AdminActionType.FAQ_DELETED,
     ]);
+    const CS_ACTIONS = new Set<AdminActionType>([
+      AdminActionType.CS_ASSIGNED,
+      AdminActionType.CS_CLOSED,
+    ]);
 
     const pickRefId = (actionType: AdminActionType): string | null => {
-      if (USER_ACTIONS.has(actionType)) return pick(users).id;
+      if (EXPERT_TARGET_ACTIONS.has(actionType)) return pick(expertUsers).id;
+      if (CLIENT_TARGET_ACTIONS.has(actionType)) return pick(clientUsers).id;
+      if (BLACKLIST_ACTIONS.has(actionType)) return pick(users).id;
       if (FAQ_ACTIONS.has(actionType)) return pick(faqs).id;
+      if (CS_ACTIONS.has(actionType)) return pick(csChatRooms).id;
       return null;
     };
 
