@@ -3,12 +3,18 @@ import { AuthProvider, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 import { EXPERT_ERRORS, USER_ERRORS } from '../common/constants/errors';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
+import { Paginated } from '../common/types/paginated.type';
+import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { mapServiceCategories } from '../common/utils/service-category.util';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
 import { PortfoliosService } from '../portfolios/portfolios.service';
+import { ReviewResponseDto } from '../services/dto/service-response.dto';
+import { mapReview } from '../services/services.mapper';
 import { UploadService } from '../upload/upload.service';
 
+import { ServicesRepository } from './../services/services.repository';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersRepository } from './users.repository';
@@ -65,6 +71,7 @@ export class UsersService {
     private readonly expertProfilesRepository: ExpertProfilesRepository,
     private readonly portfoliosService: PortfoliosService,
     private readonly uploadService: UploadService,
+    private readonly servicesRepository: ServicesRepository,
   ) {}
 
   async getUserWithPortfolios(userId: string) {
@@ -202,5 +209,36 @@ export class UsersService {
       });
 
     return { isDeleted, deletedAt, deletionReason };
+  }
+
+  async getAllReviewsByUserId(
+    userId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<ReviewResponseDto>> {
+    const user = await this.usersRepository.findById(userId);
+
+    if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const [reviews, totalCount] = await Promise.all([
+      this.servicesRepository.findAllReviewsByUserId({
+        userId,
+        skip,
+        take: pageSize,
+      }),
+      this.servicesRepository.countReviewsByUserId(userId),
+    ]);
+
+    return toPaginatedResponse(
+      reviews.map((review) => mapReview(review)),
+      {
+        page,
+        pageSize,
+        totalCount,
+      },
+    );
   }
 }

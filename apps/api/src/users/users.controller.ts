@@ -1,4 +1,11 @@
-import { Controller, Get, HttpStatus, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import {
@@ -7,8 +14,14 @@ import {
   USER_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
-import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
+import {
+  ApiPaginatedResponse,
+  ApiSuccessResponse,
+} from '../common/decorators/api-success-response.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { Paginated } from '../common/types/paginated.type';
 import { PortfolioListResponseDto } from '../portfolios/dto/portfolio-response.dto';
+import { ReviewResponseDto } from '../services/dto/service-response.dto';
 
 import { UsersService } from './users.service';
 
@@ -30,5 +43,18 @@ export class UsersController {
   @Get(':id/portfolios')
   getPortfoliosByUserId(@Param('id') userId: string) {
     return this.usersService.getUserWithPortfolios(userId);
+  }
+
+  @ApiOperation({ summary: '유저 리뷰 목록 불러오기' })
+  @ApiPaginatedResponse(HttpStatus.OK, ReviewResponseDto)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get(':id/reviews')
+  getReviewsByUserId(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @Query() query: PaginationQueryDto,
+  ): Promise<Paginated<ReviewResponseDto>> {
+    return this.usersService.getAllReviewsByUserId(userId, query);
   }
 }

@@ -97,6 +97,25 @@ export class ServicesRepository {
     });
   }
 
+  findAllReviewsByUserId(args: {
+    userId: string;
+    skip: number;
+    take: number;
+  }): Promise<ReviewWithUser[]> {
+    return this.prisma.review.findMany({
+      where: { userId: args.userId },
+      select: reviewWithUserSelect,
+      orderBy: { createdAt: 'desc' },
+      skip: args.skip,
+      take: args.take,
+    });
+  }
+  countReviewsByUserId(userId: string): Promise<number> {
+    return this.prisma.review.count({
+      where: { userId },
+    });
+  }
+
   createReview(data: {
     orderId: string;
     userId: string;
