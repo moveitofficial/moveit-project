@@ -44,7 +44,6 @@ export class UsersController {
   @ApiOperation({ summary: '유저 리뷰 목록 불러오기' })
   @JwtAuth()
   @ApiPaginatedResponse(HttpStatus.OK, ReviewResponseDto)
-  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get('me/reviews')
