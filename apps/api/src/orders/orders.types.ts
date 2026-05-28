@@ -2,6 +2,10 @@ import { ORDER_LIST_MAIN_IMAGE_LIMIT } from './orders.constants';
 
 import type { Prisma } from '@prisma/client';
 
+export type OrderWithPayment = Prisma.OrderGetPayload<{
+  include: { payment: true };
+}>;
+
 export const orderListSelect = {
   id: true,
   status: true,

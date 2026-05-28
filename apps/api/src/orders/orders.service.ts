@@ -4,7 +4,6 @@ import {
   PaymentStatus,
   Role,
   ServiceStatus,
-  type Prisma,
 } from '@prisma/client';
 
 import {
@@ -28,13 +27,14 @@ import {
   PLATFORM_FEE_RATE,
 } from './orders.constants';
 import { mapOrderDetail } from './orders.mapper';
+import {
+  validateOrderStatusAuthority,
+  validateOrderStatusFlow,
+} from './orders.policy';
 import { OrdersRepository } from './orders.repository';
 
 import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
-
-type OrderWithPayment = Prisma.OrderGetPayload<{
-  include: { payment: true };
-}>;
+import type { OrderWithPayment } from './orders.types';
 
 @Injectable()
 export class OrdersService {
@@ -117,15 +117,16 @@ export class OrdersService {
       if (dto.paymentKey === undefined || dto.paidAmount === undefined) {
         throw new AppException(COMMON_ERRORS.VALIDATION_ERROR);
       }
-      if (order.clientUserId !== userId) {
-        throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-      }
       if (
         order.status === OrderStatus.CANCEL_REQUESTED ||
         order.status === OrderStatus.PAYMENT_CANCELLED
       ) {
         throw new AppException(ORDER_ERRORS.ALREADY_CANCELED);
       }
+
+      validateOrderStatusAuthority(order, dto.status, userId, userRole);
+      validateOrderStatusFlow(order.status, dto.status);
+
       return this.verifyAndApprovePayment(
         order,
         dto.paymentKey,
@@ -133,7 +134,8 @@ export class OrdersService {
       );
     }
 
-    this.validateStatusTransition(order, dto.status, userId, userRole);
+    validateOrderStatusAuthority(order, dto.status, userId, userRole);
+    validateOrderStatusFlow(order.status, dto.status);
     const updated = await this.ordersRepository.updateOrderStatusOnly(
       orderId,
       order.status,
@@ -191,64 +193,6 @@ export class OrdersService {
     );
     if (!result) throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
     return result;
-  }
-
-  private validateStatusTransition(
-    order: OrderWithPayment,
-    nextStatus: OrderStatus,
-    userId: string,
-    userRole: Role,
-  ): void {
-    const current = order.status;
-
-    if (
-      current === OrderStatus.SETTLEMENT_COMPLETED ||
-      current === OrderStatus.REFUND_COMPLETED
-    ) {
-      throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
-    }
-
-    if (
-      current === OrderStatus.NEGOTIATING &&
-      nextStatus === OrderStatus.CANCEL_REQUESTED
-    ) {
-      if (order.clientUserId !== userId) {
-        throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-      }
-      return;
-    }
-
-    if (
-      current === OrderStatus.IN_PROGRESS &&
-      nextStatus === OrderStatus.WORK_COMPLETED
-    ) {
-      if (order.expertUserId !== userId || userRole !== Role.EXPERT) {
-        throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-      }
-      return;
-    }
-
-    if (
-      current === OrderStatus.WORK_COMPLETED &&
-      nextStatus === OrderStatus.PURCHASE_CONFIRMED
-    ) {
-      if (order.clientUserId !== userId || userRole !== Role.CLIENT) {
-        throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-      }
-      return;
-    }
-
-    if (
-      current === OrderStatus.PURCHASE_CONFIRMED &&
-      nextStatus === OrderStatus.SETTLEMENT_REQUESTED
-    ) {
-      if (order.expertUserId !== userId || userRole !== Role.EXPERT) {
-        throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-      }
-      return;
-    }
-
-    throw new AppException(ORDER_ERRORS.INVALID_STATUS);
   }
 
   private fetchAmountFromExternalPG(
