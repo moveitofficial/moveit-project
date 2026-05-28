@@ -14,16 +14,22 @@ import {
   SERVICE_ERRORS,
 } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
+import { toPaginatedResponse } from '../common/utils/list-response.util';
 
 import { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
 import {
+  ORDER_LIST_USER_ID_FIELD,
+  ORDERS_LIST_DEFAULT_PAGE,
+  ORDERS_LIST_DEFAULT_PAGE_SIZE,
   PAYMENT_AMOUNT_VALIDATION_FAILED_REASON,
   PG_STUB_PROVIDER,
   PG_STUB_RECEIPT_URL,
   PLATFORM_FEE_RATE,
 } from './orders.constants';
 import { OrdersRepository } from './orders.repository';
+
+import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
 
 type OrderWithPayment = Prisma.OrderGetPayload<{
   include: { payment: true };
@@ -32,6 +38,30 @@ type OrderWithPayment = Prisma.OrderGetPayload<{
 @Injectable()
 export class OrdersService {
   constructor(private readonly ordersRepository: OrdersRepository) {}
+
+  async getOrders(userId: string, query: GetOrdersQueryDto) {
+    const page = query.page ?? ORDERS_LIST_DEFAULT_PAGE;
+    const pageSize = query.pageSize ?? ORDERS_LIST_DEFAULT_PAGE_SIZE;
+    const skip = (page - 1) * pageSize;
+    const field = ORDER_LIST_USER_ID_FIELD[query.as];
+
+    const [orders, totalCount] = await Promise.all([
+      this.ordersRepository.findOrdersByUser({
+        userId,
+        field,
+        statuses: query.status,
+        skip,
+        take: pageSize,
+      }),
+      this.ordersRepository.countOrdersByUser({
+        userId,
+        field,
+        statuses: query.status,
+      }),
+    ]);
+
+    return toPaginatedResponse(orders, { page, pageSize, totalCount });
+  }
 
   async initializeOrder(clientUserId: string, dto: CreateOrderRequestDto) {
     const service = await this.ordersRepository.findServiceById(dto.serviceId);

@@ -1,12 +1,14 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -24,6 +26,7 @@ import { ApiSuccessResponse } from '../common/decorators/api-success-response.de
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
 
 import { CreateOrderRequestDto } from './dto/create-order-request.dto';
+import { GetOrdersQueryDto } from './dto/get-orders-query.dto';
 import { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
 import { OrdersService } from './orders.service';
 
@@ -33,6 +36,17 @@ import type { Request } from 'express';
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  @ApiOperation({ summary: '내 주문 목록 조회' })
+  @JwtAuth()
+  @ApiPaginatedResponse(HttpStatus.OK, OrderListItemDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get()
+  getOrders(@Req() req: Request, @Query() query: GetOrdersQueryDto) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.getOrders(user.userId, query);
+  }
 
   @ApiOperation({ summary: '주문서 초기 생성' })
   @RoleAuth(Role.CLIENT)
