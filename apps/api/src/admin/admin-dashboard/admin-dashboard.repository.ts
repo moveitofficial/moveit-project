@@ -123,4 +123,15 @@ export class AdminDashboardRepository {
       select: { id: true, title: true },
     });
   }
+
+  findCsChatRoomsByIds(ids: string[]) {
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.prisma.csChatRoom.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        user: { select: { name: true } },
+      },
+    });
+  }
 }
