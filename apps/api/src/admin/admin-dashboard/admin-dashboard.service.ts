@@ -6,17 +6,12 @@ import { toPaginatedResponse } from '../../common/utils/list-response.util';
 import { AdminDashboardRepository } from './admin-dashboard.repository';
 import {
   FAQ_TARGET_ACTIONS,
+  type Paginated,
   PendingType,
   USER_TARGET_ACTIONS,
 } from './admin-dashboard.types';
-import {
-  ActivitiesResponseDataDto,
-  ActivityItemDto,
-} from './dto/activities-response.dto';
-import {
-  PendingItemDto,
-  PendingResponseDataDto,
-} from './dto/pending-response.dto';
+import { ActivityItemDto } from './dto/activities-response.dto';
+import { PendingItemDto } from './dto/pending-response.dto';
 import { SummaryResponseDataDto } from './dto/summary-response.dto';
 
 @Injectable()
@@ -42,7 +37,9 @@ export class AdminDashboardService {
     };
   }
 
-  async getPending(query: PaginationQueryDto): Promise<PendingResponseDataDto> {
+  async getPending(
+    query: PaginationQueryDto,
+  ): Promise<Paginated<PendingItemDto>> {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
 
@@ -99,7 +96,7 @@ export class AdminDashboardService {
 
   async getActivities(
     query: PaginationQueryDto,
-  ): Promise<ActivitiesResponseDataDto> {
+  ): Promise<Paginated<ActivityItemDto>> {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
