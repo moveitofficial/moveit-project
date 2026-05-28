@@ -27,6 +27,7 @@ import {
   PG_STUB_RECEIPT_URL,
   PLATFORM_FEE_RATE,
 } from './orders.constants';
+import { mapOrderDetail } from './orders.mapper';
 import { OrdersRepository } from './orders.repository';
 
 import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
@@ -61,6 +62,17 @@ export class OrdersService {
     ]);
 
     return toPaginatedResponse(orders, { page, pageSize, totalCount });
+  }
+
+  async getOrderDetail(userId: string, orderId: string) {
+    const order = await this.ordersRepository.findOrderDetail(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    if (order.clientUserId !== userId && order.expertUserId !== userId) {
+      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+    }
+
+    return mapOrderDetail(order);
   }
 
   async initializeOrder(clientUserId: string, dto: CreateOrderRequestDto) {
@@ -190,7 +202,6 @@ export class OrdersService {
     const current = order.status;
 
     if (
-      current === OrderStatus.PURCHASE_CONFIRMED ||
       current === OrderStatus.SETTLEMENT_COMPLETED ||
       current === OrderStatus.REFUND_COMPLETED
     ) {

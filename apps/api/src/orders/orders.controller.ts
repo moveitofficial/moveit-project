@@ -22,11 +22,15 @@ import {
   SERVICE_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
-import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
+import {
+  ApiPaginatedResponse,
+  ApiSuccessResponse,
+} from '../common/decorators/api-success-response.decorator';
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
 
 import { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import { GetOrdersQueryDto } from './dto/get-orders-query.dto';
+import { OrderDetailDto, OrderListItemDto } from './dto/order-response.dto';
 import { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
 import { OrdersService } from './orders.service';
 
@@ -46,6 +50,22 @@ export class OrdersController {
   getOrders(@Req() req: Request, @Query() query: GetOrdersQueryDto) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.getOrders(user.userId, query);
+  }
+
+  @ApiOperation({ summary: '주문 상세 단건 조회' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, OrderDetailDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get(':id')
+  getOrderDetail(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.getOrderDetail(user.userId, orderId);
   }
 
   @ApiOperation({ summary: '주문서 초기 생성' })
