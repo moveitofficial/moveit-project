@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { type Paginated } from '../../common/types/paginated.type';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
 
 import { AdminDashboardRepository } from './admin-dashboard.repository';
 import {
   CS_TARGET_ACTIONS,
   FAQ_TARGET_ACTIONS,
-  type Paginated,
   PendingType,
   USER_TARGET_ACTIONS,
 } from './admin-dashboard.types';
