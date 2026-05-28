@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import * as styles from './UserTabs.css';
 
-import type { UserTabType } from '@/features/users/types';
+export type UserTabType = 'CLIENT' | 'EXPERT';
 
 interface Props {
   currentTab: UserTabType;
@@ -26,7 +26,9 @@ export default function UserTabs({
   ];
 
   const handleTabClick = (tab: UserTabType) => {
-    if (tab === currentTab) return;
+    if (tab === currentTab) {
+      return;
+    }
     router.push(`?tab=${tab}`);
   };
 
