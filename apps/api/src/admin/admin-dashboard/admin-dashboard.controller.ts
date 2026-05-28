@@ -8,10 +8,10 @@ import {
   ApiSuccessResponse,
 } from '../../common/decorators/api-success-response.decorator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { type Paginated } from '../../common/types/paginated.type';
 import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
 
 import { AdminDashboardService } from './admin-dashboard.service';
-import { type Paginated } from './admin-dashboard.types';
 import { ActivityItemDto } from './dto/activities-response.dto';
 import { PendingItemDto } from './dto/pending-response.dto';
 import { SummaryResponseDataDto } from './dto/summary-response.dto';
