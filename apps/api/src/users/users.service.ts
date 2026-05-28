@@ -105,7 +105,7 @@ export class UsersService {
     if (expertProfile === null) throw new AppException(EXPERT_ERRORS.NOT_FOUND);
 
     return this.servicesService.getAllServicesByExpertId(
-      expertProfile.id,
+      expertProfile.userId,
       query,
     );
   }
