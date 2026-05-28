@@ -11,5 +11,6 @@ import { ServicesService } from './services.service';
   imports: [AuthModule, UploadModule],
   controllers: [ServicesController],
   providers: [ServicesService, ServicesRepository],
+  exports: [ServicesService],
 })
 export class ServicesModule {}
