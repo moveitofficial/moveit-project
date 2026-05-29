@@ -63,9 +63,11 @@ export class CommunityPostsController {
   @ApiOperation({ summary: '게시글 수정' })
   @JwtAuth()
   @ApiSuccessResponse(HttpStatus.OK, PostResponseDto)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT)
+  @ApiErrorResponse(
+    COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMON_ERRORS.VALIDATION_ERROR,
+  )
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
