@@ -13,7 +13,8 @@ import { Paginated } from '../common/types/paginated.type';
 import { mapServiceCategories } from '../common/utils/service-category.util';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
 import { PortfoliosService } from '../portfolios/portfolios.service';
-import { ReviewResponseDto } from '../services/dto/service-response.dto';
+import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
+import { MyReviewListItemResponseDto } from '../services/dto/service-response.dto';
 import { type ServiceListItemResponse } from '../services/services.mapper';
 import { ServicesService } from '../services/services.service';
 import { UploadService } from '../upload/upload.service';
@@ -237,8 +238,8 @@ export class UsersService {
 
   async getAllReviewsByUserId(
     userId: string,
-    query: PaginationQueryDto,
-  ): Promise<Paginated<ReviewResponseDto>> {
+    query: MyReviewsQueryDto,
+  ): Promise<Paginated<MyReviewListItemResponseDto>> {
     const user = await this.usersRepository.findById(userId);
 
     if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);

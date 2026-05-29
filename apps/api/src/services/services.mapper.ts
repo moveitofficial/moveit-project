@@ -1,6 +1,7 @@
 import { mapServiceCategoryRef } from '../common/utils/service-category.util';
 
 import type {
+  MyReviewListItem,
   ReviewWithUser,
   ServiceDetail,
   ServiceListItem,
@@ -22,6 +23,27 @@ export function mapReview(review: ReviewWithUser) {
     },
   };
 }
+
+export function mapMyReviewListItem(review: MyReviewListItem) {
+  const { service } = review.order;
+  const expert = service.expertUser;
+
+  return {
+    id: review.id,
+    rating: review.rating,
+    content: review.content,
+    createdAt: review.createdAt.toISOString(),
+    serviceTitle: service.title,
+    expert: {
+      id: expert.id,
+      name: expert.name ?? '',
+      profileImageUrl: expert.profileImageUrl,
+      companyName: expert.expertProfile?.businessName ?? expert.name ?? '',
+    },
+  };
+}
+
+export type MyReviewListItemResponse = ReturnType<typeof mapMyReviewListItem>;
 
 export function mapServiceListItem(
   service: ServiceListItem,

@@ -4,6 +4,7 @@ import { ServiceStatus, type Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 import {
+  myReviewListSelect,
   reviewWithUserSelect,
   serviceDetailInclude,
   serviceInclude,
@@ -11,6 +12,8 @@ import {
 } from './services.types';
 
 import type {
+  MyReviewListItem,
+  MyReviewSort,
   ReviewWithUser,
   ServiceDetail,
   ServiceListItem,
@@ -101,11 +104,17 @@ export class ServicesRepository {
     userId: string;
     skip: number;
     take: number;
-  }): Promise<ReviewWithUser[]> {
+    sort: MyReviewSort;
+  }): Promise<MyReviewListItem[]> {
+    const orderBy =
+      args.sort === 'oldest'
+        ? { createdAt: 'asc' as const }
+        : { createdAt: 'desc' as const };
+
     return this.prisma.review.findMany({
       where: { userId: args.userId },
-      select: reviewWithUserSelect,
-      orderBy: { createdAt: 'desc' },
+      select: myReviewListSelect,
+      orderBy,
       skip: args.skip,
       take: args.take,
     });

@@ -15,10 +15,12 @@ import { UploadService } from '../upload/upload.service';
 
 import { CreateReviewRequestDto } from './dto/create-review-request.dto';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
+import { MyReviewsQueryDto } from './dto/my-reviews-query.dto';
 import { UpdateReviewRequestDto } from './dto/update-review-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import {
+  mapMyReviewListItem,
   mapReview,
   mapService,
   mapServiceDetail,
@@ -35,7 +37,7 @@ import {
 } from './services.types';
 
 import type {
-  ReviewResponseDto,
+  MyReviewListItemResponseDto,
   ServiceListQueryDto,
   ServiceListSort,
   ServiceReviewsQueryDto,
@@ -300,10 +302,11 @@ export class ServicesService {
 
   async getAllReviewsByUserId(
     userId: string,
-    query: PaginationQueryDto,
-  ): Promise<Paginated<ReviewResponseDto>> {
+    query: MyReviewsQueryDto,
+  ): Promise<Paginated<MyReviewListItemResponseDto>> {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
+    const sort = query.sort ?? 'latest';
     const skip = (page - 1) * pageSize;
 
     const [reviews, totalCount] = await Promise.all([
@@ -311,12 +314,13 @@ export class ServicesService {
         userId,
         skip,
         take: pageSize,
+        sort,
       }),
       this.servicesRepository.countReviewsByUserId(userId),
     ]);
 
     return toPaginatedResponse(
-      reviews.map((review) => mapReview(review)),
+      reviews.map((review) => mapMyReviewListItem(review)),
       {
         page,
         pageSize,
