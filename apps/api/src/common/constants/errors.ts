@@ -348,6 +348,11 @@ export const COMMUNITY_POSTS_ERRORS = {
     message: '본인이 등록한 게시글만 수정할 수 있습니다.',
     code: 'COMMUNITY_POSTS_FORBIDDEN',
   },
+  ALREADY_DELETED: {
+    status: HttpStatus.CONFLICT,
+    message: '삭제된 게시글입니다.',
+    code: 'COMMUNITY_POSTS_ALREADY_DELETED',
+  },
   CONTENT_TOO_SHORT: {
     status: HttpStatus.BAD_REQUEST,
     message: '게시글 내용은 최소 1자 이상이어야 합니다.',
