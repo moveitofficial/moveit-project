@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { AuthProvider, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
-import { EXPERT_ERRORS, USER_ERRORS } from '../common/constants/errors';
+import {
+  EXPERT_ERRORS,
+  SERVICE_ERRORS,
+  USER_ERRORS,
+} from '../common/constants/errors';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
@@ -11,10 +15,14 @@ import { mapServiceCategories } from '../common/utils/service-category.util';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
 import { PortfoliosService } from '../portfolios/portfolios.service';
 import { ReviewResponseDto } from '../services/dto/service-response.dto';
-import { mapReview } from '../services/services.mapper';
+import {
+  mapReview,
+  type ServiceListItemResponse,
+} from '../services/services.mapper';
+import { ServicesRepository } from '../services/services.repository';
+import { ServicesService } from '../services/services.service';
 import { UploadService } from '../upload/upload.service';
 
-import { ServicesRepository } from './../services/services.repository';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersRepository } from './users.repository';
@@ -72,6 +80,7 @@ export class UsersService {
     private readonly portfoliosService: PortfoliosService,
     private readonly uploadService: UploadService,
     private readonly servicesRepository: ServicesRepository,
+    private readonly servicesService: ServicesService,
   ) {}
 
   async getUserWithPortfolios(userId: string) {
@@ -85,6 +94,27 @@ export class UsersService {
     if (expertProfile === null) throw new AppException(EXPERT_ERRORS.NOT_FOUND);
 
     return this.portfoliosService.findManyByExpertProfileId(expertProfile.id);
+  }
+
+  async getUserWithServices(
+    userId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<ServiceListItemResponse>> {
+    const user = await this.usersRepository.findById(userId);
+
+    if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (user.role !== Role.EXPERT)
+      throw new AppException(SERVICE_ERRORS.FORBIDDEN_NOT_EXPERT);
+
+    const expertProfile =
+      await this.expertProfilesRepository.findByUserId(userId);
+
+    if (expertProfile === null) throw new AppException(EXPERT_ERRORS.NOT_FOUND);
+
+    return this.servicesService.getAllServicesByExpertId(
+      expertProfile.userId,
+      query,
+    );
   }
 
   getAllUser() {
