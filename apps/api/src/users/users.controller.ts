@@ -23,6 +23,7 @@ import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { Paginated } from '../common/types/paginated.type';
 import { PortfolioListResponseDto } from '../portfolios/dto/portfolio-response.dto';
 import { ServiceListItemResponseDto } from '../services/dto/service-response.dto';
+import { ExpertServiceListItemResponse } from '../services/services.mapper';
 
 import { UsersService } from './users.service';
 
@@ -53,9 +54,9 @@ export class UsersController {
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get(':id/services')
   getAllServicesByUserId(
-    @Param('id', ParseUUIDPipe) userID: string,
+    @Param('id', ParseUUIDPipe) userId: string,
     @Query() query: PaginationQueryDto,
-  ): Promise<Paginated<ServiceListItemResponseDto>> {
-    return this.usersService.getUserWithServices(userID, query);
+  ): Promise<Paginated<ExpertServiceListItemResponse>> {
+    return this.usersService.getUserWithServices(userId, query);
   }
 }

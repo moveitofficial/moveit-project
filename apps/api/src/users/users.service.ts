@@ -15,7 +15,7 @@ import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.rep
 import { PortfoliosService } from '../portfolios/portfolios.service';
 import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
 import { MyReviewListItemResponseDto } from '../services/dto/service-response.dto';
-import { type ServiceListItemResponse } from '../services/services.mapper';
+import { ExpertServiceListItemResponse } from '../services/services.mapper';
 import { ServicesService } from '../services/services.service';
 import { UploadService } from '../upload/upload.service';
 
@@ -94,7 +94,7 @@ export class UsersService {
   async getUserWithServices(
     userId: string,
     query: PaginationQueryDto,
-  ): Promise<Paginated<ServiceListItemResponse>> {
+  ): Promise<Paginated<ExpertServiceListItemResponse>> {
     const user = await this.usersRepository.findById(userId);
 
     if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
@@ -106,10 +106,7 @@ export class UsersService {
 
     if (expertProfile === null) throw new AppException(EXPERT_ERRORS.NOT_FOUND);
 
-    return this.servicesService.getAllServicesByExpertId(
-      expertProfile.userId,
-      query,
-    );
+    return this.servicesService.getAllServicesByExpertId(userId, query);
   }
 
   getAllUser() {

@@ -149,3 +149,26 @@ export function mapService(service: ServiceWithRelations): ServiceResponse {
     categoryRef: mapServiceCategoryRef({ serviceGroup, serviceCategory }),
   };
 }
+
+export function mapExpertServiceListItem(
+  service: ServiceListItem,
+  stats: ServiceReviewStats,
+) {
+  const { images, techStacks } = service;
+
+  return {
+    id: service.id,
+    title: service.title,
+    servicePrice: service.servicePrice,
+    thumbnailUrl: images[0]?.imgUrl ?? '',
+    status: service.status,
+    techStacks: techStacks.map(({ techStack }) => techStack.name),
+    rating: stats.rating,
+    reviewCount: stats.reviewCount,
+    orderCount: service._count.orders,
+  };
+}
+
+export type ExpertServiceListItemResponse = ReturnType<
+  typeof mapExpertServiceListItem
+>;
