@@ -133,9 +133,40 @@ export type ReviewWithUser = Prisma.ReviewGetPayload<{
   select: typeof reviewWithUserSelect;
 }>;
 
+export const myReviewListSelect = {
+  id: true,
+  rating: true,
+  content: true,
+  createdAt: true,
+  order: {
+    select: {
+      service: {
+        select: {
+          title: true,
+          expertUser: {
+            select: {
+              id: true,
+              name: true,
+              profileImageUrl: true,
+              expertProfile: { select: { businessName: true } },
+            },
+          },
+        },
+      },
+    },
+  },
+} satisfies Prisma.ReviewSelect;
+
+export type MyReviewListItem = Prisma.ReviewGetPayload<{
+  select: typeof myReviewListSelect;
+}>;
+
 export const SERVICE_REVIEW_SORT = ['latest', 'rating'] as const;
 
 export type ServiceReviewSort = (typeof SERVICE_REVIEW_SORT)[number];
+
+export type { MyReviewSort } from './dto/my-reviews-query.dto';
+export { MY_REVIEW_SORT } from './dto/my-reviews-query.dto';
 
 export const REVIEWABLE_ORDER_STATUSES: OrderStatus[] = [
   OrderStatus.PURCHASE_CONFIRMED,

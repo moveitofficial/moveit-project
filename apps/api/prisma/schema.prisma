@@ -637,7 +637,7 @@ model Order {
   totalAmount        Int         @map("total_amount")
   status             OrderStatus
   startDate          DateTime    @map("start_date")
-  endDate            DateTime    @map("end_date")
+  endDate            DateTime?   @map("end_date")
   refundReason       String?     @map("refund_reason")
   createdAt          DateTime    @default(now()) @map("created_at")
   confirmedAt        DateTime?   @map("confirmed_at")

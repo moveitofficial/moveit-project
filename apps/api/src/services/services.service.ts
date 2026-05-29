@@ -7,16 +7,22 @@ import {
   REVIEW_ERRORS,
   SERVICE_ERRORS,
 } from '../common/constants/errors';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
+import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { UploadService } from '../upload/upload.service';
 
 import { CreateReviewRequestDto } from './dto/create-review-request.dto';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
+import { MyReviewsQueryDto } from './dto/my-reviews-query.dto';
 import { UpdateReviewRequestDto } from './dto/update-review-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import {
+  ExpertServiceListItemResponse,
+  mapExpertServiceListItem,
+  mapMyReviewListItem,
   mapReview,
   mapService,
   mapServiceDetail,
@@ -33,6 +39,7 @@ import {
 } from './services.types';
 
 import type {
+  MyReviewListItemResponseDto,
   ServiceListQueryDto,
   ServiceListSort,
   ServiceReviewsQueryDto,
@@ -256,6 +263,74 @@ export class ServicesService {
       const stats = statsMap.get(s.id) ?? { reviewCount: 0, rating: 0 };
       return mapServiceListItem(s, stats);
     });
+  }
+
+  async getAllServicesByExpertId(
+    expertUserId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<ExpertServiceListItemResponse>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const [services, totalCount] = await Promise.all([
+      this.servicesRepository.findMany({
+        where: {
+          expertUserId,
+          status: ServiceStatus.ACTIVE,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: pageSize,
+      }),
+      this.servicesRepository.count({
+        expertUserId,
+        status: ServiceStatus.ACTIVE,
+      }),
+    ]);
+
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      services.map((s) => s.id),
+    );
+
+    return toPaginatedResponse(
+      services.map((service) => {
+        const stats = statsMap.get(service.id) ?? { reviewCount: 0, rating: 0 };
+        return mapExpertServiceListItem(service, stats);
+      }),
+      { page, pageSize, totalCount },
+    );
+  }
+
+  async getAllReviewsByUserId(
+    userId: string,
+    query: MyReviewsQueryDto,
+  ): Promise<Paginated<MyReviewListItemResponseDto>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const sort = query.sort ?? 'latest';
+    const skip = (page - 1) * pageSize;
+
+    const [reviews, totalCount] = await Promise.all([
+      this.servicesRepository.findAllReviewsByUserId({
+        userId,
+        skip,
+        take: pageSize,
+        sort,
+      }),
+      this.servicesRepository.countReviewsByUserId(userId),
+    ]);
+
+    return toPaginatedResponse(
+      reviews.map((review) => mapMyReviewListItem(review)),
+      {
+        page,
+        pageSize,
+        totalCount,
+      },
+    );
   }
 
   async createService(

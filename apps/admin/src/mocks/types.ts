@@ -14,9 +14,18 @@ export type OrderStatus =
   | 'REFUNDED'
   | 'EXPIRED';
 export type PaymentStatus = 'PENDING' | 'DONE' | 'FAILED' | 'CANCELED';
-export type RefundStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'CANCELED';
+export type RefundStatus =
+  | 'REQUESTED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'COMPLETED'
+  | 'CANCELED';
 export type ReportStatus = 'PENDING' | 'IN_REVIEW' | 'RESOLVED' | 'REJECTED';
-export type SettlementStatus = 'REQUESTED' | 'APPROVED' | 'COMPLETED' | 'REJECTED';
+export type SettlementStatus =
+  | 'REQUESTED'
+  | 'APPROVED'
+  | 'COMPLETED'
+  | 'REJECTED';
 export type CSChatStatus = 'OPEN' | 'CLOSED';
 
 export interface ApiSuccess<T> {
@@ -196,7 +205,35 @@ export interface AdminManager {
   createdAt: string;
 }
 
-export type PendingTaskType = 'EXPERT_APPROVAL' | 'REPORT' | 'CS' | 'SETTLEMENT';
+export interface AdminBlacklistUser {
+  id: string;
+  name: string;
+  email: string;
+  provider: Provider;
+  region: string;
+  orderCount: number;
+  reportCount: number;
+  createdAt: string;
+}
+
+export interface AdminBlacklistExpert {
+  id: string;
+  name: string;
+  email: string;
+  companyName: string;
+  serviceType: ServiceType;
+  provider: Provider;
+  region: string;
+  totalOrders: number;
+  reportCount: number;
+  createdAt: string;
+}
+
+export type PendingTaskType =
+  | 'EXPERT_APPROVAL'
+  | 'REPORT'
+  | 'CS'
+  | 'SETTLEMENT';
 export type ActivityType =
   | 'EXPERT_APPROVED'
   | 'EXPERT_REJECTED'
@@ -218,8 +255,18 @@ export interface AdminDashboard {
     pendingSettlementCount: number;
     activeOrderCount: number;
   };
-  pendingTasks: { type: PendingTaskType; title: string; requester: string; createdAt: string }[];
-  recentActivities: { type: ActivityType; message: string; adminName: string; createdAt: string }[];
+  pendingTasks: {
+    type: PendingTaskType;
+    title: string;
+    requester: string;
+    createdAt: string;
+  }[];
+  recentActivities: {
+    type: ActivityType;
+    message: string;
+    adminName: string;
+    createdAt: string;
+  }[];
 }
 
 export interface SalesStatistics {

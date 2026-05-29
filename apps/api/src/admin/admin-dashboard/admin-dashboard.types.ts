@@ -1,4 +1,4 @@
-import { AdminActionType } from '@prisma/client';
+import { AdminActionType, type MainSectionType } from '@prisma/client';
 
 export enum PendingType {
   EXPERT_APPLICATION = 'EXPERT_APPLICATION',
@@ -29,3 +29,18 @@ export const CS_TARGET_ACTIONS = new Set<AdminActionType>([
   AdminActionType.CS_ASSIGNED,
   AdminActionType.CS_CLOSED,
 ]);
+
+// 활동 로그에서 referenceId가 MainSetting을 가리키는 액션 종류
+export const MAIN_TARGET_ACTIONS = new Set<AdminActionType>([
+  AdminActionType.MAIN_UPDATED,
+]);
+
+// MainSetting 섹션 타입 → 한글 표시명
+export const MAIN_SECTION_LABELS: Record<MainSectionType, string> = {
+  POPULAR_IT_COACHING: '가장 많이 찾는 IT 코칭',
+  POPULAR_PROJECT_REQUEST: '가장 많이 찾는 프로젝트 의뢰',
+  MOVEIT_POPULAR_PROJECT_EXPERT: '무빗 인기 프로젝트 의뢰 전문가',
+  MOVEIT_POPULAR_COACHING: '무빗 인기 코칭',
+  RECOMMENDED_IT_COACHING: '추천 IT 코칭',
+  RECOMMENDED_PROJECT_REQUEST: '추천 프로젝트 의뢰',
+};

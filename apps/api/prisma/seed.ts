@@ -207,11 +207,20 @@ class Seeder {
     await this.#seedAdminActivityLogs([superAdmin, ...staffAdmins]);
     console.warn(`✅ 배너/메인설정/FAQ/통계/카테고리추천/어드민로그`);
 
+    const testServiceId = await this.#seedOrdersApiTestData();
+    console.warn(`✅ Orders API 테스트 시드 (주문 10건 + 타인 주문 1건)`);
+
     console.warn('\n────────────────────────────');
     console.warn(`🔑 테스트 계정 (공통 비밀번호: ${SEED_PASSWORD})`);
     console.warn(`   admin@moveit.com         (ADMIN)`);
     console.warn(`   client1~20@moveit.com    (CLIENT)`);
     console.warn(`   expert1~20@moveit.com    (EXPERT, expert1~8 신청 대기)`);
+    console.warn('');
+    console.warn(`🧪 Orders API 테스트 (비밀번호: Test1234!)`);
+    console.warn(`   client@test.com   (CLIENT)`);
+    console.warn(`   expert@test.com   (EXPERT, 승인 완료)`);
+    console.warn(`   other@test.com    (CLIENT, 403 검증용)`);
+    console.warn(`   serviceId         ${testServiceId}`);
     console.warn('────────────────────────────');
     console.warn('✅ 시딩 완료');
   }
@@ -349,31 +358,42 @@ class Seeder {
   ): Promise<{ clients: User[]; experts: User[] }> {
     const regions = Object.values(Region);
 
+    const providers = Object.values(AuthProvider);
+    // client1·expert1은 LOCAL 고정(이메일 로그인 테스트 보장), 나머지는 4종 provider 랜덤
+    const resolveProvider = (i: number): AuthProvider =>
+      i === 0 ? AuthProvider.LOCAL : pick(providers);
+
     const clients = await Promise.all(
-      range(20).map((i) =>
-        this.#prisma.user.create({
+      range(20).map((i) => {
+        const provider = resolveProvider(i);
+        const isLocal = provider === AuthProvider.LOCAL;
+        return this.#prisma.user.create({
           data: {
             email: `client${(i + 1).toString()}@moveit.com`,
             name: `클라이언트${(i + 1).toString()}`,
-            password: passwordHash,
-            provider: AuthProvider.LOCAL,
+            password: isLocal ? passwordHash : null,
+            provider,
+            providerId: isLocal ? null : faker.string.numeric(15),
             role: Role.CLIENT,
             profileImageUrl: pickProfileImage(),
             region: pick(regions),
             phoneNumber: faker.phone.number(),
           },
-        }),
-      ),
+        });
+      }),
     );
 
     const experts = await Promise.all(
-      range(20).map((i) =>
-        this.#prisma.user.create({
+      range(20).map((i) => {
+        const provider = resolveProvider(i);
+        const isLocal = provider === AuthProvider.LOCAL;
+        return this.#prisma.user.create({
           data: {
             email: `expert${(i + 1).toString()}@moveit.com`,
             name: `전문가${(i + 1).toString()}`,
-            password: passwordHash,
-            provider: AuthProvider.LOCAL,
+            password: isLocal ? passwordHash : null,
+            provider,
+            providerId: isLocal ? null : faker.string.numeric(15),
             role: Role.EXPERT,
             profileImageUrl: pickProfileImage(),
             region: pick(regions),
@@ -381,8 +401,8 @@ class Seeder {
             bankName: pick(['국민', '신한', '우리', '하나', '카카오뱅크']),
             bankAccount: faker.finance.accountNumber(),
           },
-        }),
-      ),
+        });
+      }),
     );
 
     return { clients, experts };
@@ -535,13 +555,37 @@ class Seeder {
     const services: Service[] = [];
     const statuses = Object.values(ServiceStatus);
 
+    // UI 테스트용 보장 케이스 — 첫 4명 승인 전문가에 고정 분배
+    // (그룹·개수·상태 고정, 세부 카테고리는 랜덤). 5명부터는 기존대로 random.
+    const projectGroupId = serviceGroups.find(
+      (g) => g.name === ServiceGroupName.PROJECT_REQUEST,
+    )?.id;
+    const coachingGroupId = serviceGroups.find(
+      (g) => g.name === ServiceGroupName.IT_COACHING,
+    )?.id;
+    if (!projectGroupId || !coachingGroupId) {
+      throw new Error(
+        '필수 ServiceGroup(IT_COACHING, PROJECT_REQUEST)이 시드 단계에 없습니다',
+      );
+    }
+    const guaranteedPlan = [
+      { count: 30, groupId: projectGroupId, status: ServiceStatus.ACTIVE },
+      { count: 30, groupId: coachingGroupId, status: ServiceStatus.ACTIVE },
+      { count: 10, groupId: projectGroupId, status: ServiceStatus.ACTIVE },
+      { count: 10, groupId: coachingGroupId, status: ServiceStatus.ACTIVE },
+    ];
+    let guaranteedIndex = 0;
+
     for (const expert of experts) {
       const profile = expertProfiles.find((p) => p.userId === expert.id);
       if (!profile) continue;
       // 미승인(신청 대기) 전문가는 서비스 생성 안 함 — 승인 후에야 서비스 등록 가능
       if (!profile.isApproved) continue;
 
-      const count = rand(1, 2);
+      const guaranteed = guaranteedPlan[guaranteedIndex];
+      if (guaranteed) guaranteedIndex++;
+      const count = guaranteed?.count ?? rand(10, 30);
+
       for (let i = 0; i < count; i++) {
         const service = await this.#prisma.service.create({
           data: {
@@ -556,8 +600,8 @@ class Seeder {
               '작업 시작 전 기획서와 참고 자료를 준비해 주세요.',
             refundPolicy:
               '작업 시작 전 100% 환불, 작업 중 50% 환불, 작업 완료 후 환불 불가',
-            status: pick(statuses),
-            serviceGroupId: pick(serviceGroups).id,
+            status: guaranteed?.status ?? pick(statuses),
+            serviceGroupId: guaranteed?.groupId ?? pick(serviceGroups).id,
             serviceCategoryId: pick(serviceCategories).id,
           },
         });
@@ -648,7 +692,11 @@ class Seeder {
           totalAmount: service.servicePrice + platformFee,
           status,
           startDate: faker.date.recent({ days: 30 }),
-          endDate: faker.date.soon({ days: 30 }),
+          // 협의 중 단계는 작업 종료일이 아직 안 정해진 상태로 둠
+          endDate:
+            status === OrderStatus.NEGOTIATING
+              ? null
+              : faker.date.soon({ days: 30 }),
           confirmedAt: isConfirmed ? faker.date.recent({ days: 30 }) : null,
           settledAt: isSettled ? faker.date.recent({ days: 10 }) : null,
           settledByAdminId: isSettled ? admin.id : null,
@@ -1127,10 +1175,11 @@ class Seeder {
   // ─── 21. AdminActivityLogs ─────────────────────────────────────────
   async #seedAdminActivityLogs(admins: Admin[]): Promise<void> {
     // 실제로 가리킬 수 있는 id 후보 미리 조회 → enrich 시 매칭되도록
-    const [users, faqs, csChatRooms] = await Promise.all([
+    const [users, faqs, csChatRooms, mainSettings] = await Promise.all([
       this.#prisma.user.findMany({ select: { id: true, role: true } }),
       this.#prisma.faq.findMany({ select: { id: true } }),
       this.#prisma.csChatRoom.findMany({ select: { id: true } }),
+      this.#prisma.mainSetting.findMany({ select: { id: true } }),
     ]);
 
     // 액션의 의미에 맞게 user 풀 분리
@@ -1161,6 +1210,9 @@ class Seeder {
       AdminActionType.CS_ASSIGNED,
       AdminActionType.CS_CLOSED,
     ]);
+    const MAIN_ACTIONS = new Set<AdminActionType>([
+      AdminActionType.MAIN_UPDATED,
+    ]);
 
     const pickRefId = (actionType: AdminActionType): string | null => {
       if (EXPERT_TARGET_ACTIONS.has(actionType)) return pick(expertUsers).id;
@@ -1168,6 +1220,10 @@ class Seeder {
       if (BLACKLIST_ACTIONS.has(actionType)) return pick(users).id;
       if (FAQ_ACTIONS.has(actionType)) return pick(faqs).id;
       if (CS_ACTIONS.has(actionType)) return pick(csChatRooms).id;
+      if (MAIN_ACTIONS.has(actionType)) {
+        if (mainSettings.length === 0) return null;
+        return pick(mainSettings).id;
+      }
       return null;
     };
 
@@ -1195,6 +1251,280 @@ class Seeder {
         },
       });
     }
+  }
+
+  // ─── 22. Orders API 테스트 시드 ──────────────────────────────────────
+  // 고정 계정(client@test.com / expert@test.com / other@test.com) + 상태별 주문 묶음.
+  // 비밀번호 Test1234!, 기존 시드와 별개로 끝에 추가됨.
+  async #seedOrdersApiTestData(): Promise<string> {
+    const testPasswordHash = await bcrypt.hash('Test1234!', 10);
+    const regions = Object.values(Region);
+
+    // 1) 고정 계정 3개
+    const [client, expert, other] = await Promise.all([
+      this.#prisma.user.create({
+        data: {
+          email: 'client@test.com',
+          name: '테스트 의뢰인',
+          password: testPasswordHash,
+          provider: AuthProvider.LOCAL,
+          role: Role.CLIENT,
+          profileImageUrl: pickProfileImage(),
+          region: pick(regions),
+          phoneNumber: faker.phone.number(),
+        },
+      }),
+      this.#prisma.user.create({
+        data: {
+          email: 'expert@test.com',
+          name: '테스트 전문가',
+          password: testPasswordHash,
+          provider: AuthProvider.LOCAL,
+          role: Role.EXPERT,
+          profileImageUrl: pickProfileImage(),
+          region: pick(regions),
+          phoneNumber: faker.phone.number(),
+          bankName: '국민',
+          bankAccount: faker.finance.accountNumber(),
+        },
+      }),
+      this.#prisma.user.create({
+        data: {
+          email: 'other@test.com',
+          name: '테스트 타인',
+          password: testPasswordHash,
+          provider: AuthProvider.LOCAL,
+          role: Role.CLIENT,
+          profileImageUrl: pickProfileImage(),
+          region: pick(regions),
+          phoneNumber: faker.phone.number(),
+        },
+      }),
+    ]);
+
+    // 2) expert ExpertProfile (승인 완료)
+    await this.#prisma.expertProfile.create({
+      data: {
+        userId: expert.id,
+        isApplied: true,
+        isApproved: true,
+        approvedAt: faker.date.recent({ days: 30 }),
+        businessName: faker.company.name(),
+        businessNumber: faker.string.numeric(10),
+        ceoName: expert.name ?? '테스트 전문가',
+        contactTimeStart: '10:00',
+        contactTimeEnd: '19:00',
+        foundedYear: 2020,
+        employeeMin: 1,
+        employeeMax: 10,
+        description: 'Orders API 테스트용 전문가입니다',
+      },
+    });
+
+    // 3) expert 소유 ACTIVE 서비스 1개
+    const serviceGroup = await this.#prisma.serviceGroup.findFirst();
+    const serviceCategory = await this.#prisma.serviceCategory.findFirst();
+    if (!serviceGroup || !serviceCategory) {
+      throw new Error('카탈로그 시드 누락 — ServiceGroup/Category 없음');
+    }
+
+    const expertService = await this.#prisma.service.create({
+      data: {
+        expertUserId: expert.id,
+        title: '[테스트] Orders API용 서비스',
+        workDuration: 30,
+        revisionCount: 3,
+        serviceScope: 'Orders API 테스트 전용',
+        servicePrice: 1_000_000,
+        description: 'Orders API 테스트용 서비스입니다',
+        preparationNotes: '준비 사항 안내',
+        refundPolicy: '환불 정책 안내',
+        status: ServiceStatus.ACTIVE,
+        serviceGroupId: serviceGroup.id,
+        serviceCategoryId: serviceCategory.id,
+      },
+    });
+
+    // 4) 상태별 주문 묶음 (client ↔ expert)
+    const platformFee = Math.floor(expertService.servicePrice * 0.1);
+    const totalAmount = expertService.servicePrice + platformFee;
+
+    const futureDate = (days: number): Date =>
+      new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    const pastDate = (days: number): Date =>
+      new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const orderPlan: {
+      status: OrderStatus;
+      endDate: Date | null;
+      paymentStatus: PaymentStatus;
+      confirmedAt: Date | null;
+      withRefund: boolean;
+    }[] = [
+      // NEGOTIATING × 2 — 일정 등록 / 취소 요청 테스트용
+      {
+        status: OrderStatus.NEGOTIATING,
+        endDate: null,
+        paymentStatus: PaymentStatus.PAID,
+        confirmedAt: null,
+        withRefund: false,
+      },
+      {
+        status: OrderStatus.NEGOTIATING,
+        endDate: null,
+        paymentStatus: PaymentStatus.PAID,
+        confirmedAt: null,
+        withRefund: false,
+      },
+      // CANCEL_REQUESTED × 1
+      {
+        status: OrderStatus.CANCEL_REQUESTED,
+        endDate: null,
+        paymentStatus: PaymentStatus.CANCELLED,
+        confirmedAt: null,
+        withRefund: false,
+      },
+      // IN_PROGRESS × 2 — 작업완료 / 일정변경 테스트용
+      {
+        status: OrderStatus.IN_PROGRESS,
+        endDate: futureDate(30),
+        paymentStatus: PaymentStatus.PAID,
+        confirmedAt: null,
+        withRefund: false,
+      },
+      {
+        status: OrderStatus.IN_PROGRESS,
+        endDate: futureDate(30),
+        paymentStatus: PaymentStatus.PAID,
+        confirmedAt: null,
+        withRefund: false,
+      },
+      // DEADLINE_IMMINENT × 1
+      {
+        status: OrderStatus.DEADLINE_IMMINENT,
+        endDate: futureDate(2),
+        paymentStatus: PaymentStatus.PAID,
+        confirmedAt: null,
+        withRefund: false,
+      },
+      // WORK_COMPLETED × 1
+      {
+        status: OrderStatus.WORK_COMPLETED,
+        endDate: futureDate(15),
+        paymentStatus: PaymentStatus.PAID,
+        confirmedAt: null,
+        withRefund: false,
+      },
+      // PURCHASE_CONFIRMED × 1
+      {
+        status: OrderStatus.PURCHASE_CONFIRMED,
+        endDate: futureDate(10),
+        paymentStatus: PaymentStatus.PAID,
+        confirmedAt: new Date(),
+        withRefund: false,
+      },
+      // SETTLEMENT_REQUESTED × 1
+      {
+        status: OrderStatus.SETTLEMENT_REQUESTED,
+        endDate: futureDate(5),
+        paymentStatus: PaymentStatus.PAID,
+        confirmedAt: new Date(),
+        withRefund: false,
+      },
+      // REFUND_REQUESTED × 1 — Refund 레코드 동반
+      {
+        status: OrderStatus.REFUND_REQUESTED,
+        endDate: pastDate(5),
+        paymentStatus: PaymentStatus.PAID,
+        confirmedAt: null,
+        withRefund: true,
+      },
+    ];
+
+    for (const plan of orderPlan) {
+      const order = await this.#prisma.order.create({
+        data: {
+          clientUserId: client.id,
+          expertUserId: expert.id,
+          serviceId: expertService.id,
+          agreedServicePrice: expertService.servicePrice,
+          platformFee,
+          totalAmount,
+          status: plan.status,
+          startDate: pastDate(rand(1, 14)),
+          endDate: plan.endDate,
+          confirmedAt: plan.confirmedAt,
+        },
+      });
+
+      const payment = await this.#prisma.payment.create({
+        data: {
+          orderId: order.id,
+          clientUserId: client.id,
+          paidAmount: order.totalAmount,
+          status: plan.paymentStatus,
+          method: '카드',
+          installmentMonths: 1,
+          approvedAt: new Date(),
+        },
+      });
+
+      if (plan.withRefund) {
+        await this.#prisma.refund.create({
+          data: {
+            paymentId: payment.id,
+            clientUserId: client.id,
+            expertUserId: expert.id,
+            refundAmount: order.totalAmount,
+            type: RefundType.REFUND,
+            status: RefundStatus.REQUESTED,
+            requestedAt: new Date(),
+          },
+        });
+      }
+    }
+
+    // 5) 타인 소유 IN_PROGRESS 주문 1건 (other ↔ 임의의 다른 expert)
+    const otherExpert = await this.#prisma.user.findFirst({
+      where: { role: Role.EXPERT, NOT: { id: expert.id } },
+    });
+    if (!otherExpert) {
+      throw new Error('타인용 다른 expert가 없음');
+    }
+    const otherExpertService = await this.#prisma.service.findFirst({
+      where: { expertUserId: otherExpert.id, status: ServiceStatus.ACTIVE },
+    });
+    if (!otherExpertService) {
+      throw new Error('타인용 다른 expert의 ACTIVE 서비스가 없음');
+    }
+
+    const otherPlatformFee = Math.floor(otherExpertService.servicePrice * 0.1);
+    const otherOrder = await this.#prisma.order.create({
+      data: {
+        clientUserId: other.id,
+        expertUserId: otherExpert.id,
+        serviceId: otherExpertService.id,
+        agreedServicePrice: otherExpertService.servicePrice,
+        platformFee: otherPlatformFee,
+        totalAmount: otherExpertService.servicePrice + otherPlatformFee,
+        status: OrderStatus.IN_PROGRESS,
+        startDate: pastDate(7),
+        endDate: futureDate(30),
+      },
+    });
+    await this.#prisma.payment.create({
+      data: {
+        orderId: otherOrder.id,
+        clientUserId: other.id,
+        paidAmount: otherOrder.totalAmount,
+        status: PaymentStatus.PAID,
+        method: '카드',
+        installmentMonths: 1,
+        approvedAt: new Date(),
+      },
+    });
+
+    return expertService.id;
   }
 }
 

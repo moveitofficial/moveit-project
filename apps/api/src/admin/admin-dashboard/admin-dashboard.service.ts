@@ -8,6 +8,8 @@ import { AdminDashboardRepository } from './admin-dashboard.repository';
 import {
   CS_TARGET_ACTIONS,
   FAQ_TARGET_ACTIONS,
+  MAIN_SECTION_LABELS,
+  MAIN_TARGET_ACTIONS,
   PendingType,
   USER_TARGET_ACTIONS,
 } from './admin-dashboard.types';
@@ -111,6 +113,7 @@ export class AdminDashboardService {
     const userIds: string[] = [];
     const faqIds: string[] = [];
     const csIds: string[] = [];
+    const mainIds: string[] = [];
     for (const r of rows) {
       if (r.referenceId === null) continue;
       if (USER_TARGET_ACTIONS.has(r.actionType)) {
@@ -119,21 +122,28 @@ export class AdminDashboardService {
         faqIds.push(r.referenceId);
       } else if (CS_TARGET_ACTIONS.has(r.actionType)) {
         csIds.push(r.referenceId);
+      } else if (MAIN_TARGET_ACTIONS.has(r.actionType)) {
+        mainIds.push(r.referenceId);
       }
     }
 
-    const [users, faqs, csRooms] = await Promise.all([
+    const [users, faqs, csRooms, mainSettings] = await Promise.all([
       this.adminDashboardRepository.findUsersByIds(userIds),
       this.adminDashboardRepository.findFaqsByIds(faqIds),
       this.adminDashboardRepository.findCsChatRoomsByIds(csIds),
+      this.adminDashboardRepository.findMainSettingsByIds(mainIds),
     ]);
 
     const userNameMap = new Map(users.map((u) => [u.id, u.name]));
     const faqTitleMap = new Map(faqs.map((f) => [f.id, f.title]));
     const csUserNameMap = new Map(csRooms.map((c) => [c.id, c.user.name]));
+    const mainSectionMap = new Map(
+      mainSettings.map((m) => [m.id, MAIN_SECTION_LABELS[m.sectionType]]),
+    );
 
     const items: ActivityItemDto[] = rows.map((r) => {
       let targetName: string | null = null;
+
       if (r.referenceId !== null) {
         if (USER_TARGET_ACTIONS.has(r.actionType)) {
           targetName = userNameMap.get(r.referenceId) ?? null;
@@ -141,6 +151,9 @@ export class AdminDashboardService {
           targetName = faqTitleMap.get(r.referenceId) ?? null;
         } else if (CS_TARGET_ACTIONS.has(r.actionType)) {
           targetName = csUserNameMap.get(r.referenceId) ?? null;
+        } else if (MAIN_TARGET_ACTIONS.has(r.actionType)) {
+          const label = mainSectionMap.get(r.referenceId);
+          targetName = label ? `${label} 노출 수정` : null;
         }
       }
       return {
