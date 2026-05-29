@@ -2,6 +2,7 @@ export * from './types';
 export * from './dashboard';
 export * from './users';
 export * from './experts';
+export * from './blacklist';
 export * from './services';
 export * from './orders';
 export * from './refunds';
