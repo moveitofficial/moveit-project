@@ -349,31 +349,42 @@ class Seeder {
   ): Promise<{ clients: User[]; experts: User[] }> {
     const regions = Object.values(Region);
 
+    const providers = Object.values(AuthProvider);
+    // client1·expert1은 LOCAL 고정(이메일 로그인 테스트 보장), 나머지는 4종 provider 랜덤
+    const resolveProvider = (i: number): AuthProvider =>
+      i === 0 ? AuthProvider.LOCAL : pick(providers);
+
     const clients = await Promise.all(
-      range(20).map((i) =>
-        this.#prisma.user.create({
+      range(20).map((i) => {
+        const provider = resolveProvider(i);
+        const isLocal = provider === AuthProvider.LOCAL;
+        return this.#prisma.user.create({
           data: {
             email: `client${(i + 1).toString()}@moveit.com`,
             name: `클라이언트${(i + 1).toString()}`,
-            password: passwordHash,
-            provider: AuthProvider.LOCAL,
+            password: isLocal ? passwordHash : null,
+            provider,
+            providerId: isLocal ? null : faker.string.numeric(15),
             role: Role.CLIENT,
             profileImageUrl: pickProfileImage(),
             region: pick(regions),
             phoneNumber: faker.phone.number(),
           },
-        }),
-      ),
+        });
+      }),
     );
 
     const experts = await Promise.all(
-      range(20).map((i) =>
-        this.#prisma.user.create({
+      range(20).map((i) => {
+        const provider = resolveProvider(i);
+        const isLocal = provider === AuthProvider.LOCAL;
+        return this.#prisma.user.create({
           data: {
             email: `expert${(i + 1).toString()}@moveit.com`,
             name: `전문가${(i + 1).toString()}`,
-            password: passwordHash,
-            provider: AuthProvider.LOCAL,
+            password: isLocal ? passwordHash : null,
+            provider,
+            providerId: isLocal ? null : faker.string.numeric(15),
             role: Role.EXPERT,
             profileImageUrl: pickProfileImage(),
             region: pick(regions),
@@ -381,8 +392,8 @@ class Seeder {
             bankName: pick(['국민', '신한', '우리', '하나', '카카오뱅크']),
             bankAccount: faker.finance.accountNumber(),
           },
-        }),
-      ),
+        });
+      }),
     );
 
     return { clients, experts };
@@ -535,13 +546,37 @@ class Seeder {
     const services: Service[] = [];
     const statuses = Object.values(ServiceStatus);
 
+    // UI 테스트용 보장 케이스 — 첫 4명 승인 전문가에 고정 분배
+    // (그룹·개수·상태 고정, 세부 카테고리는 랜덤). 5명부터는 기존대로 random.
+    const projectGroupId = serviceGroups.find(
+      (g) => g.name === ServiceGroupName.PROJECT_REQUEST,
+    )?.id;
+    const coachingGroupId = serviceGroups.find(
+      (g) => g.name === ServiceGroupName.IT_COACHING,
+    )?.id;
+    if (!projectGroupId || !coachingGroupId) {
+      throw new Error(
+        '필수 ServiceGroup(IT_COACHING, PROJECT_REQUEST)이 시드 단계에 없습니다',
+      );
+    }
+    const guaranteedPlan = [
+      { count: 30, groupId: projectGroupId, status: ServiceStatus.ACTIVE },
+      { count: 30, groupId: coachingGroupId, status: ServiceStatus.ACTIVE },
+      { count: 10, groupId: projectGroupId, status: ServiceStatus.ACTIVE },
+      { count: 10, groupId: coachingGroupId, status: ServiceStatus.ACTIVE },
+    ];
+    let guaranteedIndex = 0;
+
     for (const expert of experts) {
       const profile = expertProfiles.find((p) => p.userId === expert.id);
       if (!profile) continue;
       // 미승인(신청 대기) 전문가는 서비스 생성 안 함 — 승인 후에야 서비스 등록 가능
       if (!profile.isApproved) continue;
 
-      const count = rand(1, 2);
+      const guaranteed = guaranteedPlan[guaranteedIndex];
+      if (guaranteed) guaranteedIndex++;
+      const count = guaranteed?.count ?? rand(10, 30);
+
       for (let i = 0; i < count; i++) {
         const service = await this.#prisma.service.create({
           data: {
@@ -556,8 +591,8 @@ class Seeder {
               '작업 시작 전 기획서와 참고 자료를 준비해 주세요.',
             refundPolicy:
               '작업 시작 전 100% 환불, 작업 중 50% 환불, 작업 완료 후 환불 불가',
-            status: pick(statuses),
-            serviceGroupId: pick(serviceGroups).id,
+            status: guaranteed?.status ?? pick(statuses),
+            serviceGroupId: guaranteed?.groupId ?? pick(serviceGroups).id,
             serviceCategoryId: pick(serviceCategories).id,
           },
         });
@@ -1127,10 +1162,11 @@ class Seeder {
   // ─── 21. AdminActivityLogs ─────────────────────────────────────────
   async #seedAdminActivityLogs(admins: Admin[]): Promise<void> {
     // 실제로 가리킬 수 있는 id 후보 미리 조회 → enrich 시 매칭되도록
-    const [users, faqs, csChatRooms] = await Promise.all([
+    const [users, faqs, csChatRooms, mainSettings] = await Promise.all([
       this.#prisma.user.findMany({ select: { id: true, role: true } }),
       this.#prisma.faq.findMany({ select: { id: true } }),
       this.#prisma.csChatRoom.findMany({ select: { id: true } }),
+      this.#prisma.mainSetting.findMany({ select: { id: true } }),
     ]);
 
     // 액션의 의미에 맞게 user 풀 분리
@@ -1161,6 +1197,9 @@ class Seeder {
       AdminActionType.CS_ASSIGNED,
       AdminActionType.CS_CLOSED,
     ]);
+    const MAIN_ACTIONS = new Set<AdminActionType>([
+      AdminActionType.MAIN_UPDATED,
+    ]);
 
     const pickRefId = (actionType: AdminActionType): string | null => {
       if (EXPERT_TARGET_ACTIONS.has(actionType)) return pick(expertUsers).id;
@@ -1168,6 +1207,10 @@ class Seeder {
       if (BLACKLIST_ACTIONS.has(actionType)) return pick(users).id;
       if (FAQ_ACTIONS.has(actionType)) return pick(faqs).id;
       if (CS_ACTIONS.has(actionType)) return pick(csChatRooms).id;
+      if (MAIN_ACTIONS.has(actionType)) {
+        if (mainSettings.length === 0) return null;
+        return pick(mainSettings).id;
+      }
       return null;
     };
 
