@@ -10,6 +10,7 @@ interface Props {
   tableSlot: ReactNode;
   page: number;
   totalPages: number;
+  actionSlot?: ReactNode;
 }
 
 export default function ListLayout({
@@ -17,11 +18,15 @@ export default function ListLayout({
   tableSlot,
   page,
   totalPages,
+  actionSlot,
 }: Props) {
   return (
     <div className={styles.container}>
       <Suspense fallback={null}>
-        <div className={styles.filterSection}>{filterSlot}</div>
+        <div className={styles.filterSection}>
+          {filterSlot}
+          {actionSlot !== undefined && actionSlot}
+        </div>
       </Suspense>
 
       <div className={styles.tableSection}>{tableSlot}</div>
