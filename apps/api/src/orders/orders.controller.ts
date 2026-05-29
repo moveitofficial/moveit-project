@@ -8,7 +8,6 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  Query,
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -19,19 +18,20 @@ import {
   COMMON_ERRORS,
   ORDER_ERRORS,
   PAYMENT_ERRORS,
-  SERVICE_ERRORS,
+  REVIEW_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
-import {
-  ApiPaginatedResponse,
-  ApiSuccessResponse,
-} from '../common/decorators/api-success-response.decorator';
+import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
+import { PaymentsService } from '../payments/payments.service';
 
-import { CreateOrderRequestDto } from './dto/create-order-request.dto';
-import { CreateOrderResponseDto } from './dto/create-order-response.dto';
-import { GetOrdersQueryDto } from './dto/get-orders-query.dto';
-import { OrderDetailDto, OrderListItemDto } from './dto/order-response.dto';
+import { CreateOrderReviewRequestDto } from './dto/create-order-review-request.dto';
+import {
+  OrderPaymentDto,
+  OrderReviewResponseDto,
+} from './dto/order-response.dto';
+import { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
+import { UpdateOrderScheduleResponseDto } from './dto/update-order-schedule-response.dto';
 import { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
 import { UpdateOrderStatusResponseDto } from './dto/update-order-status-response.dto';
 import { OrdersService } from './orders.service';
@@ -41,65 +41,33 @@ import type { Request } from 'express';
 @ApiTags('orders')
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly paymentsService: PaymentsService,
+  ) {}
 
-  @ApiOperation({ summary: '내 주문 목록 조회' })
+  @ApiOperation({ summary: '주문 결제·환불 상세 (거래상세)' })
   @JwtAuth()
-  @ApiPaginatedResponse(HttpStatus.OK, OrderListItemDto)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Get()
-  getOrders(@Req() req: Request, @Query() query: GetOrdersQueryDto) {
-    const user = req.user as JwtAccessUser;
-    return this.ordersService.getOrders(user.userId, query);
-  }
-
-  @ApiOperation({ summary: '주문 상세 단건 조회' })
-  @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.OK, OrderDetailDto)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiSuccessResponse(HttpStatus.OK, OrderPaymentDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, PAYMENT_ERRORS.NOT_FOUND)
   @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Get(':id')
-  getOrderDetail(
+  @Get(':id/payment')
+  getOrderPayment(
     @Req() req: Request,
     @Param('id', ParseUUIDPipe) orderId: string,
   ) {
     const user = req.user as JwtAccessUser;
-    return this.ordersService.getOrderDetail(user.userId, orderId);
+    return this.paymentsService.getOrderPayment(user.userId, orderId);
   }
 
-  @ApiOperation({ summary: '주문서 초기 생성' })
-  @RoleAuth(Role.CLIENT)
-  @ApiSuccessResponse(HttpStatus.CREATED, CreateOrderResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_AVAILABLE)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @HttpCode(HttpStatus.CREATED)
-  @Post()
-  createOrder(@Req() req: Request, @Body() dto: CreateOrderRequestDto) {
-    const user = req.user as JwtAccessUser;
-    return this.ordersService.initializeOrder(user.userId, dto);
-  }
-
-  @ApiOperation({ summary: '주문 상태 전이 (결제 검증 포함)' })
+  @ApiOperation({ summary: '주문 상태 전이' })
   @JwtAuth()
   @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, PAYMENT_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
-  @ApiErrorResponse(
-    ORDER_ERRORS.AMOUNT_MISMATCH,
-    ORDER_ERRORS.INVALID_STATUS,
-    COMMON_ERRORS.VALIDATION_ERROR,
-  )
-  @ApiErrorResponse(
-    ORDER_ERRORS.ALREADY_CANCELED,
-    ORDER_ERRORS.ALREADY_PROCESSED,
-    PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY,
-    PAYMENT_ERRORS.ALREADY_CONFIRMED,
-  )
+  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS, COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(ORDER_ERRORS.ALREADY_PROCESSED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.OK)
   @Patch(':id/status')
@@ -115,5 +83,84 @@ export class OrdersController {
       orderId,
       dto,
     );
+  }
+
+  @ApiOperation({ summary: '주문 일정 등록·변경' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderScheduleResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS, COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Patch(':id/schedule')
+  updateSchedule(
+    @Param('id', ParseUUIDPipe) orderId: string,
+    @Req() req: Request,
+    @Body() dto: UpdateOrderScheduleRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.updateOrderSchedule(
+      user.userId,
+      user.role,
+      orderId,
+      dto,
+    );
+  }
+
+  @ApiOperation({ summary: '구매 확정' })
+  @RoleAuth(Role.CLIENT)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/confirm')
+  confirmOrder(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.confirmOrder(user.userId, orderId);
+  }
+
+  @ApiOperation({ summary: '정산 요청' })
+  @RoleAuth(Role.EXPERT)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/settlement-request')
+  requestSettlement(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.requestSettlement(user.userId, orderId);
+  }
+
+  @ApiOperation({ summary: '주문 리뷰 작성' })
+  @RoleAuth(Role.CLIENT)
+  @ApiSuccessResponse(HttpStatus.CREATED, OrderReviewResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    REVIEW_ERRORS.ORDER_NOT_REVIEWABLE,
+  )
+  @ApiErrorResponse(REVIEW_ERRORS.ALREADY_EXISTS)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.CREATED)
+  @Post(':id/review')
+  createOrderReview(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+    @Body() dto: CreateOrderReviewRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.createOrderReview(user.userId, orderId, dto);
   }
 }
