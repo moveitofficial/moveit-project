@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CommunityPost } from '@prisma/client';
+import { CommunityCategory, CommunityPost } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -23,19 +23,29 @@ export class CommunityPostsRepository {
     return this.prisma.communityPost.create(args);
   }
 
-  findAllPosts(args: { skip: number; take: number }) {
+  buildListWhere(category?: CommunityCategory) {
+    return {
+      deletedAt: null,
+      ...(category !== undefined && { category }),
+    };
+  }
+
+  findAllPosts(args: {
+    skip: number;
+    take: number;
+    category?: CommunityCategory;
+  }) {
     return this.prisma.communityPost.findMany({
-      where: { deletedAt: null },
+      where: this.buildListWhere(args.category),
       orderBy: { createdAt: 'desc' },
       skip: args.skip,
       take: args.take,
       select: postListSelect,
     });
   }
-
-  countPosts(): Promise<number> {
+  countPosts(category?: CommunityCategory): Promise<number> {
     return this.prisma.communityPost.count({
-      where: { deletedAt: null },
+      where: this.buildListWhere(category),
     });
   }
 }

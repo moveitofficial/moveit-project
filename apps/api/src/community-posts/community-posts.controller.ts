@@ -17,9 +17,9 @@ import {
   ApiSuccessResponse,
 } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 import { CommunityPostsService } from './community-posts.service';
+import { PostListQueryDto } from './dto/post-list-query.dto';
 import { PostRequestDto } from './dto/post-request.dto';
 import {
   PostListItemResponseDto,
@@ -49,7 +49,7 @@ export class CommunityPostsController {
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get()
-  getAllPosts(@Query() query: PaginationQueryDto) {
+  getAllPosts(@Query() query: PostListQueryDto) {
     return this.communityPostsService.getAllPosts(query);
   }
 }
