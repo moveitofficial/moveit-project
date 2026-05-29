@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { CommunityPost } from '@prisma/client';
 
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 
-import { mapPostListItem } from './community-posts.mapper';
+import { mapPost, mapPostListItem } from './community-posts.mapper';
 import { CommunityPostsRepository } from './community-posts.repository';
 import { PostListQueryDto } from './dto/post-list-query.dto';
 import { PostRequestDto } from './dto/post-request.dto';
@@ -16,8 +15,13 @@ export class CommunityPostsService {
     private readonly communityPostsRepository: CommunityPostsRepository,
   ) {}
 
-  createPost(userId: string, dto: PostRequestDto): Promise<CommunityPost> {
-    return this.communityPostsRepository.createPost(userId, dto);
+  async createPost(
+    userId: string,
+    dto: PostRequestDto,
+  ): Promise<ReturnType<typeof mapPost>> {
+    const created = await this.communityPostsRepository.createPost(userId, dto);
+
+    return mapPost(created);
   }
 
   async getAllPosts(

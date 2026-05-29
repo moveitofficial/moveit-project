@@ -1,6 +1,7 @@
 import { Role } from '@prisma/client';
 
 import type { PostListItem } from './community-posts.types';
+import type { CommunityPost } from '@prisma/client';
 
 function resolveAuthorDisplayName(user: PostListItem['user']): string {
   if (user.role === Role.EXPERT) {
@@ -20,5 +21,16 @@ export function mapPostListItem(post: PostListItem) {
     authorDisplayName: resolveAuthorDisplayName(post.user),
     commentCount: post._count.comments,
     likeCount: post._count.likeRecords,
+  };
+}
+
+export function mapPost(post: CommunityPost) {
+  return {
+    id: post.id,
+    userId: post.userId,
+    category: post.category,
+    title: post.title,
+    content: post.content,
+    createdAt: post.createdAt,
   };
 }
