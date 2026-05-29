@@ -36,6 +36,8 @@ export class CommunityPostsController {
   @ApiOperation({ summary: '게시글 생성' })
   @JwtAuth()
   @ApiSuccessResponse(HttpStatus.CREATED, PostResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Post()
   createPost(@Req() req: Request, @Body() body: PostRequestDto) {
     const user = req.user as JwtAccessUser;
