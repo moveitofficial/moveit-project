@@ -23,6 +23,18 @@ export class CommunityPostsRepository {
     return this.prisma.communityPost.create(args);
   }
 
+  updatePost(postId: string, dto: PostRequestDto): Promise<CommunityPost> {
+    const args = {
+      where: { id: postId },
+      data: {
+        category: dto.category,
+        title: dto.title,
+        content: dto.content,
+      },
+    };
+    return this.prisma.communityPost.update(args);
+  }
+
   buildListWhere(category?: CommunityCategory) {
     return {
       deletedAt: null,
