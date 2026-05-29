@@ -12,7 +12,7 @@ import { PostResponseDto } from './dto/post-response.dto';
 import type { Request } from 'express';
 
 @ApiTags('community-posts')
-@Controller('communityposts')
+@Controller('community-posts')
 export class CommunityPostsController {
   constructor(private readonly communityPostsService: CommunityPostsService) {}
 

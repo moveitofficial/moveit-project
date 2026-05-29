@@ -20,3 +20,17 @@ export class PostResponseDto {
   @ApiProperty({ example: '2026-05-28T10:00:00.000Z' })
   declare createdAt: Date;
 }
+
+export class PostListItemResponseDto extends PostResponseDto {
+  @ApiProperty({
+    example: '코드잇 에이전시',
+    description: '게시글 작성자 이름',
+  })
+  declare authorDisplayName: string;
+
+  @ApiProperty({ example: 233 })
+  declare likeCount: number;
+
+  @ApiProperty({ example: 233 })
+  declare commentCount: number;
+}
