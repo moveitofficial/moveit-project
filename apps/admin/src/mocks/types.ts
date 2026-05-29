@@ -229,6 +229,24 @@ export interface AdminBlacklistExpert {
   createdAt: string;
 }
 
+export interface AdminWithdrawnUser {
+  id: string;
+  email: string;
+  withdrawReason: string;
+  provider: Provider;
+  createdAt: string;
+  withdrawnAt: string;
+}
+
+export interface AdminWithdrawnExpert {
+  id: string;
+  email: string;
+  withdrawReason: string;
+  provider: Provider;
+  createdAt: string;
+  withdrawnAt: string;
+}
+
 export type PendingTaskType =
   | 'EXPERT_APPROVAL'
   | 'REPORT'
