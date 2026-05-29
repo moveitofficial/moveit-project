@@ -60,6 +60,15 @@ export class CommunityPostsController {
     return this.communityPostsService.getAllPosts(query);
   }
 
+  @ApiOperation({ summary: '게시글 조회' })
+  @ApiSuccessResponse(HttpStatus.OK, PostResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @Get(':id')
+  getPost(@Param('id', ParseUUIDPipe) postId: string) {
+    return this.communityPostsService.getPost(postId);
+  }
+
   @ApiOperation({ summary: '게시글 수정' })
   @JwtAuth()
   @ApiSuccessResponse(HttpStatus.OK, PostResponseDto)
