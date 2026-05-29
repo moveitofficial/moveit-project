@@ -137,7 +137,7 @@ export const ORDER_ERRORS = {
   },
   FORBIDDEN_NOT_OWNER: {
     status: HttpStatus.FORBIDDEN,
-    message: '본인의 주문만 접근할 수 있습니다.',
+    message: '본인의 주문에만 접근할 수 있습니다.',
   },
   INVALID_STATUS: {
     status: HttpStatus.BAD_REQUEST,
@@ -146,14 +146,6 @@ export const ORDER_ERRORS = {
   AMOUNT_MISMATCH: {
     status: HttpStatus.BAD_REQUEST,
     message: '결제 요청 금액이 실제 주문 금액과 일치하지 않습니다.',
-  },
-  ALREADY_CANCELED: {
-    status: HttpStatus.CONFLICT,
-    message: '이미 취소된 주문입니다.',
-  },
-  ALREADY_REFUNDED: {
-    status: HttpStatus.CONFLICT,
-    message: '이미 환불된 주문입니다.',
   },
   ALREADY_PROCESSED: {
     status: HttpStatus.CONFLICT,
