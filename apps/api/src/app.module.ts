@@ -9,6 +9,7 @@ import { CatalogsModule } from './catalogs/catalogs.module';
 import { ChatModule } from './chat/chat.module';
 import { ClientProfilesModule } from './client-profiles/client-profiles.module';
 import { RolesGuard } from './common/guards/roles.guard';
+import { CommunityPostsModule } from './community-posts/community-posts.module';
 import { ExpertProfilesModule } from './expert-profiles/expert-profiles.module';
 import { HealthModule } from './health/health.module';
 import { MailerModule } from './mailer/mailer.module';
@@ -39,6 +40,7 @@ import { UsersModule } from './users/users.module';
     ExpertProfilesModule,
     PortfoliosModule,
     MailerModule,
+    CommunityPostsModule,
   ],
   controllers: [AppController],
   providers: [AppService, RolesGuard],
