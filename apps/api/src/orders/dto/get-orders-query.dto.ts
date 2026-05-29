@@ -4,9 +4,9 @@ import { Transform } from 'class-transformer';
 import { IsEnum, IsIn, IsOptional } from 'class-validator';
 
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
-import { ORDER_LIST_AS } from '../orders.constants';
+import { ORDER_LIST_AS, ORDER_LIST_SORT } from '../orders.constants';
 
-import type { OrderListAs } from '../orders.constants';
+import type { OrderListAs, OrderListSort } from '../orders.constants';
 
 export class GetOrdersQueryDto extends PaginationQueryDto {
   @ApiProperty({
@@ -29,4 +29,13 @@ export class GetOrdersQueryDto extends PaginationQueryDto {
   )
   @IsEnum(OrderStatus, { each: true })
   declare status?: OrderStatus[];
+
+  @ApiPropertyOptional({
+    description: '정렬 (latest: 최신순, deadline: 마감일순)',
+    enum: ORDER_LIST_SORT,
+    default: 'latest',
+  })
+  @IsOptional()
+  @IsIn(ORDER_LIST_SORT)
+  declare sort?: OrderListSort;
 }

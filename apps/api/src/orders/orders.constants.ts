@@ -15,6 +15,13 @@ export const ORDER_LIST_USER_ID_FIELD = {
   [ORDER_LIST_AS.EXPERT]: 'expertUserId',
 } as const;
 
+// GET /orders 목록 — 정렬
+export const ORDER_LIST_SORT = ['latest', 'deadline'] as const;
+
+export type OrderListSort = (typeof ORDER_LIST_SORT)[number];
+
+export const ORDER_LIST_DEFAULT_SORT: OrderListSort = 'latest';
+
 // 목록 메인 이미지 조회 개수
 export const ORDER_LIST_MAIN_IMAGE_LIMIT = 1;
 

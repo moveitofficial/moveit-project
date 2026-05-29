@@ -18,6 +18,7 @@ import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
 import {
+  ORDER_LIST_DEFAULT_SORT,
   ORDER_LIST_USER_ID_FIELD,
   ORDERS_LIST_DEFAULT_PAGE,
   ORDERS_LIST_DEFAULT_PAGE_SIZE,
@@ -26,7 +27,7 @@ import {
   PG_STUB_RECEIPT_URL,
   PLATFORM_FEE_RATE,
 } from './orders.constants';
-import { mapOrderDetail } from './orders.mapper';
+import { mapOrderDetail, mapOrderListItem } from './orders.mapper';
 import {
   validateOrderStatusAuthority,
   validateOrderStatusFlow,
@@ -45,12 +46,14 @@ export class OrdersService {
     const pageSize = query.pageSize ?? ORDERS_LIST_DEFAULT_PAGE_SIZE;
     const skip = (page - 1) * pageSize;
     const field = ORDER_LIST_USER_ID_FIELD[query.as];
+    const sort = query.sort ?? ORDER_LIST_DEFAULT_SORT;
 
     const [orders, totalCount] = await Promise.all([
       this.ordersRepository.findOrdersByUser({
         userId,
         field,
         statuses: query.status,
+        sort,
         skip,
         take: pageSize,
       }),
@@ -61,7 +64,14 @@ export class OrdersService {
       }),
     ]);
 
-    return toPaginatedResponse(orders, { page, pageSize, totalCount });
+    return toPaginatedResponse(
+      orders.map((order) => mapOrderListItem(order)),
+      {
+        page,
+        pageSize,
+        totalCount,
+      },
+    );
   }
 
   async getOrderDetail(userId: string, orderId: string) {

@@ -8,6 +8,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { INITIAL_PAID_AMOUNT } from './orders.constants';
 import { orderDetailSelect, orderListSelect } from './orders.types';
 
+import type { OrderListSort } from './orders.constants';
+
 @Injectable()
 export class OrdersRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -16,10 +18,11 @@ export class OrdersRepository {
     userId: string;
     field: 'clientUserId' | 'expertUserId';
     statuses?: OrderStatus[];
+    sort: OrderListSort;
     skip: number;
     take: number;
   }) {
-    const { userId, field, statuses, skip, take } = params;
+    const { userId, field, statuses, sort, skip, take } = params;
     const userWhere: Prisma.OrderWhereInput =
       field === 'clientUserId'
         ? { clientUserId: userId }
@@ -31,7 +34,7 @@ export class OrdersRepository {
     return this.prisma.order.findMany({
       where: { ...userWhere, ...statusWhere },
       select: orderListSelect,
-      orderBy: { createdAt: 'desc' },
+      orderBy: sort === 'deadline' ? { endDate: 'asc' } : { createdAt: 'desc' },
       skip,
       take,
     });

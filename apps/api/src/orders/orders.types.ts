@@ -19,7 +19,6 @@ export const orderListSelect = {
     select: {
       id: true,
       title: true,
-      servicePrice: true,
       images: {
         where: { isMain: true },
         take: ORDER_LIST_MAIN_IMAGE_LIMIT,
@@ -31,9 +30,17 @@ export const orderListSelect = {
     select: { id: true, name: true },
   },
   expertUser: {
-    select: { id: true, name: true, profileImageUrl: true },
+    select: {
+      id: true,
+      profileImageUrl: true,
+      expertProfile: { select: { businessName: true } },
+    },
   },
 } satisfies Prisma.OrderSelect;
+
+export type OrderListRow = Prisma.OrderGetPayload<{
+  select: typeof orderListSelect;
+}>;
 
 export const orderDetailSelect = {
   id: true,

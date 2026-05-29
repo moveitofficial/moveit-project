@@ -18,9 +18,6 @@ class OrderServiceSummaryDto {
   @ApiProperty({ example: '웹 서비스 MVP 개발' })
   declare title: string;
 
-  @ApiProperty({ example: 380_000 })
-  declare servicePrice: number;
-
   @ApiProperty({ type: [OrderServiceImageDto] })
   declare images: OrderServiceImageDto[];
 }
@@ -37,28 +34,14 @@ class OrderExpertSummaryDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
 
-  @ApiProperty({ nullable: true, example: '홍길동' })
-  declare name: string | null;
+  @ApiProperty({ nullable: true, example: '코드잇에이전시' })
+  declare businessName: string | null;
 
   @ApiProperty({
     nullable: true,
     example: 'https://cdn.example.com/profile.jpg',
   })
   declare profileImageUrl: string | null;
-}
-
-class OrderListPaginationDto {
-  @ApiProperty({ example: 1 })
-  declare page: number;
-
-  @ApiProperty({ example: 20 })
-  declare pageSize: number;
-
-  @ApiProperty({ example: 50 })
-  declare totalCount: number;
-
-  @ApiProperty({ example: true })
-  declare hasNext: boolean;
 }
 
 export class OrderListItemDto {
@@ -94,14 +77,6 @@ export class OrderListItemDto {
 
   @ApiProperty({ type: OrderExpertSummaryDto })
   declare expertUser: OrderExpertSummaryDto;
-}
-
-export class OrderListResponseDto {
-  @ApiProperty({ type: [OrderListItemDto] })
-  declare items: OrderListItemDto[];
-
-  @ApiProperty({ type: OrderListPaginationDto })
-  declare pagination: OrderListPaginationDto;
 }
 
 class OrderRefundDto {
