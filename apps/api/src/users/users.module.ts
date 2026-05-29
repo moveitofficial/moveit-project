@@ -4,7 +4,6 @@ import { ClientProfilesModule } from '../client-profiles/client-profiles.module'
 import { ExpertProfilesModule } from '../expert-profiles/expert-profiles.module';
 import { PortfoliosModule } from '../portfolios/portfolios.module';
 import { ServicesModule } from '../services/services.module';
-import { ServicesRepository } from '../services/services.repository';
 import { UploadModule } from '../upload/upload.module';
 
 import { MePortfoliosController } from './me-portfolios.controller';
@@ -21,7 +20,7 @@ import { UsersService } from './users.service';
     UploadModule,
     ServicesModule,
   ],
-  providers: [UsersRepository, UsersService, ServicesRepository],
+  providers: [UsersRepository, UsersService],
   controllers: [UsersController, MeController, MePortfoliosController],
   exports: [UsersService],
 })

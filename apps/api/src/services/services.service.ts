@@ -35,6 +35,7 @@ import {
 } from './services.types';
 
 import type {
+  ReviewResponseDto,
   ServiceListQueryDto,
   ServiceListSort,
   ServiceReviewsQueryDto,
@@ -295,6 +296,33 @@ export class ServicesService {
       pageSize,
       totalCount,
     });
+  }
+
+  async getAllReviewsByUserId(
+    userId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<ReviewResponseDto>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const [reviews, totalCount] = await Promise.all([
+      this.servicesRepository.findAllReviewsByUserId({
+        userId,
+        skip,
+        take: pageSize,
+      }),
+      this.servicesRepository.countReviewsByUserId(userId),
+    ]);
+
+    return toPaginatedResponse(
+      reviews.map((review) => mapReview(review)),
+      {
+        page,
+        pageSize,
+        totalCount,
+      },
+    );
   }
 
   async createService(

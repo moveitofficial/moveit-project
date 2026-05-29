@@ -10,16 +10,11 @@ import {
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
-import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { mapServiceCategories } from '../common/utils/service-category.util';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
 import { PortfoliosService } from '../portfolios/portfolios.service';
 import { ReviewResponseDto } from '../services/dto/service-response.dto';
-import {
-  mapReview,
-  type ServiceListItemResponse,
-} from '../services/services.mapper';
-import { ServicesRepository } from '../services/services.repository';
+import { type ServiceListItemResponse } from '../services/services.mapper';
 import { ServicesService } from '../services/services.service';
 import { UploadService } from '../upload/upload.service';
 
@@ -79,7 +74,6 @@ export class UsersService {
     private readonly expertProfilesRepository: ExpertProfilesRepository,
     private readonly portfoliosService: PortfoliosService,
     private readonly uploadService: UploadService,
-    private readonly servicesRepository: ServicesRepository,
     private readonly servicesService: ServicesService,
   ) {}
 
@@ -249,26 +243,6 @@ export class UsersService {
 
     if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
 
-    const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 20;
-    const skip = (page - 1) * pageSize;
-
-    const [reviews, totalCount] = await Promise.all([
-      this.servicesRepository.findAllReviewsByUserId({
-        userId,
-        skip,
-        take: pageSize,
-      }),
-      this.servicesRepository.countReviewsByUserId(userId),
-    ]);
-
-    return toPaginatedResponse(
-      reviews.map((review) => mapReview(review)),
-      {
-        page,
-        pageSize,
-        totalCount,
-      },
-    );
+    return this.servicesService.getAllReviewsByUserId(userId, query);
   }
 }
