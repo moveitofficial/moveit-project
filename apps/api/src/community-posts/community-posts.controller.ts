@@ -42,9 +42,11 @@ export class CommunityPostsController {
   @ApiOperation({ summary: '게시글 생성' })
   @JwtAuth()
   @ApiSuccessResponse(HttpStatus.CREATED, PostResponseDto)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT,
+  )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT)
   @Post()
   createPost(@Req() req: Request, @Body() body: PostRequestDto) {
     const user = req.user as JwtAccessUser;

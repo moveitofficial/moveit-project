@@ -23,6 +23,5 @@ export class PostRequestDto {
   })
   @IsString()
   @IsNotEmpty()
-  @Length(1, 1000)
   declare content: string;
 }
