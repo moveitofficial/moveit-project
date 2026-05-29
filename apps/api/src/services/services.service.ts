@@ -20,6 +20,8 @@ import { UpdateReviewRequestDto } from './dto/update-review-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import {
+  ExpertServiceListItemResponse,
+  mapExpertServiceListItem,
   mapMyReviewListItem,
   mapReview,
   mapService,
@@ -266,7 +268,7 @@ export class ServicesService {
   async getAllServicesByExpertId(
     expertUserId: string,
     query: PaginationQueryDto,
-  ): Promise<Paginated<ServiceListItemResponse>> {
+  ): Promise<Paginated<ExpertServiceListItemResponse>> {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
@@ -293,11 +295,13 @@ export class ServicesService {
       services.map((s) => s.id),
     );
 
-    return toPaginatedResponse(this.toListItems(services, statsMap), {
-      page,
-      pageSize,
-      totalCount,
-    });
+    return toPaginatedResponse(
+      services.map((service) => {
+        const stats = statsMap.get(service.id) ?? { reviewCount: 0, rating: 0 };
+        return mapExpertServiceListItem(service, stats);
+      }),
+      { page, pageSize, totalCount },
+    );
   }
 
   async getAllReviewsByUserId(

@@ -492,3 +492,36 @@ export class ServiceDetailResponseDto {
   @ApiProperty({ example: 45 })
   declare favoriteCount: number;
 }
+
+export class ExpertServiceListItemResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: '안드로이드 / iOS 앱 개발' })
+  declare title: string;
+
+  @ApiProperty({ example: 380_000 })
+  declare servicePrice: number;
+
+  @ApiProperty({ example: 'https://...' })
+  declare thumbnailUrl: string;
+
+  @ApiProperty({ enum: ServiceStatus })
+  declare status: ServiceStatus;
+
+  @ApiProperty({
+    enum: TechStackName,
+    isArray: true,
+    example: [TechStackName.REACT],
+  })
+  declare techStacks: TechStackName[];
+
+  @ApiProperty({ example: 4.9 })
+  declare rating: number;
+
+  @ApiProperty({ example: 328 })
+  declare reviewCount: number;
+
+  @ApiProperty({ example: 120 })
+  declare orderCount: number;
+}
