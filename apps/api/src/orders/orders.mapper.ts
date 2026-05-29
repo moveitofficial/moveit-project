@@ -1,4 +1,26 @@
 import type { OrderDetailRow, OrderListRow } from './orders.types';
+import type { Order } from '@prisma/client';
+
+export function mapCreateOrderResponse(order: Order) {
+  return {
+    id: order.id,
+    status: order.status,
+    agreedServicePrice: order.agreedServicePrice,
+    platformFee: order.platformFee,
+    totalAmount: order.totalAmount,
+    startDate: order.startDate,
+    endDate: order.endDate,
+    createdAt: order.createdAt,
+  };
+}
+
+export function mapUpdateOrderStatusResponse(order: Order) {
+  return {
+    id: order.id,
+    status: order.status,
+    confirmedAt: order.confirmedAt,
+  };
+}
 
 export function mapOrderListItem(order: OrderListRow) {
   return {

@@ -27,7 +27,12 @@ import {
   PG_STUB_RECEIPT_URL,
   PLATFORM_FEE_RATE,
 } from './orders.constants';
-import { mapOrderDetail, mapOrderListItem } from './orders.mapper';
+import {
+  mapCreateOrderResponse,
+  mapOrderDetail,
+  mapOrderListItem,
+  mapUpdateOrderStatusResponse,
+} from './orders.mapper';
 import {
   validateOrderStatusAuthority,
   validateOrderStatusFlow,
@@ -36,6 +41,7 @@ import { OrdersRepository } from './orders.repository';
 
 import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
 import type { OrderWithPayment } from './orders.types';
+import type { Order } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
@@ -97,7 +103,7 @@ export class OrdersService {
     const platformFee = Math.floor(agreedServicePrice * PLATFORM_FEE_RATE);
     const totalAmount = agreedServicePrice + platformFee;
 
-    return this.ordersRepository.createPendingOrder({
+    const order = await this.ordersRepository.createPendingOrder({
       clientUserId,
       expertUserId: service.expertUserId,
       serviceId: service.id,
@@ -108,6 +114,8 @@ export class OrdersService {
       endDate: new Date(dto.endDate),
       paymentMethod: dto.paymentMethod,
     });
+
+    return mapCreateOrderResponse(order);
   }
 
   async updateOrderStatus(
@@ -133,11 +141,12 @@ export class OrdersService {
       validateOrderStatusAuthority(order, dto.status, userId, userRole);
       validateOrderStatusFlow(order.status, dto.status);
 
-      return this.verifyAndApprovePayment(
+      const paid = await this.verifyAndApprovePayment(
         order,
         dto.paymentKey,
         dto.paidAmount,
       );
+      return mapUpdateOrderStatusResponse(paid);
     }
 
     validateOrderStatusAuthority(order, dto.status, userId, userRole);
@@ -148,14 +157,14 @@ export class OrdersService {
       dto.status,
     );
     if (!updated) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
-    return updated;
+    return mapUpdateOrderStatusResponse(updated);
   }
 
   private async verifyAndApprovePayment(
     order: OrderWithPayment,
     paymentKey: string,
     paidAmount: number,
-  ) {
+  ): Promise<Order> {
     if (!order.payment) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
 
     const canVerify =

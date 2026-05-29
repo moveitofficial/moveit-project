@@ -29,9 +29,11 @@ import {
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
 
 import { CreateOrderRequestDto } from './dto/create-order-request.dto';
+import { CreateOrderResponseDto } from './dto/create-order-response.dto';
 import { GetOrdersQueryDto } from './dto/get-orders-query.dto';
 import { OrderDetailDto, OrderListItemDto } from './dto/order-response.dto';
 import { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
+import { UpdateOrderStatusResponseDto } from './dto/update-order-status-response.dto';
 import { OrdersService } from './orders.service';
 
 import type { Request } from 'express';
@@ -70,7 +72,7 @@ export class OrdersController {
 
   @ApiOperation({ summary: '주문서 초기 생성' })
   @RoleAuth(Role.CLIENT)
-  @ApiSuccessResponse(HttpStatus.CREATED)
+  @ApiSuccessResponse(HttpStatus.CREATED, CreateOrderResponseDto)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_AVAILABLE)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
@@ -84,7 +86,7 @@ export class OrdersController {
 
   @ApiOperation({ summary: '주문 상태 전이 (결제 검증 포함)' })
   @JwtAuth()
-  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, PAYMENT_ERRORS.NOT_FOUND)
   @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(
