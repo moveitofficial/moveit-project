@@ -3,6 +3,7 @@ import { CommunityPost } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
+import { postListSelect } from './community-posts.types';
 import { PostRequestDto } from './dto/post-request.dto';
 
 @Injectable()
@@ -28,29 +29,7 @@ export class CommunityPostsRepository {
       orderBy: { createdAt: 'desc' },
       skip: args.skip,
       take: args.take,
-      select: {
-        id: true,
-        userId: true,
-        category: true,
-        title: true,
-        content: true,
-        createdAt: true,
-        user: {
-          select: {
-            id: true,
-            role: true,
-            name: true,
-            clientProfile: { select: { nickname: true } },
-            expertProfile: { select: { businessName: true } },
-          },
-        },
-        _count: {
-          select: {
-            comments: { where: { deletedAt: null } },
-            likeRecords: true,
-          },
-        },
-      },
+      select: postListSelect,
     });
   }
 
