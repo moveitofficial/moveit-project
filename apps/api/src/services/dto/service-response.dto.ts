@@ -334,6 +334,47 @@ class ReviewerResponseDto {
   declare profileImageUrl: string | null;
 }
 
+class MyReviewExpertResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: '김전문' })
+  declare name: string;
+
+  @ApiProperty({
+    nullable: true,
+    example: 'https://example.img.com/image.jpg',
+  })
+  declare profileImageUrl: string | null;
+
+  @ApiProperty({ example: '코드잇 에이전시' })
+  declare companyName: string;
+}
+
+export class MyReviewListItemResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({
+    example: 5,
+    minimum: 1,
+    maximum: 5,
+  })
+  declare rating: number;
+
+  @ApiProperty({ example: '리뷰 내용' })
+  declare content: string;
+
+  @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
+  declare createdAt: string;
+
+  @ApiProperty({ example: 'React 입문 코칭' })
+  declare serviceTitle: string;
+
+  @ApiProperty({ type: MyReviewExpertResponseDto })
+  declare expert: MyReviewExpertResponseDto;
+}
+
 export class ReviewResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;

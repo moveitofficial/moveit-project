@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseInterceptors,
@@ -31,6 +32,7 @@ import { ApiErrorResponse } from '../common/decorators/api-error-response.decora
 import { ApiFileBody } from '../common/decorators/api-file-body.decorator';
 import {
   ApiOneOfSuccessResponse,
+  ApiPaginatedResponse,
   ApiSuccessResponse,
 } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
@@ -40,6 +42,8 @@ import {
   ExpertProfileResponseDto,
 } from '../expert-profiles/dto/expert-profile-response.dto';
 import { ExpertProfilesService } from '../expert-profiles/expert-profiles.service';
+import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
+import { MyReviewListItemResponseDto } from '../services/dto/service-response.dto';
 
 import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
 import { UpdateExpertProfileDto } from './dto/update-expert-profile.dto';
@@ -212,5 +216,17 @@ export class MeController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.expertProfilesService.updateExpertProfile(user.userId, dto);
+  }
+
+  @ApiOperation({ summary: '내 리뷰 목록 조회' })
+  @RoleAuth(Role.CLIENT)
+  @ApiPaginatedResponse(HttpStatus.OK, MyReviewListItemResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get('reviews')
+  getMyReviews(@Req() req: Request, @Query() query: MyReviewsQueryDto) {
+    const user = req.user as JwtAccessUser;
+    return this.usersService.getAllReviewsByUserId(user.userId, query);
   }
 }
