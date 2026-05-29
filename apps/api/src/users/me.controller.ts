@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseInterceptors,
@@ -31,15 +32,18 @@ import { ApiErrorResponse } from '../common/decorators/api-error-response.decora
 import { ApiFileBody } from '../common/decorators/api-file-body.decorator';
 import {
   ApiOneOfSuccessResponse,
+  ApiPaginatedResponse,
   ApiSuccessResponse,
 } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { ExpertProfileRequestDto } from '../expert-profiles/dto/expert-profile-request.dto';
 import {
   CreateExpertProfileResponseDto,
   ExpertProfileResponseDto,
 } from '../expert-profiles/dto/expert-profile-response.dto';
 import { ExpertProfilesService } from '../expert-profiles/expert-profiles.service';
+import { ReviewResponseDto } from '../services/dto/service-response.dto';
 
 import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
 import { UpdateExpertProfileDto } from './dto/update-expert-profile.dto';
@@ -212,5 +216,17 @@ export class MeController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.expertProfilesService.updateExpertProfile(user.userId, dto);
+  }
+
+  @ApiOperation({ summary: '내 리뷰 목록 불러오기' })
+  @RoleAuth(Role.CLIENT)
+  @ApiPaginatedResponse(HttpStatus.OK, ReviewResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get('reviews')
+  getMyReviews(@Req() req: Request, @Query() query: PaginationQueryDto) {
+    const user = req.user as JwtAccessUser;
+    return this.usersService.getAllReviewsByUserId(user.userId, query);
   }
 }
