@@ -3,6 +3,9 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -41,10 +44,7 @@ export class CommunityPostsController {
   @ApiSuccessResponse(HttpStatus.CREATED, PostResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @ApiErrorResponse(
-    COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT,
-    COMMUNITY_POSTS_ERRORS.CONTENT_TOO_LONG,
-  )
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT)
   @Post()
   createPost(@Req() req: Request, @Body() body: PostRequestDto) {
     const user = req.user as JwtAccessUser;
@@ -58,5 +58,24 @@ export class CommunityPostsController {
   @Get()
   getAllPosts(@Query() query: PostListQueryDto) {
     return this.communityPostsService.getAllPosts(query);
+  }
+
+  @ApiOperation({ summary: '게시글 수정' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, PostResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Patch(':id')
+  updatePost(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: PostRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.updatePost(user.userId, id, dto);
   }
 }
