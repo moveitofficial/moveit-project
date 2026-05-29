@@ -63,6 +63,14 @@ export class CommunityPostsService {
     );
   }
 
+  async getPost(postId: string): Promise<ReturnType<typeof mapPost>> {
+    const post = await this.communityPostsRepository.findByPostId(postId);
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+    return mapPost(post);
+  }
+
   async updatePost(
     userId: string,
     postId: string,
