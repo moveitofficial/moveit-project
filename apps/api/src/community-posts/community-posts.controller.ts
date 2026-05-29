@@ -26,7 +26,7 @@ import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
 
 import { CommunityPostsService } from './community-posts.service';
 import { PostListQueryDto } from './dto/post-list-query.dto';
-import { PostRequestDto } from './dto/post-request.dto';
+import { PostRequestDto, UpdatePostRequestDto } from './dto/post-request.dto';
 import {
   PostListItemResponseDto,
   PostResponseDto,
@@ -68,6 +68,7 @@ export class CommunityPostsController {
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @ApiErrorResponse(
     COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMUNITY_POSTS_ERRORS.NOTHING_TO_UPDATE,
     COMMON_ERRORS.VALIDATION_ERROR,
   )
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
@@ -77,7 +78,7 @@ export class CommunityPostsController {
   updatePost(
     @Req() req: Request,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: PostRequestDto,
+    @Body() dto: UpdatePostRequestDto,
   ) {
     const user = req.user as JwtAccessUser;
     return this.communityPostsService.updatePost(user.userId, id, dto);

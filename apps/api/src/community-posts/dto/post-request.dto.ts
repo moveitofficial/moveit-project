@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { CommunityCategory } from '@prisma/client';
 import { IsEnum, IsNotEmpty, IsString, Length } from 'class-validator';
 
@@ -25,3 +25,5 @@ export class PostRequestDto {
   @IsNotEmpty()
   declare content: string;
 }
+
+export class UpdatePostRequestDto extends PartialType(PostRequestDto) {}
