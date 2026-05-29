@@ -1,4 +1,4 @@
-import type { OrderDetailRow, OrderListRow } from './orders.types';
+import type { OrderListRow, OrderReviewRow } from './orders.types';
 import type { Order } from '@prisma/client';
 
 export function mapCreateOrderResponse(order: Order) {
@@ -19,6 +19,14 @@ export function mapUpdateOrderStatusResponse(order: Order) {
     id: order.id,
     status: order.status,
     confirmedAt: order.confirmedAt,
+  };
+}
+
+export function mapUpdateOrderScheduleResponse(order: Order) {
+  return {
+    id: order.id,
+    status: order.status,
+    endDate: order.endDate,
   };
 }
 
@@ -46,22 +54,16 @@ export function mapOrderListItem(order: OrderListRow) {
   };
 }
 
-export function mapOrderDetail(order: OrderDetailRow) {
+export function mapOrderReview(review: OrderReviewRow) {
   return {
-    id: order.id,
-    status: order.status,
-    totalAmount: order.totalAmount,
-    agreedServicePrice: order.agreedServicePrice,
-    platformFee: order.platformFee,
-    refundReason: order.refundReason,
-    startDate: order.startDate,
-    endDate: order.endDate,
-    createdAt: order.createdAt,
-    confirmedAt: order.confirmedAt,
-    settledAt: order.settledAt,
-    service: order.service,
-    payment: order.payment,
+    id: review.id,
+    rating: review.rating,
+    content: review.content,
+    createdAt: review.createdAt.toISOString(),
+    reviewer: {
+      id: review.user.id,
+      name: review.user.name ?? '',
+      profileImageUrl: review.user.profileImageUrl,
+    },
   };
 }
-
-export type OrderDetailResponse = ReturnType<typeof mapOrderDetail>;

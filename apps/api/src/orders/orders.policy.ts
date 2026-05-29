@@ -1,9 +1,15 @@
 import { OrderStatus, Role } from '@prisma/client';
 
-import { ORDER_ERRORS } from '../common/constants/errors';
+import { ORDER_ERRORS, REVIEW_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 
-import type { OrderWithPayment } from './orders.types';
+import { REVIEWABLE_ORDER_STATUSES } from './orders.constants';
+
+import type {
+  OrderPolicyOrder,
+  OrderReviewPolicyOrder,
+  OrderSchedulePolicyOrder,
+} from './orders.types';
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.NEGOTIATING]: [OrderStatus.CANCEL_REQUESTED],
@@ -13,8 +19,8 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   // DEADLINE_IMMINENT·EXPIRED → target 전환은 크론 전용 (PATCH 불가)
   [OrderStatus.DEADLINE_IMMINENT]: [OrderStatus.WORK_COMPLETED],
   [OrderStatus.EXPIRED]: [],
-  [OrderStatus.WORK_COMPLETED]: [OrderStatus.PURCHASE_CONFIRMED],
-  [OrderStatus.PURCHASE_CONFIRMED]: [OrderStatus.SETTLEMENT_REQUESTED],
+  [OrderStatus.WORK_COMPLETED]: [],
+  [OrderStatus.PURCHASE_CONFIRMED]: [],
   [OrderStatus.SETTLEMENT_REQUESTED]: [],
   [OrderStatus.SETTLEMENT_COMPLETED]: [],
   [OrderStatus.REFUND_REQUESTED]: [],
@@ -38,7 +44,7 @@ export function validateOrderStatusFlow(
 }
 
 export function validateOrderStatusAuthority(
-  order: OrderWithPayment,
+  order: OrderPolicyOrder,
   next: OrderStatus,
   userId: string,
   userRole: Role,
@@ -64,18 +70,74 @@ export function validateOrderStatusAuthority(
   ) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
   }
+}
 
-  if (
-    next === OrderStatus.PURCHASE_CONFIRMED &&
-    (order.clientUserId !== userId || userRole !== Role.CLIENT)
-  ) {
+export function validateConfirmOrderPolicy(
+  order: OrderPolicyOrder,
+  userId: string,
+): void {
+  if (order.clientUserId !== userId) {
+    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (order.status !== OrderStatus.WORK_COMPLETED) {
+    throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+  }
+}
+
+export function validateSettlementRequestPolicy(
+  order: OrderPolicyOrder,
+  userId: string,
+): void {
+  if (order.expertUserId !== userId) {
+    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (order.status !== OrderStatus.PURCHASE_CONFIRMED) {
+    throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+  }
+}
+
+export function validateScheduleAuthority(
+  order: OrderSchedulePolicyOrder,
+  userId: string,
+  userRole: Role,
+): void {
+  if (order.clientUserId !== userId && order.expertUserId !== userId) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
   }
 
+  if (order.status === OrderStatus.NEGOTIATING && order.endDate === null) {
+    if (order.expertUserId !== userId || userRole !== Role.EXPERT) {
+      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+    }
+    return;
+  }
+
   if (
-    next === OrderStatus.SETTLEMENT_REQUESTED &&
-    (order.expertUserId !== userId || userRole !== Role.EXPERT)
+    order.status === OrderStatus.IN_PROGRESS ||
+    order.status === OrderStatus.DEADLINE_IMMINENT
   ) {
+    if (order.clientUserId !== userId || userRole !== Role.CLIENT) {
+      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+    }
+    return;
+  }
+
+  throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+}
+
+export function validateCreateOrderReviewPolicy(
+  order: OrderReviewPolicyOrder,
+  userId: string,
+): void {
+  if (order.clientUserId !== userId) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+
+  if (!REVIEWABLE_ORDER_STATUSES.includes(order.status)) {
+    throw new AppException(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE);
+  }
+
+  if (order.review !== null) {
+    throw new AppException(REVIEW_ERRORS.ALREADY_EXISTS);
   }
 }

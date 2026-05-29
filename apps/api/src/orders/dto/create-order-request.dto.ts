@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsInt, IsNotEmpty, IsString, IsUUID, Min } from 'class-validator';
 
 export class CreateOrderRequestDto {
   @ApiProperty({
@@ -10,24 +11,19 @@ export class CreateOrderRequestDto {
   declare serviceId: string;
 
   @ApiProperty({
-    description: '작업 시작 희망일',
-    example: '2026-06-01T00:00:00.000Z',
-  })
-  @IsDateString()
-  declare startDate: string;
-
-  @ApiProperty({
-    description: '작업 마감 희망일',
-    example: '2026-06-30T00:00:00.000Z',
-  })
-  @IsDateString()
-  declare endDate: string;
-
-  @ApiProperty({
-    description: '결제 수단',
-    example: 'CARD',
+    description: 'PG사 발급 결제 고유 키',
+    example: 'tgen_20260527_example',
   })
   @IsString()
   @IsNotEmpty()
-  declare paymentMethod: string;
+  declare paymentKey: string;
+
+  @ApiProperty({
+    description: '클라이언트가 최종 결제 완료한 금액(원)',
+    example: 1_100_000,
+  })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  declare paidAmount: number;
 }

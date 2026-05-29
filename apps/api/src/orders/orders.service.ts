@@ -1,47 +1,41 @@
 import { Injectable } from '@nestjs/common';
-import {
-  OrderStatus,
-  PaymentStatus,
-  Role,
-  ServiceStatus,
-} from '@prisma/client';
+import { OrderStatus, Role, ServiceStatus } from '@prisma/client';
 
-import {
-  COMMON_ERRORS,
-  ORDER_ERRORS,
-  PAYMENT_ERRORS,
-  SERVICE_ERRORS,
-} from '../common/constants/errors';
+import { ORDER_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 
-import { CreateOrderRequestDto } from './dto/create-order-request.dto';
-import { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
 import {
   ORDER_LIST_DEFAULT_SORT,
   ORDER_LIST_USER_ID_FIELD,
   ORDERS_LIST_DEFAULT_PAGE,
   ORDERS_LIST_DEFAULT_PAGE_SIZE,
-  PAYMENT_AMOUNT_VALIDATION_FAILED_REASON,
   PG_STUB_PROVIDER,
   PG_STUB_RECEIPT_URL,
   PLATFORM_FEE_RATE,
 } from './orders.constants';
 import {
   mapCreateOrderResponse,
-  mapOrderDetail,
   mapOrderListItem,
+  mapOrderReview,
+  mapUpdateOrderScheduleResponse,
   mapUpdateOrderStatusResponse,
 } from './orders.mapper';
 import {
+  validateConfirmOrderPolicy,
+  validateCreateOrderReviewPolicy,
   validateOrderStatusAuthority,
   validateOrderStatusFlow,
+  validateScheduleAuthority,
+  validateSettlementRequestPolicy,
 } from './orders.policy';
 import { OrdersRepository } from './orders.repository';
 
+import type { CreateOrderRequestDto } from './dto/create-order-request.dto';
+import type { CreateOrderReviewRequestDto } from './dto/create-order-review-request.dto';
 import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
-import type { OrderWithPayment } from './orders.types';
-import type { Order } from '@prisma/client';
+import type { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
+import type { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
 
 @Injectable()
 export class OrdersService {
@@ -80,17 +74,6 @@ export class OrdersService {
     );
   }
 
-  async getOrderDetail(userId: string, orderId: string) {
-    const order = await this.ordersRepository.findOrderDetail(orderId);
-    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
-
-    if (order.clientUserId !== userId && order.expertUserId !== userId) {
-      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-    }
-
-    return mapOrderDetail(order);
-  }
-
   async initializeOrder(clientUserId: string, dto: CreateOrderRequestDto) {
     const service = await this.ordersRepository.findServiceById(dto.serviceId);
     if (!service) throw new AppException(SERVICE_ERRORS.NOT_FOUND);
@@ -103,16 +86,29 @@ export class OrdersService {
     const platformFee = Math.floor(agreedServicePrice * PLATFORM_FEE_RATE);
     const totalAmount = agreedServicePrice + platformFee;
 
-    const order = await this.ordersRepository.createPendingOrder({
+    const pgVerifiedAmount = await this.fetchAmountFromExternalPG(
+      dto.paymentKey,
+      dto.paidAmount,
+    );
+
+    if (totalAmount !== dto.paidAmount || pgVerifiedAmount !== totalAmount) {
+      throw new AppException(ORDER_ERRORS.AMOUNT_MISMATCH);
+    }
+
+    const order = await this.ordersRepository.createPaidOrder({
       clientUserId,
       expertUserId: service.expertUserId,
       serviceId: service.id,
       agreedServicePrice,
       platformFee,
       totalAmount,
-      startDate: new Date(dto.startDate),
-      endDate: new Date(dto.endDate),
-      paymentMethod: dto.paymentMethod,
+      paymentKey: dto.paymentKey,
+      paidAmount: dto.paidAmount,
+      rawData: {
+        provider: PG_STUB_PROVIDER,
+        receiptUrl: PG_STUB_RECEIPT_URL,
+        approvedAt: new Date().toISOString(),
+      },
     });
 
     return mapCreateOrderResponse(order);
@@ -124,33 +120,12 @@ export class OrdersService {
     orderId: string,
     dto: UpdateOrderStatusRequestDto,
   ) {
-    const order = await this.ordersRepository.findOrderWithPayment(orderId);
+    const order = await this.ordersRepository.findOrderPolicy(orderId);
     if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
-
-    if (dto.status === OrderStatus.IN_PROGRESS) {
-      if (dto.paymentKey === undefined || dto.paidAmount === undefined) {
-        throw new AppException(COMMON_ERRORS.VALIDATION_ERROR);
-      }
-      if (
-        order.status === OrderStatus.CANCEL_REQUESTED ||
-        order.status === OrderStatus.PAYMENT_CANCELLED
-      ) {
-        throw new AppException(ORDER_ERRORS.ALREADY_CANCELED);
-      }
-
-      validateOrderStatusAuthority(order, dto.status, userId, userRole);
-      validateOrderStatusFlow(order.status, dto.status);
-
-      const paid = await this.verifyAndApprovePayment(
-        order,
-        dto.paymentKey,
-        dto.paidAmount,
-      );
-      return mapUpdateOrderStatusResponse(paid);
-    }
 
     validateOrderStatusAuthority(order, dto.status, userId, userRole);
     validateOrderStatusFlow(order.status, dto.status);
+
     const updated = await this.ordersRepository.updateOrderStatusOnly(
       orderId,
       order.status,
@@ -160,54 +135,85 @@ export class OrdersService {
     return mapUpdateOrderStatusResponse(updated);
   }
 
-  private async verifyAndApprovePayment(
-    order: OrderWithPayment,
-    paymentKey: string,
-    paidAmount: number,
-  ): Promise<Order> {
-    if (!order.payment) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+  async updateOrderSchedule(
+    userId: string,
+    userRole: Role,
+    orderId: string,
+    dto: UpdateOrderScheduleRequestDto,
+  ) {
+    const order = await this.ordersRepository.findOrderSchedulePolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
 
-    const canVerify =
-      order.status === OrderStatus.NEGOTIATING &&
-      (order.payment.status === PaymentStatus.PENDING ||
-        order.payment.status === PaymentStatus.FAILED);
-    if (!canVerify) {
-      throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
-    }
+    validateScheduleAuthority(order, userId, userRole);
 
-    const pgVerifiedAmount = await this.fetchAmountFromExternalPG(
-      paymentKey,
-      paidAmount,
+    const endDate = new Date(dto.endDate);
+
+    const updated =
+      order.status === OrderStatus.NEGOTIATING && order.endDate === null
+        ? await this.ordersRepository.updateOrderSchedule({
+            orderId,
+            fromStatus: OrderStatus.NEGOTIATING,
+            endDate,
+            toStatus: OrderStatus.IN_PROGRESS,
+          })
+        : await this.ordersRepository.updateOrderSchedule({
+            orderId,
+            fromStatus: order.status,
+            endDate,
+          });
+
+    if (!updated) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+    return mapUpdateOrderScheduleResponse(updated);
+  }
+
+  async confirmOrder(userId: string, orderId: string) {
+    const order = await this.ordersRepository.findOrderPolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateConfirmOrderPolicy(order, userId);
+
+    const updated = await this.ordersRepository.updateOrderStatusOnly(
+      orderId,
+      OrderStatus.WORK_COMPLETED,
+      OrderStatus.PURCHASE_CONFIRMED,
     );
+    if (!updated) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+    return mapUpdateOrderStatusResponse(updated);
+  }
 
-    if (
-      order.totalAmount !== paidAmount ||
-      pgVerifiedAmount !== order.totalAmount
-    ) {
-      await this.ordersRepository.updatePaymentToFailed(order.id, {
-        reason: PAYMENT_AMOUNT_VALIDATION_FAILED_REASON,
-        orderId: order.id,
-        clientPaidAmount: paidAmount,
-        pgVerifiedAmount,
-        paymentKey,
-      });
-      throw new AppException(ORDER_ERRORS.AMOUNT_MISMATCH);
-    }
+  async requestSettlement(userId: string, orderId: string) {
+    const order = await this.ordersRepository.findOrderPolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
 
-    const mockRawData = {
-      provider: PG_STUB_PROVIDER,
-      receiptUrl: PG_STUB_RECEIPT_URL,
-      approvedAt: new Date().toISOString(),
-    };
+    validateSettlementRequestPolicy(order, userId);
 
-    const result = await this.ordersRepository.updateOrderAndPaymentToPaid(
-      order.id,
-      paymentKey,
-      paidAmount,
-      mockRawData,
+    const updated = await this.ordersRepository.updateOrderStatusOnly(
+      orderId,
+      OrderStatus.PURCHASE_CONFIRMED,
+      OrderStatus.SETTLEMENT_REQUESTED,
     );
-    if (!result) throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
-    return result;
+    if (!updated) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+    return mapUpdateOrderStatusResponse(updated);
+  }
+
+  async createOrderReview(
+    userId: string,
+    orderId: string,
+    dto: CreateOrderReviewRequestDto,
+  ) {
+    const order = await this.ordersRepository.findOrderReviewPolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateCreateOrderReviewPolicy(order, userId);
+
+    const review = await this.ordersRepository.createReview({
+      orderId,
+      userId,
+      rating: dto.rating,
+      content: dto.content,
+    });
+
+    return mapOrderReview(review);
   }
 
   private fetchAmountFromExternalPG(

@@ -2,10 +2,6 @@ import { ORDER_LIST_MAIN_IMAGE_LIMIT } from './orders.constants';
 
 import type { Prisma } from '@prisma/client';
 
-export type OrderWithPayment = Prisma.OrderGetPayload<{
-  include: { payment: true };
-}>;
-
 export const orderListSelect = {
   id: true,
   status: true,
@@ -42,59 +38,50 @@ export type OrderListRow = Prisma.OrderGetPayload<{
   select: typeof orderListSelect;
 }>;
 
-export const orderDetailSelect = {
+export const orderPolicySelect = {
   id: true,
   clientUserId: true,
   expertUserId: true,
   status: true,
-  totalAmount: true,
-  agreedServicePrice: true,
-  platformFee: true,
-  refundReason: true,
-  startDate: true,
-  endDate: true,
-  createdAt: true,
-  confirmedAt: true,
-  settledAt: true,
-  service: {
-    select: {
-      id: true,
-      title: true,
-      servicePrice: true,
-      workDuration: true,
-      revisionCount: true,
-      serviceScope: true,
-      description: true,
-      preparationNotes: true,
-      refundPolicy: true,
-    },
-  },
-  payment: {
-    select: {
-      id: true,
-      status: true,
-      method: true,
-      paidAmount: true,
-      installmentMonths: true,
-      paymentKey: true,
-      createdAt: true,
-      approvedAt: true,
-      refund: {
-        select: {
-          id: true,
-          type: true,
-          status: true,
-          refundAmount: true,
-          adminReason: true,
-          requestedAt: true,
-          approvedAt: true,
-          refundedAt: true,
-        },
-      },
-    },
-  },
 } satisfies Prisma.OrderSelect;
 
-export type OrderDetailRow = Prisma.OrderGetPayload<{
-  select: typeof orderDetailSelect;
+export type OrderPolicyOrder = Prisma.OrderGetPayload<{
+  select: typeof orderPolicySelect;
+}>;
+
+export const orderSchedulePolicySelect = {
+  id: true,
+  clientUserId: true,
+  expertUserId: true,
+  status: true,
+  endDate: true,
+} satisfies Prisma.OrderSelect;
+
+export type OrderSchedulePolicyOrder = Prisma.OrderGetPayload<{
+  select: typeof orderSchedulePolicySelect;
+}>;
+
+export const orderReviewPolicySelect = {
+  id: true,
+  clientUserId: true,
+  status: true,
+  review: { select: { id: true } },
+} satisfies Prisma.OrderSelect;
+
+export type OrderReviewPolicyOrder = Prisma.OrderGetPayload<{
+  select: typeof orderReviewPolicySelect;
+}>;
+
+export const orderReviewSelect = {
+  id: true,
+  rating: true,
+  content: true,
+  createdAt: true,
+  user: {
+    select: { id: true, name: true, profileImageUrl: true },
+  },
+} satisfies Prisma.ReviewSelect;
+
+export type OrderReviewRow = Prisma.ReviewGetPayload<{
+  select: typeof orderReviewSelect;
 }>;
