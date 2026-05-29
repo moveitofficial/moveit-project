@@ -22,7 +22,7 @@ import {
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { Paginated } from '../common/types/paginated.type';
 import { PortfolioListResponseDto } from '../portfolios/dto/portfolio-response.dto';
-import { ServiceListItemResponseDto } from '../services/dto/service-response.dto';
+import { ExpertServiceListItemResponseDto } from '../services/dto/service-response.dto';
 import { ExpertServiceListItemResponse } from '../services/services.mapper';
 
 import { UsersService } from './users.service';
@@ -48,7 +48,7 @@ export class UsersController {
   }
 
   @ApiOperation({ summary: '유저(전문가) 서비스 조회하기' })
-  @ApiPaginatedResponse(HttpStatus.OK, ServiceListItemResponseDto)
+  @ApiPaginatedResponse(HttpStatus.OK, ExpertServiceListItemResponseDto)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND, EXPERT_ERRORS.NOT_FOUND)
   @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_EXPERT)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
