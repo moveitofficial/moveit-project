@@ -134,4 +134,12 @@ export class AdminDashboardRepository {
       },
     });
   }
+
+  findMainSettingsByIds(ids: string[]) {
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.prisma.mainSetting.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, sectionType: true },
+    });
+  }
 }
