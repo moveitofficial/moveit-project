@@ -72,7 +72,6 @@ export class OrdersController {
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.CREATED)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_SELF_ORDER)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_AVAILABLE)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)

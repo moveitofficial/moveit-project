@@ -83,10 +83,6 @@ export class OrdersService {
       throw new AppException(SERVICE_ERRORS.NOT_AVAILABLE);
     }
 
-    if (service.expertUserId === clientUserId) {
-      throw new AppException(ORDER_ERRORS.FORBIDDEN_SELF_ORDER);
-    }
-
     const agreedServicePrice = service.servicePrice;
     const platformFee = Math.floor(agreedServicePrice * PLATFORM_FEE_RATE);
     const totalAmount = agreedServicePrice + platformFee;

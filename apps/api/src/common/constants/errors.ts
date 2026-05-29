@@ -133,11 +133,7 @@ export const ORDER_ERRORS = {
   },
   FORBIDDEN_NOT_OWNER: {
     status: HttpStatus.FORBIDDEN,
-    message: '본인의 주문만 결제하거나 조회할 수 있습니다.',
-  },
-  FORBIDDEN_SELF_ORDER: {
-    status: HttpStatus.FORBIDDEN,
-    message: '본인의 서비스는 구매할 수 없습니다.',
+    message: '본인의 주문만 접근할 수 있습니다.',
   },
   INVALID_STATUS: {
     status: HttpStatus.BAD_REQUEST,
