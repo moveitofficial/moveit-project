@@ -35,6 +35,12 @@ export class CommunityPostsRepository {
     return this.prisma.communityPost.update(args);
   }
 
+  findByPostId(postId: string): Promise<CommunityPost | null> {
+    return this.prisma.communityPost.findUnique({
+      where: { id: postId },
+    });
+  }
+
   buildListWhere(category?: CommunityCategory) {
     return {
       deletedAt: null,

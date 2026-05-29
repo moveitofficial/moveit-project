@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { COMMUNITY_POST_ERRORS } from '../common/constants/errors';
+import { COMMUNITY_POSTS_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
@@ -31,11 +31,11 @@ export class CommunityPostsService {
     const plainTextLength = getPostContentPlainTextLength(sanitizedContent);
 
     if (plainTextLength < POST_MIN_LENGTH) {
-      throw new AppException(COMMUNITY_POST_ERRORS.CONTENT_TOO_SHORT);
+      throw new AppException(COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT);
     }
 
     if (plainTextLength > POST_CONTENT_MAX_LENGTH) {
-      throw new AppException(COMMUNITY_POST_ERRORS.CONTENT_TOO_LONG);
+      throw new AppException(COMMUNITY_POSTS_ERRORS.CONTENT_TOO_LONG);
     }
 
     const created = await this.communityPostsRepository.createPost(userId, {

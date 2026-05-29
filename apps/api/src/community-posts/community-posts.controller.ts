@@ -12,7 +12,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import {
   COMMON_ERRORS,
-  COMMUNITY_POST_ERRORS,
+  COMMUNITY_POSTS_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import {
@@ -42,8 +42,8 @@ export class CommunityPostsController {
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @ApiErrorResponse(
-    COMMUNITY_POST_ERRORS.CONTENT_TOO_SHORT,
-    COMMUNITY_POST_ERRORS.CONTENT_TOO_LONG,
+    COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMUNITY_POSTS_ERRORS.CONTENT_TOO_LONG,
   )
   @Post()
   createPost(@Req() req: Request, @Body() body: PostRequestDto) {
