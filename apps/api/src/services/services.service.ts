@@ -7,7 +7,9 @@ import {
   REVIEW_ERRORS,
   SERVICE_ERRORS,
 } from '../common/constants/errors';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
+import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { UploadService } from '../upload/upload.service';
 
@@ -255,6 +257,43 @@ export class ServicesService {
     return others.map((s) => {
       const stats = statsMap.get(s.id) ?? { reviewCount: 0, rating: 0 };
       return mapServiceListItem(s, stats);
+    });
+  }
+
+  async getAllServicesByExpertId(
+    expertUserId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<ServiceListItemResponse>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const [services, totalCount] = await Promise.all([
+      this.servicesRepository.findMany({
+        where: {
+          expertUserId,
+          status: ServiceStatus.ACTIVE,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: pageSize,
+      }),
+      this.servicesRepository.count({
+        expertUserId,
+        status: ServiceStatus.ACTIVE,
+      }),
+    ]);
+
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      services.map((s) => s.id),
+    );
+
+    return toPaginatedResponse(this.toListItems(services, statsMap), {
+      page,
+      pageSize,
+      totalCount,
     });
   }
 
