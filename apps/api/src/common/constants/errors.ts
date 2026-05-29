@@ -336,3 +336,16 @@ export const EXPERT_ERRORS = {
     message: '승인이 거절된 전문가입니다.',
   },
 } as const;
+
+export const COMMUNITY_POST_ERRORS = {
+  CONTENT_TOO_SHORT: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '게시글 내용은 최소 1자 이상이어야 합니다.',
+    code: 'COMMUNITY_POST_CONTENT_TOO_SHORT',
+  },
+  CONTENT_TOO_LONG: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '게시글 내용은 최대 1000자 이하여야 합니다.',
+    code: 'COMMUNITY_POST_CONTENT_TOO_LONG',
+  },
+} as const;

@@ -10,7 +10,10 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
-import { COMMON_ERRORS } from '../common/constants/errors';
+import {
+  COMMON_ERRORS,
+  COMMUNITY_POST_ERRORS,
+} from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import {
   ApiPaginatedResponse,
@@ -38,6 +41,10 @@ export class CommunityPostsController {
   @ApiSuccessResponse(HttpStatus.CREATED, PostResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(
+    COMMUNITY_POST_ERRORS.CONTENT_TOO_SHORT,
+    COMMUNITY_POST_ERRORS.CONTENT_TOO_LONG,
+  )
   @Post()
   createPost(@Req() req: Request, @Body() body: PostRequestDto) {
     const user = req.user as JwtAccessUser;
