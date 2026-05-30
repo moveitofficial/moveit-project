@@ -148,6 +148,7 @@ class Seeder {
       techStacks,
       serviceGroups,
       serviceCategories,
+      [superAdmin, ...staffAdmins],
     );
     console.warn(
       `✅ 전문가 프로필/카테고리/기술스택 ${expertProfiles.length.toString()}개`,
@@ -214,7 +215,9 @@ class Seeder {
     console.warn(`🔑 테스트 계정 (공통 비밀번호: ${SEED_PASSWORD})`);
     console.warn(`   admin@moveit.com         (ADMIN)`);
     console.warn(`   client1~20@moveit.com    (CLIENT)`);
-    console.warn(`   expert1~20@moveit.com    (EXPERT, expert1~8 신청 대기)`);
+    console.warn(
+      `   expert1~20@moveit.com    (EXPERT, expert1~4 신청 대기 / expert5~8 거절 / expert9~20 승인)`,
+    );
     console.warn('');
     console.warn(`🧪 Orders API 테스트 (비밀번호: Test1234!)`);
     console.warn(`   client@test.com   (CLIENT)`);
@@ -414,27 +417,45 @@ class Seeder {
     techStacks: { id: string; name: TechStackName }[],
     serviceGroups: { id: string; name: ServiceGroupName }[],
     serviceCategories: { id: string; name: ServiceCategoryName }[],
+    admins: Admin[],
   ): Promise<ExpertProfile[]> {
     const profiles: ExpertProfile[] = [];
 
-    // 앞 8명은 isApplied=true, isApproved=false (신청 대기) — 대시보드 카드용
-    // 나머지는 isApplied=true, isApproved=true (승인 완료)
-    const PENDING_COUNT = 8;
+    // 전문가 상태 분포 (UI 검증용 — 모든 상태 보장)
+    // index 0~3 (expert1~4): 신청 대기 (isApplied=true, isApproved=false, rejectedAt=null)
+    // index 4~7 (expert5~8): 승인 거절 (isApplied=true, isApproved=false, rejectedAt+rejectReason)
+    // index 8~19 (expert9~20): 승인 완료 (isApproved=true)
+    const PENDING_COUNT = 4;
+    const REJECTED_COUNT = 4;
+    const REJECT_REASONS = [
+      '사업자등록증 정보가 부족합니다.',
+      '제출하신 포트폴리오가 가이드라인에 부합하지 않습니다.',
+      '본인 확인이 어려워 거절되었습니다.',
+      '회사 정보 검증에 실패했습니다.',
+    ];
 
     for (const [index, expert] of experts.entries()) {
       const isPending = index < PENDING_COUNT;
+      const isRejected = !isPending && index < PENDING_COUNT + REJECTED_COUNT;
+      const isApproved = !isPending && !isRejected;
+
       const profile = await this.#prisma.expertProfile.create({
         data: {
           userId: expert.id,
           isApplied: true,
-          isApproved: !isPending,
-          approvedAt: isPending ? null : faker.date.recent({ days: 60 }),
+          isApproved,
+          approvedAt: isApproved ? faker.date.recent({ days: 60 }) : null,
+          approvedByAdminId: isApproved ? pick(admins).id : null,
+          rejectedAt: isRejected ? faker.date.recent({ days: 30 }) : null,
+          rejectReason: isRejected
+            ? (REJECT_REASONS[index - PENDING_COUNT] ?? REJECT_REASONS[0]!)
+            : null,
           businessName: faker.company.name(),
           businessNumber: faker.string.numeric(10),
           ceoName: expert.name ?? faker.person.fullName(),
           contactTimeStart: '10:00',
           contactTimeEnd: '19:00',
-          foundedYear: rand(2010, 2024),
+          foundedYear: rand(2010, 2024) * 100 + rand(1, 12),
           employeeMin: rand(1, 10),
           employeeMax: rand(11, 50),
           description: faker.lorem.paragraphs(2),
@@ -442,15 +463,15 @@ class Seeder {
       });
       profiles.push(profile);
 
-      // 전문 카테고리 (각 EXPERT마다 2개 매핑)
-      const pickedGroups = shuffle(serviceGroups).slice(0, 2);
-      const pickedCategories = shuffle(serviceCategories).slice(0, 2);
-      for (let i = 0; i < 2; i++) {
+      // 전문 분야: 그룹 1개 고정 + 그 안에서 카테고리 1~3개 (UI 상한 + MIXED_SERVICE_GROUP 정책 준수)
+      const pickedGroup = pick(serviceGroups);
+      const pickedCategories = shuffle(serviceCategories).slice(0, rand(2, 3));
+      for (const pickedCategory of pickedCategories) {
         await this.#prisma.expertSpecialtyCategory.create({
           data: {
             expertProfileId: profile.id,
-            serviceGroupId: pickedGroups[i]!.id,
-            serviceCategoryId: pickedCategories[i]!.id,
+            serviceGroupId: pickedGroup.id,
+            serviceCategoryId: pickedCategory.id,
           },
         });
       }
@@ -481,18 +502,15 @@ class Seeder {
         },
       });
 
-      // 관심 카테고리 1~2개
-      const pickedGroups = shuffle(serviceGroups).slice(0, rand(1, 2));
-      const pickedCategories = shuffle(serviceCategories).slice(
-        0,
-        pickedGroups.length,
-      );
-      for (const [i, pickedGroup] of pickedGroups.entries()) {
+      // 관심 분야: 그룹 1개 고정 + 그 안에서 카테고리 1~3개 (UI 상한 3 + MIXED_SERVICE_GROUP 정책 준수)
+      const pickedGroup = pick(serviceGroups);
+      const pickedCategories = shuffle(serviceCategories).slice(0, rand(2, 3));
+      for (const pickedCategory of pickedCategories) {
         await this.#prisma.clientInterestCategory.create({
           data: {
             clientProfileId: profile.id,
             serviceGroupId: pickedGroup.id,
-            serviceCategoryId: pickedCategories[i]!.id,
+            serviceCategoryId: pickedCategory.id,
           },
         });
       }
@@ -1302,24 +1320,39 @@ class Seeder {
       }),
     ]);
 
-    // 2) expert ExpertProfile (승인 완료)
+    // 2) expert ExpertProfile (승인 완료) — 승인한 관리자 한 명 골라서 박음
+    const approvingAdmin = await this.#prisma.admin.findFirst();
+    if (!approvingAdmin) {
+      throw new Error('관리자가 없음 — Admin 시드 누락');
+    }
     await this.#prisma.expertProfile.create({
       data: {
         userId: expert.id,
         isApplied: true,
         isApproved: true,
         approvedAt: faker.date.recent({ days: 30 }),
+        approvedByAdminId: approvingAdmin.id,
         businessName: faker.company.name(),
         businessNumber: faker.string.numeric(10),
         ceoName: expert.name ?? '테스트 전문가',
         contactTimeStart: '10:00',
         contactTimeEnd: '19:00',
-        foundedYear: 2020,
+        foundedYear: 202_005,
         employeeMin: 1,
         employeeMax: 10,
         description: 'Orders API 테스트용 전문가입니다',
       },
     });
+
+    // 2-1) client / other 의 ClientProfile (어드민 유저 상세에서 닉네임·관심분야 노출용)
+    await Promise.all([
+      this.#prisma.clientProfile.create({
+        data: { userId: client.id, nickname: '카키쿠키' },
+      }),
+      this.#prisma.clientProfile.create({
+        data: { userId: other.id, nickname: '타인유저' },
+      }),
+    ]);
 
     // 3) expert 소유 ACTIVE 서비스 1개
     const serviceGroup = await this.#prisma.serviceGroup.findFirst();
@@ -1484,25 +1517,23 @@ class Seeder {
       }
     }
 
-    // 5) 타인 소유 IN_PROGRESS 주문 1건 (other ↔ 임의의 다른 expert)
-    const otherExpert = await this.#prisma.user.findFirst({
-      where: { role: Role.EXPERT, NOT: { id: expert.id } },
-    });
-    if (!otherExpert) {
-      throw new Error('타인용 다른 expert가 없음');
-    }
+    // 5) 타인 소유 IN_PROGRESS 주문 1건 (other ↔ 임의의 ACTIVE 서비스 보유 expert)
+    // ACTIVE 서비스부터 찾고 거기서 expertUserId를 도출 (미승인 expert 회피)
     const otherExpertService = await this.#prisma.service.findFirst({
-      where: { expertUserId: otherExpert.id, status: ServiceStatus.ACTIVE },
+      where: {
+        status: ServiceStatus.ACTIVE,
+        expertUserId: { not: expert.id },
+      },
     });
     if (!otherExpertService) {
-      throw new Error('타인용 다른 expert의 ACTIVE 서비스가 없음');
+      throw new Error('타인용 ACTIVE 서비스가 없음');
     }
 
     const otherPlatformFee = Math.floor(otherExpertService.servicePrice * 0.1);
     const otherOrder = await this.#prisma.order.create({
       data: {
         clientUserId: other.id,
-        expertUserId: otherExpert.id,
+        expertUserId: otherExpertService.expertUserId,
         serviceId: otherExpertService.id,
         agreedServicePrice: otherExpertService.servicePrice,
         platformFee: otherPlatformFee,
