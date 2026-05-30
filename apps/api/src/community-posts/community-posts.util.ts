@@ -1,7 +1,6 @@
 import sanitizeHtml from 'sanitize-html';
 
 export const POST_MIN_LENGTH = 1;
-export const POST_TITLE_MAX_LENGTH = 100;
 
 const POST_CONTENT_ALLOWED_TAGS = [
   'p',
