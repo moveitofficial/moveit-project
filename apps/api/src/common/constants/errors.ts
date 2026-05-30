@@ -364,3 +364,44 @@ export const COMMUNITY_POSTS_ERRORS = {
     code: 'COMMUNITY_POSTS_NOTHING_TO_UPDATE',
   },
 } as const;
+
+export const CHAT_ERRORS = {
+  ROOM_NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '채팅방을 찾을 수 없습니다.',
+    code: 'CHAT_ROOM_NOT_FOUND',
+  },
+  FORBIDDEN_NOT_PARTICIPANT: {
+    status: HttpStatus.FORBIDDEN,
+    message: '채팅방 참여자만 접근할 수 있습니다.',
+    code: 'CHAT_FORBIDDEN_NOT_PARTICIPANT',
+  },
+  FORBIDDEN_NOT_CLIENT: {
+    status: HttpStatus.FORBIDDEN,
+    message: '클라이언트만 채팅방을 생성할 수 있습니다.',
+    code: 'CHAT_FORBIDDEN_NOT_CLIENT',
+  },
+} as const;
+
+export const CS_CHAT_ERRORS = {
+  ROOM_NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '문의방을 찾을 수 없습니다.',
+    code: 'CS_CHAT_ROOM_NOT_FOUND',
+  },
+  FORBIDDEN: {
+    status: HttpStatus.FORBIDDEN,
+    message: '접근 권한이 없습니다.',
+    code: 'CS_CHAT_FORBIDDEN',
+  },
+  ALREADY_CLOSED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '이미 종료된 문의입니다.',
+    code: 'CS_CHAT_ALREADY_CLOSED',
+  },
+  FORBIDDEN_NOT_ADMIN: {
+    status: HttpStatus.FORBIDDEN,
+    message: '관리자만 이 작업을 수행할 수 있습니다.',
+    code: 'CS_CHAT_FORBIDDEN_NOT_ADMIN',
+  },
+} as const;

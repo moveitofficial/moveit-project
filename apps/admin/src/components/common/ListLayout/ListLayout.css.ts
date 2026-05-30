@@ -6,7 +6,10 @@ export const container = style({
 });
 
 export const filterSection = style({
-  marginTop: '32px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginTop: '8px',
 });
 
 export const tableSection = style({
