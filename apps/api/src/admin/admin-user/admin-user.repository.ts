@@ -60,4 +60,51 @@ export class AdminUserRepository {
       where: { role, isDeleted: false },
     });
   }
+
+  findById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        blockedByAdmin: { select: { name: true } },
+        clientProfile: {
+          include: {
+            interestCategories: {
+              include: {
+                serviceGroup: { select: { name: true } },
+                serviceCategory: { select: { name: true } },
+              },
+            },
+          },
+        },
+        expertProfile: {
+          include: {
+            approvedByAdmin: { select: { name: true } },
+            specialtyCategories: {
+              include: {
+                serviceGroup: { select: { name: true } },
+                serviceCategory: { select: { name: true } },
+              },
+            },
+            techStacks: {
+              include: {
+                techStack: { select: { name: true } },
+              },
+            },
+            portfolios: {
+              orderBy: { createdAt: 'desc' },
+              select: {
+                id: true,
+                title: true,
+                images: {
+                  where: { isMain: true },
+                  take: 1,
+                  select: { imgUrl: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 }
