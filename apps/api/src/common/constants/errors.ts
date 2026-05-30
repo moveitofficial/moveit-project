@@ -358,10 +358,10 @@ export const COMMUNITY_POSTS_ERRORS = {
     message: '게시글 내용은 최소 1자 이상이어야 합니다.',
     code: 'COMMUNITY_POSTS_CONTENT_TOO_SHORT',
   },
-  CONTENT_TOO_LONG: {
+  NOTHING_TO_UPDATE: {
     status: HttpStatus.BAD_REQUEST,
-    message: '게시글 내용은 최대 1000자 이하여야 합니다.',
-    code: 'COMMUNITY_POSTS_CONTENT_TOO_LONG',
+    message: '수정할 항목이 없습니다.',
+    code: 'COMMUNITY_POSTS_NOTHING_TO_UPDATE',
   },
 } as const;
 
