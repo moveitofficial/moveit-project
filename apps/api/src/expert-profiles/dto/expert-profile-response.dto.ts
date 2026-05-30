@@ -83,7 +83,7 @@ export class ExpertProfileResponseDto {
   @ApiPropertyOptional({ example: '18:00' })
   declare contactTimeEnd: string | null;
 
-  @ApiPropertyOptional({ example: 2021 })
+  @ApiPropertyOptional({ example: 202_101 })
   declare foundedYear: number | null;
 
   @ApiPropertyOptional({ example: 5 })

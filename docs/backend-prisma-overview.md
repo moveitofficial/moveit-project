@@ -185,7 +185,7 @@ CS 채팅            CsChatRoom, CsMessage, CsMessageAttachment
 ### `ExpertProfile` (User 1:1)
 - `userId @unique`
 - 신청·승인: `isApplied`, `isApproved`, `approvedAt?`, `approvedByAdminId?` → `Admin`, `rejectedAt?`, `rejectReason?`
-- 사업자 정보: `businessName?`, `businessNumber?`, `ceoName?`, `contactTimeStart?`, `contactTimeEnd?`, `foundedYear?`, `employeeMin?`, `employeeMax?`
+- 사업자 정보: `businessName?`, `businessNumber?`, `ceoName?`, `contactTimeStart?`, `contactTimeEnd?`, `foundedYear? (Int, YYYYMM)`, `employeeMin?`, `employeeMax?`
 - 평점 집계: `avgRating?`, `reviewCount @default(0)`
 - 관계: `specialtyCategories`, `techStacks`, `portfolios`, `approvedByAdmin?`
 
