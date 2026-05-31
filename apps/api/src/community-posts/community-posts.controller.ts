@@ -60,7 +60,7 @@ export class CommunityPostsController {
     return this.communityPostsService.getAllPosts(query);
   }
 
-  @ApiOperation({ summary: '게시글 조회' })
+  @ApiOperation({ summary: '게시글 상세 조회' })
   @ApiSuccessResponse(HttpStatus.OK, PostResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
