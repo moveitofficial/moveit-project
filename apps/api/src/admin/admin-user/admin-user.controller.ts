@@ -15,18 +15,22 @@ import {
   ApiPaginatedResponse,
   ApiSuccessResponse,
 } from '../../common/decorators/api-success-response.decorator';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { type Paginated } from '../../common/types/paginated.type';
 import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
 
 import { AdminUserService } from './admin-user.service';
-import { UserDetailResponseDto } from './dto/user-detail-response.dto';
-import { UserOrderItemDto } from './dto/user-orders-response.dto';
-import { UserServiceItemDto } from './dto/user-services-response.dto';
-import { UserCounstDto } from './dto/users-counts-response.dto';
-import { GetUsersQueryDto } from './dto/users-query.dto';
-import { UserItemDto } from './dto/users-response.dto';
+import { UserCommentItemDto } from './dto/detail/user-comments-response.dto';
+import { UserDetailResponseDto } from './dto/detail/user-detail-response.dto';
+import { UserOrderItemDto } from './dto/detail/user-orders-response.dto';
+import { UserPostItemDto } from './dto/detail/user-posts-response.dto';
+import { UserReportReceivedItemDto } from './dto/detail/user-reports-received-response.dto';
+import { UserReportSentItemDto } from './dto/detail/user-reports-sent-response.dto';
+import { UserServiceItemDto } from './dto/detail/user-services-response.dto';
+import { UserCounstDto } from './dto/list/users-counts-response.dto';
+import { GetUsersQueryDto } from './dto/list/users-query.dto';
+import { UserItemDto } from './dto/list/users-response.dto';
+import { PageQueryDto } from './dto/page-query.dto';
 
 @ApiTags('admin-user')
 @Controller('admin/users')
@@ -88,7 +92,7 @@ export class AdminUserController {
       }),
     )
     id: string,
-    @Query() query: PaginationQueryDto,
+    @Query() query: PageQueryDto,
   ): Promise<Paginated<UserOrderItemDto>> {
     return this.adminUserService.getUserOrders(id, query);
   }
@@ -111,8 +115,88 @@ export class AdminUserController {
       }),
     )
     id: string,
-    @Query() query: PaginationQueryDto,
+    @Query() query: PageQueryDto,
   ): Promise<Paginated<UserServiceItemDto>> {
     return this.adminUserService.getUserServices(id, query);
+  }
+
+  @ApiOperation({ summary: '[어드민] 회원 상세 - 신고 받은 내역' })
+  @ApiPaginatedResponse(HttpStatus.OK, UserReportReceivedItemDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get(':id/reports/received')
+  getUserReportsReceived(
+    @Param(
+      'id',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(USER_ERRORS.NOT_FOUND),
+      }),
+    )
+    id: string,
+    @Query() query: PageQueryDto,
+  ): Promise<Paginated<UserReportReceivedItemDto>> {
+    return this.adminUserService.getUserReportsReceived(id, query);
+  }
+
+  @ApiOperation({ summary: '[어드민] 회원 상세 - 신고한 내역' })
+  @ApiPaginatedResponse(HttpStatus.OK, UserReportSentItemDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get(':id/reports/sent')
+  getUserReportsSent(
+    @Param(
+      'id',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(USER_ERRORS.NOT_FOUND),
+      }),
+    )
+    id: string,
+    @Query() query: PageQueryDto,
+  ): Promise<Paginated<UserReportSentItemDto>> {
+    return this.adminUserService.getUserReportsSent(id, query);
+  }
+
+  @ApiOperation({ summary: '[어드민] 회원 상세 - 작성 게시글' })
+  @ApiPaginatedResponse(HttpStatus.OK, UserPostItemDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get(':id/posts')
+  getUserPosts(
+    @Param(
+      'id',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(USER_ERRORS.NOT_FOUND),
+      }),
+    )
+    id: string,
+    @Query() query: PageQueryDto,
+  ): Promise<Paginated<UserPostItemDto>> {
+    return this.adminUserService.getUserPosts(id, query);
+  }
+
+  @ApiOperation({ summary: '[어드민] 회원 상세 - 작성 댓글' })
+  @ApiPaginatedResponse(HttpStatus.OK, UserCommentItemDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get(':id/comments')
+  getUserComments(
+    @Param(
+      'id',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(USER_ERRORS.NOT_FOUND),
+      }),
+    )
+    id: string,
+    @Query() query: PageQueryDto,
+  ): Promise<Paginated<UserCommentItemDto>> {
+    return this.adminUserService.getUserComments(id, query);
   }
 }

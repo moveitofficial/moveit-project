@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
 
-import type { GetUsersQueryDto } from './dto/users-query.dto';
+import type { GetUsersQueryDto } from './dto/list/users-query.dto';
 import type { Prisma, Role } from '@prisma/client';
 
 @Injectable()
@@ -167,5 +167,91 @@ export class AdminUserRepository {
 
   countServicesByExpertId(expertUserId: string): Promise<number> {
     return this.prisma.service.count({ where: { expertUserId } });
+  }
+
+  // ─── reports received (신고받은) ─────────────────────────
+  findReportsReceivedByUserId(userId: string, skip: number, take: number) {
+    return this.prisma.report.findMany({
+      where: { reportedId: userId },
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        detail: true,
+        reason: true,
+        createdAt: true,
+        reporter: { select: { id: true, name: true } },
+      },
+    });
+  }
+
+  countReportsReceivedByUserId(userId: string): Promise<number> {
+    return this.prisma.report.count({ where: { reportedId: userId } });
+  }
+
+  // ─── reports sent (신고한) ───────────────────────────────
+  findReportsSentByUserId(userId: string, skip: number, take: number) {
+    return this.prisma.report.findMany({
+      where: { reporterId: userId },
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        detail: true,
+        reason: true,
+        createdAt: true,
+        reported: { select: { id: true, name: true } },
+      },
+    });
+  }
+
+  countReportsSentByUserId(userId: string): Promise<number> {
+    return this.prisma.report.count({ where: { reporterId: userId } });
+  }
+
+  // ─── posts (게시글) ──────────────────────────────────────
+  findPostsByUserId(userId: string, skip: number, take: number) {
+    return this.prisma.communityPost.findMany({
+      where: { userId },
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        deletedAt: true,
+        deletedByAdminId: true,
+        createdAt: true,
+        deletedByAdmin: { select: { name: true } },
+      },
+    });
+  }
+
+  countPostsByUserId(userId: string): Promise<number> {
+    return this.prisma.communityPost.count({ where: { userId } });
+  }
+
+  // ─── comments (댓글) ─────────────────────────────────────
+  findCommentsByUserId(userId: string, skip: number, take: number) {
+    return this.prisma.comment.findMany({
+      where: { userId },
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        content: true,
+        deletedAt: true,
+        deletedByAdminId: true,
+        createdAt: true,
+        deletedByAdmin: { select: { name: true } },
+      },
+    });
+  }
+
+  countCommentsByUserId(userId: string): Promise<number> {
+    return this.prisma.comment.count({ where: { userId } });
   }
 }
