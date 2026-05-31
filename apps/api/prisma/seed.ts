@@ -904,6 +904,16 @@ class Seeder {
     const categories = Object.values(CommunityCategory);
     const allUsers = [...clients, ...experts];
 
+    // 관리자 댓글 삭제 사유 후보 (다양한 케이스 검증용)
+    const ADMIN_COMMENT_DELETE_REASONS = [
+      '욕설/비방',
+      '외부 연락처 유도',
+      '스팸/광고',
+      '허위·과장 정보',
+      '음란성 콘텐츠',
+      '운영 정책 위반',
+    ];
+
     for (let i = 0; i < 10; i++) {
       const author = pick(allUsers);
       const isDeleted = i === 0; // 1개는 삭제된 상태
@@ -922,11 +932,18 @@ class Seeder {
       // 댓글 0~5개
       const commentCount = rand(0, 5);
       for (let c = 0; c < commentCount; c++) {
+        // 약 1/4 확률로 관리자 삭제 (다양한 사유로 분산)
+        const isAdminDeleted = (i + c) % 4 === 0;
         await this.#prisma.comment.create({
           data: {
             postId: post.id,
             userId: pick(allUsers).id,
             content: pick(COMMENT_TEMPLATES),
+            deletedAt: isAdminDeleted ? new Date() : null,
+            deleteReason: isAdminDeleted
+              ? pick(ADMIN_COMMENT_DELETE_REASONS)
+              : null,
+            deletedByAdminId: isAdminDeleted ? admin.id : null,
           },
         });
       }
