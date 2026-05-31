@@ -64,6 +64,7 @@ export class CommunityPostsController {
   @ApiSuccessResponse(HttpStatus.OK, PostResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
   @Get(':id')
   getPost(@Param('id', ParseUUIDPipe) postId: string) {
     return this.communityPostsService.getPost(postId);

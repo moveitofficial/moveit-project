@@ -68,6 +68,9 @@ export class CommunityPostsService {
     if (post === null) {
       throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
     }
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
     return mapPost(post);
   }
 
