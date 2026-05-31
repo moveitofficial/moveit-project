@@ -15,12 +15,15 @@ import {
   ApiPaginatedResponse,
   ApiSuccessResponse,
 } from '../../common/decorators/api-success-response.decorator';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { type Paginated } from '../../common/types/paginated.type';
 import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
 
 import { AdminUserService } from './admin-user.service';
 import { UserDetailResponseDto } from './dto/user-detail-response.dto';
+import { UserOrderItemDto } from './dto/user-orders-response.dto';
+import { UserServiceItemDto } from './dto/user-services-response.dto';
 import { UserCounstDto } from './dto/users-counts-response.dto';
 import { GetUsersQueryDto } from './dto/users-query.dto';
 import { UserItemDto } from './dto/users-response.dto';
@@ -67,5 +70,49 @@ export class AdminUserController {
     id: string,
   ): Promise<UserDetailResponseDto> {
     return this.adminUserService.getUserDetail(id);
+  }
+
+  @ApiOperation({ summary: '[어드민] 회원 상세 - 구매내역 (일반회원) CLIENT' })
+  @ApiPaginatedResponse(HttpStatus.OK, UserOrderItemDto)
+  @ApiErrorResponse(USER_ERRORS.ROLE_MISMATCH)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get(':id/orders')
+  getUserOrders(
+    @Param(
+      'id',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(USER_ERRORS.NOT_FOUND),
+      }),
+    )
+    id: string,
+    @Query() query: PaginationQueryDto,
+  ): Promise<Paginated<UserOrderItemDto>> {
+    return this.adminUserService.getUserOrders(id, query);
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 회원 상세 - 등록 서비스 목록 (판매자) EXPERT',
+  })
+  @ApiPaginatedResponse(HttpStatus.OK, UserServiceItemDto)
+  @ApiErrorResponse(USER_ERRORS.ROLE_MISMATCH)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get(':id/services')
+  getUserServices(
+    @Param(
+      'id',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(USER_ERRORS.NOT_FOUND),
+      }),
+    )
+    id: string,
+    @Query() query: PaginationQueryDto,
+  ): Promise<Paginated<UserServiceItemDto>> {
+    return this.adminUserService.getUserServices(id, query);
   }
 }
