@@ -27,16 +27,18 @@ export class CommunityPostsRepository {
     return this.prisma.communityPost.create(args);
   }
 
-  updatePost(postId: string, dto: PostRequestDto): Promise<CommunityPost> {
-    const args = {
+  updatePost(
+    postId: string,
+    data: {
+      category?: CommunityCategory;
+      title?: string;
+      content?: string;
+    },
+  ): Promise<CommunityPost> {
+    return this.prisma.communityPost.update({
       where: { id: postId },
-      data: {
-        category: dto.category,
-        title: dto.title,
-        content: dto.content,
-      },
-    };
-    return this.prisma.communityPost.update(args);
+      data,
+    });
   }
 
   findByPostId(postId: string): Promise<CommunityPost | null> {

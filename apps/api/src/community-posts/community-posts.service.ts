@@ -17,8 +17,10 @@ import {
   sanitizePostContent,
 } from './community-posts.util';
 import { PostListQueryDto } from './dto/post-list-query.dto';
-import { PostRequestDto } from './dto/post-request.dto';
+import { PostRequestDto, UpdatePostRequestDto } from './dto/post-request.dto';
 import { PostListItemResponseDto } from './dto/post-response.dto';
+
+import type { CommunityCategory } from '@prisma/client';
 
 @Injectable()
 export class CommunityPostsService {
@@ -89,8 +91,16 @@ export class CommunityPostsService {
   async updatePost(
     userId: string,
     postId: string,
-    dto: PostRequestDto,
+    dto: UpdatePostRequestDto,
   ): Promise<ReturnType<typeof mapPost>> {
+    if (
+      dto.category === undefined &&
+      dto.title === undefined &&
+      dto.content === undefined
+    ) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOTHING_TO_UPDATE);
+    }
+
     const post = await this.communityPostsRepository.findByPostId(postId);
 
     if (post === null) {
@@ -105,18 +115,35 @@ export class CommunityPostsService {
       throw new AppException(COMMUNITY_POSTS_ERRORS.FORBIDDEN);
     }
 
-    const sanitizedContent = sanitizePostContent(dto.content);
-    const plainTextLength = getPostContentPlainTextLength(sanitizedContent);
+    const updateData: {
+      category?: CommunityCategory;
+      title?: string;
+      content?: string;
+    } = {};
 
-    if (plainTextLength < POST_MIN_LENGTH) {
-      throw new AppException(COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT);
+    if (dto.category !== undefined) {
+      updateData.category = dto.category;
     }
 
-    const updated = await this.communityPostsRepository.updatePost(postId, {
-      category: dto.category,
-      title: dto.title.trim(),
-      content: sanitizedContent,
-    });
+    if (dto.title !== undefined) {
+      updateData.title = dto.title.trim();
+    }
+
+    if (dto.content !== undefined) {
+      const sanitizedContent = sanitizePostContent(dto.content);
+      const plainTextLength = getPostContentPlainTextLength(sanitizedContent);
+
+      if (plainTextLength < POST_MIN_LENGTH) {
+        throw new AppException(COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT);
+      }
+
+      updateData.content = sanitizedContent;
+    }
+
+    const updated = await this.communityPostsRepository.updatePost(
+      postId,
+      updateData,
+    );
 
     return mapPost(updated);
   }

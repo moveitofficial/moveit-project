@@ -60,7 +60,7 @@ export class ExpertProfilesService {
           ceoName: dto.ceoName,
           contactTimeStart: dto.contactTimeStart,
           contactTimeEnd: dto.contactTimeEnd,
-          foundedYear: dto.foundedYear,
+          foundedYear: Number.parseInt(dto.foundedYear, 10),
           employeeMin: dto.employeeMin,
           employeeMax: dto.employeeMax,
           description: dto.description,
@@ -98,7 +98,10 @@ export class ExpertProfilesService {
           ceoName: dto.ceoName,
           contactTimeStart: dto.contactTimeStart,
           contactTimeEnd: dto.contactTimeEnd,
-          foundedYear: dto.foundedYear,
+          foundedYear:
+            dto.foundedYear === undefined
+              ? undefined
+              : Number.parseInt(dto.foundedYear, 10),
           employeeMin: dto.employeeMin,
           employeeMax: dto.employeeMax,
           description: dto.description,
@@ -111,7 +114,10 @@ export class ExpertProfilesService {
           ceoName: dto.ceoName,
           contactTimeStart: dto.contactTimeStart,
           contactTimeEnd: dto.contactTimeEnd,
-          foundedYear: dto.foundedYear,
+          foundedYear:
+            dto.foundedYear === undefined
+              ? undefined
+              : Number.parseInt(dto.foundedYear, 10),
           employeeMin: dto.employeeMin,
           employeeMax: dto.employeeMax,
           description: dto.description,

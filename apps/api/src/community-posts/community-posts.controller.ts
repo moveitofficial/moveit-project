@@ -29,7 +29,7 @@ import {
 
 import { CommunityPostsService } from './community-posts.service';
 import { PostListQueryDto } from './dto/post-list-query.dto';
-import { PostRequestDto } from './dto/post-request.dto';
+import { PostRequestDto, UpdatePostRequestDto } from './dto/post-request.dto';
 import {
   PostDetailResponseDto,
   PostListItemResponseDto,
@@ -46,9 +46,11 @@ export class CommunityPostsController {
   @ApiOperation({ summary: '게시글 생성' })
   @JwtAuth()
   @ApiSuccessResponse(HttpStatus.CREATED, PostResponseDto)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT,
+  )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT)
   @Post()
   createPost(@Req() req: Request, @Body() body: PostRequestDto) {
     const user = req.user as JwtAccessUser;
@@ -82,6 +84,7 @@ export class CommunityPostsController {
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @ApiErrorResponse(
     COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMUNITY_POSTS_ERRORS.NOTHING_TO_UPDATE,
     COMMON_ERRORS.VALIDATION_ERROR,
   )
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
@@ -91,7 +94,7 @@ export class CommunityPostsController {
   updatePost(
     @Req() req: Request,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: PostRequestDto,
+    @Body() dto: UpdatePostRequestDto,
   ) {
     const user = req.user as JwtAccessUser;
     return this.communityPostsService.updatePost(user.userId, id, dto);
