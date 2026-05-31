@@ -807,6 +807,7 @@ model Comment {
   parentCommentId  String?   @map("parent_comment_id") @db.Uuid
   content          String
   deletedAt        DateTime? @map("deleted_at")
+  deleteReason     String?   @map("delete_reason")
   deletedByAdminId String?   @map("deleted_by_admin_id") @db.Uuid
   createdAt        DateTime  @default(now()) @map("created_at")
 
