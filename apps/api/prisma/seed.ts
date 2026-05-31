@@ -679,6 +679,7 @@ class Seeder {
   ): Promise<void> {
     // 상태별 분포 — 대시보드 카드 카운트 검증용
     // 서비스 진행중(NEG+IP+DL+WC) = 8+12+6+6 = 32, 정산 요청 = 12
+    // 취소·환불은 Refund 모델로 별도 트래킹 (Order.status는 진행/종결 상태만)
     const orderStatusPlan: OrderStatus[] = [
       ...Array.from({ length: 8 }, () => OrderStatus.NEGOTIATING),
       ...Array.from({ length: 12 }, () => OrderStatus.IN_PROGRESS),
@@ -687,7 +688,12 @@ class Seeder {
       ...Array.from({ length: 5 }, () => OrderStatus.PURCHASE_CONFIRMED),
       ...Array.from({ length: 12 }, () => OrderStatus.SETTLEMENT_REQUESTED),
       ...Array.from({ length: 6 }, () => OrderStatus.SETTLEMENT_COMPLETED),
-      ...Array.from({ length: 5 }, () => OrderStatus.REFUND_REQUESTED),
+      // 환불요청 진행 중 (Refund: REFUND/REQUESTED 동반)
+      ...Array.from({ length: 2 }, () => OrderStatus.EXPIRED),
+      // 취소완료 (Refund: CANCEL/COMPLETED 동반)
+      ...Array.from({ length: 1 }, () => OrderStatus.PAYMENT_CANCELLED),
+      // 환불완료 (Refund: REFUND/COMPLETED 동반)
+      ...Array.from({ length: 2 }, () => OrderStatus.REFUND_COMPLETED),
     ];
 
     for (const status of orderStatusPlan) {
@@ -750,19 +756,34 @@ class Seeder {
         });
       }
 
-      // 환불 요청 건은 Refund 추가
-      if (status === OrderStatus.REFUND_REQUESTED) {
+      // 시안 흐름: Order.status별로 Refund row 동반
+      // - EXPIRED            → REFUND/REQUESTED (환불요청 진행 중)
+      // - PAYMENT_CANCELLED  → CANCEL/COMPLETED (취소완료)
+      // - REFUND_COMPLETED   → REFUND/COMPLETED (환불완료)
+      const refundPlan =
+        status === OrderStatus.EXPIRED
+          ? { type: RefundType.REFUND, status: RefundStatus.REQUESTED }
+          : status === OrderStatus.PAYMENT_CANCELLED
+            ? { type: RefundType.CANCEL, status: RefundStatus.COMPLETED }
+            : status === OrderStatus.REFUND_COMPLETED
+              ? { type: RefundType.REFUND, status: RefundStatus.COMPLETED }
+              : null;
+
+      if (refundPlan) {
+        const isCompleted = refundPlan.status === RefundStatus.COMPLETED;
         await this.#prisma.refund.create({
           data: {
             paymentId: payment.id,
             clientUserId: client.id,
             expertUserId: service.expertUserId,
             refundAmount: order.totalAmount,
-            type: RefundType.CANCEL,
-            status: RefundStatus.REQUESTED,
+            type: refundPlan.type,
+            status: refundPlan.status,
             adminReason: '서비스 진행 어려움',
             approvedAdminId: admin.id,
             requestedAt: new Date(),
+            approvedAt: isCompleted ? new Date() : null,
+            refundedAt: isCompleted ? new Date() : null,
             paymentKey: payment.paymentKey,
             rawData: { provider: 'toss', mock: true },
           },
@@ -1387,50 +1408,44 @@ class Seeder {
     const pastDate = (days: number): Date =>
       new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
+    // 시안 흐름: Order.status는 "진행 상태"만 표현, 취소·환불은 Refund 모델로 별도 트래킹
     const orderPlan: {
       status: OrderStatus;
       endDate: Date | null;
       paymentStatus: PaymentStatus;
       confirmedAt: Date | null;
-      withRefund: boolean;
+      refund: { type: RefundType; status: RefundStatus } | null;
     }[] = [
-      // NEGOTIATING × 2 — 일정 등록 / 취소 요청 테스트용
+      // NEGOTIATING × 1 — 일반 논의중 (취소·환불 없음)
       {
         status: OrderStatus.NEGOTIATING,
         endDate: null,
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: null,
       },
+      // 디자인 03번: 논의중 + 취소요청
       {
         status: OrderStatus.NEGOTIATING,
         endDate: null,
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: { type: RefundType.CANCEL, status: RefundStatus.REQUESTED },
       },
-      // CANCEL_REQUESTED × 1
-      {
-        status: OrderStatus.CANCEL_REQUESTED,
-        endDate: null,
-        paymentStatus: PaymentStatus.CANCELLED,
-        confirmedAt: null,
-        withRefund: false,
-      },
-      // IN_PROGRESS × 2 — 작업완료 / 일정변경 테스트용
+      // IN_PROGRESS × 2
       {
         status: OrderStatus.IN_PROGRESS,
         endDate: futureDate(30),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: null,
       },
       {
         status: OrderStatus.IN_PROGRESS,
         endDate: futureDate(30),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: null,
       },
       // DEADLINE_IMMINENT × 1
       {
@@ -1438,7 +1453,15 @@ class Seeder {
         endDate: futureDate(2),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: null,
+      },
+      // 디자인 05번: 기간만료 + 환불요청
+      {
+        status: OrderStatus.EXPIRED,
+        endDate: pastDate(5),
+        paymentStatus: PaymentStatus.PAID,
+        confirmedAt: null,
+        refund: { type: RefundType.REFUND, status: RefundStatus.REQUESTED },
       },
       // WORK_COMPLETED × 1
       {
@@ -1446,7 +1469,7 @@ class Seeder {
         endDate: futureDate(15),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: null,
       },
       // PURCHASE_CONFIRMED × 1
       {
@@ -1454,7 +1477,7 @@ class Seeder {
         endDate: futureDate(10),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: new Date(),
-        withRefund: false,
+        refund: null,
       },
       // SETTLEMENT_REQUESTED × 1
       {
@@ -1462,15 +1485,23 @@ class Seeder {
         endDate: futureDate(5),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: new Date(),
-        withRefund: false,
+        refund: null,
       },
-      // REFUND_REQUESTED × 1 — Refund 레코드 동반
+      // 디자인 06번: 취소 + 취소완료
       {
-        status: OrderStatus.REFUND_REQUESTED,
-        endDate: pastDate(5),
-        paymentStatus: PaymentStatus.PAID,
+        status: OrderStatus.PAYMENT_CANCELLED,
+        endDate: null,
+        paymentStatus: PaymentStatus.CANCELLED,
         confirmedAt: null,
-        withRefund: true,
+        refund: { type: RefundType.CANCEL, status: RefundStatus.COMPLETED },
+      },
+      // 디자인 07번: 환불 + 환불완료
+      {
+        status: OrderStatus.REFUND_COMPLETED,
+        endDate: pastDate(10),
+        paymentStatus: PaymentStatus.REFUNDED,
+        confirmedAt: null,
+        refund: { type: RefundType.REFUND, status: RefundStatus.COMPLETED },
       },
     ];
 
@@ -1502,16 +1533,19 @@ class Seeder {
         },
       });
 
-      if (plan.withRefund) {
+      if (plan.refund) {
+        const isCompleted = plan.refund.status === RefundStatus.COMPLETED;
         await this.#prisma.refund.create({
           data: {
             paymentId: payment.id,
             clientUserId: client.id,
             expertUserId: expert.id,
             refundAmount: order.totalAmount,
-            type: RefundType.REFUND,
-            status: RefundStatus.REQUESTED,
+            type: plan.refund.type,
+            status: plan.refund.status,
             requestedAt: new Date(),
+            approvedAt: isCompleted ? new Date() : null,
+            refundedAt: isCompleted ? new Date() : null,
           },
         });
       }

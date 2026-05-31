@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 
 import { USER_ERRORS } from '../../common/constants/errors';
+import { type PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { Paginated } from '../../common/types/paginated.type';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
 
 import { AdminUserRepository } from './admin-user.repository';
 import { UserDetailResponseDto } from './dto/user-detail-response.dto';
+import { UserOrderItemDto } from './dto/user-orders-response.dto';
+import { UserServiceItemDto } from './dto/user-services-response.dto';
 import { UserCounstDto } from './dto/users-counts-response.dto';
 import { GetUsersQueryDto } from './dto/users-query.dto';
 import { UserItemDto } from './dto/users-response.dto';
@@ -144,5 +147,72 @@ export class AdminUserService {
       specialty,
       ...(isClient ? { nickname } : { expert }),
     };
+  }
+
+  async getUserOrders(
+    userId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<UserOrderItemDto>> {
+    const user = await this.adminUserRepository.findRoleById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (user.role !== Role.CLIENT) {
+      throw new AppException(USER_ERRORS.ROLE_MISMATCH);
+    }
+
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
+    const skip = (page - 1) * pageSize;
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findOrdersByClientId(userId, skip, pageSize),
+      this.adminUserRepository.countOrdersByClientId(userId),
+    ]);
+
+    const items: UserOrderItemDto[] = rows.map((o) => ({
+      id: o.id,
+      service: { id: o.service.id, title: o.service.title },
+      expert: { id: o.expertUser.id, name: o.expertUser.name },
+      status: o.status,
+      totalAmount: o.totalAmount,
+      platformFee: o.platformFee,
+      endDate: o.endDate,
+      refund: o.payment?.refund
+        ? `${o.payment.refund.type}_${o.payment.refund.status}`
+        : null,
+      createdAt: o.createdAt,
+    }));
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async getUserServices(
+    userId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<UserServiceItemDto>> {
+    const user = await this.adminUserRepository.findRoleById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (user.role !== Role.EXPERT) {
+      throw new AppException(USER_ERRORS.ROLE_MISMATCH);
+    }
+
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
+    const skip = (page - 1) * pageSize;
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findServicesByExpertId(userId, skip, pageSize),
+      this.adminUserRepository.countServicesByExpertId(userId),
+    ]);
+
+    const items: UserServiceItemDto[] = rows.map((s) => ({
+      id: s.id,
+      title: s.title,
+      status: s.status,
+      servicePrice: s.servicePrice,
+      salesCount: s._count.orders,
+      createdAt: s.createdAt,
+    }));
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
   }
 }
