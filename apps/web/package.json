@@ -13,6 +13,7 @@
     "@repo/fetcher": "workspace:*",
     "@repo/fonts": "workspace:*",
     "@repo/providers": "workspace:*",
+    "@repo/socket-events": "workspace:^",
     "@repo/styles": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/utils": "workspace:*",

@@ -29,6 +29,9 @@ importers:
       '@repo/providers':
         specifier: workspace:*
         version: link:../../packages/providers
+      '@repo/socket-events':
+        specifier: workspace:^
+        version: link:../../packages/socket-events
       '@repo/styles':
         specifier: workspace:*
         version: link:../../packages/styles
@@ -126,6 +129,9 @@ importers:
       '@prisma/client':
         specifier: '6'
         version: 6.19.3(prisma@6.19.3)(typescript@5.9.2)
+      '@repo/socket-events':
+        specifier: workspace:^
+        version: link:../../packages/socket-events
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
@@ -295,6 +301,9 @@ importers:
       '@repo/providers':
         specifier: workspace:*
         version: link:../../packages/providers
+      '@repo/socket-events':
+        specifier: workspace:^
+        version: link:../../packages/socket-events
       '@repo/styles':
         specifier: workspace:*
         version: link:../../packages/styles
@@ -463,6 +472,21 @@ importers:
       '@types/react':
         specifier: ^19
         version: 19.2.2
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.4
+      typescript:
+        specifier: 5.9.2
+        version: 5.9.2
+
+  packages/socket-events:
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       eslint:
         specifier: ^9.39.1
         version: 9.39.4
