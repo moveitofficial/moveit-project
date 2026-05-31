@@ -50,8 +50,11 @@ async function bootstrap() {
     .addTag('users/me/portfolios')
     .addTag('portfolios')
     .addTag('services')
+    .addTag('community-posts')
     .addTag('admin-auth')
     .addTag('admin-account')
+    .addTag('admin-dashboard')
+    .addTag('admin-user')
     .addTag('catalogs')
     .build();
   app.use(
