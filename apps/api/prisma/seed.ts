@@ -211,6 +211,11 @@ class Seeder {
     const testServiceId = await this.#seedOrdersApiTestData();
     console.warn(`✅ Orders API 테스트 시드 (주문 10건 + 타인 주문 1건)`);
 
+    await this.#seedAdminUserSubListTestData();
+    console.warn(
+      `✅ Admin User 하위 리스트 테스트 시드 (test 계정 각 reports/posts/comments 30건씩)`,
+    );
+
     console.warn('\n────────────────────────────');
     console.warn(`🔑 테스트 계정 (공통 비밀번호: ${SEED_PASSWORD})`);
     console.warn(`   admin@moveit.com         (ADMIN)`);
@@ -1607,6 +1612,122 @@ class Seeder {
     });
 
     return expertService.id;
+  }
+
+  // ─── 23. Admin user 상세 하위 리스트 테스트 시드 ────────────────────
+  // client@test.com / expert@test.com 각자에게:
+  // - reports received 30건, reports sent 30건
+  // - posts 30건 (관리자 삭제 5 + 본인 삭제 5 + 노출중 20)
+  // - comments 30건 (관리자 삭제 5 + 본인 삭제 5 + 노출중 20)
+  async #seedAdminUserSubListTestData(): Promise<void> {
+    const ADMIN_DELETE_REASONS = [
+      '욕설/비방',
+      '외부 연락처 유도',
+      '스팸/광고',
+      '허위·과장 정보',
+      '운영 정책 위반',
+    ];
+    const categories = Object.values(CommunityCategory);
+
+    const [client, expert] = await Promise.all([
+      this.#prisma.user.findUnique({ where: { email: 'client@test.com' } }),
+      this.#prisma.user.findUnique({ where: { email: 'expert@test.com' } }),
+    ]);
+    if (!client || !expert) {
+      throw new Error('test 계정 누락 (client@test.com / expert@test.com)');
+    }
+
+    const admin = await this.#prisma.admin.findFirst();
+    if (!admin) throw new Error('Admin 없음');
+
+    // 신고는 CLIENT ↔ EXPERT 양방향만 가능 → role 별로 풀 분리
+    const [clientUsers, expertUsers] = await Promise.all([
+      this.#prisma.user.findMany({
+        where: {
+          role: Role.CLIENT,
+          email: { notIn: ['client@test.com', 'other@test.com'] },
+          isDeleted: false,
+        },
+        take: 30,
+      }),
+      this.#prisma.user.findMany({
+        where: {
+          role: Role.EXPERT,
+          email: { notIn: ['expert@test.com'] },
+          isDeleted: false,
+        },
+        take: 30,
+      }),
+    ]);
+
+    for (const target of [client, expert]) {
+      // target의 반대 role 풀 — 신고 상대 user
+      const counterparts =
+        target.role === Role.CLIENT ? expertUsers : clientUsers;
+
+      // 1. reports received — counterparts가 target을 신고
+      for (let i = 0; i < 30; i++) {
+        await this.#prisma.report.create({
+          data: {
+            reporterId: pick(counterparts).id,
+            reportedId: target.id,
+            reason: pick(REPORT_REASONS),
+            status: i < 15 ? ReportStatus.PENDING : ReportStatus.COMPLETED,
+            detail: faker.lorem.paragraph(),
+          },
+        });
+      }
+
+      // 2. reports sent — target이 counterparts를 신고
+      for (let i = 0; i < 30; i++) {
+        await this.#prisma.report.create({
+          data: {
+            reporterId: target.id,
+            reportedId: pick(counterparts).id,
+            reason: pick(REPORT_REASONS),
+            status: i < 15 ? ReportStatus.PENDING : ReportStatus.COMPLETED,
+            detail: faker.lorem.paragraph(),
+          },
+        });
+      }
+
+      // 3. posts — target 작성 30건 (관리자 삭제 5 + 본인 삭제 5 + 노출중 20)
+      for (let i = 0; i < 30; i++) {
+        const isAdminDeleted = i < 5;
+        const isUserDeleted = i >= 5 && i < 10;
+        await this.#prisma.communityPost.create({
+          data: {
+            userId: target.id,
+            category: pick(categories),
+            title: faker.lorem.sentence({ min: 3, max: 8 }),
+            content: faker.lorem.paragraphs(rand(2, 5)),
+            deletedAt: isAdminDeleted || isUserDeleted ? new Date() : null,
+            deleteReason: isAdminDeleted ? pick(ADMIN_DELETE_REASONS) : null,
+            deletedByAdminId: isAdminDeleted ? admin.id : null,
+          },
+        });
+      }
+
+      // 4. comments — target 작성 30건 (관리자 5 + 본인 5 + 노출중 20)
+      // 댓글은 검증이 user 기준이라 게시글 분포 무관 → 첫 게시글에 다 박음
+      const anyPost = await this.#prisma.communityPost.findFirst();
+      if (!anyPost) throw new Error('post 없음');
+
+      for (let i = 0; i < 30; i++) {
+        const isAdminDeleted = i < 5;
+        const isUserDeleted = i >= 5 && i < 10;
+        await this.#prisma.comment.create({
+          data: {
+            postId: anyPost.id,
+            userId: target.id,
+            content: pick(COMMENT_TEMPLATES),
+            deletedAt: isAdminDeleted || isUserDeleted ? new Date() : null,
+            deleteReason: isAdminDeleted ? pick(ADMIN_DELETE_REASONS) : null,
+            deletedByAdminId: isAdminDeleted ? admin.id : null,
+          },
+        });
+      }
+    }
   }
 }
 
