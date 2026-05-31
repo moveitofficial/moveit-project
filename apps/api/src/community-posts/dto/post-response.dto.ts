@@ -34,3 +34,8 @@ export class PostListItemResponseDto extends PostResponseDto {
   @ApiProperty({ example: 233 })
   declare commentCount: number;
 }
+
+export class PostDetailResponseDto extends PostListItemResponseDto {
+  @ApiProperty({ example: false })
+  declare isLiked: boolean;
+}

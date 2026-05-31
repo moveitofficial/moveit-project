@@ -5,7 +5,11 @@ import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 
-import { mapPost, mapPostListItem } from './community-posts.mapper';
+import {
+  mapPost,
+  mapPostDetail,
+  mapPostListItem,
+} from './community-posts.mapper';
 import { CommunityPostsRepository } from './community-posts.repository';
 import {
   getPostContentPlainTextLength,
@@ -63,6 +67,25 @@ export class CommunityPostsService {
       posts.map((post) => mapPostListItem(post)),
       { page, pageSize, totalCount },
     );
+  }
+
+  async getPost(
+    postId: string,
+    userId?: string,
+  ): Promise<ReturnType<typeof mapPostDetail>> {
+    const post = await this.communityPostsRepository.findPostDetailById(postId);
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const isLiked = userId
+      ? await this.communityPostsRepository.isLikedByUser(postId, userId)
+      : false;
+    return mapPostDetail(post, isLiked);
   }
 
   async updatePost(

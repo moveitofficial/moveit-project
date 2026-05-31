@@ -22,12 +22,16 @@ import {
   ApiPaginatedResponse,
   ApiSuccessResponse,
 } from '../common/decorators/api-success-response.decorator';
-import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
+import {
+  JwtAuth,
+  OptionalJwtAuth,
+} from '../common/decorators/jwt-auth.decorator';
 
 import { CommunityPostsService } from './community-posts.service';
 import { PostListQueryDto } from './dto/post-list-query.dto';
 import { PostRequestDto, UpdatePostRequestDto } from './dto/post-request.dto';
 import {
+  PostDetailResponseDto,
   PostListItemResponseDto,
   PostResponseDto,
 } from './dto/post-response.dto';
@@ -60,6 +64,18 @@ export class CommunityPostsController {
   @Get()
   getAllPosts(@Query() query: PostListQueryDto) {
     return this.communityPostsService.getAllPosts(query);
+  }
+
+  @ApiOperation({ summary: '게시글 상세 조회' })
+  @OptionalJwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, PostDetailResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Get(':id')
+  getPost(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser | undefined;
+    return this.communityPostsService.getPost(postId, user?.userId);
   }
 
   @ApiOperation({ summary: '게시글 수정' })
