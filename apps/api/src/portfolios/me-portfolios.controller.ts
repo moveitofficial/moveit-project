@@ -17,15 +17,16 @@ import { COMMON_ERRORS, PORTFOLIO_ERRORS } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
+
 import {
   PortfolioRequestDto,
   PortfolioUpdateDto,
-} from '../portfolios/dto/portfolio-request.dto';
+} from './dto/portfolio-request.dto';
 import {
   PortfolioCreateResponseDto,
   PortfolioResponseDto,
-} from '../portfolios/dto/portfolio-response.dto';
-import { PortfoliosService } from '../portfolios/portfolios.service';
+} from './dto/portfolio-response.dto';
+import { PortfoliosService } from './portfolios.service';
 
 import type { Request } from 'express';
 
