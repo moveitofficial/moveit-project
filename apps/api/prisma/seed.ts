@@ -211,6 +211,11 @@ class Seeder {
     const testServiceId = await this.#seedOrdersApiTestData();
     console.warn(`✅ Orders API 테스트 시드 (주문 10건 + 타인 주문 1건)`);
 
+    await this.#seedAdminUserSubListTestData();
+    console.warn(
+      `✅ Admin User 하위 리스트 테스트 시드 (test 계정 각 reports/posts/comments 30건씩)`,
+    );
+
     console.warn('\n────────────────────────────');
     console.warn(`🔑 테스트 계정 (공통 비밀번호: ${SEED_PASSWORD})`);
     console.warn(`   admin@moveit.com         (ADMIN)`);
@@ -679,6 +684,7 @@ class Seeder {
   ): Promise<void> {
     // 상태별 분포 — 대시보드 카드 카운트 검증용
     // 서비스 진행중(NEG+IP+DL+WC) = 8+12+6+6 = 32, 정산 요청 = 12
+    // 취소·환불은 Refund 모델로 별도 트래킹 (Order.status는 진행/종결 상태만)
     const orderStatusPlan: OrderStatus[] = [
       ...Array.from({ length: 8 }, () => OrderStatus.NEGOTIATING),
       ...Array.from({ length: 12 }, () => OrderStatus.IN_PROGRESS),
@@ -687,7 +693,12 @@ class Seeder {
       ...Array.from({ length: 5 }, () => OrderStatus.PURCHASE_CONFIRMED),
       ...Array.from({ length: 12 }, () => OrderStatus.SETTLEMENT_REQUESTED),
       ...Array.from({ length: 6 }, () => OrderStatus.SETTLEMENT_COMPLETED),
-      ...Array.from({ length: 5 }, () => OrderStatus.REFUND_REQUESTED),
+      // 환불요청 진행 중 (Refund: REFUND/REQUESTED 동반)
+      ...Array.from({ length: 2 }, () => OrderStatus.EXPIRED),
+      // 취소완료 (Refund: CANCEL/COMPLETED 동반)
+      ...Array.from({ length: 1 }, () => OrderStatus.PAYMENT_CANCELLED),
+      // 환불완료 (Refund: REFUND/COMPLETED 동반)
+      ...Array.from({ length: 2 }, () => OrderStatus.REFUND_COMPLETED),
     ];
 
     for (const status of orderStatusPlan) {
@@ -750,19 +761,34 @@ class Seeder {
         });
       }
 
-      // 환불 요청 건은 Refund 추가
-      if (status === OrderStatus.REFUND_REQUESTED) {
+      // 시안 흐름: Order.status별로 Refund row 동반
+      // - EXPIRED            → REFUND/REQUESTED (환불요청 진행 중)
+      // - PAYMENT_CANCELLED  → CANCEL/COMPLETED (취소완료)
+      // - REFUND_COMPLETED   → REFUND/COMPLETED (환불완료)
+      const refundPlan =
+        status === OrderStatus.EXPIRED
+          ? { type: RefundType.REFUND, status: RefundStatus.REQUESTED }
+          : status === OrderStatus.PAYMENT_CANCELLED
+            ? { type: RefundType.CANCEL, status: RefundStatus.COMPLETED }
+            : status === OrderStatus.REFUND_COMPLETED
+              ? { type: RefundType.REFUND, status: RefundStatus.COMPLETED }
+              : null;
+
+      if (refundPlan) {
+        const isCompleted = refundPlan.status === RefundStatus.COMPLETED;
         await this.#prisma.refund.create({
           data: {
             paymentId: payment.id,
             clientUserId: client.id,
             expertUserId: service.expertUserId,
             refundAmount: order.totalAmount,
-            type: RefundType.CANCEL,
-            status: RefundStatus.REQUESTED,
+            type: refundPlan.type,
+            status: refundPlan.status,
             adminReason: '서비스 진행 어려움',
             approvedAdminId: admin.id,
             requestedAt: new Date(),
+            approvedAt: isCompleted ? new Date() : null,
+            refundedAt: isCompleted ? new Date() : null,
             paymentKey: payment.paymentKey,
             rawData: { provider: 'toss', mock: true },
           },
@@ -883,6 +909,16 @@ class Seeder {
     const categories = Object.values(CommunityCategory);
     const allUsers = [...clients, ...experts];
 
+    // 관리자 댓글 삭제 사유 후보 (다양한 케이스 검증용)
+    const ADMIN_COMMENT_DELETE_REASONS = [
+      '욕설/비방',
+      '외부 연락처 유도',
+      '스팸/광고',
+      '허위·과장 정보',
+      '음란성 콘텐츠',
+      '운영 정책 위반',
+    ];
+
     for (let i = 0; i < 10; i++) {
       const author = pick(allUsers);
       const isDeleted = i === 0; // 1개는 삭제된 상태
@@ -901,11 +937,18 @@ class Seeder {
       // 댓글 0~5개
       const commentCount = rand(0, 5);
       for (let c = 0; c < commentCount; c++) {
+        // 약 1/4 확률로 관리자 삭제 (다양한 사유로 분산)
+        const isAdminDeleted = (i + c) % 4 === 0;
         await this.#prisma.comment.create({
           data: {
             postId: post.id,
             userId: pick(allUsers).id,
             content: pick(COMMENT_TEMPLATES),
+            deletedAt: isAdminDeleted ? new Date() : null,
+            deleteReason: isAdminDeleted
+              ? pick(ADMIN_COMMENT_DELETE_REASONS)
+              : null,
+            deletedByAdminId: isAdminDeleted ? admin.id : null,
           },
         });
       }
@@ -1387,50 +1430,44 @@ class Seeder {
     const pastDate = (days: number): Date =>
       new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
+    // 시안 흐름: Order.status는 "진행 상태"만 표현, 취소·환불은 Refund 모델로 별도 트래킹
     const orderPlan: {
       status: OrderStatus;
       endDate: Date | null;
       paymentStatus: PaymentStatus;
       confirmedAt: Date | null;
-      withRefund: boolean;
+      refund: { type: RefundType; status: RefundStatus } | null;
     }[] = [
-      // NEGOTIATING × 2 — 일정 등록 / 취소 요청 테스트용
+      // NEGOTIATING × 1 — 일반 논의중 (취소·환불 없음)
       {
         status: OrderStatus.NEGOTIATING,
         endDate: null,
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: null,
       },
+      // 디자인 03번: 논의중 + 취소요청
       {
         status: OrderStatus.NEGOTIATING,
         endDate: null,
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: { type: RefundType.CANCEL, status: RefundStatus.REQUESTED },
       },
-      // CANCEL_REQUESTED × 1
-      {
-        status: OrderStatus.CANCEL_REQUESTED,
-        endDate: null,
-        paymentStatus: PaymentStatus.CANCELLED,
-        confirmedAt: null,
-        withRefund: false,
-      },
-      // IN_PROGRESS × 2 — 작업완료 / 일정변경 테스트용
+      // IN_PROGRESS × 2
       {
         status: OrderStatus.IN_PROGRESS,
         endDate: futureDate(30),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: null,
       },
       {
         status: OrderStatus.IN_PROGRESS,
         endDate: futureDate(30),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: null,
       },
       // DEADLINE_IMMINENT × 1
       {
@@ -1438,7 +1475,15 @@ class Seeder {
         endDate: futureDate(2),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: null,
+      },
+      // 디자인 05번: 기간만료 + 환불요청
+      {
+        status: OrderStatus.EXPIRED,
+        endDate: pastDate(5),
+        paymentStatus: PaymentStatus.PAID,
+        confirmedAt: null,
+        refund: { type: RefundType.REFUND, status: RefundStatus.REQUESTED },
       },
       // WORK_COMPLETED × 1
       {
@@ -1446,7 +1491,7 @@ class Seeder {
         endDate: futureDate(15),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: null,
-        withRefund: false,
+        refund: null,
       },
       // PURCHASE_CONFIRMED × 1
       {
@@ -1454,7 +1499,7 @@ class Seeder {
         endDate: futureDate(10),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: new Date(),
-        withRefund: false,
+        refund: null,
       },
       // SETTLEMENT_REQUESTED × 1
       {
@@ -1462,15 +1507,23 @@ class Seeder {
         endDate: futureDate(5),
         paymentStatus: PaymentStatus.PAID,
         confirmedAt: new Date(),
-        withRefund: false,
+        refund: null,
       },
-      // REFUND_REQUESTED × 1 — Refund 레코드 동반
+      // 디자인 06번: 취소 + 취소완료
       {
-        status: OrderStatus.REFUND_REQUESTED,
-        endDate: pastDate(5),
-        paymentStatus: PaymentStatus.PAID,
+        status: OrderStatus.PAYMENT_CANCELLED,
+        endDate: null,
+        paymentStatus: PaymentStatus.CANCELLED,
         confirmedAt: null,
-        withRefund: true,
+        refund: { type: RefundType.CANCEL, status: RefundStatus.COMPLETED },
+      },
+      // 디자인 07번: 환불 + 환불완료
+      {
+        status: OrderStatus.REFUND_COMPLETED,
+        endDate: pastDate(10),
+        paymentStatus: PaymentStatus.REFUNDED,
+        confirmedAt: null,
+        refund: { type: RefundType.REFUND, status: RefundStatus.COMPLETED },
       },
     ];
 
@@ -1502,16 +1555,19 @@ class Seeder {
         },
       });
 
-      if (plan.withRefund) {
+      if (plan.refund) {
+        const isCompleted = plan.refund.status === RefundStatus.COMPLETED;
         await this.#prisma.refund.create({
           data: {
             paymentId: payment.id,
             clientUserId: client.id,
             expertUserId: expert.id,
             refundAmount: order.totalAmount,
-            type: RefundType.REFUND,
-            status: RefundStatus.REQUESTED,
+            type: plan.refund.type,
+            status: plan.refund.status,
             requestedAt: new Date(),
+            approvedAt: isCompleted ? new Date() : null,
+            refundedAt: isCompleted ? new Date() : null,
           },
         });
       }
@@ -1556,6 +1612,122 @@ class Seeder {
     });
 
     return expertService.id;
+  }
+
+  // ─── 23. Admin user 상세 하위 리스트 테스트 시드 ────────────────────
+  // client@test.com / expert@test.com 각자에게:
+  // - reports received 30건, reports sent 30건
+  // - posts 30건 (관리자 삭제 5 + 본인 삭제 5 + 노출중 20)
+  // - comments 30건 (관리자 삭제 5 + 본인 삭제 5 + 노출중 20)
+  async #seedAdminUserSubListTestData(): Promise<void> {
+    const ADMIN_DELETE_REASONS = [
+      '욕설/비방',
+      '외부 연락처 유도',
+      '스팸/광고',
+      '허위·과장 정보',
+      '운영 정책 위반',
+    ];
+    const categories = Object.values(CommunityCategory);
+
+    const [client, expert] = await Promise.all([
+      this.#prisma.user.findUnique({ where: { email: 'client@test.com' } }),
+      this.#prisma.user.findUnique({ where: { email: 'expert@test.com' } }),
+    ]);
+    if (!client || !expert) {
+      throw new Error('test 계정 누락 (client@test.com / expert@test.com)');
+    }
+
+    const admin = await this.#prisma.admin.findFirst();
+    if (!admin) throw new Error('Admin 없음');
+
+    // 신고는 CLIENT ↔ EXPERT 양방향만 가능 → role 별로 풀 분리
+    const [clientUsers, expertUsers] = await Promise.all([
+      this.#prisma.user.findMany({
+        where: {
+          role: Role.CLIENT,
+          email: { notIn: ['client@test.com', 'other@test.com'] },
+          isDeleted: false,
+        },
+        take: 30,
+      }),
+      this.#prisma.user.findMany({
+        where: {
+          role: Role.EXPERT,
+          email: { notIn: ['expert@test.com'] },
+          isDeleted: false,
+        },
+        take: 30,
+      }),
+    ]);
+
+    for (const target of [client, expert]) {
+      // target의 반대 role 풀 — 신고 상대 user
+      const counterparts =
+        target.role === Role.CLIENT ? expertUsers : clientUsers;
+
+      // 1. reports received — counterparts가 target을 신고
+      for (let i = 0; i < 30; i++) {
+        await this.#prisma.report.create({
+          data: {
+            reporterId: pick(counterparts).id,
+            reportedId: target.id,
+            reason: pick(REPORT_REASONS),
+            status: i < 15 ? ReportStatus.PENDING : ReportStatus.COMPLETED,
+            detail: faker.lorem.paragraph(),
+          },
+        });
+      }
+
+      // 2. reports sent — target이 counterparts를 신고
+      for (let i = 0; i < 30; i++) {
+        await this.#prisma.report.create({
+          data: {
+            reporterId: target.id,
+            reportedId: pick(counterparts).id,
+            reason: pick(REPORT_REASONS),
+            status: i < 15 ? ReportStatus.PENDING : ReportStatus.COMPLETED,
+            detail: faker.lorem.paragraph(),
+          },
+        });
+      }
+
+      // 3. posts — target 작성 30건 (관리자 삭제 5 + 본인 삭제 5 + 노출중 20)
+      for (let i = 0; i < 30; i++) {
+        const isAdminDeleted = i < 5;
+        const isUserDeleted = i >= 5 && i < 10;
+        await this.#prisma.communityPost.create({
+          data: {
+            userId: target.id,
+            category: pick(categories),
+            title: faker.lorem.sentence({ min: 3, max: 8 }),
+            content: faker.lorem.paragraphs(rand(2, 5)),
+            deletedAt: isAdminDeleted || isUserDeleted ? new Date() : null,
+            deleteReason: isAdminDeleted ? pick(ADMIN_DELETE_REASONS) : null,
+            deletedByAdminId: isAdminDeleted ? admin.id : null,
+          },
+        });
+      }
+
+      // 4. comments — target 작성 30건 (관리자 5 + 본인 5 + 노출중 20)
+      // 댓글은 검증이 user 기준이라 게시글 분포 무관 → 첫 게시글에 다 박음
+      const anyPost = await this.#prisma.communityPost.findFirst();
+      if (!anyPost) throw new Error('post 없음');
+
+      for (let i = 0; i < 30; i++) {
+        const isAdminDeleted = i < 5;
+        const isUserDeleted = i >= 5 && i < 10;
+        await this.#prisma.comment.create({
+          data: {
+            postId: anyPost.id,
+            userId: target.id,
+            content: pick(COMMENT_TEMPLATES),
+            deletedAt: isAdminDeleted || isUserDeleted ? new Date() : null,
+            deleteReason: isAdminDeleted ? pick(ADMIN_DELETE_REASONS) : null,
+            deletedByAdminId: isAdminDeleted ? admin.id : null,
+          },
+        });
+      }
+    }
   }
 }
 

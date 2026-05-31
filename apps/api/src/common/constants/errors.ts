@@ -91,6 +91,10 @@ export const USER_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '새 비밀번호가 일치하지 않습니다.',
   },
+  ROLE_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '해당 사용자 역할에서는 조회할 수 없는 리소스입니다.',
+  },
 } as const;
 
 export const SERVICE_ERRORS = {

@@ -7,10 +7,20 @@ import { Paginated } from '../../common/types/paginated.type';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
 
 import { AdminUserRepository } from './admin-user.repository';
-import { UserDetailResponseDto } from './dto/user-detail-response.dto';
-import { UserCounstDto } from './dto/users-counts-response.dto';
-import { GetUsersQueryDto } from './dto/users-query.dto';
-import { UserItemDto } from './dto/users-response.dto';
+import { UserCommentItemDto } from './dto/detail/user-comments-response.dto';
+import { UserDetailResponseDto } from './dto/detail/user-detail-response.dto';
+import { UserOrderItemDto } from './dto/detail/user-orders-response.dto';
+import {
+  deriveDeletionStatus,
+  UserPostItemDto,
+} from './dto/detail/user-posts-response.dto';
+import { UserReportReceivedItemDto } from './dto/detail/user-reports-received-response.dto';
+import { UserReportSentItemDto } from './dto/detail/user-reports-sent-response.dto';
+import { UserServiceItemDto } from './dto/detail/user-services-response.dto';
+import { UserCounstDto } from './dto/list/users-counts-response.dto';
+import { GetUsersQueryDto } from './dto/list/users-query.dto';
+import { UserItemDto } from './dto/list/users-response.dto';
+import { type PageQueryDto } from './dto/page-query.dto';
 
 @Injectable()
 export class AdminUserService {
@@ -144,5 +154,184 @@ export class AdminUserService {
       specialty,
       ...(isClient ? { nickname } : { expert }),
     };
+  }
+
+  async getUserOrders(
+    userId: string,
+    query: PageQueryDto,
+  ): Promise<Paginated<UserOrderItemDto>> {
+    const user = await this.adminUserRepository.findRoleById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (user.role !== Role.CLIENT) {
+      throw new AppException(USER_ERRORS.ROLE_MISMATCH);
+    }
+
+    const page = query.page ?? 1;
+    const pageSize = 10;
+    const skip = (page - 1) * pageSize;
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findOrdersByClientId(userId, skip, pageSize),
+      this.adminUserRepository.countOrdersByClientId(userId),
+    ]);
+
+    const items: UserOrderItemDto[] = rows.map((o) => ({
+      id: o.id,
+      service: { id: o.service.id, title: o.service.title },
+      expert: { id: o.expertUser.id, name: o.expertUser.name },
+      status: o.status,
+      totalAmount: o.totalAmount,
+      platformFee: o.platformFee,
+      endDate: o.endDate,
+      refund: o.payment?.refund
+        ? `${o.payment.refund.type}_${o.payment.refund.status}`
+        : null,
+      createdAt: o.createdAt,
+    }));
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async getUserServices(
+    userId: string,
+    query: PageQueryDto,
+  ): Promise<Paginated<UserServiceItemDto>> {
+    const user = await this.adminUserRepository.findRoleById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (user.role !== Role.EXPERT) {
+      throw new AppException(USER_ERRORS.ROLE_MISMATCH);
+    }
+
+    const page = query.page ?? 1;
+    const pageSize = 10;
+    const skip = (page - 1) * pageSize;
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findServicesByExpertId(userId, skip, pageSize),
+      this.adminUserRepository.countServicesByExpertId(userId),
+    ]);
+
+    const items: UserServiceItemDto[] = rows.map((s) => ({
+      id: s.id,
+      title: s.title,
+      status: s.status,
+      servicePrice: s.servicePrice,
+      salesCount: s._count.orders,
+      createdAt: s.createdAt,
+    }));
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async getUserReportsReceived(
+    userId: string,
+    query: PageQueryDto,
+  ): Promise<Paginated<UserReportReceivedItemDto>> {
+    const user = await this.adminUserRepository.findRoleById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    const page = query.page ?? 1;
+    const pageSize = 10;
+    const skip = (page - 1) * pageSize;
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findReportsReceivedByUserId(
+        userId,
+        skip,
+        pageSize,
+      ),
+      this.adminUserRepository.countReportsReceivedByUserId(userId),
+    ]);
+
+    const items: UserReportReceivedItemDto[] = rows.map((r) => ({
+      id: r.id,
+      reporter: { id: r.reporter.id, name: r.reporter.name },
+      detail: r.detail,
+      reason: r.reason,
+      createdAt: r.createdAt,
+    }));
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async getUserReportsSent(
+    userId: string,
+    query: PageQueryDto,
+  ): Promise<Paginated<UserReportSentItemDto>> {
+    const user = await this.adminUserRepository.findRoleById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    const page = query.page ?? 1;
+    const pageSize = 10;
+    const skip = (page - 1) * pageSize;
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findReportsSentByUserId(userId, skip, pageSize),
+      this.adminUserRepository.countReportsSentByUserId(userId),
+    ]);
+
+    const items: UserReportSentItemDto[] = rows.map((r) => ({
+      id: r.id,
+      reported: { id: r.reported.id, name: r.reported.name },
+      detail: r.detail,
+      reason: r.reason,
+      createdAt: r.createdAt,
+    }));
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async getUserPosts(
+    userId: string,
+    query: PageQueryDto,
+  ): Promise<Paginated<UserPostItemDto>> {
+    const user = await this.adminUserRepository.findRoleById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    const page = query.page ?? 1;
+    const pageSize = 10;
+    const skip = (page - 1) * pageSize;
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findPostsByUserId(userId, skip, pageSize),
+      this.adminUserRepository.countPostsByUserId(userId),
+    ]);
+
+    const items: UserPostItemDto[] = rows.map((p) => ({
+      id: p.id,
+      title: p.title,
+      status: deriveDeletionStatus(p.deletedAt, p.deletedByAdminId),
+      deletedAt: p.deletedAt,
+      deletedByAdminName: p.deletedByAdmin?.name ?? null,
+      createdAt: p.createdAt,
+    }));
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async getUserComments(
+    userId: string,
+    query: PageQueryDto,
+  ): Promise<Paginated<UserCommentItemDto>> {
+    const user = await this.adminUserRepository.findRoleById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    const page = query.page ?? 1;
+    const pageSize = 10;
+    const skip = (page - 1) * pageSize;
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findCommentsByUserId(userId, skip, pageSize),
+      this.adminUserRepository.countCommentsByUserId(userId),
+    ]);
+
+    const items: UserCommentItemDto[] = rows.map((c) => ({
+      id: c.id,
+      content: c.content,
+      status: deriveDeletionStatus(c.deletedAt, c.deletedByAdminId),
+      deletedAt: c.deletedAt,
+      deletedByAdminName: c.deletedByAdmin?.name ?? null,
+      createdAt: c.createdAt,
+    }));
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
   }
 }
