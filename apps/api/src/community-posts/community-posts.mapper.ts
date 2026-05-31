@@ -34,3 +34,10 @@ export function mapPost(post: CommunityPost) {
     createdAt: post.createdAt,
   };
 }
+
+export function mapPostDetail(post: PostListItem, isLiked: boolean) {
+  return {
+    ...mapPostListItem(post),
+    isLiked,
+  };
+}

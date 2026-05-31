@@ -3,7 +3,11 @@ import { CommunityCategory, CommunityPost } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
-import { postListSelect } from './community-posts.types';
+import {
+  PostDetailItem,
+  postDetailSelect,
+  postListSelect,
+} from './community-posts.types';
 import { PostRequestDto } from './dto/post-request.dto';
 
 @Injectable()
@@ -41,6 +45,15 @@ export class CommunityPostsRepository {
     });
   }
 
+  findPostDetailById(postId: string): Promise<PostDetailItem | null> {
+    return this.prisma.communityPost.findUnique({
+      where: {
+        id: postId,
+      },
+      select: postDetailSelect,
+    });
+  }
+
   buildListWhere(category?: CommunityCategory) {
     return {
       deletedAt: null,
@@ -61,9 +74,25 @@ export class CommunityPostsRepository {
       select: postListSelect,
     });
   }
+
   countPosts(category?: CommunityCategory): Promise<number> {
     return this.prisma.communityPost.count({
       where: this.buildListWhere(category),
     });
+  }
+
+  async isLikedByUser(postId: string, userId: string): Promise<boolean> {
+    const like = await this.prisma.like.findUnique({
+      where: {
+        userId_postId: {
+          userId,
+          postId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+    return like !== null;
   }
 }

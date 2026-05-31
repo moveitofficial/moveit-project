@@ -24,6 +24,15 @@ export const postListSelect = {
   },
 } satisfies Prisma.CommunityPostSelect;
 
+export const postDetailSelect = {
+  ...postListSelect,
+  deletedAt: true,
+} satisfies Prisma.CommunityPostSelect;
+
 export type PostListItem = Prisma.CommunityPostGetPayload<{
   select: typeof postListSelect;
+}>;
+
+export type PostDetailItem = Prisma.CommunityPostGetPayload<{
+  select: typeof postDetailSelect;
 }>;
