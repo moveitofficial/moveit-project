@@ -239,10 +239,6 @@ export class OrdersService {
       throw new AppException(SERVICE_ERRORS.NOT_FOUND);
     }
 
-    if (order.serviceId !== service.id) {
-      throw new AppException(REVIEW_ERRORS.ORDER_SERVICE_MISMATCH);
-    }
-
     if (order.review !== null) {
       throw new AppException(REVIEW_ERRORS.ALREADY_EXISTS);
     }

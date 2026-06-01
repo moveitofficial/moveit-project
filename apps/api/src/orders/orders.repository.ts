@@ -8,7 +8,6 @@ import {
   myReviewListSelect,
   ReviewWithUser,
   reviewWithUserSelect,
-  ServiceReviewSort,
   ServiceReviewStats,
 } from '../services/services.types';
 
