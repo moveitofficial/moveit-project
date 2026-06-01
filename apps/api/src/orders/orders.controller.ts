@@ -11,7 +11,7 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
@@ -178,12 +178,14 @@ export class OrdersController {
 
   @ApiOperation({ summary: '리뷰 삭제' })
   @RoleAuth(Role.CLIENT)
-  @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: '리뷰 삭제 성공',
+  })
   @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
   @ApiErrorResponse(REVIEW_ERRORS.ORDER_REVIEW_MISMATCH)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id/reviews/:reviewId')
   deleteReview(
     @Req() req: Request,
