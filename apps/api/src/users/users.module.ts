@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { ClientProfilesModule } from '../client-profiles/client-profiles.module';
 import { ExpertProfilesModule } from '../expert-profiles/expert-profiles.module';
+import { MePortfoliosController } from '../portfolios/me-portfolios.controller';
 import { PortfoliosModule } from '../portfolios/portfolios.module';
 import { ServicesModule } from '../services/services.module';
 import { UploadModule } from '../upload/upload.module';
@@ -20,7 +21,7 @@ import { UsersService } from './users.service';
     ServicesModule,
   ],
   providers: [UsersRepository, UsersService],
-  controllers: [UsersController, MeController],
+  controllers: [MeController, MePortfoliosController, UsersController],
   exports: [UsersService],
 })
 export class UsersModule {}

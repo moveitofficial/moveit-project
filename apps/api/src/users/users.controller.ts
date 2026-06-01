@@ -38,7 +38,7 @@ export class UsersController {
     return this.usersService.getAllUser();
   }
 
-  @ApiOperation({ summary: '유저(전문가) 포트폴리오 조회하기' })
+  @ApiOperation({ summary: '유저(전문가) 포트폴리오 목록 조회하기' })
   @ApiSuccessResponse(HttpStatus.OK, PortfolioListResponseDto)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND, EXPERT_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)

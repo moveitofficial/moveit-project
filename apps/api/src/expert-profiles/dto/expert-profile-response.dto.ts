@@ -130,3 +130,11 @@ export class CreateExpertProfileResponseDto {
   @ApiProperty({ type: ExpertProfileResponseDto })
   declare expertProfile: ExpertProfileResponseDto;
 }
+
+export class ApplyForApprovalResponseDto {
+  @ApiProperty({ example: true })
+  declare isApplied: boolean;
+
+  @ApiProperty({ example: false })
+  declare isApproved: boolean;
+}

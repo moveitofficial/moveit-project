@@ -18,6 +18,15 @@ export class ExpertProfilesRepository {
     });
   }
 
+  findByUserIdWithRelations(
+    userId: string,
+  ): Promise<ExpertProfileWithRelations | null> {
+    return this.prisma.expertProfile.findUnique({
+      where: { userId },
+      include: expertProfileInclude,
+    });
+  }
+
   create(
     userId: string,
     data: {
@@ -122,5 +131,13 @@ export class ExpertProfilesRepository {
 
     if (tx) return tx.expertProfile.update(args);
     return this.prisma.expertProfile.update(args);
+  }
+
+  applyForApproval(userId: string): Promise<ExpertProfileWithRelations> {
+    return this.prisma.expertProfile.update({
+      where: { userId },
+      data: { isApplied: true, appliedAt: new Date() },
+      include: expertProfileInclude,
+    });
   }
 }
