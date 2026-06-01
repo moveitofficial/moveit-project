@@ -998,12 +998,14 @@ model MessageAttachment {
 // =========================
 
 model CsChatRoom {
-  id              String       @id @default(uuid()) @db.Uuid
-  userId          String       @map("user_id") @db.Uuid
-  assignedAdminId String?      @map("assigned_admin_id") @db.Uuid
-  lastMessageId   String?      @map("last_message_id") @db.Uuid
-  status          CsChatStatus
-  createdAt       DateTime     @default(now()) @map("created_at")
+  id                     String       @id @default(uuid()) @db.Uuid
+  userId                 String       @map("user_id") @db.Uuid
+  assignedAdminId        String?      @map("assigned_admin_id") @db.Uuid
+  lastMessageId          String?      @map("last_message_id") @db.Uuid
+  userLastReadMessageId  String?      @map("user_last_read_message_id") @db.Uuid
+  adminLastReadMessageId String?      @map("admin_last_read_message_id") @db.Uuid
+  status                 CsChatStatus
+  createdAt              DateTime     @default(now()) @map("created_at")
 
   user          User        @relation(fields: [userId], references: [id])
   assignedAdmin Admin?      @relation(fields: [assignedAdminId], references: [id])
