@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
-import { CustomerSupportGateway } from './customer-support.gateway';
-import { CustomerSupportRepository } from './customer-support.repository';
-import { CustomerSupportService } from './customer-support.service';
+import { CsChatGateway } from './cs-chat.gateway';
+import { CsChatRepository } from './cs-chat.repository';
+import { CsChatService } from './cs-chat.service';
 
 @Module({
   imports: [
@@ -16,10 +16,6 @@ import { CustomerSupportService } from './customer-support.service';
       }),
     }),
   ],
-  providers: [
-    CustomerSupportGateway,
-    CustomerSupportService,
-    CustomerSupportRepository,
-  ],
+  providers: [CsChatGateway, CsChatService, CsChatRepository],
 })
-export class CustomerSupportModule {}
+export class CsChatModule {}

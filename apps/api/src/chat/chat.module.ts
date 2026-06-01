@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 
 import { ConsultationChatModule } from './consultation-chat/consultation-chat.module';
-import { CustomerSupportModule } from './customer-support/customer-support.module';
+import { CsChatModule } from './cs-chat/cs-chat.module';
 
 @Module({
-  imports: [ConsultationChatModule, CustomerSupportModule],
+  imports: [ConsultationChatModule, CsChatModule],
 })
 export class ChatModule {}

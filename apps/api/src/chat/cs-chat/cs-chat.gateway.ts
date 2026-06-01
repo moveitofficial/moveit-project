@@ -1,12 +1,15 @@
 import { Logger, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { SOCKET_NAMESPACES } from '@repo/socket-events';
+import { CS_EVENTS, SOCKET_NAMESPACES } from '@repo/socket-events';
 import { Server, Socket } from 'socket.io';
 
 import {
@@ -18,9 +21,12 @@ import { COMMON_ERRORS } from '../../common/constants/errors';
 import { WsExceptionFilter } from '../../common/filters/ws-exception.filter';
 import { WsErrorResponse } from '../../common/interfaces/ws-error-response.interface';
 import { toWsException } from '../../common/utils/ws-exception.util';
+import { JoinRoomDto } from '../common/dto/join-room.dto';
+import { MarkReadDto } from '../common/dto/mark-read.dto';
 import { parseCookies } from '../common/utils/parse-cookies.util';
 
-import { CustomerSupportService } from './customer-support.service';
+import { CsChatService } from './cs-chat.service';
+import { SendCSMessageDto } from './dto/send-cs-message.dto';
 
 import type { AdminJwtAccessPayload } from '../../admin/admin-auth/admin-auth.types';
 import type { JwtAccessPayload } from '../../auth/auth.types';
@@ -50,17 +56,15 @@ import type {
     credentials: true,
   },
 })
-export class CustomerSupportGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+export class CsChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   declare server: Server;
 
-  private readonly logger = new Logger(CustomerSupportGateway.name);
+  private readonly logger = new Logger(CsChatGateway.name);
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly customerSupportService: CustomerSupportService,
+    private readonly csChatService: CsChatService,
   ) {}
 
   handleConnection(socket: Socket) {
@@ -106,5 +110,52 @@ export class CustomerSupportGateway
 
   handleDisconnect(socket: Socket) {
     this.logger.log(`CS 연결 해제: ${socket.id}`);
+  }
+
+  @SubscribeMessage(CS_EVENTS.JOIN_ROOM)
+  async handleJoinRoom(
+    @ConnectedSocket() socket: CsSocket,
+    @MessageBody() dto: JoinRoomDto,
+  ) {
+    await this.csChatService.validateParticipant(dto.roomId, socket.data);
+    await socket.join(dto.roomId);
+    socket.emit(CS_EVENTS.JOINED_ROOM, { roomId: dto.roomId });
+  }
+
+  @SubscribeMessage(CS_EVENTS.SEND_MESSAGE)
+  async handleSendMessage(
+    @ConnectedSocket() socket: CsSocket,
+    @MessageBody() dto: SendCSMessageDto,
+  ) {
+    const message = await this.csChatService.sendMessage(socket.data, dto);
+    this.server.to(dto.chatRoomId).emit(CS_EVENTS.RECEIVE_MESSAGE, message);
+  }
+
+  @SubscribeMessage(CS_EVENTS.CLOSE_TICKET)
+  async handleCloseTicket(
+    @ConnectedSocket() socket: CsSocket,
+    @MessageBody() dto: JoinRoomDto,
+  ) {
+    await this.csChatService.closeTicket(dto.roomId, socket.data);
+    this.server
+      .to(dto.roomId)
+      .emit(CS_EVENTS.TICKET_CLOSED, { roomId: dto.roomId });
+  }
+
+  @SubscribeMessage(CS_EVENTS.ASSIGN_ADMIN)
+  async handleAssignAdmin(
+    @ConnectedSocket() socket: CsSocket,
+    @MessageBody() dto: JoinRoomDto,
+  ) {
+    await this.csChatService.assignAdmin(dto.roomId, socket.data);
+    await socket.join(dto.roomId);
+  }
+
+  @SubscribeMessage(CS_EVENTS.MARK_READ)
+  async handleMarkRead(
+    @ConnectedSocket() socket: CsSocket,
+    @MessageBody() dto: MarkReadDto,
+  ) {
+    await this.csChatService.markRead(dto.roomId, socket.data, dto.messageId);
   }
 }

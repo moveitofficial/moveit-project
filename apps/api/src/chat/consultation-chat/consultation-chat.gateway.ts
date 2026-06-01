@@ -17,12 +17,12 @@ import { ACCESS_COOKIE_NAME, JWT_ACCESS_TYP } from '../../auth/auth.constants';
 import { CHAT_ERRORS, COMMON_ERRORS } from '../../common/constants/errors';
 import { WsExceptionFilter } from '../../common/filters/ws-exception.filter';
 import { toWsException } from '../../common/utils/ws-exception.util';
+import { JoinRoomDto } from '../common/dto/join-room.dto';
+import { MarkReadDto } from '../common/dto/mark-read.dto';
 import { parseCookies } from '../common/utils/parse-cookies.util';
 
 import { ConsultationChatService } from './consultation-chat.service';
 import { GetOrCreateRoomDto } from './dto/get-or-create-room.dto';
-import { JoinRoomDto } from './dto/join-room.dto';
-import { MarkReadDto } from './dto/mark-read.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 
 import type { JwtAccessPayload } from '../../auth/auth.types';

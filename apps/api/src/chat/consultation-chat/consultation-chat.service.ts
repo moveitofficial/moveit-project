@@ -25,7 +25,7 @@ export class ConsultationChatService {
   }
 
   async validateParticipant(roomId: string, userId: string) {
-    const participant = await this.consultationChatRepository.findParticipant(
+    const participant = await this.consultationChatRepository.findRoom(
       roomId,
       userId,
     );
