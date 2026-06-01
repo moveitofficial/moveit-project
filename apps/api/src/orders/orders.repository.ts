@@ -202,6 +202,12 @@ export class OrdersRepository {
     });
   }
 
+  async deleteReview(reviewId: string): Promise<void> {
+    await this.prisma.review.delete({
+      where: { id: reviewId },
+    });
+  }
+
   async createPaidOrder(data: {
     clientUserId: string;
     expertUserId: string;

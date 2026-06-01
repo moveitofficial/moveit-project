@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -190,5 +191,23 @@ export class OrdersController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.updateReview(user.userId, orderId, reviewId, dto);
+  }
+
+  @ApiOperation({ summary: '리뷰 삭제' })
+  @RoleAuth(Role.CLIENT)
+  @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':id/reviews/:reviewId')
+  deleteReview(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.deleteReview(user.userId, orderId, reviewId);
   }
 }

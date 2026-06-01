@@ -330,4 +330,24 @@ export class OrdersService {
 
     return mapReview(updated);
   }
+
+  async deleteReview(userId: string, orderId: string, reviewId: string) {
+    const review = await this.ordersRepository.findReviewById(
+      reviewId,
+      orderId,
+    );
+    if (review === null) {
+      throw new AppException(REVIEW_ERRORS.NOT_FOUND);
+    }
+
+    if (review.user.id !== userId) {
+      throw new AppException(COMMON_ERRORS.FORBIDDEN);
+    }
+
+    if (review.orderId !== orderId) {
+      throw new AppException(REVIEW_ERRORS.ORDER_REVIEW_MISMATCH);
+    }
+
+    await this.ordersRepository.deleteReview(reviewId);
+  }
 }
