@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CommunityCategory, CommunityPost, Like } from '@prisma/client';
+import { CommunityCategory, CommunityPost } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -105,22 +105,27 @@ export class CommunityPostsRepository {
     return like !== null;
   }
 
-  likePost(postId: string, userId: string): Promise<Like> {
-    return this.prisma.like.create({
-      data: {
-        postId,
-        userId,
-      },
-    });
-  }
-
-  unlikePost(postId: string, userId: string): Promise<Like> {
-    return this.prisma.like.delete({
+  async likePost(postId: string, userId: string): Promise<void> {
+    await this.prisma.like.upsert({
       where: {
         userId_postId: {
           userId,
           postId,
         },
+      },
+      update: {},
+      create: {
+        userId,
+        postId,
+      },
+    });
+  }
+
+  async unlikePost(postId: string, userId: string): Promise<void> {
+    await this.prisma.like.deleteMany({
+      where: {
+        userId,
+        postId,
       },
     });
   }
