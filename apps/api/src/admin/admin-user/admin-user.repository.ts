@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { AdminActionType, Prisma, Role } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 
 import type { GetUsersQueryDto } from './dto/list/users-query.dto';
-import type { Prisma, Role } from '@prisma/client';
 
 @Injectable()
 export class AdminUserRepository {
@@ -253,5 +253,34 @@ export class AdminUserRepository {
 
   countCommentsByUserId(userId: string): Promise<number> {
     return this.prisma.comment.count({ where: { userId } });
+  }
+
+  // 클래스 내부 맨 아래
+  blockUser(
+    userId: string,
+    adminId: string,
+    action:
+      | typeof AdminActionType.BLACKLIST_ADDED
+      | typeof AdminActionType.BLACKLIST_REMOVED,
+  ) {
+    const isAdding = action === AdminActionType.BLACKLIST_ADDED;
+
+    return this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          isBlocked: isAdding,
+          blockedAt: isAdding ? new Date() : null,
+          blockedByAdminId: isAdding ? adminId : null,
+        },
+      }),
+      this.prisma.adminActivityLog.create({
+        data: {
+          adminId,
+          actionType: action,
+          referenceId: userId,
+        },
+      }),
+    ]);
   }
 }
