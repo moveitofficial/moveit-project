@@ -524,49 +524,6 @@ export class ServicesService {
     return mapService(updated);
   }
 
-  async createServiceReview(
-    userId: string,
-    serviceId: string,
-    dto: CreateReviewRequestDto,
-  ) {
-    const service = await this.servicesRepository.findById(serviceId);
-
-    if (service === null) {
-      throw new AppException(SERVICE_ERRORS.NOT_FOUND);
-    }
-
-    const order = await this.servicesRepository.findOrderForReview(dto.orderId);
-
-    if (order === null) {
-      throw new AppException(ORDER_ERRORS.NOT_FOUND);
-    }
-
-    if (order.serviceId !== serviceId) {
-      throw new AppException(REVIEW_ERRORS.ORDER_SERVICE_MISMATCH);
-    }
-
-    if (order.clientUserId !== userId) {
-      throw new AppException(COMMON_ERRORS.FORBIDDEN);
-    }
-
-    if (!REVIEWABLE_ORDER_STATUSES.includes(order.status)) {
-      throw new AppException(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE);
-    }
-
-    if (order.review !== null) {
-      throw new AppException(REVIEW_ERRORS.ALREADY_EXISTS);
-    }
-
-    const review = await this.servicesRepository.createReview({
-      orderId: dto.orderId,
-      userId,
-      rating: dto.rating,
-      content: dto.content,
-    });
-
-    return mapReview(review);
-  }
-
   async updateServiceReview(
     userId: string,
     serviceId: string,

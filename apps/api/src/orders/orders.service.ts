@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, Role, ServiceStatus } from '@prisma/client';
 
-import { ORDER_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
+import {
+  COMMON_ERRORS,
+  ORDER_ERRORS,
+  REVIEW_ERRORS,
+  SERVICE_ERRORS,
+} from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 
@@ -33,6 +38,9 @@ import type { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
 import type { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
 import type { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
+import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
+import { REVIEWABLE_ORDER_STATUSES } from '../services/services.types';
+import { mapReview } from '../services/services.mapper';
 
 @Injectable()
 export class OrdersService {
@@ -198,5 +206,50 @@ export class OrdersService {
     paidAmount: number,
   ): Promise<number> {
     return Promise.resolve(paidAmount);
+  }
+
+  async createReview(
+    userId: string,
+    orderId: string,
+    dto: CreateReviewRequestDto,
+  ) {
+    const order = await this.ordersRepository.findOrderForReview(orderId);
+
+    if (order === null) {
+      throw new AppException(ORDER_ERRORS.NOT_FOUND);
+    }
+
+    if (order.clientUserId !== userId) {
+      throw new AppException(COMMON_ERRORS.FORBIDDEN);
+    }
+
+    if (!REVIEWABLE_ORDER_STATUSES.includes(order.status)) {
+      throw new AppException(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE);
+    }
+
+    const service = await this.ordersRepository.findServiceById(
+      order.serviceId,
+    );
+
+    if (service === null) {
+      throw new AppException(SERVICE_ERRORS.NOT_FOUND);
+    }
+
+    if (order.serviceId !== service.id) {
+      throw new AppException(REVIEW_ERRORS.ORDER_SERVICE_MISMATCH);
+    }
+
+    if (order.review !== null) {
+      throw new AppException(REVIEW_ERRORS.ALREADY_EXISTS);
+    }
+
+    const review = await this.ordersRepository.createReview({
+      orderId,
+      userId,
+      rating: dto.rating,
+      content: dto.content,
+    });
+
+    return mapReview(review);
   }
 }

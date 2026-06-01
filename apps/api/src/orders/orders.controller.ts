@@ -32,6 +32,8 @@ import { UpdateOrderStatusResponseDto } from './dto/update-order-status-response
 import { OrdersService } from './orders.service';
 
 import type { Request } from 'express';
+import { ReviewResponseDto } from '../services/dto/service-response.dto';
+import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
 
 @ApiTags('orders')
 @Controller('orders')
@@ -135,5 +137,23 @@ export class OrdersController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.requestSettlement(user.userId, orderId);
+  }
+
+  @ApiOperation({ summary: '리뷰 작성' })
+  @RoleAuth(Role.CLIENT)
+  @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/reviews')
+  createReview(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+    @Body() dto: CreateReviewRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.createReview(user.userId, orderId, dto);
   }
 }

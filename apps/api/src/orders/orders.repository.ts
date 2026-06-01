@@ -9,10 +9,12 @@ import { DEFAULT_PAYMENT_METHOD } from './orders.constants';
 import {
   orderListSelect,
   orderPolicySelect,
+  orderReviewSelect,
   orderSchedulePolicySelect,
 } from './orders.types';
 
 import type { OrderListSort } from './orders.constants';
+import { ReviewWithUser, reviewWithUserSelect } from '../services/services.types';
 
 @Injectable()
 export class OrdersRepository {
@@ -78,6 +80,30 @@ export class OrdersRepository {
     return this.prisma.order.findUnique({
       where: { id: orderId },
       select: orderSchedulePolicySelect,
+    });
+  }
+
+  async findOrderForReview(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: orderReviewSelect,
+    });
+  }
+
+  createReview(data: {
+    orderId: string;
+    userId: string;
+    rating: number;
+    content: string;
+  }): Promise<ReviewWithUser> {
+    return this.prisma.review.create({
+      data: {
+        orderId: data.orderId,
+        userId: data.userId,
+        rating: data.rating,
+        content: data.content,
+      },
+      select: reviewWithUserSelect,
     });
   }
 
