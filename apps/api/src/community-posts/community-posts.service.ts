@@ -171,4 +171,27 @@ export class CommunityPostsService {
 
     return mapPost(updated);
   }
+
+  async toggleLike(postId: string, userId: string) {
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const isLiked = await this.communityPostsRepository.isLikedByUser(
+      postId,
+      userId,
+    );
+
+    await (isLiked
+      ? this.communityPostsRepository.unlikePost(postId, userId)
+      : this.communityPostsRepository.likePost(postId, userId));
+
+    return { isLiked: !isLiked };
+  }
 }

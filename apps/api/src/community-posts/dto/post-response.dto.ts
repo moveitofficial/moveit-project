@@ -50,3 +50,11 @@ export class PostDeletionResponseDto extends OmitType(PostResponseDto, [
   })
   declare deletedAt: Date;
 }
+
+export class ToggleLikeResponseDto {
+  @ApiProperty({
+    example: true,
+    description: '좋아요 여부',
+  })
+  declare isLiked: boolean;
+}
