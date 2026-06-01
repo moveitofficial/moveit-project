@@ -4,6 +4,7 @@ import { Comment, CommunityCategory, CommunityPost } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 import {
+  commentListSelect,
   PostDetailItem,
   postDetailSelect,
   postListSelect,
@@ -144,5 +145,22 @@ export class CommunityPostsRepository {
     };
 
     return this.prisma.comment.create(args);
+  }
+
+  findAllComments(args: { postId: string; skip: number; take: number }) {
+    return this.prisma.comment.findMany({
+      where: this.buildCommentListWhere(args.postId),
+      select: commentListSelect,
+      orderBy: { createdAt: 'desc' },
+      skip: args.skip,
+      take: args.take,
+    });
+  }
+
+  buildCommentListWhere(postId: string) {
+    return {
+      postId,
+      deletedAt: null,
+    };
   }
 }
