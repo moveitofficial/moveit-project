@@ -349,7 +349,7 @@ export const COMMUNITY_POSTS_ERRORS = {
   },
   FORBIDDEN: {
     status: HttpStatus.FORBIDDEN,
-    message: '본인이 등록한 게시글만 수정할 수 있습니다.',
+    message: '본인이 등록한 게시글만 수정, 삭제할 수 있습니다.',
     code: 'COMMUNITY_POSTS_FORBIDDEN',
   },
   ALREADY_DELETED: {

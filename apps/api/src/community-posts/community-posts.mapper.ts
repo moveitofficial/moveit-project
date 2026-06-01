@@ -41,3 +41,10 @@ export function mapPostDetail(post: PostListItem, isLiked: boolean) {
     isLiked,
   };
 }
+
+export function mapPostToBeDeleted(post: CommunityPost) {
+  return {
+    ...mapPost(post),
+    deletedAt: post.deletedAt,
+  };
+}
