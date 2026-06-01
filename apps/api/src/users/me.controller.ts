@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Patch,
@@ -140,7 +141,7 @@ export class MeController {
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Patch('withdraw')
+  @Delete()
   withdrawMyAccount(@Req() req: Request, @Body() dto: WithdrawRequestDto) {
     const user = req.user as JwtAccessUser;
     return this.usersService.withdrawUser(user.userId, dto.deletionReason);
