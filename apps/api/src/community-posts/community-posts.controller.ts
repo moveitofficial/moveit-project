@@ -34,6 +34,7 @@ import {
   PostDetailResponseDto,
   PostListItemResponseDto,
   PostResponseDto,
+  ToggleLikeResponseDto,
 } from './dto/post-response.dto';
 
 import type { Request } from 'express';
@@ -98,5 +99,17 @@ export class CommunityPostsController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.communityPostsService.updatePost(user.userId, id, dto);
+  }
+
+  @ApiOperation({ summary: '게시글 좋아요 토글' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, ToggleLikeResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Post(':id/like')
+  toggleLike(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.toggleLike(postId, user.userId);
   }
 }
