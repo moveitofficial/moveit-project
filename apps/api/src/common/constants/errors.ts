@@ -95,6 +95,14 @@ export const USER_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '해당 사용자 역할에서는 조회할 수 없는 리소스입니다.',
   },
+  ALREADY_BLOCKED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 블랙리스트에 등록된 회원입니다.',
+  },
+  NOT_BLOCKED: {
+    status: HttpStatus.CONFLICT,
+    message: '블랙리스트에 등록되지 않은 회원입니다.',
+  },
 } as const;
 
 export const SERVICE_ERRORS = {
@@ -404,5 +412,18 @@ export const CS_CHAT_ERRORS = {
     status: HttpStatus.FORBIDDEN,
     message: '관리자만 이 작업을 수행할 수 있습니다.',
     code: 'CS_CHAT_FORBIDDEN_NOT_ADMIN',
+  },
+} as const;
+
+export const COMMENTS_ERRORS = {
+  CONTENT_TOO_SHORT: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '댓글 내용은 최소 1자 이상이어야 합니다.',
+    code: 'COMMENTS_CONTENT_TOO_SHORT',
+  },
+  CONTENT_TOO_LONG: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '댓글 내용은 최대 300자 이하여야 합니다.',
+    code: 'COMMENTS_CONTENT_TOO_LONG',
   },
 } as const;

@@ -3,6 +3,7 @@ import type {
   Provider,
   ServiceType,
   ServiceStatus,
+  ReportReason,
 } from '@/types/enums';
 
 export const PROVIDER_LABEL: Record<Provider, string> = {
@@ -44,6 +45,19 @@ export const SERVICE_STATUS_LABEL: Record<ServiceStatus, string> = {
 
 export const SERVICE_STATUS_OPTIONS = (
   Object.entries(SERVICE_STATUS_LABEL) as [ServiceStatus, string][]
+).map(([value, label]) => ({ value, label }));
+
+export const REPORT_REASON_LABEL: Record<ReportReason, string> = {
+  FALSE_INFORMATION: '허위·과장 정보',
+  ABUSE: '욕설·비방',
+  ILLEGAL_ACTIVITY: '불법 행위/사기 의심',
+  EXTERNAL_CONTACT: '외부 연락처 유도',
+  SPAM: '스팸/광고',
+  OTHER: '기타',
+};
+
+export const REPORT_REASON_OPTIONS = (
+  Object.entries(REPORT_REASON_LABEL) as [ReportReason, string][]
 ).map(([value, label]) => ({ value, label }));
 
 export const REGION_LABEL: Record<string, string> = {

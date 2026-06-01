@@ -53,10 +53,9 @@ export class OrdersController {
   ) {}
 
   @ApiOperation({ summary: '주문 결제·환불 상세 (거래상세)' })
-  @JwtAuth()
+  @JwtAuth(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiSuccessResponse(HttpStatus.OK, OrderPaymentDto)
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, PAYMENT_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get(':id/payment')
   getOrderPayment(
@@ -68,10 +67,9 @@ export class OrdersController {
   }
 
   @ApiOperation({ summary: '주문 상태 전이' })
-  @JwtAuth()
+  @JwtAuth(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS, COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(ORDER_ERRORS.ALREADY_PROCESSED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
@@ -92,10 +90,9 @@ export class OrdersController {
   }
 
   @ApiOperation({ summary: '주문 일정 등록·변경' })
-  @JwtAuth()
+  @JwtAuth(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiSuccessResponse(HttpStatus.OK, UpdateOrderScheduleResponseDto)
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS, COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.OK)
@@ -115,10 +112,9 @@ export class OrdersController {
   }
 
   @ApiOperation({ summary: '구매 확정' })
-  @RoleAuth(Role.CLIENT)
+  @RoleAuth(Role.CLIENT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.OK)
@@ -132,10 +128,9 @@ export class OrdersController {
   }
 
   @ApiOperation({ summary: '정산 요청' })
-  @RoleAuth(Role.EXPERT)
+  @RoleAuth(Role.EXPERT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.OK)

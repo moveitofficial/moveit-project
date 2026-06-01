@@ -98,9 +98,8 @@ export class ServicesController {
     summary: '전문가 서비스 상태 변경',
     description: '서비스 상태 변경: ACTIVE(활성)/PAUSED(중지)',
   })
-  @RoleAuth(Role.EXPERT)
+  @RoleAuth(Role.EXPERT, SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
@@ -120,9 +119,8 @@ export class ServicesController {
   }
 
   @ApiOperation({ summary: '전문가 서비스 수정 (상태 제외)' })
-  @RoleAuth(Role.EXPERT)
+  @RoleAuth(Role.EXPERT, SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
   @ApiErrorResponse(
@@ -144,9 +142,8 @@ export class ServicesController {
     summary: '전문가 서비스 종료',
     description: '서비스 상태: CLOSED - 종료 처리',
   })
-  @RoleAuth(Role.EXPERT)
+  @RoleAuth(Role.EXPERT, SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiSuccessResponse(HttpStatus.OK, ServiceResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(SERVICE_ERRORS.ALREADY_DELETED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)

@@ -19,24 +19,24 @@ interface ErrorConstant {
 
 export const ROLES_KEY = 'roles';
 
-export function JwtAuth(...additionalErrors: ErrorConstant[]) {
-  const allErrors = [
-    AUTH_ERRORS.TOKEN_EXPIRED,
-    AUTH_ERRORS.ACCESS_TOKEN_INVALID,
-    ...additionalErrors,
-  ];
-
+export function JwtAuth(...additionalForbiddenErrors: ErrorConstant[]) {
   return applyDecorators(
     UseGuards(JwtAccessGuard),
     ApiCookieAuth('cookieAuth'),
-    ApiErrorResponse(COMMON_ERRORS.BLOCKED, USER_ERRORS.DELETED),
+    ApiErrorResponse(
+      COMMON_ERRORS.BLOCKED,
+      USER_ERRORS.DELETED,
+      ...additionalForbiddenErrors,
+    ),
     ApiUnauthorizedResponse({
       type: ErrorResponseDto,
       examples: Object.fromEntries(
-        allErrors.map((err, i) => [
-          String(i),
-          { summary: err.message, value: errorResponseExample(err) },
-        ]),
+        [AUTH_ERRORS.TOKEN_EXPIRED, AUTH_ERRORS.ACCESS_TOKEN_INVALID].map(
+          (err, i) => [
+            String(i),
+            { summary: err.message, value: errorResponseExample(err) },
+          ],
+        ),
       ),
     }),
   );
@@ -49,13 +49,10 @@ export function OptionalJwtAuth() {
   );
 }
 
-export function RoleAuth(role: Role, ...additionalErrors: ErrorConstant[]) {
-  const allErrors = [
-    AUTH_ERRORS.TOKEN_EXPIRED,
-    AUTH_ERRORS.ACCESS_TOKEN_INVALID,
-    ...additionalErrors,
-  ];
-
+export function RoleAuth(
+  role: Role,
+  ...additionalForbiddenErrors: ErrorConstant[]
+) {
   return applyDecorators(
     SetMetadata(ROLES_KEY, [role]),
     UseGuards(JwtAccessGuard, RolesGuard),
@@ -64,14 +61,17 @@ export function RoleAuth(role: Role, ...additionalErrors: ErrorConstant[]) {
       COMMON_ERRORS.BLOCKED,
       USER_ERRORS.DELETED,
       COMMON_ERRORS.FORBIDDEN,
+      ...additionalForbiddenErrors,
     ),
     ApiUnauthorizedResponse({
       type: ErrorResponseDto,
       examples: Object.fromEntries(
-        allErrors.map((err, i) => [
-          String(i),
-          { summary: err.message, value: errorResponseExample(err) },
-        ]),
+        [AUTH_ERRORS.TOKEN_EXPIRED, AUTH_ERRORS.ACCESS_TOKEN_INVALID].map(
+          (err, i) => [
+            String(i),
+            { summary: err.message, value: errorResponseExample(err) },
+          ],
+        ),
       ),
     }),
   );

@@ -1,7 +1,7 @@
 import { Role } from '@prisma/client';
 
 import type { PostListItem } from './community-posts.types';
-import type { CommunityPost } from '@prisma/client';
+import type { Comment, CommunityPost } from '@prisma/client';
 
 function resolveAuthorDisplayName(user: PostListItem['user']): string {
   if (user.role === Role.EXPERT) {
@@ -49,5 +49,14 @@ export function mapPostToBeDeleted(post: CommunityPost) {
     title: post.title,
     createdAt: post.createdAt,
     deletedAt: post.deletedAt,
+  };
+}
+
+export function mapComment(comment: Comment) {
+  return {
+    id: comment.id,
+    userId: comment.userId,
+    content: comment.content,
+    createdAt: comment.createdAt,
   };
 }

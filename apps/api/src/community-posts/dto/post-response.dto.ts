@@ -58,3 +58,20 @@ export class ToggleLikeResponseDto {
   })
   declare isLiked: boolean;
 }
+
+export class CommentResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ format: 'uuid' })
+  declare userId: string;
+
+  @ApiProperty({
+    example: '안녕하세요. 좋은 글 잘 봤습니다.',
+    description: '댓글 내용',
+  })
+  declare content: string;
+
+  @ApiProperty({ example: '2026-05-28T10:00:00.000Z' })
+  declare createdAt: Date;
+}
