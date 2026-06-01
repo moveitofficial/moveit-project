@@ -1,23 +1,32 @@
 import { Injectable } from '@nestjs/common';
 
-import { COMMUNITY_POSTS_ERRORS } from '../common/constants/errors';
+import {
+  COMMENTS_ERRORS,
+  COMMUNITY_POSTS_ERRORS,
+} from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 
 import {
+  mapComment,
   mapPost,
   mapPostDetail,
   mapPostListItem,
 } from './community-posts.mapper';
 import { CommunityPostsRepository } from './community-posts.repository';
 import {
+  COMMENT_MAX_LENGTH,
   getPostContentPlainTextLength,
   POST_MIN_LENGTH,
   sanitizePostContent,
 } from './community-posts.util';
 import { PostListQueryDto } from './dto/post-list-query.dto';
-import { PostRequestDto, UpdatePostRequestDto } from './dto/post-request.dto';
+import {
+  CommentRequestDto,
+  PostRequestDto,
+  UpdatePostRequestDto,
+} from './dto/post-request.dto';
 import { PostListItemResponseDto } from './dto/post-response.dto';
 
 import type { CommunityCategory } from '@prisma/client';
@@ -146,5 +155,29 @@ export class CommunityPostsService {
     );
 
     return mapPost(updated);
+  }
+
+  async createComment(
+    userId: string,
+    postId: string,
+    dto: CommentRequestDto,
+  ): Promise<ReturnType<typeof mapComment>> {
+    const sanitizedContent = sanitizePostContent(dto.content);
+    const plainTextLength = getPostContentPlainTextLength(sanitizedContent);
+
+    if (plainTextLength < POST_MIN_LENGTH) {
+      throw new AppException(COMMENTS_ERRORS.CONTENT_TOO_SHORT);
+    }
+
+    if (plainTextLength > COMMENT_MAX_LENGTH) {
+      throw new AppException(COMMENTS_ERRORS.CONTENT_TOO_LONG);
+    }
+
+    const comment = await this.communityPostsRepository.createComment(
+      postId,
+      userId,
+      dto,
+    );
+    return mapComment(comment);
   }
 }
