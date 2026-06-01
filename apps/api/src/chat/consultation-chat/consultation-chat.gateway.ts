@@ -63,7 +63,7 @@ export class ConsultationChatGateway
   ) {}
 
   handleConnection(socket: Socket) {
-    const payload = this.#resolvePayload(socket);
+    const payload = this.#resolvePrincipal(socket);
     if (!payload) {
       const response: WsErrorResponse = {
         success: false,
@@ -81,7 +81,7 @@ export class ConsultationChatGateway
     this.logger.log(`연결: ${socket.id} (userId: ${payload.sub})`);
   }
 
-  #resolvePayload(socket: Socket): JwtAccessPayload | null {
+  #resolvePrincipal(socket: Socket): JwtAccessPayload | null {
     try {
       const token = parseCookies(socket.handshake.headers.cookie)[
         ACCESS_COOKIE_NAME
@@ -89,7 +89,8 @@ export class ConsultationChatGateway
       if (!token) return null;
       const payload = this.jwtService.verify<JwtAccessPayload>(token);
       return payload.typ === JWT_ACCESS_TYP ? payload : null;
-    } catch {
+    } catch (error) {
+      this.logger.error(`resolvePrincipal error: ${String(error)}`);
       return null;
     }
   }
@@ -134,11 +135,11 @@ export class ConsultationChatGateway
     @MessageBody() dto: SendMessageDto,
   ) {
     const message = await this.consultationChatService.sendMessage(
-      dto.chatRoomId,
+      dto.roomId,
       socket.data.userId,
       dto,
     );
-    this.server.to(dto.chatRoomId).emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+    this.server.to(dto.roomId).emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
   }
 
   @SubscribeMessage(CHAT_EVENTS.MARK_READ)

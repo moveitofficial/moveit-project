@@ -103,7 +103,8 @@ export class CsChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           : null;
       }
       return null;
-    } catch {
+    } catch (error) {
+      this.logger.error(`resolvePrincipal error: ${String(error)}`);
       return null;
     }
   }
@@ -128,7 +129,7 @@ export class CsChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() dto: SendCSMessageDto,
   ) {
     const message = await this.csChatService.sendMessage(socket.data, dto);
-    this.server.to(dto.chatRoomId).emit(CS_EVENTS.RECEIVE_MESSAGE, message);
+    this.server.to(dto.roomId).emit(CS_EVENTS.RECEIVE_MESSAGE, message);
   }
 
   @SubscribeMessage(CS_EVENTS.CLOSE_TICKET)

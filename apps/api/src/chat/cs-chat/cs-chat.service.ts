@@ -27,7 +27,7 @@ export class CsChatService {
   }
 
   async sendMessage(socketData: CsSocketData, dto: SendCSMessageDto) {
-    await this.validateParticipant(dto.chatRoomId, socketData);
+    await this.validateParticipant(dto.roomId, socketData);
 
     const senderFields =
       socketData.kind === 'user'
@@ -35,7 +35,7 @@ export class CsChatService {
         : { senderType: SenderType.ADMIN, senderAdminId: socketData.adminId };
 
     return this.csChatRepository.createMessage({
-      chatRoomId: dto.chatRoomId,
+      chatRoomId: dto.roomId,
       content: dto.content,
       type: dto.type,
       ...senderFields,

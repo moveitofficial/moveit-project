@@ -1,4 +1,4 @@
-import { ArgumentsHost, Catch } from '@nestjs/common';
+import { ArgumentsHost, Catch, Logger } from '@nestjs/common';
 import { BaseWsExceptionFilter, WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 
@@ -18,10 +18,13 @@ function isWsErrorPayload(value: unknown): value is WsErrorPayload {
 
 @Catch()
 export class WsExceptionFilter extends BaseWsExceptionFilter {
+  private readonly logger = new Logger(WsExceptionFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost) {
     const client = host.switchToWs().getClient<Socket>();
 
     if (!(exception instanceof WsException)) {
+      this.logger.error(exception);
       const response: WsErrorResponse = {
         success: false,
         message: COMMON_ERRORS.INTERNAL_SERVER_ERROR.message,

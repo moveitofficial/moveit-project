@@ -3,7 +3,7 @@ import { IsEnum, IsString, IsUUID, MinLength } from 'class-validator';
 
 export class SendCSMessageDto {
   @IsUUID()
-  declare chatRoomId: string;
+  declare roomId: string;
 
   @IsEnum(MessageType)
   declare type: MessageType;
