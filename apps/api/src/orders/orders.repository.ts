@@ -118,6 +118,19 @@ export class OrdersRepository {
     });
   }
 
+  findReviewById(
+    reviewId: string,
+    orderId: string,
+  ): Promise<ReviewWithUser | null> {
+    return this.prisma.review.findFirst({
+      where: {
+        id: reviewId,
+        order: { id: orderId },
+      },
+      select: reviewWithUserSelect,
+    });
+  }
+
   findReviews(args: {
     orderId: string;
     skip: number;
@@ -173,6 +186,20 @@ export class OrdersRepository {
       });
     }
     return result;
+  }
+
+  updateReview(
+    reviewId: string,
+    data: {
+      rating?: number;
+      content?: string;
+    },
+  ): Promise<ReviewWithUser> {
+    return this.prisma.review.update({
+      where: { id: reviewId },
+      data,
+      select: reviewWithUserSelect,
+    });
   }
 
   async createPaidOrder(data: {

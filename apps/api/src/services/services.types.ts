@@ -121,6 +121,7 @@ export type ServiceDetail = Prisma.ServiceGetPayload<{
 
 export const reviewWithUserSelect = {
   id: true,
+  orderId: true,
   rating: true,
   content: true,
   createdAt: true,

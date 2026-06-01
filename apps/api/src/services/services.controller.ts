@@ -17,18 +17,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import {
-  ApiConsumes,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import {
   COMMON_ERRORS,
-  REVIEW_ERRORS,
   SERVICE_ERRORS,
   UPLOAD_ERRORS,
 } from '../common/constants/errors';
@@ -49,8 +43,6 @@ import {
   ServiceListPaginatedResponseDto,
   ServiceListQueryDto,
   ServiceResponseDto,
-  ServiceReviewsPaginatedResponseDto,
-  ServiceReviewsQueryDto,
 } from './dto/service-response.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
@@ -171,43 +163,6 @@ export class ServicesController {
   @Get(':id/others')
   findOthers(@Param('id', ParseUUIDPipe) serviceId: string) {
     return this.servicesService.getOtherServicesByExpertId(serviceId);
-  }
-
-  @ApiOperation({ summary: '서비스 리뷰 목록 조회' })
-  @ApiSuccessResponse(HttpStatus.OK, ServiceReviewsPaginatedResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Get(':id/reviews')
-  findReviews(
-    @Param('id', ParseUUIDPipe) serviceId: string,
-    @Query() query: ServiceReviewsQueryDto,
-  ) {
-    return this.servicesService.getServiceReviews(serviceId, query);
-  }
-
-  @ApiOperation({ summary: '서비스 리뷰 삭제' })
-  @RoleAuth(Role.CLIENT)
-  @ApiResponse({
-    status: HttpStatus.NO_CONTENT,
-    description: '리뷰 삭제 성공',
-  })
-  @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':id/reviews/:reviewId')
-  deleteReview(
-    @Req() req: Request,
-    @Param('id', ParseUUIDPipe) serviceId: string,
-    @Param('reviewId', ParseUUIDPipe) reviewId: string,
-  ) {
-    const user = req.user as JwtAccessUser;
-    return this.servicesService.deleteServiceReview(
-      user.userId,
-      serviceId,
-      reviewId,
-    );
   }
 
   @ApiOperation({ summary: '서비스 이미지 업로드' })

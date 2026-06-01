@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceStatus, type Prisma } from '@prisma/client';
 
-import {
-  COMMON_ERRORS,
-  REVIEW_ERRORS,
-  SERVICE_ERRORS,
-} from '../common/constants/errors';
+import { SERVICE_ERRORS } from '../common/constants/errors';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
@@ -518,26 +514,5 @@ export class ServicesService {
     await this.uploadService.deleteImages(keys);
 
     return mapService(updated);
-  }
-
-  async deleteServiceReview(
-    userId: string,
-    serviceId: string,
-    reviewId: string,
-  ): Promise<void> {
-    const review = await this.servicesRepository.findReviewById(
-      reviewId,
-      serviceId,
-    );
-
-    if (review === null) {
-      throw new AppException(REVIEW_ERRORS.NOT_FOUND);
-    }
-
-    if (review.user.id !== userId) {
-      throw new AppException(COMMON_ERRORS.FORBIDDEN);
-    }
-
-    await this.servicesRepository.deleteReview(reviewId);
   }
 }

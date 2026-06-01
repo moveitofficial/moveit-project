@@ -11,6 +11,7 @@ import { AppException } from '../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
 import { ServiceReviewsQueryDto } from '../services/dto/service-response.dto';
+import { UpdateReviewRequestDto } from '../services/dto/update-review-request.dto';
 import { mapReview } from '../services/services.mapper';
 import { REVIEWABLE_ORDER_STATUSES } from '../services/services.types';
 
@@ -298,5 +299,35 @@ export class OrdersService {
       ),
       averageRating: stats.rating,
     };
+  }
+
+  async updateReview(
+    userId: string,
+    orderId: string,
+    reviewId: string,
+    dto: UpdateReviewRequestDto,
+  ) {
+    const review = await this.ordersRepository.findReviewById(
+      reviewId,
+      orderId,
+    );
+    if (review === null) {
+      throw new AppException(REVIEW_ERRORS.NOT_FOUND);
+    }
+
+    if (review.user.id !== userId) {
+      throw new AppException(COMMON_ERRORS.FORBIDDEN);
+    }
+
+    if (review.orderId !== orderId) {
+      throw new AppException(REVIEW_ERRORS.ORDER_REVIEW_MISMATCH);
+    }
+
+    const updated = await this.ordersRepository.updateReview(reviewId, {
+      rating: dto.rating,
+      content: dto.content,
+    });
+
+    return mapReview(updated);
   }
 }

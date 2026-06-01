@@ -87,19 +87,6 @@ export class ServicesRepository {
     });
   }
 
-  findReviewById(
-    reviewId: string,
-    serviceId: string,
-  ): Promise<ReviewWithUser | null> {
-    return this.prisma.review.findFirst({
-      where: {
-        id: reviewId,
-        order: { serviceId },
-      },
-      select: reviewWithUserSelect,
-    });
-  }
-
   findAllReviewsByUserId(args: {
     userId: string;
     skip: number;

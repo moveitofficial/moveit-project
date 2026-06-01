@@ -30,6 +30,7 @@ import {
   ServiceReviewsPaginatedResponseDto,
   ServiceReviewsQueryDto,
 } from '../services/dto/service-response.dto';
+import { UpdateReviewRequestDto } from '../services/dto/update-review-request.dto';
 
 import { OrderPaymentDto } from './dto/order-response.dto';
 import { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
@@ -170,5 +171,24 @@ export class OrdersController {
     @Query() query: ServiceReviewsQueryDto,
   ) {
     return this.ordersService.getReviews(serviceId, query);
+  }
+
+  @ApiOperation({ summary: '리뷰 수정' })
+  @RoleAuth(Role.CLIENT)
+  @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Patch(':id/reviews/:reviewId')
+  updateReview(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+    @Body() dto: UpdateReviewRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.updateReview(user.userId, orderId, reviewId, dto);
   }
 }
