@@ -117,12 +117,6 @@ export class OrdersRepository {
     });
   }
 
-  countReviews(orderId: string): Promise<number> {
-    return this.prisma.review.count({
-      where: { order: { id: orderId } },
-    });
-  }
-
   findReviewById(
     reviewId: string,
     orderId: string,
@@ -133,26 +127,6 @@ export class OrdersRepository {
         order: { id: orderId },
       },
       select: reviewWithUserSelect,
-    });
-  }
-
-  findReviews(args: {
-    orderId: string;
-    skip: number;
-    take: number;
-    sort: ServiceReviewSort;
-  }): Promise<ReviewWithUser[]> {
-    const orderBy =
-      args.sort === 'rating'
-        ? { rating: 'desc' as const }
-        : { createdAt: 'desc' as const };
-
-    return this.prisma.review.findMany({
-      where: { order: { id: args.orderId } },
-      select: reviewWithUserSelect,
-      orderBy,
-      skip: args.skip,
-      take: args.take,
     });
   }
 

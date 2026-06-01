@@ -9,7 +9,6 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  Query,
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -28,11 +27,7 @@ import { ApiSuccessResponse } from '../common/decorators/api-success-response.de
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
 import { PaymentsService } from '../payments/payments.service';
 import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
-import {
-  ReviewResponseDto,
-  ServiceReviewsPaginatedResponseDto,
-  ServiceReviewsQueryDto,
-} from '../services/dto/service-response.dto';
+import { ReviewResponseDto } from '../services/dto/service-response.dto';
 import { UpdateReviewRequestDto } from '../services/dto/update-review-request.dto';
 
 import { OrderPaymentDto } from './dto/order-response.dto';
@@ -160,19 +155,6 @@ export class OrdersController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.createReview(user.userId, orderId, dto);
-  }
-
-  @ApiOperation({ summary: '리뷰 목록 조회' })
-  @ApiSuccessResponse(HttpStatus.OK, ServiceReviewsPaginatedResponseDto)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(REVIEW_ERRORS.ORDER_SERVICE_MISMATCH)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Get(':id/reviews')
-  findReviews(
-    @Param('id', ParseUUIDPipe) serviceId: string,
-    @Query() query: ServiceReviewsQueryDto,
-  ) {
-    return this.ordersService.getReviews(serviceId, query);
   }
 
   @ApiOperation({ summary: '리뷰 수정' })
