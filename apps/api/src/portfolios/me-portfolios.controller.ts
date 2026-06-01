@@ -55,7 +55,6 @@ export class MePortfoliosController {
   @RoleAuth(Role.EXPERT)
   @ApiSuccessResponse(HttpStatus.OK, PortfolioResponseDto)
   @ApiErrorResponse(PORTFOLIO_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
     PORTFOLIO_ERRORS.MAIN_IMAGE_REQUIRED,
@@ -77,7 +76,6 @@ export class MePortfoliosController {
   @RoleAuth(Role.EXPERT)
   @ApiSuccessResponse(HttpStatus.NO_CONTENT)
   @ApiErrorResponse(PORTFOLIO_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')

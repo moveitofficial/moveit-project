@@ -89,11 +89,10 @@ export class CommunityPostsController {
   }
 
   @ApiOperation({ summary: '게시글 삭제' })
-  @JwtAuth()
+  @JwtAuth(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
   @ApiSuccessResponse(HttpStatus.OK, PostDeletionResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
   @Delete(':id')
   deletePost(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
@@ -102,7 +101,7 @@ export class CommunityPostsController {
   }
 
   @ApiOperation({ summary: '게시글 수정' })
-  @JwtAuth()
+  @JwtAuth(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
   @ApiSuccessResponse(HttpStatus.OK, PostResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @ApiErrorResponse(
@@ -111,7 +110,6 @@ export class CommunityPostsController {
     COMMON_ERRORS.VALIDATION_ERROR,
   )
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
   @Patch(':id')
   updatePost(
