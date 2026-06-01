@@ -4,20 +4,14 @@ import { ServiceStatus, type Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 import {
-  myReviewListSelect,
-  reviewWithUserSelect,
   serviceDetailInclude,
   serviceInclude,
   serviceListInclude,
 } from './services.types';
 
 import type {
-  MyReviewListItem,
-  MyReviewSort,
-  ReviewWithUser,
   ServiceDetail,
   ServiceListItem,
-  ServiceReviewSort,
   ServiceReviewStats,
   ServiceWithRelations,
 } from './services.types';
@@ -41,80 +35,6 @@ export class ServicesRepository {
     return this.prisma.service.findUnique({
       where: { id },
       include: serviceDetailInclude,
-    });
-  }
-
-  findReviews(args: {
-    serviceId: string;
-    skip: number;
-    take: number;
-    sort: ServiceReviewSort;
-  }): Promise<ReviewWithUser[]> {
-    const orderBy =
-      args.sort === 'rating'
-        ? { rating: 'desc' as const }
-        : { createdAt: 'desc' as const };
-
-    return this.prisma.review.findMany({
-      where: { order: { serviceId: args.serviceId } },
-      select: reviewWithUserSelect,
-      orderBy,
-      skip: args.skip,
-      take: args.take,
-    });
-  }
-
-  countReviews(serviceId: string): Promise<number> {
-    return this.prisma.review.count({
-      where: { order: { serviceId } },
-    });
-  }
-
-  findOrderForReview(orderId: string) {
-    return this.prisma.order.findUnique({
-      where: { id: orderId },
-      select: {
-        id: true,
-        clientUserId: true,
-        serviceId: true,
-        status: true,
-        review: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    });
-  }
-
-  findAllReviewsByUserId(args: {
-    userId: string;
-    skip: number;
-    take: number;
-    sort: MyReviewSort;
-  }): Promise<MyReviewListItem[]> {
-    const orderBy =
-      args.sort === 'oldest'
-        ? { createdAt: 'asc' as const }
-        : { createdAt: 'desc' as const };
-
-    return this.prisma.review.findMany({
-      where: { userId: args.userId },
-      select: myReviewListSelect,
-      orderBy,
-      skip: args.skip,
-      take: args.take,
-    });
-  }
-  countReviewsByUserId(userId: string): Promise<number> {
-    return this.prisma.review.count({
-      where: { userId },
-    });
-  }
-
-  async deleteReview(reviewId: string): Promise<void> {
-    await this.prisma.review.delete({
-      where: { id: reviewId },
     });
   }
 
