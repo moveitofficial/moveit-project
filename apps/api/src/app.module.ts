@@ -13,6 +13,7 @@ import { CommunityPostsModule } from './community-posts/community-posts.module';
 import { ExpertProfilesModule } from './expert-profiles/expert-profiles.module';
 import { HealthModule } from './health/health.module';
 import { MailerModule } from './mailer/mailer.module';
+import { OrdersModule } from './orders/orders.module';
 import { PortfoliosModule } from './portfolios/portfolios.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { S3Module } from './s3/s3.module';
@@ -36,6 +37,7 @@ import { UsersModule } from './users/users.module';
     CatalogsModule,
     ClientProfilesModule,
     ServicesModule,
+    OrdersModule,
     AdminModule,
     ExpertProfilesModule,
     PortfoliosModule,

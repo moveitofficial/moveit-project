@@ -83,6 +83,13 @@ export class CommunityPostsRepository {
     });
   }
 
+  deletePost(postId: string): Promise<CommunityPost> {
+    return this.prisma.communityPost.update({
+      where: { id: postId },
+      data: { deletedAt: new Date() },
+    });
+  }
+
   async isLikedByUser(postId: string, userId: string): Promise<boolean> {
     const like = await this.prisma.like.findUnique({
       where: {
@@ -96,6 +103,31 @@ export class CommunityPostsRepository {
       },
     });
     return like !== null;
+  }
+
+  async likePost(postId: string, userId: string): Promise<void> {
+    await this.prisma.like.upsert({
+      where: {
+        userId_postId: {
+          userId,
+          postId,
+        },
+      },
+      update: {},
+      create: {
+        userId,
+        postId,
+      },
+    });
+  }
+
+  async unlikePost(postId: string, userId: string): Promise<void> {
+    await this.prisma.like.deleteMany({
+      where: {
+        userId,
+        postId,
+      },
+    });
   }
 
   createComment(

@@ -42,6 +42,16 @@ export function mapPostDetail(post: PostListItem, isLiked: boolean) {
   };
 }
 
+export function mapPostToBeDeleted(post: CommunityPost) {
+  return {
+    id: post.id,
+    userId: post.userId,
+    title: post.title,
+    createdAt: post.createdAt,
+    deletedAt: post.deletedAt,
+  };
+}
+
 export function mapComment(comment: Comment) {
   return {
     id: comment.id,

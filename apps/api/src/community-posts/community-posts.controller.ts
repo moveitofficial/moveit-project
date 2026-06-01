@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   HttpStatus,
   Param,
   ParseUUIDPipe,
@@ -37,9 +39,11 @@ import {
 } from './dto/post-request.dto';
 import {
   CommentResponseDto,
+  PostDeletionResponseDto,
   PostDetailResponseDto,
   PostListItemResponseDto,
   PostResponseDto,
+  ToggleLikeResponseDto,
 } from './dto/post-response.dto';
 
 import type { Request } from 'express';
@@ -84,6 +88,19 @@ export class CommunityPostsController {
     return this.communityPostsService.getPost(postId, user?.userId);
   }
 
+  @ApiOperation({ summary: '게시글 삭제' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, PostDeletionResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Delete(':id')
+  deletePost(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.deletePost(postId, user.userId);
+  }
+
   @ApiOperation({ summary: '게시글 수정' })
   @JwtAuth()
   @ApiSuccessResponse(HttpStatus.OK, PostResponseDto)
@@ -125,5 +142,18 @@ export class CommunityPostsController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.communityPostsService.createComment(user.userId, postId, dto);
+  }
+
+  @ApiOperation({ summary: '게시글 좋아요 토글' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, ToggleLikeResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/like')
+  toggleLike(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.toggleLike(postId, user.userId);
   }
 }

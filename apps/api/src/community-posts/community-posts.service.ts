@@ -13,6 +13,7 @@ import {
   mapPost,
   mapPostDetail,
   mapPostListItem,
+  mapPostToBeDeleted,
 } from './community-posts.mapper';
 import { CommunityPostsRepository } from './community-posts.repository';
 import {
@@ -97,6 +98,29 @@ export class CommunityPostsService {
     return mapPostDetail(post, isLiked);
   }
 
+  async deletePost(
+    postId: string,
+    userId: string,
+  ): Promise<ReturnType<typeof mapPostToBeDeleted>> {
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    if (post.userId !== userId) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.FORBIDDEN);
+    }
+
+    const toBeDeleted = await this.communityPostsRepository.deletePost(postId);
+
+    return mapPostToBeDeleted(toBeDeleted);
+  }
+
   async updatePost(
     userId: string,
     postId: string,
@@ -155,6 +179,29 @@ export class CommunityPostsService {
     );
 
     return mapPost(updated);
+  }
+
+  async toggleLike(postId: string, userId: string) {
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const isLiked = await this.communityPostsRepository.isLikedByUser(
+      postId,
+      userId,
+    );
+
+    await (isLiked
+      ? this.communityPostsRepository.unlikePost(postId, userId)
+      : this.communityPostsRepository.likePost(postId, userId));
+
+    return { isLiked: !isLiked };
   }
 
   async createComment(

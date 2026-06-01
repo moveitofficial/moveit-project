@@ -1,0 +1,34 @@
+// GET /users/me/orders 목록 — 페이지네이션 기본값
+export const ORDERS_LIST_DEFAULT_PAGE = 1;
+export const ORDERS_LIST_DEFAULT_PAGE_SIZE = 20;
+
+// GET /users/me/orders 목록 — as 값
+export const ORDER_LIST_AS = {
+  CLIENT: 'client',
+  EXPERT: 'expert',
+} as const;
+
+export type OrderListAs = (typeof ORDER_LIST_AS)[keyof typeof ORDER_LIST_AS];
+
+export const ORDER_LIST_USER_ID_FIELD = {
+  [ORDER_LIST_AS.CLIENT]: 'clientUserId',
+  [ORDER_LIST_AS.EXPERT]: 'expertUserId',
+} as const;
+
+// GET /users/me/orders 목록 — 정렬
+export const ORDER_LIST_SORT = ['latest', 'deadline'] as const;
+
+export type OrderListSort = (typeof ORDER_LIST_SORT)[number];
+
+export const ORDER_LIST_DEFAULT_SORT: OrderListSort = 'latest';
+
+// 목록 메인 이미지 조회 개수
+export const ORDER_LIST_MAIN_IMAGE_LIMIT = 1;
+
+// 플랫폼 수수료율 (10%)
+export const PLATFORM_FEE_RATE = 0.1;
+
+// PG 연동 전 임시 값
+export const PG_STUB_PROVIDER = 'TOSS' as const;
+export const PG_STUB_RECEIPT_URL = 'http://...' as const;
+export const DEFAULT_PAYMENT_METHOD = 'CARD' as const;
