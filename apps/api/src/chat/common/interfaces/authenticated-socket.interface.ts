@@ -18,5 +18,9 @@ export interface CsAdminSocketData {
 
 export type CsSocketData = CsUserSocketData | CsAdminSocketData;
 
-export type ConsultationSocket = Socket & { data: ConsultationSocketData };
-export type CsSocket = Socket & { data: CsSocketData };
+export type ConsultationSocket = Omit<Socket, 'data'> & {
+  data: ConsultationSocketData;
+};
+export type CsSocket = Omit<Socket, 'data'> & {
+  data: CsSocketData;
+};

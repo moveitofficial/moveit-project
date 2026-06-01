@@ -2,6 +2,9 @@ import { ArgumentsHost, Catch } from '@nestjs/common';
 import { BaseWsExceptionFilter, WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 
+import { COMMON_ERRORS } from '../constants/errors';
+import { WsErrorResponse } from '../interfaces/ws-error-response.interface';
+
 interface WsErrorPayload {
   message: string;
   code: string;
@@ -19,30 +22,32 @@ export class WsExceptionFilter extends BaseWsExceptionFilter {
     const client = host.switchToWs().getClient<Socket>();
 
     if (!(exception instanceof WsException)) {
-      client.emit('error', {
+      const response: WsErrorResponse = {
         success: false,
-        message: '서버 오류가 발생했습니다.',
-        error: { code: 'INTERNAL_SERVER_ERROR' },
-      });
+        message: COMMON_ERRORS.INTERNAL_SERVER_ERROR.message,
+        error: { code: COMMON_ERRORS.INTERNAL_SERVER_ERROR.code },
+      };
+      client.emit('error', response);
       return;
     }
 
     const error = exception.getError();
+    let response: WsErrorResponse;
 
     if (isWsErrorPayload(error)) {
-      client.emit('error', {
+      response = {
         success: false,
         message: error.message,
         error: { code: error.code },
-      });
+      };
     } else {
       const message =
-        typeof error === 'string' ? error : '서버 오류가 발생했습니다.';
-      client.emit('error', {
-        success: false,
-        message,
-        error: { code: 'WS_ERROR' },
-      });
+        typeof error === 'string'
+          ? error
+          : COMMON_ERRORS.INTERNAL_SERVER_ERROR.message;
+      response = { success: false, message, error: { code: 'WS_ERROR' } };
     }
+
+    client.emit('error', response);
   }
 }
