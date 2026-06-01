@@ -101,7 +101,9 @@ export class SignInRequestDto {
 @ApiSuccessResponse(HttpStatus.OK, ResponseDto)
 @ApiErrorResponse(AUTH_ERRORS.INVALID_CREDENTIALS, ...)
 ```
-보호 라우트는 [`@JwtAuth(...추가에러)`](mdc:apps/api/src/common/decorators/jwt-auth.decorator.ts) 한 줄로 가드 + 401 문서화.
+보호 라우트는 [`@JwtAuth`](mdc:apps/api/src/common/decorators/jwt-auth.decorator.ts) / `@RoleAuth` 한 줄로 가드 + 401/403 문서화.
+비즈니스 로직에서 발생하는 추가 403은 인자로 전달한다 — `@JwtAuth(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)`, `@RoleAuth(Role.EXPERT, SERVICE_ERRORS.FORBIDDEN_NOT_OWNER)`.
+`@ApiErrorResponse(FORBIDDEN_*)` 별도 선언 금지 (같은 403 status가 중복 선언되어 Swagger에서 덮어써짐).
 
 **JWT는 쿠키(`moveit_access_token` 1h / `moveit_refresh_token` 7d, httpOnly + sameSite lax).** 응답 body에 토큰 노출 금지.
 
