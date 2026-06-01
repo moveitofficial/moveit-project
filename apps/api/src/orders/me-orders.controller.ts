@@ -53,12 +53,12 @@ export class MeOrdersController {
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.CREATED, CreateOrderResponseDto)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_AVAILABLE)
   @ApiErrorResponse(
+    SERVICE_ERRORS.NOT_AVAILABLE,
     ORDER_ERRORS.AMOUNT_MISMATCH,
     COMMON_ERRORS.VALIDATION_ERROR,
-    PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY,
   )
+  @ApiErrorResponse(PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
   @Post()
