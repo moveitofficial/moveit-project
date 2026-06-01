@@ -4,14 +4,17 @@ import { ServiceStatus, type Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 import {
+  reviewWithUserSelect,
   serviceDetailInclude,
   serviceInclude,
   serviceListInclude,
 } from './services.types';
 
 import type {
+  ReviewWithUser,
   ServiceDetail,
   ServiceListItem,
+  ServiceReviewSort,
   ServiceReviewStats,
   ServiceWithRelations,
 } from './services.types';
@@ -46,6 +49,32 @@ export class ServicesRepository {
       select: { id: true },
     });
     return row !== null;
+  }
+
+  findReviews(args: {
+    serviceId: string;
+    skip: number;
+    take: number;
+    sort: ServiceReviewSort;
+  }): Promise<ReviewWithUser[]> {
+    const orderBy =
+      args.sort === 'rating'
+        ? { rating: 'desc' as const }
+        : { createdAt: 'desc' as const };
+
+    return this.prisma.review.findMany({
+      where: { order: { serviceId: args.serviceId } },
+      select: reviewWithUserSelect,
+      orderBy,
+      skip: args.skip,
+      take: args.take,
+    });
+  }
+
+  countReviews(serviceId: string): Promise<number> {
+    return this.prisma.review.count({
+      where: { order: { serviceId } },
+    });
   }
 
   update(
