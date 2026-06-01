@@ -46,7 +46,27 @@ export const userMenuGroup = style({
 });
 
 export const navLink = style({
+  position: 'relative',
+  display: 'inline-flex',
+  alignItems: 'center',
+  height: '72px',
   color: vars.color.black400,
+});
+
+export const navLinkActive = style({
+  color: vars.color.black500,
+  selectors: {
+    '&::after': {
+      content: '',
+      position: 'absolute',
+      left: '50%',
+      bottom: '-1px',
+      width: '73px',
+      height: '4px',
+      transform: 'translateX(-50%)',
+      backgroundColor: vars.color.blue300,
+    },
+  },
 });
 
 export const signUpButton = style({

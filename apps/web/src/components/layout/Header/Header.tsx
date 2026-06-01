@@ -1,16 +1,19 @@
+'use client';
+
 import headerLogo from '@public/header/headerLogo.svg';
 import { typography } from '@repo/styles/typography';
 import clsx from 'clsx';
 import { type Route } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import * as styles from './Header.css';
 
 const navItems: { label: string; href: Route }[] = [
   { label: 'IT코칭', href: '#' },
   { label: '프로젝트의뢰', href: '#' },
-  { label: '자유게시판', href: '#' },
+  { label: '자유게시판', href: '/community' },
   { label: 'FAQ', href: '#' },
 ];
 
@@ -20,6 +23,8 @@ const userMenuItems: { label: string; href: Route }[] = [
 ];
 
 export default function Header() {
+  const pathname = usePathname();
+
   return (
     <header className={styles.wrapper}>
       <div className={styles.inner}>
@@ -28,15 +33,28 @@ export default function Header() {
             <Image src={headerLogo} alt="moveit" className={styles.logo} />
           </Link>
           <nav className={styles.navMenu}>
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={clsx(typography.f16R, styles.navLink)}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive =
+                item.href !== '#' &&
+                (pathname === item.href ||
+                  (item.href === '/community' &&
+                    (pathname === '/community' ||
+                      pathname.startsWith('/community/'))));
+
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={clsx(
+                    typography.f16R,
+                    styles.navLink,
+                    isActive && styles.navLinkActive,
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
         <div className={styles.userMenuGroup}>
