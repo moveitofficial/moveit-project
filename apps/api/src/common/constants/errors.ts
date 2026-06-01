@@ -418,7 +418,7 @@ export const COMMENTS_ERRORS = {
   },
   CONTENT_TOO_LONG: {
     status: HttpStatus.BAD_REQUEST,
-    message: '댓글 내용은 최대 300자 이하여야 합니다.',
+    message: '댓글 내용은 최대 1000자 이하여야 합니다.',
     code: 'COMMENTS_CONTENT_TOO_LONG',
   },
 } as const;
