@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -32,6 +33,7 @@ import { CommunityPostsService } from './community-posts.service';
 import { PostListQueryDto } from './dto/post-list-query.dto';
 import { PostRequestDto, UpdatePostRequestDto } from './dto/post-request.dto';
 import {
+  PostDeletionResponseDto,
   PostDetailResponseDto,
   PostListItemResponseDto,
   PostResponseDto,
@@ -78,6 +80,19 @@ export class CommunityPostsController {
   getPost(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
     const user = req.user as JwtAccessUser | undefined;
     return this.communityPostsService.getPost(postId, user?.userId);
+  }
+
+  @ApiOperation({ summary: '게시글 삭제' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, PostDeletionResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Delete(':id')
+  deletePost(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.deletePost(postId, user.userId);
   }
 
   @ApiOperation({ summary: '게시글 수정' })

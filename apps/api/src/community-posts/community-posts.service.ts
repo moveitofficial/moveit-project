@@ -9,6 +9,7 @@ import {
   mapPost,
   mapPostDetail,
   mapPostListItem,
+  mapPostToBeDeleted,
 } from './community-posts.mapper';
 import { CommunityPostsRepository } from './community-posts.repository';
 import {
@@ -86,6 +87,29 @@ export class CommunityPostsService {
       ? await this.communityPostsRepository.isLikedByUser(postId, userId)
       : false;
     return mapPostDetail(post, isLiked);
+  }
+
+  async deletePost(
+    postId: string,
+    userId: string,
+  ): Promise<ReturnType<typeof mapPostToBeDeleted>> {
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    if (post.userId !== userId) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.FORBIDDEN);
+    }
+
+    const toBeDeleted = await this.communityPostsRepository.deletePost(postId);
+
+    return mapPostToBeDeleted(toBeDeleted);
   }
 
   async updatePost(
