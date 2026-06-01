@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CommunityCategory, CommunityPost } from '@prisma/client';
+import { Comment, CommunityCategory, CommunityPost } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -8,7 +8,7 @@ import {
   postDetailSelect,
   postListSelect,
 } from './community-posts.types';
-import { PostRequestDto } from './dto/post-request.dto';
+import { CommentRequestDto, PostRequestDto } from './dto/post-request.dto';
 
 @Injectable()
 export class CommunityPostsRepository {
@@ -128,5 +128,21 @@ export class CommunityPostsRepository {
         postId,
       },
     });
+  }
+
+  createComment(
+    postId: string,
+    userId: string,
+    dto: CommentRequestDto,
+  ): Promise<Comment> {
+    const args = {
+      data: {
+        postId,
+        userId,
+        content: dto.content.trim(),
+      },
+    };
+
+    return this.prisma.comment.create(args);
   }
 }

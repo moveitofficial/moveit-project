@@ -401,3 +401,16 @@ export const CS_CHAT_ERRORS = {
     code: 'CS_CHAT_FORBIDDEN_NOT_ADMIN',
   },
 } as const;
+
+export const COMMENTS_ERRORS = {
+  CONTENT_TOO_SHORT: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '댓글 내용은 최소 1자 이상이어야 합니다.',
+    code: 'COMMENTS_CONTENT_TOO_SHORT',
+  },
+  CONTENT_TOO_LONG: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '댓글 내용은 최대 300자 이하여야 합니다.',
+    code: 'COMMENTS_CONTENT_TOO_LONG',
+  },
+} as const;

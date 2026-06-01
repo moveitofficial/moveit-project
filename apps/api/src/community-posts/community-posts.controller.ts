@@ -16,6 +16,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import {
+  COMMENTS_ERRORS,
   COMMON_ERRORS,
   COMMUNITY_POSTS_ERRORS,
 } from '../common/constants/errors';
@@ -31,8 +32,13 @@ import {
 
 import { CommunityPostsService } from './community-posts.service';
 import { PostListQueryDto } from './dto/post-list-query.dto';
-import { PostRequestDto, UpdatePostRequestDto } from './dto/post-request.dto';
 import {
+  CommentRequestDto,
+  PostRequestDto,
+  UpdatePostRequestDto,
+} from './dto/post-request.dto';
+import {
+  CommentResponseDto,
   PostDeletionResponseDto,
   PostDetailResponseDto,
   PostListItemResponseDto,
@@ -128,5 +134,26 @@ export class CommunityPostsController {
   toggleLike(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
     const user = req.user as JwtAccessUser;
     return this.communityPostsService.toggleLike(postId, user.userId);
+  }
+
+  @ApiOperation({ summary: '댓글 생성' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.CREATED, CommentResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    COMMENTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMENTS_ERRORS.CONTENT_TOO_LONG,
+  )
+  @Post(':id/comments')
+  createComment(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) postId: string,
+    @Body() dto: CommentRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.createComment(user.userId, postId, dto);
   }
 }
