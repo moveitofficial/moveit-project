@@ -48,10 +48,15 @@ async function bootstrap() {
     .addTag('users')
     .addTag('users/me')
     .addTag('users/me/portfolios')
+    .addTag('users/me/orders')
     .addTag('portfolios')
     .addTag('services')
+    .addTag('orders')
+    .addTag('community-posts')
     .addTag('admin-auth')
     .addTag('admin-account')
+    .addTag('admin-dashboard')
+    .addTag('admin-user')
     .addTag('catalogs')
     .build();
   app.use(

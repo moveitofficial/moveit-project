@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { AdminActionType, Role } from '@prisma/client';
 
 import { USER_ERRORS } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
@@ -333,5 +333,29 @@ export class AdminUserService {
     }));
 
     return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async blockUser(userId: string, adminId: string): Promise<void> {
+    const user = await this.adminUserRepository.findById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (user.isBlocked) throw new AppException(USER_ERRORS.ALREADY_BLOCKED);
+
+    await this.adminUserRepository.blockUser(
+      userId,
+      adminId,
+      AdminActionType.BLACKLIST_ADDED,
+    );
+  }
+
+  async unblockUser(userId: string, adminId: string): Promise<void> {
+    const user = await this.adminUserRepository.findById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (!user.isBlocked) throw new AppException(USER_ERRORS.NOT_BLOCKED);
+
+    await this.adminUserRepository.blockUser(
+      userId,
+      adminId,
+      AdminActionType.BLACKLIST_REMOVED,
+    );
   }
 }

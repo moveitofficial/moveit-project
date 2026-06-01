@@ -6,7 +6,6 @@ import { PortfoliosModule } from '../portfolios/portfolios.module';
 import { ServicesModule } from '../services/services.module';
 import { UploadModule } from '../upload/upload.module';
 
-import { MePortfoliosController } from './me-portfolios.controller';
 import { MeController } from './me.controller';
 import { UsersController } from './users.controller';
 import { UsersRepository } from './users.repository';
@@ -21,7 +20,7 @@ import { UsersService } from './users.service';
     ServicesModule,
   ],
   providers: [UsersRepository, UsersService],
-  controllers: [UsersController, MeController, MePortfoliosController],
+  controllers: [UsersController, MeController],
   exports: [UsersService],
 })
 export class UsersModule {}

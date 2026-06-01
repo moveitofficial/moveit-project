@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { CommunityCategory } from '@prisma/client';
 
 export class PostResponseDto {
@@ -33,4 +33,45 @@ export class PostListItemResponseDto extends PostResponseDto {
 
   @ApiProperty({ example: 233 })
   declare commentCount: number;
+}
+
+export class PostDetailResponseDto extends PostListItemResponseDto {
+  @ApiProperty({ example: false })
+  declare isLiked: boolean;
+}
+
+export class PostDeletionResponseDto extends OmitType(PostResponseDto, [
+  'category',
+  'content',
+] as const) {
+  @ApiProperty({
+    example: '2026-05-28T10:00:00.000Z',
+    description: '삭제 일시',
+  })
+  declare deletedAt: Date;
+}
+
+export class ToggleLikeResponseDto {
+  @ApiProperty({
+    example: true,
+    description: '좋아요 여부',
+  })
+  declare isLiked: boolean;
+}
+
+export class CommentResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ format: 'uuid' })
+  declare userId: string;
+
+  @ApiProperty({
+    example: '안녕하세요. 좋은 글 잘 봤습니다.',
+    description: '댓글 내용',
+  })
+  declare content: string;
+
+  @ApiProperty({ example: '2026-05-28T10:00:00.000Z' })
+  declare createdAt: Date;
 }

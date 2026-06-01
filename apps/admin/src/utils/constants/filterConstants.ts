@@ -2,7 +2,9 @@ import type {
   ExpertApprovalStatus,
   Provider,
   ServiceType,
-} from '@/mocks/types';
+  ServiceStatus,
+  ReportReason,
+} from '@/types/enums';
 
 export const PROVIDER_LABEL: Record<Provider, string> = {
   LOCAL: '이메일',
@@ -32,6 +34,30 @@ export const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
 
 export const SERVICE_TYPE_OPTIONS = (
   Object.entries(SERVICE_TYPE_LABEL) as [ServiceType, string][]
+).map(([value, label]) => ({ value, label }));
+
+export const SERVICE_STATUS_LABEL: Record<ServiceStatus, string> = {
+  ON_SALE: '판매중',
+  STOPPED: '판매중지',
+  DELETED: '삭제',
+  HIDDEN: '숨김',
+};
+
+export const SERVICE_STATUS_OPTIONS = (
+  Object.entries(SERVICE_STATUS_LABEL) as [ServiceStatus, string][]
+).map(([value, label]) => ({ value, label }));
+
+export const REPORT_REASON_LABEL: Record<ReportReason, string> = {
+  FALSE_INFORMATION: '허위·과장 정보',
+  ABUSE: '욕설·비방',
+  ILLEGAL_ACTIVITY: '불법 행위/사기 의심',
+  EXTERNAL_CONTACT: '외부 연락처 유도',
+  SPAM: '스팸/광고',
+  OTHER: '기타',
+};
+
+export const REPORT_REASON_OPTIONS = (
+  Object.entries(REPORT_REASON_LABEL) as [ReportReason, string][]
 ).map(([value, label]) => ({ value, label }));
 
 export const REGION_LABEL: Record<string, string> = {

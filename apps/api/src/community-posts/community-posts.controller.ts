@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   HttpStatus,
   Param,
   ParseUUIDPipe,
@@ -14,6 +16,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import {
+  COMMENTS_ERRORS,
   COMMON_ERRORS,
   COMMUNITY_POSTS_ERRORS,
 } from '../common/constants/errors';
@@ -22,14 +25,25 @@ import {
   ApiPaginatedResponse,
   ApiSuccessResponse,
 } from '../common/decorators/api-success-response.decorator';
-import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
+import {
+  JwtAuth,
+  OptionalJwtAuth,
+} from '../common/decorators/jwt-auth.decorator';
 
 import { CommunityPostsService } from './community-posts.service';
 import { PostListQueryDto } from './dto/post-list-query.dto';
-import { PostRequestDto, UpdatePostRequestDto } from './dto/post-request.dto';
 import {
+  CommentRequestDto,
+  PostRequestDto,
+  UpdatePostRequestDto,
+} from './dto/post-request.dto';
+import {
+  CommentResponseDto,
+  PostDeletionResponseDto,
+  PostDetailResponseDto,
   PostListItemResponseDto,
   PostResponseDto,
+  ToggleLikeResponseDto,
 } from './dto/post-response.dto';
 
 import type { Request } from 'express';
@@ -62,8 +76,32 @@ export class CommunityPostsController {
     return this.communityPostsService.getAllPosts(query);
   }
 
+  @ApiOperation({ summary: '게시글 상세 조회' })
+  @OptionalJwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, PostDetailResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Get(':id')
+  getPost(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser | undefined;
+    return this.communityPostsService.getPost(postId, user?.userId);
+  }
+
+  @ApiOperation({ summary: '게시글 삭제' })
+  @JwtAuth(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
+  @ApiSuccessResponse(HttpStatus.OK, PostDeletionResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Delete(':id')
+  deletePost(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.deletePost(postId, user.userId);
+  }
+
   @ApiOperation({ summary: '게시글 수정' })
-  @JwtAuth()
+  @JwtAuth(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
   @ApiSuccessResponse(HttpStatus.OK, PostResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @ApiErrorResponse(
@@ -72,7 +110,6 @@ export class CommunityPostsController {
     COMMON_ERRORS.VALIDATION_ERROR,
   )
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
   @Patch(':id')
   updatePost(
@@ -82,5 +119,39 @@ export class CommunityPostsController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.communityPostsService.updatePost(user.userId, id, dto);
+  }
+
+  @ApiOperation({ summary: '게시글 좋아요 토글' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, ToggleLikeResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/like')
+  toggleLike(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.toggleLike(postId, user.userId);
+  }
+
+  @ApiOperation({ summary: '댓글 생성' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.CREATED, CommentResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    COMMENTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMENTS_ERRORS.CONTENT_TOO_LONG,
+  )
+  @Post(':id/comments')
+  createComment(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) postId: string,
+    @Body() dto: CommentRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.createComment(user.userId, postId, dto);
   }
 }

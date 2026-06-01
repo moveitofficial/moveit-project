@@ -27,3 +27,14 @@ export class PostRequestDto {
 }
 
 export class UpdatePostRequestDto extends PartialType(PostRequestDto) {}
+
+export class CommentRequestDto {
+  @ApiProperty({
+    example: '안녕하세요. 좋은 글 잘 봤습니다.',
+    description: '댓글 내용',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 300)
+  declare content: string;
+}

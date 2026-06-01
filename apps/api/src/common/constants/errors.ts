@@ -95,6 +95,14 @@ export const USER_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '해당 사용자 역할에서는 조회할 수 없는 리소스입니다.',
   },
+  ALREADY_BLOCKED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 블랙리스트에 등록된 회원입니다.',
+  },
+  NOT_BLOCKED: {
+    status: HttpStatus.CONFLICT,
+    message: '블랙리스트에 등록되지 않은 회원입니다.',
+  },
 } as const;
 
 export const SERVICE_ERRORS = {
@@ -141,11 +149,7 @@ export const ORDER_ERRORS = {
   },
   FORBIDDEN_NOT_OWNER: {
     status: HttpStatus.FORBIDDEN,
-    message: '본인의 주문만 결제하거나 조회할 수 있습니다.',
-  },
-  FORBIDDEN_SELF_ORDER: {
-    status: HttpStatus.FORBIDDEN,
-    message: '본인의 서비스는 구매할 수 없습니다.',
+    message: '본인의 주문에만 접근할 수 있습니다.',
   },
   INVALID_STATUS: {
     status: HttpStatus.BAD_REQUEST,
@@ -154,14 +158,6 @@ export const ORDER_ERRORS = {
   AMOUNT_MISMATCH: {
     status: HttpStatus.BAD_REQUEST,
     message: '결제 요청 금액이 실제 주문 금액과 일치하지 않습니다.',
-  },
-  ALREADY_CANCELED: {
-    status: HttpStatus.CONFLICT,
-    message: '이미 취소된 주문입니다.',
-  },
-  ALREADY_REFUNDED: {
-    status: HttpStatus.CONFLICT,
-    message: '이미 환불된 주문입니다.',
   },
   ALREADY_PROCESSED: {
     status: HttpStatus.CONFLICT,
@@ -183,8 +179,12 @@ export const PAYMENT_ERRORS = {
     message: '결제 금액이 일치하지 않습니다.',
   },
   ALREADY_CONFIRMED: {
-    status: HttpStatus.BAD_REQUEST,
+    status: HttpStatus.CONFLICT,
     message: '이미 승인된 결제입니다.',
+  },
+  DUPLICATE_PAYMENT_KEY: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 사용된 결제 키입니다.',
   },
 } as const;
 
@@ -349,7 +349,7 @@ export const COMMUNITY_POSTS_ERRORS = {
   },
   FORBIDDEN: {
     status: HttpStatus.FORBIDDEN,
-    message: '본인이 등록한 게시글만 수정할 수 있습니다.',
+    message: '본인이 등록한 게시글만 수정, 삭제할 수 있습니다.',
     code: 'COMMUNITY_POSTS_FORBIDDEN',
   },
   ALREADY_DELETED: {
@@ -407,5 +407,18 @@ export const CS_CHAT_ERRORS = {
     status: HttpStatus.FORBIDDEN,
     message: '관리자만 이 작업을 수행할 수 있습니다.',
     code: 'CS_CHAT_FORBIDDEN_NOT_ADMIN',
+  },
+} as const;
+
+export const COMMENTS_ERRORS = {
+  CONTENT_TOO_SHORT: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '댓글 내용은 최소 1자 이상이어야 합니다.',
+    code: 'COMMENTS_CONTENT_TOO_SHORT',
+  },
+  CONTENT_TOO_LONG: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '댓글 내용은 최대 300자 이하여야 합니다.',
+    code: 'COMMENTS_CONTENT_TOO_LONG',
   },
 } as const;

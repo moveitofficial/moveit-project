@@ -1,9 +1,13 @@
 import {
   Controller,
+  Delete,
   Get,
+  HttpCode,
   HttpStatus,
   Param,
+  Post,
   Query,
+  Req,
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
@@ -31,6 +35,9 @@ import { UserCounstDto } from './dto/list/users-counts-response.dto';
 import { GetUsersQueryDto } from './dto/list/users-query.dto';
 import { UserItemDto } from './dto/list/users-response.dto';
 import { PageQueryDto } from './dto/page-query.dto';
+
+import type { AdminJwtAccessUser } from '../admin-auth/jwt/admin-jwt-access.strategy';
+import type { Request } from 'express';
 
 @ApiTags('admin-user')
 @Controller('admin/users')
@@ -198,5 +205,51 @@ export class AdminUserController {
     @Query() query: PageQueryDto,
   ): Promise<Paginated<UserCommentItemDto>> {
     return this.adminUserService.getUserComments(id, query);
+  }
+
+  @ApiOperation({ summary: '[어드민] 회원 블랙리스트 등록' })
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(USER_ERRORS.ALREADY_BLOCKED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/blacklist')
+  blockUser(
+    @Param(
+      'id',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(USER_ERRORS.NOT_FOUND),
+      }),
+    )
+    id: string,
+    @Req() req: Request,
+  ): Promise<void> {
+    const { adminId } = req.user as AdminJwtAccessUser;
+    return this.adminUserService.blockUser(id, adminId);
+  }
+
+  @ApiOperation({ summary: '[어드민] 회원 블랙리스트 해제' })
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(USER_ERRORS.NOT_BLOCKED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @Delete(':id/blacklist')
+  unblockUser(
+    @Param(
+      'id',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(USER_ERRORS.NOT_FOUND),
+      }),
+    )
+    id: string,
+    @Req() req: Request,
+  ): Promise<void> {
+    const { adminId } = req.user as AdminJwtAccessUser;
+    return this.adminUserService.unblockUser(id, adminId);
   }
 }

@@ -17,15 +17,16 @@ import { COMMON_ERRORS, PORTFOLIO_ERRORS } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
+
 import {
   PortfolioRequestDto,
   PortfolioUpdateDto,
-} from '../portfolios/dto/portfolio-request.dto';
+} from './dto/portfolio-request.dto';
 import {
   PortfolioCreateResponseDto,
   PortfolioResponseDto,
-} from '../portfolios/dto/portfolio-response.dto';
-import { PortfoliosService } from '../portfolios/portfolios.service';
+} from './dto/portfolio-response.dto';
+import { PortfoliosService } from './portfolios.service';
 
 import type { Request } from 'express';
 
@@ -54,7 +55,6 @@ export class MePortfoliosController {
   @RoleAuth(Role.EXPERT)
   @ApiSuccessResponse(HttpStatus.OK, PortfolioResponseDto)
   @ApiErrorResponse(PORTFOLIO_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
     PORTFOLIO_ERRORS.MAIN_IMAGE_REQUIRED,
@@ -76,7 +76,6 @@ export class MePortfoliosController {
   @RoleAuth(Role.EXPERT)
   @ApiSuccessResponse(HttpStatus.NO_CONTENT)
   @ApiErrorResponse(PORTFOLIO_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')

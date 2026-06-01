@@ -37,4 +37,14 @@ export class AdminAccountRepository {
   create(data: CreateAdminParams): Promise<Admin> {
     return this.prisma.admin.create({ data });
   }
+
+  async updatePassword(id: string, hashedPassword: string): Promise<void> {
+    await this.prisma.admin.update({
+      where: { id },
+      data: {
+        password: hashedPassword,
+        mustChangePassword: false,
+      },
+    });
+  }
 }

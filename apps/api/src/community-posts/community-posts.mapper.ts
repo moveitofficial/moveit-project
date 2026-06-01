@@ -1,7 +1,7 @@
 import { Role } from '@prisma/client';
 
 import type { PostListItem } from './community-posts.types';
-import type { CommunityPost } from '@prisma/client';
+import type { Comment, CommunityPost } from '@prisma/client';
 
 function resolveAuthorDisplayName(user: PostListItem['user']): string {
   if (user.role === Role.EXPERT) {
@@ -32,5 +32,31 @@ export function mapPost(post: CommunityPost) {
     title: post.title,
     content: post.content,
     createdAt: post.createdAt,
+  };
+}
+
+export function mapPostDetail(post: PostListItem, isLiked: boolean) {
+  return {
+    ...mapPostListItem(post),
+    isLiked,
+  };
+}
+
+export function mapPostToBeDeleted(post: CommunityPost) {
+  return {
+    id: post.id,
+    userId: post.userId,
+    title: post.title,
+    createdAt: post.createdAt,
+    deletedAt: post.deletedAt,
+  };
+}
+
+export function mapComment(comment: Comment) {
+  return {
+    id: comment.id,
+    userId: comment.userId,
+    content: comment.content,
+    createdAt: comment.createdAt,
   };
 }

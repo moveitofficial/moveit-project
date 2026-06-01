@@ -1,19 +1,33 @@
 import { Injectable } from '@nestjs/common';
 
-import { COMMUNITY_POSTS_ERRORS } from '../common/constants/errors';
+import {
+  COMMENTS_ERRORS,
+  COMMUNITY_POSTS_ERRORS,
+} from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 
-import { mapPost, mapPostListItem } from './community-posts.mapper';
+import {
+  mapComment,
+  mapPost,
+  mapPostDetail,
+  mapPostListItem,
+  mapPostToBeDeleted,
+} from './community-posts.mapper';
 import { CommunityPostsRepository } from './community-posts.repository';
 import {
+  COMMENT_MAX_LENGTH,
   getPostContentPlainTextLength,
   POST_MIN_LENGTH,
   sanitizePostContent,
 } from './community-posts.util';
 import { PostListQueryDto } from './dto/post-list-query.dto';
-import { PostRequestDto, UpdatePostRequestDto } from './dto/post-request.dto';
+import {
+  CommentRequestDto,
+  PostRequestDto,
+  UpdatePostRequestDto,
+} from './dto/post-request.dto';
 import { PostListItemResponseDto } from './dto/post-response.dto';
 
 import type { CommunityCategory } from '@prisma/client';
@@ -63,6 +77,48 @@ export class CommunityPostsService {
       posts.map((post) => mapPostListItem(post)),
       { page, pageSize, totalCount },
     );
+  }
+
+  async getPost(
+    postId: string,
+    userId?: string,
+  ): Promise<ReturnType<typeof mapPostDetail>> {
+    const post = await this.communityPostsRepository.findPostDetailById(postId);
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const isLiked = userId
+      ? await this.communityPostsRepository.isLikedByUser(postId, userId)
+      : false;
+    return mapPostDetail(post, isLiked);
+  }
+
+  async deletePost(
+    postId: string,
+    userId: string,
+  ): Promise<ReturnType<typeof mapPostToBeDeleted>> {
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    if (post.userId !== userId) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.FORBIDDEN);
+    }
+
+    const toBeDeleted = await this.communityPostsRepository.deletePost(postId);
+
+    return mapPostToBeDeleted(toBeDeleted);
   }
 
   async updatePost(
@@ -123,5 +179,62 @@ export class CommunityPostsService {
     );
 
     return mapPost(updated);
+  }
+
+  async toggleLike(postId: string, userId: string) {
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const isLiked = await this.communityPostsRepository.isLikedByUser(
+      postId,
+      userId,
+    );
+
+    await (isLiked
+      ? this.communityPostsRepository.unlikePost(postId, userId)
+      : this.communityPostsRepository.likePost(postId, userId));
+
+    return { isLiked: !isLiked };
+  }
+
+  async createComment(
+    userId: string,
+    postId: string,
+    dto: CommentRequestDto,
+  ): Promise<ReturnType<typeof mapComment>> {
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const sanitizedContent = sanitizePostContent(dto.content);
+    const plainTextLength = getPostContentPlainTextLength(sanitizedContent);
+
+    if (plainTextLength < POST_MIN_LENGTH) {
+      throw new AppException(COMMENTS_ERRORS.CONTENT_TOO_SHORT);
+    }
+
+    if (plainTextLength > COMMENT_MAX_LENGTH) {
+      throw new AppException(COMMENTS_ERRORS.CONTENT_TOO_LONG);
+    }
+
+    const comment = await this.communityPostsRepository.createComment(
+      postId,
+      userId,
+      dto,
+    );
+    return mapComment(comment);
   }
 }
