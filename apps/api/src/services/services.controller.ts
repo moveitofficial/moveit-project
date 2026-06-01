@@ -28,7 +28,6 @@ import { Role } from '@prisma/client';
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import {
   COMMON_ERRORS,
-  ORDER_ERRORS,
   REVIEW_ERRORS,
   SERVICE_ERRORS,
   UPLOAD_ERRORS,
@@ -43,10 +42,8 @@ import {
 import { UploadServiceImagesResponseDto } from '../upload/dto/upload-response.dto';
 import { UploadService } from '../upload/upload.service';
 
-import { CreateReviewRequestDto } from './dto/create-review-request.dto';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import {
-  ReviewResponseDto,
   ServiceDetailResponseDto,
   ServiceListItemResponseDto,
   ServiceListPaginatedResponseDto,
@@ -55,7 +52,6 @@ import {
   ServiceReviewsPaginatedResponseDto,
   ServiceReviewsQueryDto,
 } from './dto/service-response.dto';
-import { UpdateReviewRequestDto } from './dto/update-review-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import { ServicesService } from './services.service';
@@ -188,32 +184,6 @@ export class ServicesController {
     @Query() query: ServiceReviewsQueryDto,
   ) {
     return this.servicesService.getServiceReviews(serviceId, query);
-  }
-
-  @ApiOperation({ summary: '서비스 리뷰 수정' })
-  @RoleAuth(Role.CLIENT)
-  @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
-  @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
-  @ApiErrorResponse(
-    COMMON_ERRORS.VALIDATION_ERROR,
-    REVIEW_ERRORS.NOTHING_TO_UPDATE,
-  )
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Patch(':id/reviews/:reviewId')
-  patchReview(
-    @Req() req: Request,
-    @Param('id', ParseUUIDPipe) serviceId: string,
-    @Param('reviewId', ParseUUIDPipe) reviewId: string,
-    @Body() dto: UpdateReviewRequestDto,
-  ) {
-    const user = req.user as JwtAccessUser;
-    return this.servicesService.updateServiceReview(
-      user.userId,
-      serviceId,
-      reviewId,
-      dto,
-    );
   }
 
   @ApiOperation({ summary: '서비스 리뷰 삭제' })

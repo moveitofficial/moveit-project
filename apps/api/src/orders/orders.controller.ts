@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -23,6 +24,12 @@ import { ApiErrorResponse } from '../common/decorators/api-error-response.decora
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
 import { PaymentsService } from '../payments/payments.service';
+import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
+import {
+  ReviewResponseDto,
+  ServiceReviewsPaginatedResponseDto,
+  ServiceReviewsQueryDto,
+} from '../services/dto/service-response.dto';
 
 import { OrderPaymentDto } from './dto/order-response.dto';
 import { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
@@ -32,8 +39,6 @@ import { UpdateOrderStatusResponseDto } from './dto/update-order-status-response
 import { OrdersService } from './orders.service';
 
 import type { Request } from 'express';
-import { ReviewResponseDto } from '../services/dto/service-response.dto';
-import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
 
 @ApiTags('orders')
 @Controller('orders')
@@ -155,5 +160,15 @@ export class OrdersController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.createReview(user.userId, orderId, dto);
+  }
+
+  @ApiOperation({ summary: '리뷰 목록 조회' })
+  @ApiSuccessResponse(HttpStatus.OK, ServiceReviewsPaginatedResponseDto)
+  @Get(':id/reviews')
+  findReviews(
+    @Param('id', ParseUUIDPipe) serviceId: string,
+    @Query() query: ServiceReviewsQueryDto,
+  ) {
+    return this.ordersService.getReviews(serviceId, query);
   }
 }

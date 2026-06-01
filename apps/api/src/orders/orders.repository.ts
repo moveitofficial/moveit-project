@@ -4,6 +4,12 @@ import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { PAYMENT_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  ReviewWithUser,
+  reviewWithUserSelect,
+  ServiceReviewSort,
+  ServiceReviewStats,
+} from '../services/services.types';
 
 import { DEFAULT_PAYMENT_METHOD } from './orders.constants';
 import {
@@ -14,7 +20,6 @@ import {
 } from './orders.types';
 
 import type { OrderListSort } from './orders.constants';
-import { ReviewWithUser, reviewWithUserSelect } from '../services/services.types';
 
 @Injectable()
 export class OrdersRepository {
@@ -105,6 +110,69 @@ export class OrdersRepository {
       },
       select: reviewWithUserSelect,
     });
+  }
+
+  countReviews(orderId: string): Promise<number> {
+    return this.prisma.review.count({
+      where: { order: { id: orderId } },
+    });
+  }
+
+  findReviews(args: {
+    orderId: string;
+    skip: number;
+    take: number;
+    sort: ServiceReviewSort;
+  }): Promise<ReviewWithUser[]> {
+    const orderBy =
+      args.sort === 'rating'
+        ? { rating: 'desc' as const }
+        : { createdAt: 'desc' as const };
+
+    return this.prisma.review.findMany({
+      where: { order: { id: args.orderId } },
+      select: reviewWithUserSelect,
+      orderBy,
+      skip: args.skip,
+      take: args.take,
+    });
+  }
+
+  async getReviewStatsByOrderIds(
+    orderIds: string[],
+  ): Promise<Map<string, ServiceReviewStats>> {
+    if (orderIds.length === 0) {
+      return new Map();
+    }
+
+    const reviews = await this.prisma.review.findMany({
+      where: { orderId: { in: orderIds } },
+      select: {
+        orderId: true,
+        rating: true,
+      },
+    });
+
+    const acc = new Map<string, { sum: number; count: number }>();
+    for (const review of reviews) {
+      const cur = acc.get(review.orderId) ?? { sum: 0, count: 0 };
+      acc.set(review.orderId, {
+        sum: cur.sum + review.rating,
+        count: cur.count + 1,
+      });
+    }
+
+    const result = new Map<string, ServiceReviewStats>();
+    for (const orderId of orderIds) {
+      const bucket = acc.get(orderId);
+      const count = bucket?.count ?? 0;
+      result.set(orderId, {
+        reviewCount: count,
+        rating:
+          count > 0 ? Math.round(((bucket?.sum ?? 0) / count) * 10) / 10 : 0,
+      });
+    }
+    return result;
   }
 
   async createPaidOrder(data: {

@@ -9,6 +9,10 @@ import {
 } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
+import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
+import { ServiceReviewsQueryDto } from '../services/dto/service-response.dto';
+import { mapReview } from '../services/services.mapper';
+import { REVIEWABLE_ORDER_STATUSES } from '../services/services.types';
 
 import {
   ORDER_LIST_DEFAULT_SORT,
@@ -38,9 +42,6 @@ import type { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
 import type { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
 import type { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
-import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
-import { REVIEWABLE_ORDER_STATUSES } from '../services/services.types';
-import { mapReview } from '../services/services.mapper';
 
 @Injectable()
 export class OrdersService {
@@ -251,5 +252,51 @@ export class OrdersService {
     });
 
     return mapReview(review);
+  }
+
+  async getReviews(orderId: string, query: ServiceReviewsQueryDto) {
+    const order = await this.ordersRepository.findOrderForReview(orderId);
+
+    if (order === null) {
+      throw new AppException(ORDER_ERRORS.NOT_FOUND);
+    }
+
+    const service = await this.ordersRepository.findServiceById(
+      order.serviceId,
+    );
+
+    if (service === null) {
+      throw new AppException(SERVICE_ERRORS.NOT_FOUND);
+    }
+
+    if (order.serviceId !== service.id) {
+      throw new AppException(REVIEW_ERRORS.ORDER_SERVICE_MISMATCH);
+    }
+
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 5;
+    const sort = query.sort ?? 'latest';
+    const skip = (page - 1) * pageSize;
+
+    const [items, totalCount, statsMap] = await Promise.all([
+      this.ordersRepository.findReviews({
+        orderId,
+        skip,
+        take: pageSize,
+        sort,
+      }),
+      this.ordersRepository.countReviews(orderId),
+      this.ordersRepository.getReviewStatsByOrderIds([orderId]),
+    ]);
+
+    const stats = statsMap.get(orderId) ?? { reviewCount: 0, rating: 0 };
+
+    return {
+      ...toPaginatedResponse(
+        items.map((review) => mapReview(review)),
+        { page, pageSize, totalCount },
+      ),
+      averageRating: stats.rating,
+    };
   }
 }

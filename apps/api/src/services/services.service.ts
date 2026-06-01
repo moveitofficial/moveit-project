@@ -3,7 +3,6 @@ import { ServiceStatus, type Prisma } from '@prisma/client';
 
 import {
   COMMON_ERRORS,
-  ORDER_ERRORS,
   REVIEW_ERRORS,
   SERVICE_ERRORS,
 } from '../common/constants/errors';
@@ -13,10 +12,8 @@ import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { UploadService } from '../upload/upload.service';
 
-import { CreateReviewRequestDto } from './dto/create-review-request.dto';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import { MyReviewsQueryDto } from './dto/my-reviews-query.dto';
-import { UpdateReviewRequestDto } from './dto/update-review-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import {
@@ -35,7 +32,6 @@ import {
   type ServiceListItem,
   type ServiceReviewStats,
   type ServiceResponse,
-  REVIEWABLE_ORDER_STATUSES,
 } from './services.types';
 
 import type {
@@ -522,45 +518,6 @@ export class ServicesService {
     await this.uploadService.deleteImages(keys);
 
     return mapService(updated);
-  }
-
-  async updateServiceReview(
-    userId: string,
-    serviceId: string,
-    reviewId: string,
-    dto: UpdateReviewRequestDto,
-  ) {
-    if (dto.rating === undefined && dto.content === undefined) {
-      throw new AppException(REVIEW_ERRORS.NOTHING_TO_UPDATE);
-    }
-
-    const review = await this.servicesRepository.findReviewById(
-      reviewId,
-      serviceId,
-    );
-
-    if (review === null) {
-      throw new AppException(REVIEW_ERRORS.NOT_FOUND);
-    }
-
-    if (review.user.id !== userId) {
-      throw new AppException(COMMON_ERRORS.FORBIDDEN);
-    }
-
-    const updateData: { rating?: number; content?: string } = {};
-    if (dto.rating !== undefined) {
-      updateData.rating = dto.rating;
-    }
-    if (dto.content !== undefined) {
-      updateData.content = dto.content;
-    }
-
-    const updated = await this.servicesRepository.updateReview(
-      reviewId,
-      updateData,
-    );
-
-    return mapReview(updated);
   }
 
   async deleteServiceReview(

@@ -125,37 +125,6 @@ export class ServicesRepository {
     });
   }
 
-  createReview(data: {
-    orderId: string;
-    userId: string;
-    rating: number;
-    content: string;
-  }): Promise<ReviewWithUser> {
-    return this.prisma.review.create({
-      data: {
-        orderId: data.orderId,
-        userId: data.userId,
-        rating: data.rating,
-        content: data.content,
-      },
-      select: reviewWithUserSelect,
-    });
-  }
-
-  updateReview(
-    reviewId: string,
-    data: {
-      rating?: number;
-      content?: string;
-    },
-  ): Promise<ReviewWithUser> {
-    return this.prisma.review.update({
-      where: { id: reviewId },
-      data,
-      select: reviewWithUserSelect,
-    });
-  }
-
   async deleteReview(reviewId: string): Promise<void> {
     await this.prisma.review.delete({
       where: { id: reviewId },
