@@ -14,9 +14,35 @@ import type { ExpertProfileWithRelations } from './expert-profiles.types';
 
 function mapProfile(profile: ExpertProfileWithRelations) {
   return {
-    ...profile,
+    id: profile.id,
+    userId: profile.userId,
+    isApplied: profile.isApplied,
+    isApproved: profile.isApproved,
+    approvedAt: profile.approvedAt,
+    rejectedAt: profile.rejectedAt,
+    rejectReason: profile.rejectReason,
+    businessName: profile.businessName,
+    businessNumber: profile.businessNumber,
+    ceoName: profile.ceoName,
+    contactTimeStart: profile.contactTimeStart,
+    contactTimeEnd: profile.contactTimeEnd,
+    foundedYear: profile.foundedYear,
+    employeeMin: profile.employeeMin,
+    employeeMax: profile.employeeMax,
+    description: profile.description,
+    avgRating: profile.avgRating,
+    reviewCount: profile.reviewCount,
+    createdAt: profile.createdAt,
     specialtyCategories: mapServiceCategories(profile.specialtyCategories),
     techStacks: profile.techStacks.map((ts) => ({ name: ts.techStack.name })),
+    portfolios: profile.portfolios.map((p) => ({
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      clientName: p.clientName,
+      businessSector: p.businessSector,
+      createdAt: p.createdAt,
+    })),
   };
 }
 
@@ -155,8 +181,8 @@ export class ExpertProfilesService {
     if (!isComplete)
       throw new AppException(EXPERT_PROFILE_ERRORS.INCOMPLETE_PROFILE);
 
-    const updated =
+    const { isApplied, isApproved } =
       await this.expertProfilesRepository.applyForApproval(userId);
-    return mapProfile(updated);
+    return { isApplied, isApproved };
   }
 }

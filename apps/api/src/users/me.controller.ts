@@ -39,6 +39,7 @@ import {
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
 import { ExpertProfileRequestDto } from '../expert-profiles/dto/expert-profile-request.dto';
 import {
+  ApplyForApprovalResponseDto,
   CreateExpertProfileResponseDto,
   ExpertProfileResponseDto,
 } from '../expert-profiles/dto/expert-profile-response.dto';
@@ -185,7 +186,7 @@ export class MeController {
 
   @ApiOperation({ summary: '판매자 승인 신청' })
   @RoleAuth(Role.EXPERT)
-  @ApiSuccessResponse(HttpStatus.OK, ExpertProfileResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, ApplyForApprovalResponseDto)
   @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(
     EXPERT_PROFILE_ERRORS.ALREADY_APPLIED,
