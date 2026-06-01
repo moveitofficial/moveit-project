@@ -1,6 +1,6 @@
 import { Role } from '@prisma/client';
 
-import type { PostListItem } from './community-posts.types';
+import type { CommentListItem, PostListItem } from './community-posts.types';
 import type { Comment, CommunityPost } from '@prisma/client';
 
 function resolveAuthorDisplayName(user: PostListItem['user']): string {
@@ -58,5 +58,16 @@ export function mapComment(comment: Comment) {
     userId: comment.userId,
     content: comment.content,
     createdAt: comment.createdAt,
+  };
+}
+
+export function mapCommentListItem(comment: CommentListItem) {
+  return {
+    id: comment.id,
+    userId: comment.userId,
+    content: comment.content,
+    createdAt: comment.createdAt,
+    authorDisplayName: resolveAuthorDisplayName(comment.user),
+    authorProfileImageUrl: comment.user.profileImageUrl,
   };
 }

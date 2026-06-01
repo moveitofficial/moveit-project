@@ -163,4 +163,10 @@ export class CommunityPostsRepository {
       deletedAt: null,
     };
   }
+
+  countComments(postId: string): Promise<number> {
+    return this.prisma.comment.count({
+      where: this.buildCommentListWhere(postId),
+    });
+  }
 }
