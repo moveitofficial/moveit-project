@@ -448,6 +448,7 @@ class Seeder {
         data: {
           userId: expert.id,
           isApplied: true,
+          appliedAt: faker.date.recent({ days: 90 }),
           isApproved,
           approvedAt: isApproved ? faker.date.recent({ days: 60 }) : null,
           approvedByAdminId: isApproved ? pick(admins).id : null,
@@ -1372,6 +1373,7 @@ class Seeder {
       data: {
         userId: expert.id,
         isApplied: true,
+        appliedAt: faker.date.recent({ days: 60 }),
         isApproved: true,
         approvedAt: faker.date.recent({ days: 30 }),
         approvedByAdminId: approvingAdmin.id,
