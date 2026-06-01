@@ -83,6 +83,13 @@ export class CommunityPostsRepository {
     });
   }
 
+  deletePost(postId: string): Promise<CommunityPost> {
+    return this.prisma.communityPost.update({
+      where: { id: postId },
+      data: { deletedAt: new Date() },
+    });
+  }
+
   async isLikedByUser(postId: string, userId: string): Promise<boolean> {
     const like = await this.prisma.like.findUnique({
       where: {
