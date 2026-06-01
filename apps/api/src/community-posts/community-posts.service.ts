@@ -162,6 +162,16 @@ export class CommunityPostsService {
     postId: string,
     dto: CommentRequestDto,
   ): Promise<ReturnType<typeof mapComment>> {
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
     const sanitizedContent = sanitizePostContent(dto.content);
     const plainTextLength = getPostContentPlainTextLength(sanitizedContent);
 
