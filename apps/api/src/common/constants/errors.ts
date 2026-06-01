@@ -231,6 +231,21 @@ export const EXPERT_PROFILE_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '전문 분야는 하나의 서비스 그룹에서만 선택할 수 있습니다.',
   },
+  ALREADY_APPLIED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 판매자 승인을 신청하였습니다.',
+    code: 'EXPERT_PROFILE_ALREADY_APPLIED',
+  },
+  ALREADY_APPROVED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 판매자 승인이 완료되었습니다.',
+    code: 'EXPERT_PROFILE_ALREADY_APPROVED',
+  },
+  INCOMPLETE_PROFILE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '승인 신청 전 전문가 프로필의 모든 항목을 입력해 주세요.',
+    code: 'EXPERT_PROFILE_INCOMPLETE_PROFILE',
+  },
 } as const;
 
 export const PORTFOLIO_ERRORS = {

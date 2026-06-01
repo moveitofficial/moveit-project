@@ -127,4 +127,36 @@ export class ExpertProfilesService {
 
     return mapProfile(profile);
   }
+
+  async applyForApproval(userId: string) {
+    const profile =
+      await this.expertProfilesRepository.findByUserIdWithRelations(userId);
+    if (profile === null)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
+    if (profile.isApproved)
+      throw new AppException(EXPERT_PROFILE_ERRORS.ALREADY_APPROVED);
+    if (profile.isApplied)
+      throw new AppException(EXPERT_PROFILE_ERRORS.ALREADY_APPLIED);
+
+    const isComplete =
+      profile.businessName !== null &&
+      profile.businessNumber !== null &&
+      profile.ceoName !== null &&
+      profile.contactTimeStart !== null &&
+      profile.contactTimeEnd !== null &&
+      profile.foundedYear !== null &&
+      profile.employeeMin !== null &&
+      profile.employeeMax !== null &&
+      profile.description !== null &&
+      profile.specialtyCategories.length > 0 &&
+      profile.techStacks.length > 0 &&
+      profile.portfolios.length > 0;
+
+    if (!isComplete)
+      throw new AppException(EXPERT_PROFILE_ERRORS.INCOMPLETE_PROFILE);
+
+    const updated =
+      await this.expertProfilesRepository.applyForApproval(userId);
+    return mapProfile(updated);
+  }
 }

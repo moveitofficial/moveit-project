@@ -183,6 +183,22 @@ export class MeController {
     return this.expertProfilesService.createExpertProfile(user.userId, dto);
   }
 
+  @ApiOperation({ summary: '판매자 승인 신청' })
+  @RoleAuth(Role.EXPERT)
+  @ApiSuccessResponse(HttpStatus.OK, ExpertProfileResponseDto)
+  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    EXPERT_PROFILE_ERRORS.ALREADY_APPLIED,
+    EXPERT_PROFILE_ERRORS.ALREADY_APPROVED,
+    EXPERT_PROFILE_ERRORS.INCOMPLETE_PROFILE,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Post('expert-profiles/apply')
+  applyForApproval(@Req() req: Request) {
+    const user = req.user as JwtAccessUser;
+    return this.expertProfilesService.applyForApproval(user.userId);
+  }
+
   @ApiOperation({ summary: '의뢰인 프로필 수정하기' })
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.OK, ClientProfileResponseDto)
