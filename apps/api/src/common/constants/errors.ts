@@ -95,6 +95,14 @@ export const USER_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '해당 사용자 역할에서는 조회할 수 없는 리소스입니다.',
   },
+  ALREADY_BLOCKED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 블랙리스트에 등록된 회원입니다.',
+  },
+  NOT_BLOCKED: {
+    status: HttpStatus.CONFLICT,
+    message: '블랙리스트에 등록되지 않은 회원입니다.',
+  },
 } as const;
 
 export const SERVICE_ERRORS = {
