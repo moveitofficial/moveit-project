@@ -1,5 +1,3 @@
-import { OrderStatus } from '@prisma/client';
-
 // GET /users/me/orders 목록 — 페이지네이션 기본값
 export const ORDERS_LIST_DEFAULT_PAGE = 1;
 export const ORDERS_LIST_DEFAULT_PAGE_SIZE = 20;
@@ -34,10 +32,3 @@ export const PLATFORM_FEE_RATE = 0.1;
 export const PG_STUB_PROVIDER = 'TOSS' as const;
 export const PG_STUB_RECEIPT_URL = 'http://...' as const;
 export const DEFAULT_PAYMENT_METHOD = 'CARD' as const;
-
-// 리뷰 작성 가능한 주문 상태 (PURCHASE_CONFIRMED 이후)
-export const REVIEWABLE_ORDER_STATUSES: OrderStatus[] = [
-  OrderStatus.PURCHASE_CONFIRMED,
-  OrderStatus.SETTLEMENT_REQUESTED,
-  OrderStatus.SETTLEMENT_COMPLETED,
-];

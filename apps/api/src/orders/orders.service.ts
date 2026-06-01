@@ -17,13 +17,11 @@ import {
 import {
   mapCreateOrderResponse,
   mapOrderListItem,
-  mapOrderReview,
   mapUpdateOrderScheduleResponse,
   mapUpdateOrderStatusResponse,
 } from './orders.mapper';
 import {
   validateConfirmOrderPolicy,
-  validateCreateOrderReviewPolicy,
   validateOrderStatusAuthority,
   validateOrderStatusFlow,
   validateScheduleAuthority,
@@ -32,7 +30,6 @@ import {
 import { OrdersRepository } from './orders.repository';
 
 import type { CreateOrderRequestDto } from './dto/create-order-request.dto';
-import type { CreateOrderReviewRequestDto } from './dto/create-order-review-request.dto';
 import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
 import type { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
 import type { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
@@ -194,26 +191,6 @@ export class OrdersService {
     );
     if (!updated) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
     return mapUpdateOrderStatusResponse(updated);
-  }
-
-  async createOrderReview(
-    userId: string,
-    orderId: string,
-    dto: CreateOrderReviewRequestDto,
-  ) {
-    const order = await this.ordersRepository.findOrderReviewPolicy(orderId);
-    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
-
-    validateCreateOrderReviewPolicy(order, userId);
-
-    const review = await this.ordersRepository.createReview({
-      orderId,
-      userId,
-      rating: dto.rating,
-      content: dto.content,
-    });
-
-    return mapOrderReview(review);
   }
 
   private fetchAmountFromExternalPG(

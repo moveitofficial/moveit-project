@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 
-import { PAYMENT_ERRORS, REVIEW_ERRORS } from '../common/constants/errors';
+import { PAYMENT_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -9,8 +9,6 @@ import { DEFAULT_PAYMENT_METHOD } from './orders.constants';
 import {
   orderListSelect,
   orderPolicySelect,
-  orderReviewPolicySelect,
-  orderReviewSelect,
   orderSchedulePolicySelect,
 } from './orders.types';
 
@@ -80,13 +78,6 @@ export class OrdersRepository {
     return this.prisma.order.findUnique({
       where: { id: orderId },
       select: orderSchedulePolicySelect,
-    });
-  }
-
-  async findOrderReviewPolicy(orderId: string) {
-    return this.prisma.order.findUnique({
-      where: { id: orderId },
-      select: orderReviewPolicySelect,
     });
   }
 
@@ -174,32 +165,5 @@ export class OrdersRepository {
     if (count === 0) return null;
 
     return this.prisma.order.findUnique({ where: { id: orderId } });
-  }
-
-  async createReview(data: {
-    orderId: string;
-    userId: string;
-    rating: number;
-    content: string;
-  }) {
-    try {
-      return await this.prisma.review.create({
-        data: {
-          orderId: data.orderId,
-          userId: data.userId,
-          rating: data.rating,
-          content: data.content,
-        },
-        select: orderReviewSelect,
-      });
-    } catch (error: unknown) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new AppException(REVIEW_ERRORS.ALREADY_EXISTS);
-      }
-      throw error;
-    }
   }
 }

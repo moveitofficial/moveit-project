@@ -18,18 +18,13 @@ import {
   COMMON_ERRORS,
   ORDER_ERRORS,
   PAYMENT_ERRORS,
-  REVIEW_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
 import { PaymentsService } from '../payments/payments.service';
 
-import { CreateOrderReviewRequestDto } from './dto/create-order-review-request.dto';
-import {
-  OrderPaymentDto,
-  OrderReviewResponseDto,
-} from './dto/order-response.dto';
+import { OrderPaymentDto } from './dto/order-response.dto';
 import { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
 import { UpdateOrderScheduleResponseDto } from './dto/update-order-schedule-response.dto';
 import { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
@@ -140,27 +135,5 @@ export class OrdersController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.requestSettlement(user.userId, orderId);
-  }
-
-  @ApiOperation({ summary: '주문 리뷰 작성' })
-  @RoleAuth(Role.CLIENT)
-  @ApiSuccessResponse(HttpStatus.CREATED, OrderReviewResponseDto)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
-  @ApiErrorResponse(
-    COMMON_ERRORS.VALIDATION_ERROR,
-    REVIEW_ERRORS.ORDER_NOT_REVIEWABLE,
-  )
-  @ApiErrorResponse(REVIEW_ERRORS.ALREADY_EXISTS)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @HttpCode(HttpStatus.CREATED)
-  @Post(':id/review')
-  createOrderReview(
-    @Req() req: Request,
-    @Param('id', ParseUUIDPipe) orderId: string,
-    @Body() dto: CreateOrderReviewRequestDto,
-  ) {
-    const user = req.user as JwtAccessUser;
-    return this.ordersService.createOrderReview(user.userId, orderId, dto);
   }
 }

@@ -60,28 +60,3 @@ export const orderSchedulePolicySelect = {
 export type OrderSchedulePolicyOrder = Prisma.OrderGetPayload<{
   select: typeof orderSchedulePolicySelect;
 }>;
-
-export const orderReviewPolicySelect = {
-  id: true,
-  clientUserId: true,
-  status: true,
-  review: { select: { id: true } },
-} satisfies Prisma.OrderSelect;
-
-export type OrderReviewPolicyOrder = Prisma.OrderGetPayload<{
-  select: typeof orderReviewPolicySelect;
-}>;
-
-export const orderReviewSelect = {
-  id: true,
-  rating: true,
-  content: true,
-  createdAt: true,
-  user: {
-    select: { id: true, name: true, profileImageUrl: true },
-  },
-} satisfies Prisma.ReviewSelect;
-
-export type OrderReviewRow = Prisma.ReviewGetPayload<{
-  select: typeof orderReviewSelect;
-}>;

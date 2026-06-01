@@ -136,34 +136,3 @@ export class OrderPaymentDto {
   @ApiProperty({ type: OrderRefundDto, nullable: true })
   declare refund: OrderRefundDto | null;
 }
-
-class OrderReviewReviewerDto {
-  @ApiProperty({ format: 'uuid' })
-  declare id: string;
-
-  @ApiProperty({ example: '홍길동' })
-  declare name: string;
-
-  @ApiProperty({
-    nullable: true,
-    example: 'https://cdn.example.com/profile.jpg',
-  })
-  declare profileImageUrl: string | null;
-}
-
-export class OrderReviewResponseDto {
-  @ApiProperty({ format: 'uuid' })
-  declare id: string;
-
-  @ApiProperty({ example: 5, minimum: 1, maximum: 5 })
-  declare rating: number;
-
-  @ApiProperty({ example: '리뷰 내용' })
-  declare content: string;
-
-  @ApiProperty({ example: '2026-05-28T00:00:00.000Z' })
-  declare createdAt: string;
-
-  @ApiProperty({ type: OrderReviewReviewerDto })
-  declare reviewer: OrderReviewReviewerDto;
-}

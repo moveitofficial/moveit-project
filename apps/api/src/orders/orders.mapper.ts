@@ -1,4 +1,4 @@
-import type { OrderListRow, OrderReviewRow } from './orders.types';
+import type { OrderListRow } from './orders.types';
 import type { Order } from '@prisma/client';
 
 export function mapCreateOrderResponse(order: Order) {
@@ -50,20 +50,6 @@ export function mapOrderListItem(order: OrderListRow) {
       id: order.expertUser.id,
       businessName: order.expertUser.expertProfile?.businessName ?? null,
       profileImageUrl: order.expertUser.profileImageUrl,
-    },
-  };
-}
-
-export function mapOrderReview(review: OrderReviewRow) {
-  return {
-    id: review.id,
-    rating: review.rating,
-    content: review.content,
-    createdAt: review.createdAt.toISOString(),
-    reviewer: {
-      id: review.user.id,
-      name: review.user.name ?? '',
-      profileImageUrl: review.user.profileImageUrl,
     },
   };
 }

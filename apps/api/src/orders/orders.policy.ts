@@ -1,13 +1,10 @@
 import { OrderStatus, Role } from '@prisma/client';
 
-import { ORDER_ERRORS, REVIEW_ERRORS } from '../common/constants/errors';
+import { ORDER_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
-
-import { REVIEWABLE_ORDER_STATUSES } from './orders.constants';
 
 import type {
   OrderPolicyOrder,
-  OrderReviewPolicyOrder,
   OrderSchedulePolicyOrder,
 } from './orders.types';
 
@@ -123,21 +120,4 @@ export function validateScheduleAuthority(
   }
 
   throw new AppException(ORDER_ERRORS.INVALID_STATUS);
-}
-
-export function validateCreateOrderReviewPolicy(
-  order: OrderReviewPolicyOrder,
-  userId: string,
-): void {
-  if (order.clientUserId !== userId) {
-    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-  }
-
-  if (!REVIEWABLE_ORDER_STATUSES.includes(order.status)) {
-    throw new AppException(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE);
-  }
-
-  if (order.review !== null) {
-    throw new AppException(REVIEW_ERRORS.ALREADY_EXISTS);
-  }
 }
