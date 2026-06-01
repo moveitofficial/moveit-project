@@ -63,4 +63,12 @@ export class AdminAccountService {
         `로그인 후 즉시 비밀번호를 변경해주세요.`,
     });
   }
+
+  findById(id: string) {
+    return this.adminAccountRepository.findById(id);
+  }
+
+  updatePassword(id: string, hashedPassword: string): Promise<void> {
+    return this.adminAccountRepository.updatePassword(id, hashedPassword);
+  }
 }
