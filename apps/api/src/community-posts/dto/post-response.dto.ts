@@ -39,3 +39,11 @@ export class PostDetailResponseDto extends PostListItemResponseDto {
   @ApiProperty({ example: false })
   declare isLiked: boolean;
 }
+
+export class ToggleLikeResponseDto {
+  @ApiProperty({
+    example: true,
+    description: '좋아요 여부',
+  })
+  declare isLiked: boolean;
+}
