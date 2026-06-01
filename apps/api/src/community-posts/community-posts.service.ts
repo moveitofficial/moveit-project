@@ -251,6 +251,16 @@ export class CommunityPostsService {
     const pageSize = query.pageSize ?? 10;
     const skip = (page - 1) * pageSize;
 
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
     const [comments, totalCount] = await Promise.all([
       this.communityPostsRepository.findAllComments({
         postId,

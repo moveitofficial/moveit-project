@@ -29,6 +29,7 @@ import {
   JwtAuth,
   OptionalJwtAuth,
 } from '../common/decorators/jwt-auth.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 import { CommunityPostsService } from './community-posts.service';
 import { PostListQueryDto } from './dto/post-list-query.dto';
@@ -38,6 +39,7 @@ import {
   UpdatePostRequestDto,
 } from './dto/post-request.dto';
 import {
+  CommentListItemResponseDto,
   CommentResponseDto,
   PostDeletionResponseDto,
   PostDetailResponseDto,
@@ -153,5 +155,18 @@ export class CommunityPostsController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.communityPostsService.createComment(user.userId, postId, dto);
+  }
+
+  @ApiOperation({ summary: '댓글 목록 조회' })
+  @ApiPaginatedResponse(HttpStatus.OK, CommentListItemResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Get(':id/comments')
+  getComments(
+    @Param('id', ParseUUIDPipe) postId: string,
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.communityPostsService.getComments(postId, query);
   }
 }
