@@ -164,6 +164,8 @@ enum NotificationCategory {
   POST_COMMENT // 내 게시글에 댓글이 달렸어요
   POST_REPLY // 내 댓글에 답글이 달렸어요
   POST_LIKE // 내 게시글에 좋아요가 달렸어요
+  EXPERT_APPROVED // 전문가 승인이 완료되었어요
+  EXPERT_REJECTED // 전문가 승인이 거절되었어요
 
   // 거래
   ORDER_CREATED // 새 주문이 생성되었어요
@@ -846,8 +848,8 @@ model Notification {
 
   content String
 
-  referenceType ReferenceType @map("reference_type")
-  referenceId   String        @map("reference_id") @db.Uuid
+  referenceType ReferenceType? @map("reference_type")
+  referenceId   String?        @map("reference_id") @db.Uuid
 
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at")
