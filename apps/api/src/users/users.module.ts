@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { ClientProfilesModule } from '../client-profiles/client-profiles.module';
 import { ExpertProfilesModule } from '../expert-profiles/expert-profiles.module';
+import { OrdersModule } from '../orders/orders.module';
 import { PortfoliosModule } from '../portfolios/portfolios.module';
 import { ServicesModule } from '../services/services.module';
 import { UploadModule } from '../upload/upload.module';
@@ -15,6 +16,7 @@ import { UsersService } from './users.service';
   imports: [
     ClientProfilesModule,
     ExpertProfilesModule,
+    OrdersModule,
     PortfoliosModule,
     UploadModule,
     ServicesModule,

@@ -8,11 +8,16 @@ import {
   SERVICE_ERRORS,
 } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
+import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
-import { ServiceReviewsQueryDto } from '../services/dto/service-response.dto';
+import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
+import {
+  MyReviewListItemResponseDto,
+  ServiceReviewsQueryDto,
+} from '../services/dto/service-response.dto';
 import { UpdateReviewRequestDto } from '../services/dto/update-review-request.dto';
-import { mapReview } from '../services/services.mapper';
+import { mapMyReviewListItem, mapReview } from '../services/services.mapper';
 import { REVIEWABLE_ORDER_STATUSES } from '../services/services.types';
 
 import {
@@ -222,7 +227,7 @@ export class OrdersService {
     }
 
     if (order.clientUserId !== userId) {
-      throw new AppException(COMMON_ERRORS.FORBIDDEN);
+      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
     }
 
     if (!REVIEWABLE_ORDER_STATUSES.includes(order.status)) {
@@ -253,6 +258,31 @@ export class OrdersService {
     });
 
     return mapReview(review);
+  }
+
+  async getAllReviewsByUserId(
+    userId: string,
+    query: MyReviewsQueryDto,
+  ): Promise<Paginated<MyReviewListItemResponseDto>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const sort = query.sort ?? 'latest';
+    const skip = (page - 1) * pageSize;
+
+    const [reviews, totalCount] = await Promise.all([
+      this.ordersRepository.findAllReviewsByUserId({
+        userId,
+        skip,
+        take: pageSize,
+        sort,
+      }),
+      this.ordersRepository.countReviewsByUserId(userId),
+    ]);
+
+    return toPaginatedResponse(
+      reviews.map((review) => mapMyReviewListItem(review)),
+      { page, pageSize, totalCount },
+    );
   }
 
   async getReviews(orderId: string, query: ServiceReviewsQueryDto) {

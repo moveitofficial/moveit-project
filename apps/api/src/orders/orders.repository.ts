@@ -5,6 +5,7 @@ import { PAYMENT_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  myReviewListSelect,
   ReviewWithUser,
   reviewWithUserSelect,
   ServiceReviewSort,
@@ -20,6 +21,10 @@ import {
 } from './orders.types';
 
 import type { OrderListSort } from './orders.constants';
+import type {
+  MyReviewListItem,
+  MyReviewSort,
+} from '../services/services.types';
 
 @Injectable()
 export class OrdersRepository {
@@ -205,6 +210,32 @@ export class OrdersRepository {
   async deleteReview(reviewId: string): Promise<void> {
     await this.prisma.review.delete({
       where: { id: reviewId },
+    });
+  }
+
+  findAllReviewsByUserId(args: {
+    userId: string;
+    skip: number;
+    take: number;
+    sort: MyReviewSort;
+  }): Promise<MyReviewListItem[]> {
+    const orderBy =
+      args.sort === 'oldest'
+        ? { createdAt: 'asc' as const }
+        : { createdAt: 'desc' as const };
+
+    return this.prisma.review.findMany({
+      where: { userId: args.userId },
+      select: myReviewListSelect,
+      orderBy,
+      skip: args.skip,
+      take: args.take,
+    });
+  }
+
+  countReviewsByUserId(userId: string): Promise<number> {
+    return this.prisma.review.count({
+      where: { userId },
     });
   }
 

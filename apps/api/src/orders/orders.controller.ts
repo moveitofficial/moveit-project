@@ -20,6 +20,8 @@ import {
   COMMON_ERRORS,
   ORDER_ERRORS,
   PAYMENT_ERRORS,
+  REVIEW_ERRORS,
+  SERVICE_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
@@ -149,9 +151,10 @@ export class OrdersController {
   @ApiOperation({ summary: '리뷰 작성' })
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
-  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE)
+  @ApiErrorResponse(REVIEW_ERRORS.ALREADY_EXISTS)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.OK)
   @Post(':id/reviews')
@@ -166,6 +169,9 @@ export class OrdersController {
 
   @ApiOperation({ summary: '리뷰 목록 조회' })
   @ApiSuccessResponse(HttpStatus.OK, ServiceReviewsPaginatedResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(REVIEW_ERRORS.ORDER_SERVICE_MISMATCH)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get(':id/reviews')
   findReviews(
     @Param('id', ParseUUIDPipe) serviceId: string,
@@ -177,9 +183,9 @@ export class OrdersController {
   @ApiOperation({ summary: '리뷰 수정' })
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
-  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
+  @ApiErrorResponse(REVIEW_ERRORS.ORDER_REVIEW_MISMATCH)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.OK)
   @Patch(':id/reviews/:reviewId')
@@ -196,9 +202,9 @@ export class OrdersController {
   @ApiOperation({ summary: '리뷰 삭제' })
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
-  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
+  @ApiErrorResponse(REVIEW_ERRORS.ORDER_REVIEW_MISMATCH)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id/reviews/:reviewId')
