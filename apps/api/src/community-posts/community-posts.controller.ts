@@ -159,7 +159,7 @@ export class CommunityPostsController {
   }
 
   @ApiOperation({ summary: '댓글 수정' })
-  @JwtAuth()
+  @JwtAuth(COMMENTS_ERRORS.FORBIDDEN)
   @ApiSuccessResponse(HttpStatus.OK, CommentResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
@@ -169,7 +169,6 @@ export class CommunityPostsController {
     COMMENTS_ERRORS.CONTENT_TOO_LONG,
     COMMENTS_ERRORS.NOTHING_TO_UPDATE,
   )
-  @ApiErrorResponse(COMMENTS_ERRORS.FORBIDDEN)
   @Patch(':id/comments/:commentId')
   updateComment(
     @Req() req: Request,
