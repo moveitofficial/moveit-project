@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceStatus, type Prisma } from '@prisma/client';
 
-import { SERVICE_ERRORS } from '../common/constants/errors';
+import {
+  EXPERT_PROFILE_ERRORS,
+  SERVICE_ERRORS,
+} from '../common/constants/errors';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
@@ -297,6 +300,11 @@ export class ServicesService {
     expertUserId: string,
     dto: CreateServiceRequestDto,
   ): Promise<ServiceResponse> {
+    const expertProfile =
+      await this.servicesRepository.findExpertProfileByUserId(expertUserId);
+    if (!expertProfile) throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
+    if (!expertProfile.isApproved)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_APPROVED);
     const service = await this.servicesRepository.create({
       id: dto.serviceId,
       expertUser: { connect: { id: expertUserId } },

@@ -184,7 +184,7 @@ export class MeController {
     return this.expertProfilesService.createExpertProfile(user.userId, dto);
   }
 
-  @ApiOperation({ summary: '판매자 승인 신청' })
+  @ApiOperation({ summary: '전문가 승인 신청' })
   @RoleAuth(Role.EXPERT)
   @ApiSuccessResponse(HttpStatus.OK, ApplyForApprovalResponseDto)
   @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_FOUND)

@@ -10,7 +10,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import {
   COMMON_ERRORS,
-  EXPERT_ERRORS,
+  EXPERT_PROFILE_ERRORS,
   SERVICE_ERRORS,
   USER_ERRORS,
 } from '../common/constants/errors';
@@ -40,7 +40,7 @@ export class UsersController {
 
   @ApiOperation({ summary: '유저(전문가) 포트폴리오 목록 조회하기' })
   @ApiSuccessResponse(HttpStatus.OK, PortfolioListResponseDto)
-  @ApiErrorResponse(USER_ERRORS.NOT_FOUND, EXPERT_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND, EXPERT_PROFILE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get(':id/portfolios')
   getPortfoliosByUserId(@Param('id') userId: string) {
@@ -49,7 +49,7 @@ export class UsersController {
 
   @ApiOperation({ summary: '유저(전문가) 서비스 조회하기' })
   @ApiPaginatedResponse(HttpStatus.OK, ExpertServiceListItemResponseDto)
-  @ApiErrorResponse(USER_ERRORS.NOT_FOUND, EXPERT_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND, EXPERT_PROFILE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(SERVICE_ERRORS.FORBIDDEN_NOT_EXPERT)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get(':id/services')
