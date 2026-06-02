@@ -67,4 +67,21 @@ export class ConsultationChatRepository {
     });
     return message;
   }
+
+  findAllRooms(userId: string) {
+    return this.prisma.chatRoom.findMany({
+      where: {
+        OR: [{ clientUserId: userId }, { expertUserId: userId }],
+      },
+      include: { lastMessage: true },
+      orderBy: { lastMessage: { createdAt: 'desc' } },
+    });
+  }
+
+  findMessages(roomId: string) {
+    return this.prisma.message.findMany({
+      where: { chatRoomId: roomId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
 }

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { CHAT_ERRORS } from '../../common/constants/errors';
+import { AppException } from '../../common/exceptions/app.exception';
 import { toWsException } from '../../common/utils/ws-exception.util';
 
 import { ConsultationChatRepository } from './consultation-chat.repository';
@@ -53,5 +54,19 @@ export class ConsultationChatService {
       userId,
       messageId,
     );
+  }
+
+  async getRooms(userId: string) {
+    return await this.consultationChatRepository.findAllRooms(userId);
+  }
+
+  async getMessages(roomId: string, userId: string) {
+    const participant = await this.consultationChatRepository.findRoom(
+      roomId,
+      userId,
+    );
+    if (!participant)
+      throw new AppException(CHAT_ERRORS.FORBIDDEN_NOT_PARTICIPANT);
+    return await this.consultationChatRepository.findMessages(roomId);
   }
 }
