@@ -4,6 +4,7 @@ export const orderPaymentSelect = {
   id: true,
   clientUserId: true,
   expertUserId: true,
+  totalAmount: true,
   payment: {
     select: {
       id: true,
