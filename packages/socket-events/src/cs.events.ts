@@ -3,6 +3,7 @@ export const CS_EVENTS = {
   // client/admin → server
   JOIN_ROOM: 'joinRoom',
   SEND_MESSAGE: 'sendMessage',
+  MARK_READ: 'markRead',
   CLOSE_TICKET: 'closeTicket',
   ASSIGN_ADMIN: 'assignAdmin',
   // server → client/admin

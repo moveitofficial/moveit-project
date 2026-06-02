@@ -35,6 +35,6 @@ export class CommentRequestDto {
   })
   @IsString()
   @IsNotEmpty()
-  @Length(1, 300)
+  @Length(1, 1000)
   declare content: string;
 }

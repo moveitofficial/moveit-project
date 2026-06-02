@@ -44,6 +44,21 @@ export const mockBlockedUser: User = {
 
 export const mockCurrentUser = mockClientUser;
 
+export function getMockAuthUser(): User | null {
+  const flag = process.env.NEXT_PUBLIC_MOCK_AUTH_USER?.trim().toLowerCase();
+  if (flag === 'false') {
+    return null;
+  }
+  if (flag === 'true') {
+    return mockCurrentUser;
+  }
+  if (process.env.NODE_ENV === 'development') {
+    return mockCurrentUser;
+  }
+
+  return null;
+}
+
 export const mockCurrentUserResponse: ApiSuccess<User> = {
   success: true,
   message: '요청 성공',

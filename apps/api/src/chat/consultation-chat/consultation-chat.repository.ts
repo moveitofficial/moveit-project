@@ -38,7 +38,7 @@ export class ConsultationChatRepository {
     });
   }
 
-  async findParticipant(roomId: string, userId: string) {
+  async findRoom(roomId: string, userId: string) {
     return this.prisma.chatParticipant.findUnique({
       where: { chatRoomId_userId: { chatRoomId: roomId, userId } },
     });

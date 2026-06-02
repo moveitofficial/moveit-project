@@ -164,15 +164,20 @@ enum NotificationCategory {
   POST_COMMENT // 내 게시글에 댓글이 달렸어요
   POST_REPLY // 내 댓글에 답글이 달렸어요
   POST_LIKE // 내 게시글에 좋아요가 달렸어요
+  EXPERT_APPROVED // 전문가 승인이 완료되었어요
+  EXPERT_REJECTED // 전문가 승인이 거절되었어요
 
   // 거래
   ORDER_CREATED // 새 주문이 생성되었어요
   ORDER_CANCELLED // 주문이 취소되었어요
+  ORDER_CANCEL_REQUESTED // 취소 요청 들어왔어요 (판매자에게) ← 추가(6/2)
   PAYMENT_SUCCESS // 결제가 완료되었어요
+  WORK_COMPLETED // 작업이 완료되었어요 (구매자에게)   ← 추가(6/2)
   REFUND_REQUESTED // 환불 요청이 들어왔어요
   PURCHASE_CONFIRM_REQUEST // 구매확정을 요청해주세요 (의뢰인에게)
+  PURCHASE_CONFIRM_PENDING // 구매확정 안 됨, 의뢰인에게 요청해주세요 (판매자에게)   ← 추가(6/2)
   PURCHASE_CONFIRMED // 구매확정이 완료되었어요 (전문가에게)
-  SETTLEMENT_REQUESTED // 정산 요청이 들어왔어요 (어드민에게)
+  SETTLEMENT_REQUESTED // 정산 요청을 해주세요 (어드민에게)
   SETTLEMENT_DONE // 정산이 완료되었어요
 
   // 일정
@@ -369,6 +374,7 @@ model ExpertProfile {
   id                String    @id @default(uuid()) @db.Uuid
   userId            String    @unique @map("user_id") @db.Uuid
   isApplied         Boolean   @default(false) @map("is_applied")
+  appliedAt         DateTime? @map("applied_at") // <- (6/2추가)
   isApproved        Boolean   @default(false) @map("is_approved")
   approvedAt        DateTime? @map("approved_at")
   approvedByAdminId String?   @map("approved_by_admin_id") @db.Uuid
@@ -846,8 +852,8 @@ model Notification {
 
   content String
 
-  referenceType ReferenceType @map("reference_type")
-  referenceId   String        @map("reference_id") @db.Uuid
+  referenceType ReferenceType? @map("reference_type")
+  referenceId   String?        @map("reference_id") @db.Uuid
 
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at")

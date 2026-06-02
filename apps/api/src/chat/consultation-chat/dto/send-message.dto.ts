@@ -13,7 +13,7 @@ import {
 
 export class SendMessageDto {
   @IsUUID()
-  declare chatRoomId: string;
+  declare roomId: string;
 
   @IsEnum(MessageType)
   declare type: MessageType;

@@ -65,6 +65,15 @@ export class PortfoliosService {
     private readonly uploadService: UploadService,
   ) {}
 
+  async findManyByUserId(userId: string) {
+    const expertProfile =
+      await this.expertProfilesRepository.findByUserId(userId);
+    if (expertProfile === null) {
+      return toListResponse([]);
+    }
+    return this.findManyByExpertProfileId(expertProfile.id);
+  }
+
   async findManyByExpertProfileId(expertProfileId: string) {
     const portfolios =
       await this.portfoliosRepository.findManyByExpertProfileId(

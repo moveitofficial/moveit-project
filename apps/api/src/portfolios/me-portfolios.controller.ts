@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -24,6 +25,7 @@ import {
 } from './dto/portfolio-request.dto';
 import {
   PortfolioCreateResponseDto,
+  PortfolioListResponseDto,
   PortfolioResponseDto,
 } from './dto/portfolio-response.dto';
 import { PortfoliosService } from './portfolios.service';
@@ -34,6 +36,16 @@ import type { Request } from 'express';
 @Controller('users/me/portfolios')
 export class MePortfoliosController {
   constructor(private readonly portfoliosService: PortfoliosService) {}
+
+  @ApiOperation({ summary: '내 포트폴리오 목록 조회' })
+  @RoleAuth(Role.EXPERT)
+  @ApiSuccessResponse(HttpStatus.OK, PortfolioListResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get()
+  getMyPortfolios(@Req() req: Request) {
+    const user = req.user as JwtAccessUser;
+    return this.portfoliosService.findManyByUserId(user.userId);
+  }
 
   @ApiOperation({ summary: '포트폴리오 등록' })
   @RoleAuth(Role.EXPERT)
