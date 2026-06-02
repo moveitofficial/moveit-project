@@ -180,4 +180,10 @@ export class ServicesRepository {
       include: serviceListInclude,
     });
   }
+
+  findExpertProfileByUserId(userId: string) {
+    return this.prisma.expertProfile.findUnique({
+      where: { userId },
+    });
+  }
 }
