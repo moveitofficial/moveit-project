@@ -4,15 +4,26 @@ import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { PAYMENT_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  myReviewListSelect,
+  ReviewWithUser,
+  reviewWithUserSelect,
+  ServiceReviewStats,
+} from '../services/services.types';
 
 import { DEFAULT_PAYMENT_METHOD } from './orders.constants';
 import {
   orderListSelect,
   orderPolicySelect,
+  orderReviewSelect,
   orderSchedulePolicySelect,
 } from './orders.types';
 
 import type { OrderListSort } from './orders.constants';
+import type {
+  MyReviewListItem,
+  MyReviewSort,
+} from '../services/services.types';
 
 @Injectable()
 export class OrdersRepository {
@@ -78,6 +89,126 @@ export class OrdersRepository {
     return this.prisma.order.findUnique({
       where: { id: orderId },
       select: orderSchedulePolicySelect,
+    });
+  }
+
+  async findOrderForReview(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: orderReviewSelect,
+    });
+  }
+
+  createReview(data: {
+    orderId: string;
+    userId: string;
+    rating: number;
+    content: string;
+  }): Promise<ReviewWithUser> {
+    return this.prisma.review.create({
+      data: {
+        orderId: data.orderId,
+        userId: data.userId,
+        rating: data.rating,
+        content: data.content,
+      },
+      select: reviewWithUserSelect,
+    });
+  }
+
+  findReviewById(
+    reviewId: string,
+    orderId: string,
+  ): Promise<ReviewWithUser | null> {
+    return this.prisma.review.findFirst({
+      where: {
+        id: reviewId,
+        order: { id: orderId },
+      },
+      select: reviewWithUserSelect,
+    });
+  }
+
+  async getReviewStatsByOrderIds(
+    orderIds: string[],
+  ): Promise<Map<string, ServiceReviewStats>> {
+    if (orderIds.length === 0) {
+      return new Map();
+    }
+
+    const reviews = await this.prisma.review.findMany({
+      where: { orderId: { in: orderIds } },
+      select: {
+        orderId: true,
+        rating: true,
+      },
+    });
+
+    const acc = new Map<string, { sum: number; count: number }>();
+    for (const review of reviews) {
+      const cur = acc.get(review.orderId) ?? { sum: 0, count: 0 };
+      acc.set(review.orderId, {
+        sum: cur.sum + review.rating,
+        count: cur.count + 1,
+      });
+    }
+
+    const result = new Map<string, ServiceReviewStats>();
+    for (const orderId of orderIds) {
+      const bucket = acc.get(orderId);
+      const count = bucket?.count ?? 0;
+      result.set(orderId, {
+        reviewCount: count,
+        rating:
+          count > 0 ? Math.round(((bucket?.sum ?? 0) / count) * 10) / 10 : 0,
+      });
+    }
+    return result;
+  }
+
+  updateReview(
+    reviewId: string,
+    data: {
+      rating?: number;
+      content?: string;
+    },
+  ): Promise<ReviewWithUser> {
+    return this.prisma.review.update({
+      where: { id: reviewId },
+      data,
+      select: reviewWithUserSelect,
+    });
+  }
+
+  async deleteReview(reviewId: string): Promise<void> {
+    await this.prisma.review.delete({
+      where: { id: reviewId },
+    });
+  }
+
+  findAllReviewsByUserId(args: {
+    userId: string;
+    skip: number;
+    take: number;
+    sort: MyReviewSort;
+  }): Promise<MyReviewListItem[]> {
+    const orderBy =
+      args.sort === 'oldest'
+        ? { createdAt: 'asc' as const }
+        : { createdAt: 'desc' as const };
+
+    return this.prisma.review.findMany({
+      where: { userId: args.userId },
+      select: myReviewListSelect,
+      orderBy,
+      skip: args.skip,
+      take: args.take,
+    });
+  }
+
+  countReviewsByUserId(userId: string): Promise<number> {
+    return this.prisma.review.count({
+      where: { userId },
     });
   }
 

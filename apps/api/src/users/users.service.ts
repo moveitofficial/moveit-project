@@ -3,7 +3,7 @@ import { AuthProvider, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 import {
-  EXPERT_ERRORS,
+  EXPERT_PROFILE_ERRORS,
   SERVICE_ERRORS,
   USER_ERRORS,
 } from '../common/constants/errors';
@@ -12,6 +12,7 @@ import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { mapServiceCategories } from '../common/utils/service-category.util';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
+import { OrdersService } from '../orders/orders.service';
 import { PortfoliosService } from '../portfolios/portfolios.service';
 import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
 import { MyReviewListItemResponseDto } from '../services/dto/service-response.dto';
@@ -76,6 +77,7 @@ export class UsersService {
     private readonly portfoliosService: PortfoliosService,
     private readonly uploadService: UploadService,
     private readonly servicesService: ServicesService,
+    private readonly ordersService: OrdersService,
   ) {}
 
   async getUserWithPortfolios(userId: string) {
@@ -86,7 +88,8 @@ export class UsersService {
     const expertProfile =
       await this.expertProfilesRepository.findByUserId(userId);
 
-    if (expertProfile === null) throw new AppException(EXPERT_ERRORS.NOT_FOUND);
+    if (expertProfile === null)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
 
     return this.portfoliosService.findManyByExpertProfileId(expertProfile.id);
   }
@@ -104,7 +107,8 @@ export class UsersService {
     const expertProfile =
       await this.expertProfilesRepository.findByUserId(userId);
 
-    if (expertProfile === null) throw new AppException(EXPERT_ERRORS.NOT_FOUND);
+    if (expertProfile === null)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
 
     return this.servicesService.getAllServicesByExpertId(userId, query);
   }
@@ -241,6 +245,6 @@ export class UsersService {
 
     if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
 
-    return this.servicesService.getAllReviewsByUserId(userId, query);
+    return this.ordersService.getAllReviewsByUserId(userId, query);
   }
 }

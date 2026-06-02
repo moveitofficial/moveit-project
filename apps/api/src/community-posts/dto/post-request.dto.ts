@@ -38,3 +38,5 @@ export class CommentRequestDto {
   @Length(1, 1000)
   declare content: string;
 }
+
+export class UpdateCommentRequestDto extends PartialType(CommentRequestDto) {}

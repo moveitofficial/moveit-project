@@ -12,6 +12,35 @@ import { ExpertProfilesRepository } from './expert-profiles.repository';
 
 import type { ExpertProfileWithRelations } from './expert-profiles.types';
 
+function mapUpdatedProfile(profile: ExpertProfileWithRelations) {
+  return {
+    id: profile.id,
+    userId: profile.userId,
+    businessName: profile.businessName,
+    businessNumber: profile.businessNumber,
+    ceoName: profile.ceoName,
+    contactTimeStart: profile.contactTimeStart,
+    contactTimeEnd: profile.contactTimeEnd,
+    foundedYear: profile.foundedYear,
+    employeeMin: profile.employeeMin,
+    employeeMax: profile.employeeMax,
+    description: profile.description,
+    avgRating: profile.avgRating,
+    reviewCount: profile.reviewCount,
+    createdAt: profile.createdAt,
+    specialtyCategories: mapServiceCategories(profile.specialtyCategories),
+    techStacks: profile.techStacks.map((ts) => ({ name: ts.techStack.name })),
+    portfolios: profile.portfolios.map((p) => ({
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      clientName: p.clientName,
+      businessSector: p.businessSector,
+      createdAt: p.createdAt,
+    })),
+  };
+}
+
 function mapProfile(profile: ExpertProfileWithRelations) {
   return {
     id: profile.id,
@@ -151,7 +180,7 @@ export class ExpertProfilesService {
           techStackNames: dto.techStackNames,
         }));
 
-    return mapProfile(profile);
+    return mapUpdatedProfile(profile);
   }
 
   async applyForApproval(userId: string) {

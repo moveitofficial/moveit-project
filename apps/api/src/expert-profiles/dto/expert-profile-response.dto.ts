@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import {
   BusinessSector,
   Region,
@@ -23,7 +23,7 @@ class TechStackResponseDto {
   declare name: TechStackName;
 }
 
-class PortfolioResponseDto {
+class ExpertPortfolioResponseDto {
   @ApiProperty({ example: 'b3e57c2a-e64b-47c7-99dd-a174ca2d4dac' })
   declare id: string;
 
@@ -110,8 +110,8 @@ export class ExpertProfileResponseDto {
   @ApiProperty({ type: [TechStackResponseDto] })
   declare techStacks: TechStackResponseDto[];
 
-  @ApiProperty({ type: [PortfolioResponseDto] })
-  declare portfolios: PortfolioResponseDto[];
+  @ApiProperty({ type: [ExpertPortfolioResponseDto] })
+  declare portfolios: ExpertPortfolioResponseDto[];
 }
 
 export class CreateExpertProfileResponseDto {
@@ -130,6 +130,11 @@ export class CreateExpertProfileResponseDto {
   @ApiProperty({ type: ExpertProfileResponseDto })
   declare expertProfile: ExpertProfileResponseDto;
 }
+
+export class UpdateExpertProfileResponseDto extends OmitType(
+  ExpertProfileResponseDto,
+  ['isApplied', 'isApproved', 'approvedAt', 'rejectedAt', 'rejectReason'],
+) {}
 
 export class ApplyForApprovalResponseDto {
   @ApiProperty({ example: true })

@@ -246,6 +246,10 @@ export const EXPERT_PROFILE_ERRORS = {
     message: '승인 신청 전 전문가 프로필의 모든 항목을 입력해 주세요.',
     code: 'EXPERT_PROFILE_INCOMPLETE_PROFILE',
   },
+  NOT_APPROVED: {
+    status: HttpStatus.FORBIDDEN,
+    message: '승인되지 않은 전문가입니다.',
+  },
 } as const;
 
 export const PORTFOLIO_ERRORS = {
@@ -303,6 +307,11 @@ export const REVIEW_ERRORS = {
     message: '주문과 서비스가 일치하지 않습니다.',
     code: 'REVIEW_ORDER_SERVICE_MISMATCH',
   },
+  ORDER_REVIEW_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '주문과 리뷰가 일치하지 않습니다.',
+    code: 'REVIEW_ORDER_REVIEW_MISMATCH',
+  },
   NOTHING_TO_UPDATE: {
     status: HttpStatus.BAD_REQUEST,
     message: '수정된 내용이 없습니다.',
@@ -334,25 +343,6 @@ export const UPLOAD_ERRORS = {
   PROFILE_IMAGE_TOO_LARGE: {
     status: HttpStatus.BAD_REQUEST,
     message: '프로필 이미지의 가로와 세로는 각각 500px 이하여야 합니다.',
-  },
-} as const;
-
-export const EXPERT_ERRORS = {
-  NOT_FOUND: {
-    status: HttpStatus.NOT_FOUND,
-    message: '전문가를 찾을 수 없습니다.',
-  },
-  NOT_APPROVED: {
-    status: HttpStatus.FORBIDDEN,
-    message: '승인되지 않은 전문가입니다.',
-  },
-  ALREADY_APPROVED: {
-    status: HttpStatus.BAD_REQUEST,
-    message: '이미 승인된 전문가입니다.',
-  },
-  REJECTED: {
-    status: HttpStatus.FORBIDDEN,
-    message: '승인이 거절된 전문가입니다.',
   },
 } as const;
 
@@ -426,6 +416,26 @@ export const CS_CHAT_ERRORS = {
 } as const;
 
 export const COMMENTS_ERRORS = {
+  FORBIDDEN: {
+    status: HttpStatus.FORBIDDEN,
+    message: '본인이 등록한 댓글만 수정할 수 있습니다.',
+    code: 'COMMENTS_FORBIDDEN',
+  },
+  NOTHING_TO_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '수정할 항목이 없습니다.',
+    code: 'COMMENTS_NOTHING_TO_UPDATE',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '댓글을 찾을 수 없습니다.',
+    code: 'COMMENTS_NOT_FOUND',
+  },
+  ALREADY_DELETED: {
+    status: HttpStatus.CONFLICT,
+    message: '삭제된 댓글입니다.',
+    code: 'COMMENTS_ALREADY_DELETED',
+  },
   CONTENT_TOO_SHORT: {
     status: HttpStatus.BAD_REQUEST,
     message: '댓글 내용은 최소 1자 이상이어야 합니다.',

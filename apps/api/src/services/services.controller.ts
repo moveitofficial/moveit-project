@@ -17,19 +17,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import {
-  ApiConsumes,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import {
   COMMON_ERRORS,
-  ORDER_ERRORS,
-  REVIEW_ERRORS,
+  EXPERT_PROFILE_ERRORS,
   SERVICE_ERRORS,
   UPLOAD_ERRORS,
 } from '../common/constants/errors';
@@ -43,10 +37,8 @@ import {
 import { UploadServiceImagesResponseDto } from '../upload/dto/upload-response.dto';
 import { UploadService } from '../upload/upload.service';
 
-import { CreateReviewRequestDto } from './dto/create-review-request.dto';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import {
-  ReviewResponseDto,
   ServiceDetailResponseDto,
   ServiceListItemResponseDto,
   ServiceListPaginatedResponseDto,
@@ -55,7 +47,6 @@ import {
   ServiceReviewsPaginatedResponseDto,
   ServiceReviewsQueryDto,
 } from './dto/service-response.dto';
-import { UpdateReviewRequestDto } from './dto/update-review-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import { ServicesService } from './services.service';
@@ -98,6 +89,8 @@ export class ServicesController {
     SERVICE_ERRORS.MAIN_IMAGE_REQUIRED,
     SERVICE_ERRORS.DETAIL_IMAGE_INVALID,
   )
+  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_APPROVED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
   @Post()
@@ -174,93 +167,6 @@ export class ServicesController {
     return this.servicesService.getOtherServicesByExpertId(serviceId);
   }
 
-  @ApiOperation({ summary: '서비스 리뷰 목록 조회' })
-  @ApiSuccessResponse(HttpStatus.OK, ServiceReviewsPaginatedResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Get(':id/reviews')
-  findReviews(
-    @Param('id', ParseUUIDPipe) serviceId: string,
-    @Query() query: ServiceReviewsQueryDto,
-  ) {
-    return this.servicesService.getServiceReviews(serviceId, query);
-  }
-
-  @ApiOperation({ summary: '서비스 리뷰 작성' })
-  @RoleAuth(Role.CLIENT)
-  @ApiSuccessResponse(HttpStatus.CREATED, ReviewResponseDto)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND, ORDER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(
-    COMMON_ERRORS.VALIDATION_ERROR,
-    REVIEW_ERRORS.ORDER_NOT_REVIEWABLE,
-    REVIEW_ERRORS.ORDER_SERVICE_MISMATCH,
-  )
-  @ApiErrorResponse(REVIEW_ERRORS.ALREADY_EXISTS)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @HttpCode(HttpStatus.CREATED)
-  @Post(':id/reviews')
-  createReview(
-    @Req() req: Request,
-    @Param('id', ParseUUIDPipe) serviceId: string,
-    @Body() dto: CreateReviewRequestDto,
-  ) {
-    const user = req.user as JwtAccessUser;
-    return this.servicesService.createServiceReview(
-      user.userId,
-      serviceId,
-      dto,
-    );
-  }
-
-  @ApiOperation({ summary: '서비스 리뷰 수정' })
-  @RoleAuth(Role.CLIENT)
-  @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
-  @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(
-    COMMON_ERRORS.VALIDATION_ERROR,
-    REVIEW_ERRORS.NOTHING_TO_UPDATE,
-  )
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Patch(':id/reviews/:reviewId')
-  patchReview(
-    @Req() req: Request,
-    @Param('id', ParseUUIDPipe) serviceId: string,
-    @Param('reviewId', ParseUUIDPipe) reviewId: string,
-    @Body() dto: UpdateReviewRequestDto,
-  ) {
-    const user = req.user as JwtAccessUser;
-    return this.servicesService.updateServiceReview(
-      user.userId,
-      serviceId,
-      reviewId,
-      dto,
-    );
-  }
-
-  @ApiOperation({ summary: '서비스 리뷰 삭제' })
-  @RoleAuth(Role.CLIENT)
-  @ApiResponse({
-    status: HttpStatus.NO_CONTENT,
-    description: '리뷰 삭제 성공',
-  })
-  @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':id/reviews/:reviewId')
-  deleteReview(
-    @Req() req: Request,
-    @Param('id', ParseUUIDPipe) serviceId: string,
-    @Param('reviewId', ParseUUIDPipe) reviewId: string,
-  ) {
-    const user = req.user as JwtAccessUser;
-    return this.servicesService.deleteServiceReview(
-      user.userId,
-      serviceId,
-      reviewId,
-    );
-  }
-
   @ApiOperation({ summary: '서비스 이미지 업로드' })
   @RoleAuth(Role.EXPERT)
   @ApiConsumes('multipart/form-data')
@@ -305,5 +211,18 @@ export class ServicesController {
       ),
     ]);
     return { serviceId, mainImage: mainImage[0], detailImages };
+  }
+
+  @ApiOperation({ summary: '서비스 리뷰 목록 조회' })
+  @ApiSuccessResponse(HttpStatus.OK, ServiceReviewsPaginatedResponseDto)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get(':id/reviews')
+  findReviews(
+    @Param('id', ParseUUIDPipe) serviceId: string,
+    @Query() query: ServiceReviewsQueryDto,
+  ) {
+    return this.servicesService.getServiceReviews(serviceId, query);
   }
 }

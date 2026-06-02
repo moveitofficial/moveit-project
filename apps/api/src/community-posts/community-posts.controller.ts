@@ -29,15 +29,18 @@ import {
   JwtAuth,
   OptionalJwtAuth,
 } from '../common/decorators/jwt-auth.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 import { CommunityPostsService } from './community-posts.service';
 import { PostListQueryDto } from './dto/post-list-query.dto';
 import {
   CommentRequestDto,
   PostRequestDto,
+  UpdateCommentRequestDto,
   UpdatePostRequestDto,
 } from './dto/post-request.dto';
 import {
+  CommentListItemResponseDto,
   CommentResponseDto,
   PostDeletionResponseDto,
   PostDetailResponseDto,
@@ -153,5 +156,50 @@ export class CommunityPostsController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.communityPostsService.createComment(user.userId, postId, dto);
+  }
+
+  @ApiOperation({ summary: '댓글 수정' })
+  @JwtAuth(COMMENTS_ERRORS.FORBIDDEN)
+  @ApiSuccessResponse(HttpStatus.OK, CommentResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND, COMMENTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    COMMUNITY_POSTS_ERRORS.ALREADY_DELETED,
+    COMMENTS_ERRORS.ALREADY_DELETED,
+  )
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    COMMENTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMENTS_ERRORS.CONTENT_TOO_LONG,
+    COMMENTS_ERRORS.NOTHING_TO_UPDATE,
+  )
+  @Patch(':id/comments/:commentId')
+  updateComment(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) postId: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+    @Body() dto: UpdateCommentRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.updateComment(
+      user.userId,
+      commentId,
+      postId,
+      dto,
+    );
+  }
+
+  @ApiOperation({ summary: '댓글 목록 조회' })
+  @ApiPaginatedResponse(HttpStatus.OK, CommentListItemResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Get(':id/comments')
+  getComments(
+    @Param('id', ParseUUIDPipe) postId: string,
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.communityPostsService.getComments(postId, query);
   }
 }

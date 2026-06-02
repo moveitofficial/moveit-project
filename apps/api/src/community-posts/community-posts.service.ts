@@ -4,12 +4,14 @@ import {
   COMMENTS_ERRORS,
   COMMUNITY_POSTS_ERRORS,
 } from '../common/constants/errors';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 
 import {
   mapComment,
+  mapCommentListItem,
   mapPost,
   mapPostDetail,
   mapPostListItem,
@@ -18,6 +20,7 @@ import {
 import { CommunityPostsRepository } from './community-posts.repository';
 import {
   COMMENT_MAX_LENGTH,
+  COMMENT_MIN_LENGTH,
   getPostContentPlainTextLength,
   POST_MIN_LENGTH,
   sanitizePostContent,
@@ -26,9 +29,13 @@ import { PostListQueryDto } from './dto/post-list-query.dto';
 import {
   CommentRequestDto,
   PostRequestDto,
+  UpdateCommentRequestDto,
   UpdatePostRequestDto,
 } from './dto/post-request.dto';
-import { PostListItemResponseDto } from './dto/post-response.dto';
+import {
+  CommentListItemResponseDto,
+  PostListItemResponseDto,
+} from './dto/post-response.dto';
 
 import type { CommunityCategory } from '@prisma/client';
 
@@ -236,5 +243,86 @@ export class CommunityPostsService {
       dto,
     );
     return mapComment(comment);
+  }
+
+  async updateComment(
+    userId: string,
+    commentId: string,
+    postId: string,
+    dto: UpdateCommentRequestDto,
+  ): Promise<ReturnType<typeof mapComment>> {
+    if (dto.content === undefined) {
+      throw new AppException(COMMENTS_ERRORS.NOTHING_TO_UPDATE);
+    }
+
+    if (dto.content.trim().length < COMMENT_MIN_LENGTH) {
+      throw new AppException(COMMENTS_ERRORS.CONTENT_TOO_SHORT);
+    }
+
+    if (dto.content.trim().length > COMMENT_MAX_LENGTH) {
+      throw new AppException(COMMENTS_ERRORS.CONTENT_TOO_LONG);
+    }
+
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const comment = await this.communityPostsRepository.findComment(commentId);
+    if (comment === null) {
+      throw new AppException(COMMENTS_ERRORS.NOT_FOUND);
+    }
+
+    if (comment.userId !== userId) {
+      throw new AppException(COMMENTS_ERRORS.FORBIDDEN);
+    }
+
+    if (comment.deletedAt !== null) {
+      throw new AppException(COMMENTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const updated = await this.communityPostsRepository.updateComment(
+      commentId,
+      dto,
+    );
+    return mapComment(updated);
+  }
+
+  async getComments(
+    postId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<CommentListItemResponseDto>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
+    const skip = (page - 1) * pageSize;
+
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const [comments, totalCount] = await Promise.all([
+      this.communityPostsRepository.findAllComments({
+        postId,
+        skip,
+        take: pageSize,
+      }),
+      this.communityPostsRepository.countComments(postId),
+    ]);
+
+    return toPaginatedResponse(
+      comments.map((comment) => mapCommentListItem(comment)),
+      { page, pageSize, totalCount },
+    );
   }
 }
