@@ -71,3 +71,12 @@ export function mapCommentListItem(comment: CommentListItem) {
     authorProfileImageUrl: comment.user.profileImageUrl,
   };
 }
+
+export function mapCommentToBeDeleted(comment: Comment) {
+  return {
+    id: comment.id,
+    userId: comment.userId,
+    createdAt: comment.createdAt,
+    deletedAt: comment.deletedAt,
+  };
+}
