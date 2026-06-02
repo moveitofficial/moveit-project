@@ -10,7 +10,9 @@ import {
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
+import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { mapServiceCategories } from '../common/utils/service-category.util';
+import { resolveAuthorDisplayName } from '../community-posts/community-posts.mapper';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
 import { OrdersService } from '../orders/orders.service';
 import { PortfoliosService } from '../portfolios/portfolios.service';
@@ -20,8 +22,10 @@ import { ExpertServiceListItemResponse } from '../services/services.mapper';
 import { ServicesService } from '../services/services.service';
 import { UploadService } from '../upload/upload.service';
 
+import { MyPostsQueryDto } from './dto/my-posts-query.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { MyPostListItemResponseDto } from './dto/user-response.dto';
 import { UsersRepository } from './users.repository';
 
 import type { UserWithProfiles } from './users.types';
@@ -246,5 +250,45 @@ export class UsersService {
     if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
 
     return this.ordersService.getAllReviewsByUserId(userId, query);
+  }
+
+  async getAllPostsByUserId(
+    userId: string,
+    query: MyPostsQueryDto,
+  ): Promise<Paginated<MyPostListItemResponseDto>> {
+    const user = await this.usersRepository.findById(userId);
+
+    if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
+    const sort = query.sort ?? 'latest';
+    const skip = (page - 1) * pageSize;
+    const category = query.category;
+
+    const [posts, totalCount] = await Promise.all([
+      this.usersRepository.findAllPostsByUserId({
+        userId,
+        skip,
+        take: pageSize,
+        sort,
+        category,
+      }),
+      this.usersRepository.countPosts(userId, category),
+    ]);
+
+    return toPaginatedResponse(
+      posts.map((post) => ({
+        id: post.id,
+        category: post.category,
+        title: post.title,
+        content: post.content,
+        createdAt: post.createdAt.toISOString(),
+        authorDisplayName: resolveAuthorDisplayName(post.user),
+        likeCount: post._count.likeRecords,
+        commentCount: post._count.comments,
+      })),
+      { page, pageSize, totalCount },
+    );
   }
 }

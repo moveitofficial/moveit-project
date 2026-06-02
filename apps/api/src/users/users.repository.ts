@@ -2,12 +2,17 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 
+import { MyPostSort } from './dto/my-posts-query.dto';
 import { myPostListSelect, userWithProfilesInclude } from './users.types';
 
 import type { MyPostListItem, UserWithProfiles } from './users.types';
 import type { CreateOAuthUserParams } from '../auth/oauth/oauth.types';
-import type { AuthProvider, CommunityCategory, Prisma, User } from '@prisma/client';
-import { MyPostSort } from './dto/my-posts-query.dto';
+import type {
+  AuthProvider,
+  CommunityCategory,
+  Prisma,
+  User,
+} from '@prisma/client';
 
 @Injectable()
 export class UsersRepository {
@@ -106,6 +111,16 @@ export class UsersRepository {
       orderBy,
       skip: args.skip,
       take: args.take,
+    });
+  }
+
+  countPosts(userId: string, category?: CommunityCategory): Promise<number> {
+    return this.prisma.communityPost.count({
+      where: {
+        userId,
+        deletedAt: null,
+        ...(category !== undefined && { category }),
+      },
     });
   }
 }
