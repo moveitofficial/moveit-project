@@ -22,9 +22,9 @@ import {
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
+import { OrderPaymentDto } from '../payments/dto/order-payment-response.dto';
 import { PaymentsService } from '../payments/payments.service';
 
-import { OrderPaymentDto } from './dto/order-response.dto';
 import { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
 import { UpdateOrderScheduleResponseDto } from './dto/update-order-schedule-response.dto';
 import { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
