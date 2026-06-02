@@ -346,7 +346,6 @@ export const UPLOAD_ERRORS = {
   },
 } as const;
 
-
 export const COMMUNITY_POSTS_ERRORS = {
   NOT_FOUND: {
     status: HttpStatus.NOT_FOUND,

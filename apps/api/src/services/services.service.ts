@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceStatus, type Prisma } from '@prisma/client';
 
-import { EXPERT_PROFILE_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
+import {
+  EXPERT_PROFILE_ERRORS,
+  SERVICE_ERRORS,
+} from '../common/constants/errors';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
