@@ -243,6 +243,7 @@ export class CommunityPostsService {
   async updateComment(
     userId: string,
     commentId: string,
+    postId: string,
     dto: UpdateCommentRequestDto,
   ): Promise<ReturnType<typeof mapComment>> {
     if (dto.content === undefined) {
@@ -255,6 +256,16 @@ export class CommunityPostsService {
 
     if (dto.content.trim().length > COMMENT_MAX_LENGTH) {
       throw new AppException(COMMENTS_ERRORS.CONTENT_TOO_LONG);
+    }
+
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
     }
 
     const comment = await this.communityPostsRepository.findComment(commentId);

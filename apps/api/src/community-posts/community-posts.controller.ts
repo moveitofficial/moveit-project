@@ -35,6 +35,7 @@ import { PostListQueryDto } from './dto/post-list-query.dto';
 import {
   CommentRequestDto,
   PostRequestDto,
+  UpdateCommentRequestDto,
   UpdatePostRequestDto,
 } from './dto/post-request.dto';
 import {
@@ -153,5 +154,31 @@ export class CommunityPostsController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.communityPostsService.createComment(user.userId, postId, dto);
+  }
+
+  @ApiOperation({ summary: '댓글 수정' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, CommentResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @ApiErrorResponse(COMMENTS_ERRORS.NOTHING_TO_UPDATE)
+  @ApiErrorResponse(COMMENTS_ERRORS.CONTENT_TOO_SHORT)
+  @ApiErrorResponse(COMMENTS_ERRORS.CONTENT_TOO_LONG)
+  @ApiErrorResponse(COMMENTS_ERRORS.FORBIDDEN)
+  @Patch(':id/comments/:commentId')
+  updateComment(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) postId: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+    @Body() dto: UpdateCommentRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.updateComment(
+      user.userId,
+      commentId,
+      postId,
+      dto,
+    );
   }
 }
