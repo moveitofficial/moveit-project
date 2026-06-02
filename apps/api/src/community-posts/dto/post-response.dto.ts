@@ -75,3 +75,18 @@ export class CommentResponseDto {
   @ApiProperty({ example: '2026-05-28T10:00:00.000Z' })
   declare createdAt: Date;
 }
+
+export class CommentListItemResponseDto extends CommentResponseDto {
+  @ApiProperty({
+    example: '코드잇',
+    description: '댓글 작성자 표시 이름',
+  })
+  declare authorDisplayName: string;
+
+  @ApiProperty({
+    nullable: true,
+    example: 'https://example.com/profile.jpg',
+    description: '댓글 작성자 프로필 이미지',
+  })
+  declare authorProfileImageUrl: string | null;
+}
