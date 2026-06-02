@@ -246,6 +246,10 @@ export const EXPERT_PROFILE_ERRORS = {
     message: '승인 신청 전 전문가 프로필의 모든 항목을 입력해 주세요.',
     code: 'EXPERT_PROFILE_INCOMPLETE_PROFILE',
   },
+  NOT_APPROVED: {
+    status: HttpStatus.FORBIDDEN,
+    message: '승인되지 않은 전문가입니다.',
+  },
 } as const;
 
 export const PORTFOLIO_ERRORS = {
@@ -342,24 +346,6 @@ export const UPLOAD_ERRORS = {
   },
 } as const;
 
-export const EXPERT_ERRORS = {
-  NOT_FOUND: {
-    status: HttpStatus.NOT_FOUND,
-    message: '전문가를 찾을 수 없습니다.',
-  },
-  NOT_APPROVED: {
-    status: HttpStatus.FORBIDDEN,
-    message: '승인되지 않은 전문가입니다.',
-  },
-  ALREADY_APPROVED: {
-    status: HttpStatus.BAD_REQUEST,
-    message: '이미 승인된 전문가입니다.',
-  },
-  REJECTED: {
-    status: HttpStatus.FORBIDDEN,
-    message: '승인이 거절된 전문가입니다.',
-  },
-} as const;
 
 export const COMMUNITY_POSTS_ERRORS = {
   NOT_FOUND: {

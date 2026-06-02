@@ -3,7 +3,7 @@ import { AuthProvider, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 import {
-  EXPERT_ERRORS,
+  EXPERT_PROFILE_ERRORS,
   SERVICE_ERRORS,
   USER_ERRORS,
 } from '../common/constants/errors';
@@ -88,7 +88,7 @@ export class UsersService {
     const expertProfile =
       await this.expertProfilesRepository.findByUserId(userId);
 
-    if (expertProfile === null) throw new AppException(EXPERT_ERRORS.NOT_FOUND);
+    if (expertProfile === null) throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
 
     return this.portfoliosService.findManyByExpertProfileId(expertProfile.id);
   }
@@ -106,7 +106,7 @@ export class UsersService {
     const expertProfile =
       await this.expertProfilesRepository.findByUserId(userId);
 
-    if (expertProfile === null) throw new AppException(EXPERT_ERRORS.NOT_FOUND);
+    if (expertProfile === null) throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
 
     return this.servicesService.getAllServicesByExpertId(userId, query);
   }
