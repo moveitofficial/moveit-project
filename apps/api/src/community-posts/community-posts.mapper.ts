@@ -3,7 +3,7 @@ import { Role } from '@prisma/client';
 import type { CommentListItem, PostListItem } from './community-posts.types';
 import type { Comment, CommunityPost } from '@prisma/client';
 
-function resolveAuthorDisplayName(user: PostListItem['user']): string {
+export function resolveAuthorDisplayName(user: PostListItem['user']): string {
   if (user.role === Role.EXPERT) {
     return user.expertProfile?.businessName ?? '';
   }

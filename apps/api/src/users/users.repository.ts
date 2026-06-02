@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 
-import { userWithProfilesInclude } from './users.types';
+import { myPostListSelect, userWithProfilesInclude } from './users.types';
 
-import type { UserWithProfiles } from './users.types';
+import type { MyPostListItem, UserWithProfiles } from './users.types';
 import type { CreateOAuthUserParams } from '../auth/oauth/oauth.types';
-import type { AuthProvider, Prisma, User } from '@prisma/client';
+import type { AuthProvider, CommunityCategory, Prisma, User } from '@prisma/client';
+import { MyPostSort } from './dto/my-posts-query.dto';
 
 @Injectable()
 export class UsersRepository {
@@ -72,6 +73,39 @@ export class UsersRepository {
     return this.prisma.user.update({
       where: { id },
       data: { password: hashedPassword },
+    });
+  }
+
+  findAllPostsByUserId(args: {
+    userId: string;
+    skip: number;
+    take: number;
+    sort: MyPostSort;
+    category?: CommunityCategory;
+  }): Promise<MyPostListItem[]> {
+    const where: Prisma.CommunityPostWhereInput = {
+      userId: args.userId,
+      deletedAt: null,
+      ...(args.category !== undefined && { category: args.category }),
+    };
+    const orderBy =
+      args.sort === 'likes'
+        ? [
+            { likeRecords: { _count: 'desc' as const } },
+            { createdAt: 'desc' as const },
+          ]
+        : args.sort === 'comments'
+          ? [
+              { comments: { _count: 'desc' as const } },
+              { createdAt: 'desc' as const },
+            ]
+          : [{ createdAt: 'desc' as const }];
+    return this.prisma.communityPost.findMany({
+      where,
+      select: myPostListSelect,
+      orderBy,
+      skip: args.skip,
+      take: args.take,
     });
   }
 }

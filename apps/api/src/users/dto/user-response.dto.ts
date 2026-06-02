@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AuthProvider, Region, Role } from '@prisma/client';
+import { AuthProvider, CommunityCategory, Region, Role } from '@prisma/client';
 
 import { ClientProfileResponseDto } from '../../client-profiles/dto/client-profile-response.dto';
 import { ExpertProfileResponseDto } from '../../expert-profiles/dto/expert-profile-response.dto';
@@ -65,4 +65,30 @@ export class ClientUserResponseDto extends UserResponseDto {
 export class ExpertUserResponseDto extends UserResponseDto {
   @ApiPropertyOptional({ type: ExpertProfileResponseDto, nullable: true })
   declare expertProfile: ExpertProfileResponseDto | null;
+}
+
+export class MyPostListItemResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ enum: CommunityCategory })
+  declare category: CommunityCategory;
+
+  @ApiProperty({ example: '이 문제 어떻게 해결하나요?' })
+  declare title: string;
+
+  @ApiProperty({ example: '본문 내용' })
+  declare content: string;
+
+  @ApiProperty({ example: '2026-06-02T10:00:00.000Z' })
+  declare createdAt: string;
+
+  @ApiProperty({ example: '코드잇' })
+  declare authorDisplayName: string;
+
+  @ApiProperty({ example: 12 })
+  declare likeCount: number;
+
+  @ApiProperty({ example: 3 })
+  declare commentCount: number;
 }
