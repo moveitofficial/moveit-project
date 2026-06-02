@@ -145,4 +145,16 @@ export class CommunityPostsRepository {
 
     return this.prisma.comment.create(args);
   }
+
+  updateComment(
+    commentId: string,
+    data: {
+      content?: string;
+    },
+  ) {
+    return this.prisma.comment.update({
+      where: { id: commentId },
+      data,
+    });
+  }
 }
