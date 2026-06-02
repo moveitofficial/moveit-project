@@ -23,6 +23,7 @@ import { Role } from '@prisma/client';
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import {
   COMMON_ERRORS,
+  EXPERT_PROFILE_ERRORS,
   SERVICE_ERRORS,
   UPLOAD_ERRORS,
 } from '../common/constants/errors';
@@ -88,6 +89,8 @@ export class ServicesController {
     SERVICE_ERRORS.MAIN_IMAGE_REQUIRED,
     SERVICE_ERRORS.DETAIL_IMAGE_INVALID,
   )
+  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_APPROVED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
   @Post()
