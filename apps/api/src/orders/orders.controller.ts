@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -10,7 +11,7 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
@@ -18,11 +19,16 @@ import {
   COMMON_ERRORS,
   ORDER_ERRORS,
   PAYMENT_ERRORS,
+  REVIEW_ERRORS,
+  SERVICE_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
 import { PaymentsService } from '../payments/payments.service';
+import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
+import { ReviewResponseDto } from '../services/dto/service-response.dto';
+import { UpdateReviewRequestDto } from '../services/dto/update-review-request.dto';
 
 import { OrderPaymentDto } from './dto/order-response.dto';
 import { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
@@ -130,5 +136,63 @@ export class OrdersController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.requestSettlement(user.userId, orderId);
+  }
+
+  @ApiOperation({ summary: '리뷰 작성' })
+  @RoleAuth(Role.CLIENT)
+  @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiErrorResponse(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE)
+  @ApiErrorResponse(REVIEW_ERRORS.ALREADY_EXISTS)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/reviews')
+  createReview(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+    @Body() dto: CreateReviewRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.createReview(user.userId, orderId, dto);
+  }
+
+  @ApiOperation({ summary: '리뷰 수정' })
+  @RoleAuth(Role.CLIENT)
+  @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)
+  @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
+  @ApiErrorResponse(REVIEW_ERRORS.ORDER_REVIEW_MISMATCH)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Patch(':id/reviews/:reviewId')
+  updateReview(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+    @Body() dto: UpdateReviewRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.updateReview(user.userId, orderId, reviewId, dto);
+  }
+
+  @ApiOperation({ summary: '리뷰 삭제' })
+  @RoleAuth(Role.CLIENT)
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: '리뷰 삭제 성공',
+  })
+  @ApiErrorResponse(REVIEW_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
+  @ApiErrorResponse(REVIEW_ERRORS.ORDER_REVIEW_MISMATCH)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Delete(':id/reviews/:reviewId')
+  deleteReview(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.deleteReview(user.userId, orderId, reviewId);
   }
 }
