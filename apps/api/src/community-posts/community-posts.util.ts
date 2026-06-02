@@ -2,6 +2,7 @@ import sanitizeHtml from 'sanitize-html';
 
 export const POST_MIN_LENGTH = 1;
 export const COMMENT_MAX_LENGTH = 1000;
+export const COMMENT_MIN_LENGTH = 1;
 
 const POST_CONTENT_ALLOWED_TAGS = [
   'p',

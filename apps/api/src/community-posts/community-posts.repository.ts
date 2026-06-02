@@ -146,6 +146,12 @@ export class CommunityPostsRepository {
     return this.prisma.comment.create(args);
   }
 
+  findComment(commentId: string): Promise<Comment | null> {
+    return this.prisma.comment.findUnique({
+      where: { id: commentId },
+    });
+  }
+
   updateComment(
     commentId: string,
     data: {
