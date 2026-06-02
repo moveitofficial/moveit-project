@@ -20,6 +20,7 @@ import {
 import { CommunityPostsRepository } from './community-posts.repository';
 import {
   COMMENT_MAX_LENGTH,
+  COMMENT_MIN_LENGTH,
   getPostContentPlainTextLength,
   POST_MIN_LENGTH,
   sanitizePostContent,
@@ -28,6 +29,7 @@ import { PostListQueryDto } from './dto/post-list-query.dto';
 import {
   CommentRequestDto,
   PostRequestDto,
+  UpdateCommentRequestDto,
   UpdatePostRequestDto,
 } from './dto/post-request.dto';
 import {
@@ -241,6 +243,54 @@ export class CommunityPostsService {
       dto,
     );
     return mapComment(comment);
+  }
+
+  async updateComment(
+    userId: string,
+    commentId: string,
+    postId: string,
+    dto: UpdateCommentRequestDto,
+  ): Promise<ReturnType<typeof mapComment>> {
+    if (dto.content === undefined) {
+      throw new AppException(COMMENTS_ERRORS.NOTHING_TO_UPDATE);
+    }
+
+    if (dto.content.trim().length < COMMENT_MIN_LENGTH) {
+      throw new AppException(COMMENTS_ERRORS.CONTENT_TOO_SHORT);
+    }
+
+    if (dto.content.trim().length > COMMENT_MAX_LENGTH) {
+      throw new AppException(COMMENTS_ERRORS.CONTENT_TOO_LONG);
+    }
+
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const comment = await this.communityPostsRepository.findComment(commentId);
+    if (comment === null) {
+      throw new AppException(COMMENTS_ERRORS.NOT_FOUND);
+    }
+
+    if (comment.userId !== userId) {
+      throw new AppException(COMMENTS_ERRORS.FORBIDDEN);
+    }
+
+    if (comment.deletedAt !== null) {
+      throw new AppException(COMMENTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const updated = await this.communityPostsRepository.updateComment(
+      commentId,
+      dto,
+    );
+    return mapComment(updated);
   }
 
   async getComments(

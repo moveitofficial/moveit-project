@@ -416,6 +416,26 @@ export const CS_CHAT_ERRORS = {
 } as const;
 
 export const COMMENTS_ERRORS = {
+  FORBIDDEN: {
+    status: HttpStatus.FORBIDDEN,
+    message: '본인이 등록한 댓글만 수정할 수 있습니다.',
+    code: 'COMMENTS_FORBIDDEN',
+  },
+  NOTHING_TO_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '수정할 항목이 없습니다.',
+    code: 'COMMENTS_NOTHING_TO_UPDATE',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '댓글을 찾을 수 없습니다.',
+    code: 'COMMENTS_NOT_FOUND',
+  },
+  ALREADY_DELETED: {
+    status: HttpStatus.CONFLICT,
+    message: '삭제된 댓글입니다.',
+    code: 'COMMENTS_ALREADY_DELETED',
+  },
   CONTENT_TOO_SHORT: {
     status: HttpStatus.BAD_REQUEST,
     message: '댓글 내용은 최소 1자 이상이어야 합니다.',
