@@ -9,8 +9,23 @@ import { PaymentsService } from './payments.service';
 
 import type { TestingModule } from '@nestjs/testing';
 
+const TOSS_CONFIRM_URL = 'https://api.tosspayments.com/v1/payments/confirm';
+const TOSS_IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
+const ORDER_ID = 'order-1';
+const USER_ID = 'user-1';
+const PAYMENT_KEY = 'toss_key';
+const PAYMENT_AMOUNT = 50_000;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 describe('PaymentsService - confirmPayment', () => {
   let service: PaymentsService;
+  let fetchSpy: jest.SpyInstance<
+    Promise<Response>,
+    Parameters<typeof globalThis.fetch>
+  >;
 
   const mockPaymentsRepository = {
     findOrderPayment: jest.fn(),
@@ -32,18 +47,21 @@ describe('PaymentsService - confirmPayment', () => {
 
     service = module.get<PaymentsService>(PaymentsService);
 
-    jest.spyOn(globalThis, 'fetch').mockReset();
+    jest.clearAllMocks();
+    fetchSpy = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue({} as Response);
   });
 
   it('토스 승인이 성공하면 DB를 업데이트하고 성공 데이터를 반환한다', async () => {
     const mockOrder = {
-      id: 'order-1',
-      clientUserId: 'user-1',
-      totalAmount: 50_000,
+      id: ORDER_ID,
+      clientUserId: USER_ID,
+      totalAmount: PAYMENT_AMOUNT,
       payment: {
         id: 'payment-1',
         status: PaymentStatus.PENDING,
-        paidAmount: 50_000,
+        paidAmount: PAYMENT_AMOUNT,
         refund: null,
       },
     };
@@ -57,47 +75,82 @@ describe('PaymentsService - confirmPayment', () => {
       payment: {
         ...mockOrder.payment,
         status: PaymentStatus.PAID,
-        paymentKey: 'toss_key',
+        paymentKey: PAYMENT_KEY,
         refund: null,
       },
     });
 
-    jest.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+    fetchSpy.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ approvedAt: '2026-06-02T19:20:00+09:00' }),
     } as Response);
 
     const result = await service.confirmPayment(
-      'user-1',
-      'order-1',
-      'toss_key',
-      50_000,
+      USER_ID,
+      ORDER_ID,
+      PAYMENT_KEY,
+      PAYMENT_AMOUNT,
     );
 
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const firstCall = fetchSpy.mock.calls[0];
+    if (!firstCall) {
+      throw new Error('fetch 호출이 없습니다.');
+    }
+    const [url, init] = firstCall;
+    expect(url).toBe(TOSS_CONFIRM_URL);
+    const headers: unknown = init?.headers;
+    if (!isRecord(headers)) {
+      throw new Error('headers가 객체가 아닙니다.');
+    }
+    expect(headers[TOSS_IDEMPOTENCY_KEY_HEADER]).toBe(ORDER_ID);
     expect(result.status).toBe(PaymentStatus.PAID);
+
+    expect(mockPaymentsRepository.updatePaymentStatus).toHaveBeenCalledTimes(1);
+    const [, updateData] = mockPaymentsRepository.updatePaymentStatus.mock
+      .calls[0] as [
+      string,
+      {
+        approvedAt: Date;
+        rawData: unknown;
+        paidAmount: number;
+        paymentKey: string;
+      },
+    ];
+    expect(updateData.paymentKey).toBe(PAYMENT_KEY);
+    expect(updateData.paidAmount).toBe(PAYMENT_AMOUNT);
+    expect(updateData.approvedAt).toBeInstanceOf(Date);
+    expect(updateData.rawData).toEqual(
+      expect.objectContaining({ approvedAt: '2026-06-02T19:20:00+09:00' }),
+    );
   });
 
-  it('토스 응답이 비정상적인 객체거나 문자열이어도 isRecord가 FAILED 예외를 던진다', async () => {
+  it('토스 서버가 409 중복 요청 에러를 반환하면 ALREADY_CONFIRMED 예외를 던진다', async () => {
     const mockOrder = {
-      id: 'order-1',
-      clientUserId: 'user-1',
-      totalAmount: 50_000,
+      id: ORDER_ID,
+      clientUserId: USER_ID,
+      totalAmount: PAYMENT_AMOUNT,
       payment: {
         id: 'payment-1',
         status: PaymentStatus.PENDING,
-        paidAmount: 50_000,
+        paidAmount: PAYMENT_AMOUNT,
+        refund: null,
       },
     };
     mockPaymentsRepository.findOrderPayment.mockResolvedValueOnce(mockOrder);
 
-    jest.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+    fetchSpy.mockResolvedValueOnce({
       ok: false,
-      json: () => Promise.resolve('Internal Server Error'),
+      status: 409,
+      json: () =>
+        Promise.resolve({
+          code: 'IDEMPOTENT_REQUEST_PROCESSING',
+          message: '이미 처리 중인 요청입니다.',
+        }),
     } as Response);
 
     await expect(
-      service.confirmPayment('user-1', 'order-1', 'toss_key', 50_000),
+      service.confirmPayment(USER_ID, ORDER_ID, PAYMENT_KEY, PAYMENT_AMOUNT),
     ).rejects.toThrow(AppException);
   });
 });

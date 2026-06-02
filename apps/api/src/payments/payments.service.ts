@@ -12,8 +12,16 @@ import { AppException } from '../common/exceptions/app.exception';
 import { mapOrderPayment } from './payments.mapper';
 import { PaymentsRepository } from './payments.repository';
 
+import type { Prisma } from '@prisma/client';
+
+const TOSS_CONFIRM_URL = 'https://api.tosspayments.com/v1/payments/confirm';
+const TOSS_CONFIRM_TIMEOUT_MS = 30_000;
+const TOSS_IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
+const TOSS_IDEMPOTENT_REQUEST_PROCESSING_CODE = 'IDEMPOTENT_REQUEST_PROCESSING';
+
 interface TossConfirmSuccessResponse {
   approvedAt?: string;
+  [key: string]: unknown;
 }
 
 interface TossConfirmErrorResponse {
@@ -83,11 +91,15 @@ export class PaymentsService {
       throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
     }
 
-    const approvedAt = await this.#confirmWithToss(paymentKey, orderId, amount);
+    const { approvedAt, rawData } = await this.#confirmWithToss(
+      paymentKey,
+      orderId,
+      amount,
+    );
 
     const { count } = await this.paymentsRepository.updatePaymentStatus(
       order.payment.id,
-      { paymentKey, paidAmount: amount, approvedAt },
+      { paymentKey, paidAmount: amount, approvedAt, rawData },
     );
 
     if (count === 0) {
@@ -106,31 +118,50 @@ export class PaymentsService {
     paymentKey: string,
     orderId: string,
     amount: number,
-  ): Promise<Date> {
+  ): Promise<{ approvedAt: Date; rawData: Prisma.InputJsonValue }> {
     let response: Response;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, TOSS_CONFIRM_TIMEOUT_MS);
+
     try {
-      response = await fetch(
-        'https://api.tosspayments.com/v1/payments/confirm',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Basic ${this.tossBasicToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ paymentKey, orderId, amount }),
+      response = await fetch(TOSS_CONFIRM_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${this.tossBasicToken}`,
+          'Content-Type': 'application/json',
+          [TOSS_IDEMPOTENCY_KEY_HEADER]: orderId,
         },
-      );
+        body: JSON.stringify({ paymentKey, orderId, amount }),
+        signal: controller.signal,
+      });
     } catch {
       throw new AppException(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
+    } finally {
+      clearTimeout(timeoutId);
     }
 
-    const data: unknown = await response.json();
+    let data: unknown;
+    try {
+      data = await response.json();
+    } catch {
+      throw new AppException(PAYMENT_ERRORS.FAILED);
+    }
+
     const tossData: TossConfirmResponse = isRecord(data)
       ? data
       : { code: 'UNKNOWN', message: 'UNKNOWN' };
 
     if (!response.ok) {
+      if (
+        response.status === 409 &&
+        'code' in tossData &&
+        tossData.code === TOSS_IDEMPOTENT_REQUEST_PROCESSING_CODE
+      ) {
+        throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
+      }
       throw new AppException(PAYMENT_ERRORS.FAILED);
     }
 
@@ -139,10 +170,13 @@ export class PaymentsService {
         ? new Date(tossData.approvedAt)
         : new Date();
 
-    if (Number.isNaN(approvedAt.getTime())) {
-      return new Date();
-    }
+    const finalApprovedAt = Number.isNaN(approvedAt.getTime())
+      ? new Date()
+      : approvedAt;
 
-    return approvedAt;
+    return {
+      approvedAt: finalApprovedAt,
+      rawData: tossData as unknown as Prisma.InputJsonValue,
+    };
   }
 }

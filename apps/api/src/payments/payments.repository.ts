@@ -20,7 +20,12 @@ export class PaymentsRepository {
 
   async updatePaymentStatus(
     paymentId: string,
-    data: { paymentKey: string; paidAmount: number; approvedAt: Date },
+    data: {
+      paymentKey: string;
+      paidAmount: number;
+      approvedAt: Date;
+      rawData: Prisma.InputJsonValue;
+    },
   ) {
     try {
       return await this.prisma.payment.updateMany({
@@ -33,6 +38,7 @@ export class PaymentsRepository {
           paymentKey: data.paymentKey,
           paidAmount: data.paidAmount,
           approvedAt: data.approvedAt,
+          rawData: data.rawData,
         },
       });
     } catch (error: unknown) {
