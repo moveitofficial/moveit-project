@@ -159,6 +159,7 @@ export class CommunityPostsController {
 
   @ApiOperation({ summary: '댓글 목록 조회' })
   @ApiPaginatedResponse(HttpStatus.OK, CommentListItemResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
