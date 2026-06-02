@@ -158,10 +158,13 @@ export class CommunityPostsRepository {
     data: {
       content?: string;
     },
-  ) {
+  ): Promise<Comment> {
     return this.prisma.comment.update({
       where: { id: commentId },
       data,
+    });
+  }
+
   findAllComments(args: { postId: string; skip: number; take: number }) {
     return this.prisma.comment.findMany({
       where: this.buildCommentListWhere(args.postId),

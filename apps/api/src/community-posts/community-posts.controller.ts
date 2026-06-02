@@ -183,6 +183,8 @@ export class CommunityPostsController {
       postId,
       dto,
     );
+  }
+
   @ApiOperation({ summary: '댓글 목록 조회' })
   @ApiPaginatedResponse(HttpStatus.OK, CommentListItemResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)

@@ -262,6 +262,37 @@ export class CommunityPostsService {
     if (dto.content.trim().length > COMMENT_MAX_LENGTH) {
       throw new AppException(COMMENTS_ERRORS.CONTENT_TOO_LONG);
     }
+
+    const post = await this.communityPostsRepository.findByPostId(postId);
+
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const comment = await this.communityPostsRepository.findComment(commentId);
+    if (comment === null) {
+      throw new AppException(COMMENTS_ERRORS.NOT_FOUND);
+    }
+
+    if (comment.userId !== userId) {
+      throw new AppException(COMMENTS_ERRORS.FORBIDDEN);
+    }
+
+    if (comment.deletedAt !== null) {
+      throw new AppException(COMMENTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const updated = await this.communityPostsRepository.updateComment(
+      commentId,
+      dto,
+    );
+    return mapComment(updated);
+  }
+
   async getComments(
     postId: string,
     query: PaginationQueryDto,
