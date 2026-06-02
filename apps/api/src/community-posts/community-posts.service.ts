@@ -4,12 +4,14 @@ import {
   COMMENTS_ERRORS,
   COMMUNITY_POSTS_ERRORS,
 } from '../common/constants/errors';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 
 import {
   mapComment,
+  mapCommentListItem,
   mapPost,
   mapPostDetail,
   mapPostListItem,
@@ -30,7 +32,10 @@ import {
   UpdateCommentRequestDto,
   UpdatePostRequestDto,
 } from './dto/post-request.dto';
-import { PostListItemResponseDto } from './dto/post-response.dto';
+import {
+  CommentListItemResponseDto,
+  PostListItemResponseDto,
+} from './dto/post-response.dto';
 
 import type { CommunityCategory } from '@prisma/client';
 
@@ -257,6 +262,13 @@ export class CommunityPostsService {
     if (dto.content.trim().length > COMMENT_MAX_LENGTH) {
       throw new AppException(COMMENTS_ERRORS.CONTENT_TOO_LONG);
     }
+  async getComments(
+    postId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<CommentListItemResponseDto>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
+    const skip = (page - 1) * pageSize;
 
     const post = await this.communityPostsRepository.findByPostId(postId);
 
@@ -268,23 +280,18 @@ export class CommunityPostsService {
       throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
     }
 
-    const comment = await this.communityPostsRepository.findComment(commentId);
-    if (comment === null) {
-      throw new AppException(COMMENTS_ERRORS.NOT_FOUND);
-    }
+    const [comments, totalCount] = await Promise.all([
+      this.communityPostsRepository.findAllComments({
+        postId,
+        skip,
+        take: pageSize,
+      }),
+      this.communityPostsRepository.countComments(postId),
+    ]);
 
-    if (comment.userId !== userId) {
-      throw new AppException(COMMENTS_ERRORS.FORBIDDEN);
-    }
-
-    if (comment.deletedAt !== null) {
-      throw new AppException(COMMENTS_ERRORS.ALREADY_DELETED);
-    }
-
-    const updated = await this.communityPostsRepository.updateComment(
-      commentId,
-      dto,
+    return toPaginatedResponse(
+      comments.map((comment) => mapCommentListItem(comment)),
+      { page, pageSize, totalCount },
     );
-    return mapComment(updated);
   }
 }

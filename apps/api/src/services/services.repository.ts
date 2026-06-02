@@ -4,7 +4,6 @@ import { ServiceStatus, type Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 import {
-  myReviewListSelect,
   reviewWithUserSelect,
   serviceDetailInclude,
   serviceInclude,
@@ -12,8 +11,6 @@ import {
 } from './services.types';
 
 import type {
-  MyReviewListItem,
-  MyReviewSort,
   ReviewWithUser,
   ServiceDetail,
   ServiceListItem,
@@ -44,6 +41,16 @@ export class ServicesRepository {
     });
   }
 
+  async isFavorite(clientUserId: string, serviceId: string): Promise<boolean> {
+    const row = await this.prisma.favoriteService.findUnique({
+      where: {
+        clientUserId_serviceId: { clientUserId, serviceId },
+      },
+      select: { id: true },
+    });
+    return row !== null;
+  }
+
   findReviews(args: {
     serviceId: string;
     skip: number;
@@ -68,108 +75,6 @@ export class ServicesRepository {
     return this.prisma.review.count({
       where: { order: { serviceId } },
     });
-  }
-
-  findOrderForReview(orderId: string) {
-    return this.prisma.order.findUnique({
-      where: { id: orderId },
-      select: {
-        id: true,
-        clientUserId: true,
-        serviceId: true,
-        status: true,
-        review: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    });
-  }
-
-  findReviewById(
-    reviewId: string,
-    serviceId: string,
-  ): Promise<ReviewWithUser | null> {
-    return this.prisma.review.findFirst({
-      where: {
-        id: reviewId,
-        order: { serviceId },
-      },
-      select: reviewWithUserSelect,
-    });
-  }
-
-  findAllReviewsByUserId(args: {
-    userId: string;
-    skip: number;
-    take: number;
-    sort: MyReviewSort;
-  }): Promise<MyReviewListItem[]> {
-    const orderBy =
-      args.sort === 'oldest'
-        ? { createdAt: 'asc' as const }
-        : { createdAt: 'desc' as const };
-
-    return this.prisma.review.findMany({
-      where: { userId: args.userId },
-      select: myReviewListSelect,
-      orderBy,
-      skip: args.skip,
-      take: args.take,
-    });
-  }
-  countReviewsByUserId(userId: string): Promise<number> {
-    return this.prisma.review.count({
-      where: { userId },
-    });
-  }
-
-  createReview(data: {
-    orderId: string;
-    userId: string;
-    rating: number;
-    content: string;
-  }): Promise<ReviewWithUser> {
-    return this.prisma.review.create({
-      data: {
-        orderId: data.orderId,
-        userId: data.userId,
-        rating: data.rating,
-        content: data.content,
-      },
-      select: reviewWithUserSelect,
-    });
-  }
-
-  updateReview(
-    reviewId: string,
-    data: {
-      rating?: number;
-      content?: string;
-    },
-  ): Promise<ReviewWithUser> {
-    return this.prisma.review.update({
-      where: { id: reviewId },
-      data,
-      select: reviewWithUserSelect,
-    });
-  }
-
-  async deleteReview(reviewId: string): Promise<void> {
-    await this.prisma.review.delete({
-      where: { id: reviewId },
-    });
-  }
-
-  async isFavorite(clientUserId: string, serviceId: string): Promise<boolean> {
-    const row = await this.prisma.favoriteService.findUnique({
-      where: {
-        clientUserId_serviceId: { clientUserId, serviceId },
-      },
-      select: { id: true },
-    });
-    return row !== null;
   }
 
   update(

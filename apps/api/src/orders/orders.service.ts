@@ -1,9 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, Role, ServiceStatus } from '@prisma/client';
 
-import { ORDER_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
+import {
+  COMMON_ERRORS,
+  ORDER_ERRORS,
+  REVIEW_ERRORS,
+  SERVICE_ERRORS,
+} from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
+import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
+import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
+import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
+import { MyReviewListItemResponseDto } from '../services/dto/service-response.dto';
+import { UpdateReviewRequestDto } from '../services/dto/update-review-request.dto';
+import { mapMyReviewListItem, mapReview } from '../services/services.mapper';
+import { REVIEWABLE_ORDER_STATUSES } from '../services/services.types';
 
 import {
   ORDER_LIST_DEFAULT_SORT,
@@ -198,5 +210,121 @@ export class OrdersService {
     paidAmount: number,
   ): Promise<number> {
     return Promise.resolve(paidAmount);
+  }
+
+  async createReview(
+    userId: string,
+    orderId: string,
+    dto: CreateReviewRequestDto,
+  ) {
+    const order = await this.ordersRepository.findOrderForReview(orderId);
+
+    if (order === null) {
+      throw new AppException(ORDER_ERRORS.NOT_FOUND);
+    }
+
+    if (order.clientUserId !== userId) {
+      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+    }
+
+    if (!REVIEWABLE_ORDER_STATUSES.includes(order.status)) {
+      throw new AppException(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE);
+    }
+
+    const service = await this.ordersRepository.findServiceById(
+      order.serviceId,
+    );
+
+    if (service === null) {
+      throw new AppException(SERVICE_ERRORS.NOT_FOUND);
+    }
+
+    if (order.review !== null) {
+      throw new AppException(REVIEW_ERRORS.ALREADY_EXISTS);
+    }
+
+    const review = await this.ordersRepository.createReview({
+      orderId,
+      userId,
+      rating: dto.rating,
+      content: dto.content,
+    });
+
+    return mapReview(review);
+  }
+
+  async getAllReviewsByUserId(
+    userId: string,
+    query: MyReviewsQueryDto,
+  ): Promise<Paginated<MyReviewListItemResponseDto>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const sort = query.sort ?? 'latest';
+    const skip = (page - 1) * pageSize;
+
+    const [reviews, totalCount] = await Promise.all([
+      this.ordersRepository.findAllReviewsByUserId({
+        userId,
+        skip,
+        take: pageSize,
+        sort,
+      }),
+      this.ordersRepository.countReviewsByUserId(userId),
+    ]);
+
+    return toPaginatedResponse(
+      reviews.map((review) => mapMyReviewListItem(review)),
+      { page, pageSize, totalCount },
+    );
+  }
+
+  async updateReview(
+    userId: string,
+    orderId: string,
+    reviewId: string,
+    dto: UpdateReviewRequestDto,
+  ) {
+    const review = await this.ordersRepository.findReviewById(
+      reviewId,
+      orderId,
+    );
+    if (review === null) {
+      throw new AppException(REVIEW_ERRORS.NOT_FOUND);
+    }
+
+    if (review.user.id !== userId) {
+      throw new AppException(COMMON_ERRORS.FORBIDDEN);
+    }
+
+    if (review.orderId !== orderId) {
+      throw new AppException(REVIEW_ERRORS.ORDER_REVIEW_MISMATCH);
+    }
+
+    const updated = await this.ordersRepository.updateReview(reviewId, {
+      rating: dto.rating,
+      content: dto.content,
+    });
+
+    return mapReview(updated);
+  }
+
+  async deleteReview(userId: string, orderId: string, reviewId: string) {
+    const review = await this.ordersRepository.findReviewById(
+      reviewId,
+      orderId,
+    );
+    if (review === null) {
+      throw new AppException(REVIEW_ERRORS.NOT_FOUND);
+    }
+
+    if (review.user.id !== userId) {
+      throw new AppException(COMMON_ERRORS.FORBIDDEN);
+    }
+
+    if (review.orderId !== orderId) {
+      throw new AppException(REVIEW_ERRORS.ORDER_REVIEW_MISMATCH);
+    }
+
+    await this.ordersRepository.deleteReview(reviewId);
   }
 }

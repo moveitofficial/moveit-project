@@ -303,6 +303,11 @@ export const REVIEW_ERRORS = {
     message: '주문과 서비스가 일치하지 않습니다.',
     code: 'REVIEW_ORDER_SERVICE_MISMATCH',
   },
+  ORDER_REVIEW_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '주문과 리뷰가 일치하지 않습니다.',
+    code: 'REVIEW_ORDER_REVIEW_MISMATCH',
+  },
   NOTHING_TO_UPDATE: {
     status: HttpStatus.BAD_REQUEST,
     message: '수정된 내용이 없습니다.',
