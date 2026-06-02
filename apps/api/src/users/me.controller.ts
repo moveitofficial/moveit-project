@@ -41,7 +41,7 @@ import { ExpertProfileRequestDto } from '../expert-profiles/dto/expert-profile-r
 import {
   ApplyForApprovalResponseDto,
   CreateExpertProfileResponseDto,
-  ExpertProfileResponseDto,
+  UpdateExpertProfileResponseDto,
 } from '../expert-profiles/dto/expert-profile-response.dto';
 import { ExpertProfilesService } from '../expert-profiles/expert-profiles.service';
 import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
@@ -220,7 +220,7 @@ export class MeController {
 
   @ApiOperation({ summary: '전문가 프로필 수정하기' })
   @RoleAuth(Role.EXPERT)
-  @ApiSuccessResponse(HttpStatus.OK, ExpertProfileResponseDto)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateExpertProfileResponseDto)
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
     EXPERT_PROFILE_ERRORS.MIXED_SERVICE_GROUP,
