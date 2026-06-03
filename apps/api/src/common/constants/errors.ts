@@ -447,3 +447,10 @@ export const COMMENTS_ERRORS = {
     code: 'COMMENTS_CONTENT_TOO_LONG',
   },
 } as const;
+
+export const NOTIFICATION_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '알림을 찾을 수 없습니다.',
+  },
+} as const;

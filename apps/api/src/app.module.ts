@@ -13,6 +13,7 @@ import { CommunityPostsModule } from './community-posts/community-posts.module';
 import { ExpertProfilesModule } from './expert-profiles/expert-profiles.module';
 import { HealthModule } from './health/health.module';
 import { MailerModule } from './mailer/mailer.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { OrdersModule } from './orders/orders.module';
 import { PortfoliosModule } from './portfolios/portfolios.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -43,6 +44,7 @@ import { UsersModule } from './users/users.module';
     PortfoliosModule,
     MailerModule,
     CommunityPostsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, RolesGuard],
