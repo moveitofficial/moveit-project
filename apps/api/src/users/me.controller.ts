@@ -47,6 +47,7 @@ import { ExpertProfilesService } from '../expert-profiles/expert-profiles.servic
 import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
 import { MyReviewListItemResponseDto } from '../services/dto/service-response.dto';
 
+import { MyCommentsQueryDto } from './dto/my-comments-query.dto';
 import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
 import { UpdateExpertProfileDto } from './dto/update-expert-profile.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
@@ -54,6 +55,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ClientUserResponseDto,
   ExpertUserResponseDto,
+  MyCommentListItemResponseDto,
   UserResponseDto,
 } from './dto/user-response.dto';
 import { WithdrawDataDto, WithdrawRequestDto } from './dto/withdraw.dto';
@@ -246,5 +248,17 @@ export class MeController {
   getMyReviews(@Req() req: Request, @Query() query: MyReviewsQueryDto) {
     const user = req.user as JwtAccessUser;
     return this.usersService.getAllReviewsByUserId(user.userId, query);
+  }
+
+  @ApiOperation({ summary: '내 댓글 목록 조회' })
+  @JwtAuth()
+  @ApiPaginatedResponse(HttpStatus.OK, MyCommentListItemResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get('comments')
+  getMyComments(@Req() req: Request, @Query() query: MyCommentsQueryDto) {
+    const user = req.user as JwtAccessUser;
+    return this.usersService.getAllCommentsByUserId(user.userId, query);
   }
 }
