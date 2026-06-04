@@ -10,10 +10,15 @@ import {
   Req,
   UseGuards,
   ParseUUIDPipe,
+  Body,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { COMMON_ERRORS, USER_ERRORS } from '../../common/constants/errors';
+import {
+  COMMON_ERRORS,
+  EXPERT_PROFILE_ERRORS,
+  USER_ERRORS,
+} from '../../common/constants/errors';
 import { ApiErrorResponse } from '../../common/decorators/api-error-response.decorator';
 import {
   ApiPaginatedResponse,
@@ -31,6 +36,7 @@ import { UserPostItemDto } from './dto/detail/user-posts-response.dto';
 import { UserReportReceivedItemDto } from './dto/detail/user-reports-received-response.dto';
 import { UserReportSentItemDto } from './dto/detail/user-reports-sent-response.dto';
 import { UserServiceItemDto } from './dto/detail/user-services-response.dto';
+import { ExpertRejectRequestDto } from './dto/expert-reject-request.dto';
 import { UserCounstDto } from './dto/list/users-counts-response.dto';
 import { GetUsersQueryDto } from './dto/list/users-query.dto';
 import { UserItemDto } from './dto/list/users-response.dto';
@@ -251,5 +257,58 @@ export class AdminUserController {
   ): Promise<void> {
     const { adminId } = req.user as AdminJwtAccessUser;
     return this.adminUserService.unblockUser(id, adminId);
+  }
+
+  @ApiOperation({ summary: '[어드민] 전문가 신청 승인' })
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(USER_ERRORS.ROLE_MISMATCH)
+  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.ALREADY_APPROVED)
+  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_APPLIED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/expert/approve')
+  approveExpert(
+    @Param(
+      'id',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(USER_ERRORS.NOT_FOUND),
+      }),
+    )
+    id: string,
+    @Req() req: Request,
+  ): Promise<void> {
+    const { adminId } = req.user as AdminJwtAccessUser;
+    return this.adminUserService.approveExpert(id, adminId);
+  }
+
+  @ApiOperation({ summary: '[어드민] 전문가 신청 거절' })
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(USER_ERRORS.ROLE_MISMATCH)
+  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.ALREADY_APPROVED)
+  @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_APPLIED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/expert/reject')
+  rejectExpert(
+    @Param(
+      'id',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(USER_ERRORS.NOT_FOUND),
+      }),
+    )
+    id: string,
+    @Body() body: ExpertRejectRequestDto,
+    @Req() req: Request,
+  ): Promise<void> {
+    const { adminId } = req.user as AdminJwtAccessUser;
+    return this.adminUserService.rejectExpert(id, adminId, body.rejectReason);
   }
 }

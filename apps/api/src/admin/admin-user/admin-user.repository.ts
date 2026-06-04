@@ -255,7 +255,6 @@ export class AdminUserRepository {
     return this.prisma.comment.count({ where: { userId } });
   }
 
-  // 클래스 내부 맨 아래
   blockUser(
     userId: string,
     adminId: string,
@@ -278,6 +277,44 @@ export class AdminUserRepository {
         data: {
           adminId,
           actionType: action,
+          referenceId: userId,
+        },
+      }),
+    ]);
+  }
+
+  approveExpert(userId: string, adminId: string) {
+    return this.prisma.$transaction([
+      this.prisma.expertProfile.update({
+        where: { userId },
+        data: {
+          isApproved: true,
+          approvedAt: new Date(),
+          approvedByAdminId: adminId,
+          rejectedAt: null,
+          rejectReason: null,
+        },
+      }),
+      this.prisma.adminActivityLog.create({
+        data: {
+          adminId,
+          actionType: AdminActionType.EXPERT_APPROVED,
+          referenceId: userId,
+        },
+      }),
+    ]);
+  }
+
+  rejectExpert(userId: string, adminId: string, rejectReason: string) {
+    return this.prisma.$transaction([
+      this.prisma.expertProfile.update({
+        where: { userId },
+        data: { isApplied: false, rejectedAt: new Date(), rejectReason },
+      }),
+      this.prisma.adminActivityLog.create({
+        data: {
+          adminId,
+          actionType: AdminActionType.EXPERT_REJECTED,
           referenceId: userId,
         },
       }),
