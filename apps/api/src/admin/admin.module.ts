@@ -5,6 +5,7 @@ import { AdminAuthModule } from './admin-auth/admin-auth.module';
 import { AdminCommunityModule } from './admin-community/admin-community.module';
 import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
 import { AdminReportModule } from './admin-report/admin-report.module';
+import { AdminServiceModule } from './admin-service/admin-service.module';
 import { AdminUserModule } from './admin-user/admin-user.module';
 
 @Module({
@@ -15,6 +16,7 @@ import { AdminUserModule } from './admin-user/admin-user.module';
     AdminUserModule,
     AdminReportModule,
     AdminCommunityModule,
+    AdminServiceModule,
   ],
 })
 export class AdminModule {}
