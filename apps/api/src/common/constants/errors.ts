@@ -459,3 +459,11 @@ export const NOTIFICATION_ERRORS = {
     message: '알림을 찾을 수 없습니다.',
   },
 } as const;
+
+export const REPORT_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '신고 내역을 찾을 수 없습니다.',
+    code: 'REPORT_NOT_FOUND',
+  },
+} as const;
