@@ -2,14 +2,19 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 
-import { MyPostSort } from './dto/my-posts-query.dto';
-import { myPostListSelect, userWithProfilesInclude } from './users.types';
-
-import type { MyPostListItem, UserWithProfiles } from './users.types';
 import { MyCommentSort } from './dto/my-comments-query.dto';
-import { myCommentListSelect, userWithProfilesInclude } from './users.types';
+import { MyPostSort } from './dto/my-posts-query.dto';
+import {
+  myCommentListSelect,
+  myPostListSelect,
+  userWithProfilesInclude,
+} from './users.types';
 
-import type { MyCommentListItem, UserWithProfiles } from './users.types';
+import type {
+  MyCommentListItem,
+  MyPostListItem,
+  UserWithProfiles,
+} from './users.types';
 import type { CreateOAuthUserParams } from '../auth/oauth/oauth.types';
 import type {
   AuthProvider,
@@ -112,6 +117,22 @@ export class UsersRepository {
     return this.prisma.communityPost.findMany({
       where,
       select: myPostListSelect,
+      orderBy,
+      skip: args.skip,
+      take: args.take,
+    });
+  }
+
+  countPosts(userId: string, category?: CommunityCategory): Promise<number> {
+    return this.prisma.communityPost.count({
+      where: {
+        userId,
+        deletedAt: null,
+        ...(category !== undefined && { category }),
+      },
+    });
+  }
+
   findAllComments(args: {
     userId: string;
     skip: number;
@@ -138,12 +159,6 @@ export class UsersRepository {
     });
   }
 
-  countPosts(userId: string, category?: CommunityCategory): Promise<number> {
-    return this.prisma.communityPost.count({
-      where: {
-        userId,
-        deletedAt: null,
-        ...(category !== undefined && { category }),
   countComments(userId: string): Promise<number> {
     return this.prisma.comment.count({
       where: {

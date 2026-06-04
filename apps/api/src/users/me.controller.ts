@@ -47,8 +47,8 @@ import { ExpertProfilesService } from '../expert-profiles/expert-profiles.servic
 import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
 import { MyReviewListItemResponseDto } from '../services/dto/service-response.dto';
 
-import { MyPostsQueryDto } from './dto/my-posts-query.dto';
 import { MyCommentsQueryDto } from './dto/my-comments-query.dto';
+import { MyPostsQueryDto } from './dto/my-posts-query.dto';
 import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
 import { UpdateExpertProfileDto } from './dto/update-expert-profile.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
@@ -261,6 +261,7 @@ export class MeController {
   getMyPosts(@Req() req: Request, @Query() query: MyPostsQueryDto) {
     const user = req.user as JwtAccessUser;
     return this.usersService.getAllPostsByUserId(user.userId, query);
+  }
   @ApiOperation({ summary: '내 댓글 목록 조회' })
   @JwtAuth()
   @ApiPaginatedResponse(HttpStatus.OK, MyCommentListItemResponseDto)

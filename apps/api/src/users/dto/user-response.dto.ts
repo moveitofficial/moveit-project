@@ -91,23 +91,32 @@ export class MyPostListItemResponseDto {
 
   @ApiProperty({ example: 3 })
   declare commentCount: number;
-class MyCommentPostSummaryDto {
+}
+
+export class MyCommentPostSummaryDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
+
   @ApiProperty({ enum: CommunityCategory })
   declare category: CommunityCategory;
+
   @ApiProperty({ example: '이 문제 어떻게 해결하나요?' })
   declare title: string;
+
   @ApiProperty({ example: 12 })
   declare likeCount: number;
 }
+
 export class MyCommentListItemResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
+
   @ApiProperty({ example: '댓글 내용입니다.' })
   declare content: string;
+
   @ApiProperty({ example: '2026-06-02T10:00:00.000Z' })
   declare createdAt: string;
+
   @ApiProperty({ type: MyCommentPostSummaryDto })
   declare post: MyCommentPostSummaryDto;
 }
