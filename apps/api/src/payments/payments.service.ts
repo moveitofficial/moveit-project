@@ -8,6 +8,7 @@ import {
   PAYMENT_ERRORS,
 } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
+import { DEFAULT_PAYMENT_METHOD } from '../orders/orders.constants';
 
 import { mapOrderPayment } from './payments.mapper';
 import { PaymentsRepository } from './payments.repository';
@@ -21,6 +22,8 @@ const TOSS_IDEMPOTENT_REQUEST_PROCESSING_CODE = 'IDEMPOTENT_REQUEST_PROCESSING';
 
 interface TossConfirmSuccessResponse {
   approvedAt?: string;
+  method?: string;
+  card?: { installmentPlanMonths?: number };
   [key: string]: unknown;
 }
 
@@ -51,7 +54,7 @@ export class PaymentsService {
   }
 
   async getOrderPayment(userId: string, orderId: string) {
-    const order = await this.paymentsRepository.findOrderPayment(orderId);
+    const order = await this.paymentsRepository.findOrderPaymentOnly(orderId);
     if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
 
     if (order.clientUserId !== userId && order.expertUserId !== userId) {
@@ -62,8 +65,7 @@ export class PaymentsService {
       throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
     }
 
-    const { payment } = order;
-    return mapOrderPayment(payment);
+    return mapOrderPayment(order.payment);
   }
 
   async confirmPayment(
@@ -91,22 +93,26 @@ export class PaymentsService {
       throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
     }
 
-    const { approvedAt, rawData } = await this.#confirmWithToss(
-      paymentKey,
-      orderId,
-      amount,
-    );
+    const { approvedAt, method, installmentMonths, rawData } =
+      await this.#confirmWithToss(paymentKey, orderId, amount);
 
     const { count } = await this.paymentsRepository.updatePaymentStatus(
       order.payment.id,
-      { paymentKey, paidAmount: amount, approvedAt, rawData },
+      {
+        paymentKey,
+        paidAmount: amount,
+        approvedAt,
+        method,
+        installmentMonths,
+        rawData,
+      },
     );
 
     if (count === 0) {
       throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
     }
 
-    const updated = await this.paymentsRepository.findOrderPayment(orderId);
+    const updated = await this.paymentsRepository.findOrderPaymentOnly(orderId);
     if (!updated?.payment) {
       throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
     }
@@ -118,7 +124,12 @@ export class PaymentsService {
     paymentKey: string,
     orderId: string,
     amount: number,
-  ): Promise<{ approvedAt: Date; rawData: Prisma.InputJsonValue }> {
+  ): Promise<{
+    approvedAt: Date;
+    method: string;
+    installmentMonths: number;
+    rawData: Prisma.InputJsonValue;
+  }> {
     let response: Response;
 
     const controller = new AbortController();
@@ -174,8 +185,26 @@ export class PaymentsService {
       ? new Date()
       : approvedAt;
 
+    const method =
+      'method' in tossData && typeof tossData.method === 'string'
+        ? tossData.method
+        : DEFAULT_PAYMENT_METHOD;
+
+    // Toss 일시불 시 0 반환 → 스키마 컨벤션(1=일시불)으로 변환
+    const rawInstallmentMonths =
+      'card' in tossData && isRecord(tossData.card)
+        ? tossData.card.installmentPlanMonths
+        : undefined;
+
+    const installmentMonths =
+      typeof rawInstallmentMonths === 'number' && rawInstallmentMonths > 0
+        ? rawInstallmentMonths
+        : 1;
+
     return {
       approvedAt: finalApprovedAt,
+      method,
+      installmentMonths,
       rawData: tossData as unknown as Prisma.InputJsonValue,
     };
   }

@@ -29,6 +29,7 @@ describe('PaymentsService - confirmPayment', () => {
 
   const mockPaymentsRepository = {
     findOrderPayment: jest.fn(),
+    findOrderPaymentOnly: jest.fn(),
     updatePaymentStatus: jest.fn(),
   };
 
@@ -70,7 +71,7 @@ describe('PaymentsService - confirmPayment', () => {
     mockPaymentsRepository.updatePaymentStatus.mockResolvedValueOnce({
       count: 1,
     });
-    mockPaymentsRepository.findOrderPayment.mockResolvedValueOnce({
+    mockPaymentsRepository.findOrderPaymentOnly.mockResolvedValueOnce({
       ...mockOrder,
       payment: {
         ...mockOrder.payment,
@@ -82,7 +83,12 @@ describe('PaymentsService - confirmPayment', () => {
 
     fetchSpy.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ approvedAt: '2026-06-02T19:20:00+09:00' }),
+      json: () =>
+        Promise.resolve({
+          approvedAt: '2026-06-02T19:20:00+09:00',
+          method: 'CARD',
+          card: { installmentPlanMonths: 0 },
+        }),
     } as Response);
 
     const result = await service.confirmPayment(
@@ -115,13 +121,20 @@ describe('PaymentsService - confirmPayment', () => {
         rawData: unknown;
         paidAmount: number;
         paymentKey: string;
+        method: string;
+        installmentMonths: number;
       },
     ];
     expect(updateData.paymentKey).toBe(PAYMENT_KEY);
     expect(updateData.paidAmount).toBe(PAYMENT_AMOUNT);
     expect(updateData.approvedAt).toBeInstanceOf(Date);
+    expect(updateData.method).toBe('CARD');
+    expect(updateData.installmentMonths).toBe(1);
     expect(updateData.rawData).toEqual(
-      expect.objectContaining({ approvedAt: '2026-06-02T19:20:00+09:00' }),
+      expect.objectContaining({
+        approvedAt: '2026-06-02T19:20:00+09:00',
+        method: 'CARD',
+      }),
     );
   });
 
