@@ -12,7 +12,7 @@ import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { mapServiceCategories } from '../common/utils/service-category.util';
-import { resolveAuthorDisplayName } from '../community-posts/community-posts.mapper';
+import { resolveAuthorDisplayName } from '../common/utils/users.util';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
 import { OrdersService } from '../orders/orders.service';
 import { PortfoliosService } from '../portfolios/portfolios.service';
