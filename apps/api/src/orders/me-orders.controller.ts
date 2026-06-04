@@ -14,8 +14,6 @@ import { Role } from '@prisma/client';
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import {
   COMMON_ERRORS,
-  ORDER_ERRORS,
-  PAYMENT_ERRORS,
   SERVICE_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
@@ -49,16 +47,11 @@ export class MeOrdersController {
     return this.ordersService.getOrders(user.userId, query);
   }
 
-  @ApiOperation({ summary: '주문 생성 (결제 완료)' })
+  @ApiOperation({ summary: '주문 생성 (결제 대기)' })
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.CREATED, CreateOrderResponseDto)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(
-    SERVICE_ERRORS.NOT_AVAILABLE,
-    ORDER_ERRORS.AMOUNT_MISMATCH,
-    COMMON_ERRORS.VALIDATION_ERROR,
-  )
-  @ApiErrorResponse(PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_AVAILABLE, COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
   @Post()

@@ -22,8 +22,6 @@ import {
   ORDER_LIST_USER_ID_FIELD,
   ORDERS_LIST_DEFAULT_PAGE,
   ORDERS_LIST_DEFAULT_PAGE_SIZE,
-  PG_STUB_PROVIDER,
-  PG_STUB_RECEIPT_URL,
   PLATFORM_FEE_RATE,
 } from './orders.constants';
 import {
@@ -95,29 +93,13 @@ export class OrdersService {
     const platformFee = Math.floor(agreedServicePrice * PLATFORM_FEE_RATE);
     const totalAmount = agreedServicePrice + platformFee;
 
-    const pgVerifiedAmount = await this.fetchAmountFromExternalPG(
-      dto.paymentKey,
-      dto.paidAmount,
-    );
-
-    if (totalAmount !== dto.paidAmount || pgVerifiedAmount !== totalAmount) {
-      throw new AppException(ORDER_ERRORS.AMOUNT_MISMATCH);
-    }
-
-    const order = await this.ordersRepository.createPaidOrder({
+    const order = await this.ordersRepository.createOrder({
       clientUserId,
       expertUserId: service.expertUserId,
       serviceId: service.id,
       agreedServicePrice,
       platformFee,
       totalAmount,
-      paymentKey: dto.paymentKey,
-      paidAmount: dto.paidAmount,
-      rawData: {
-        provider: PG_STUB_PROVIDER,
-        receiptUrl: PG_STUB_RECEIPT_URL,
-        approvedAt: new Date().toISOString(),
-      },
     });
 
     return mapCreateOrderResponse(order);
@@ -203,13 +185,6 @@ export class OrdersService {
     );
     if (!updated) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
     return mapUpdateOrderStatusResponse(updated);
-  }
-
-  private fetchAmountFromExternalPG(
-    _paymentKey: string,
-    paidAmount: number,
-  ): Promise<number> {
-    return Promise.resolve(paidAmount);
   }
 
   async createReview(

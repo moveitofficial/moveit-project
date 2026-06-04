@@ -28,7 +28,4 @@ export const ORDER_LIST_MAIN_IMAGE_LIMIT = 1;
 // 플랫폼 수수료율 (10%)
 export const PLATFORM_FEE_RATE = 0.1;
 
-// PG 연동 전 임시 값
-export const PG_STUB_PROVIDER = 'TOSS' as const;
-export const PG_STUB_RECEIPT_URL = 'http://...' as const;
 export const DEFAULT_PAYMENT_METHOD = 'CARD' as const;

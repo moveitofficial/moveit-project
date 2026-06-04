@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 
-import { PAYMENT_ERRORS } from '../common/constants/errors';
-import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   myReviewListSelect,
@@ -212,51 +210,35 @@ export class OrdersRepository {
     });
   }
 
-  async createPaidOrder(data: {
+  async createOrder(data: {
     clientUserId: string;
     expertUserId: string;
     serviceId: string;
     agreedServicePrice: number;
     platformFee: number;
     totalAmount: number;
-    paymentKey: string;
-    paidAmount: number;
-    rawData: Prisma.InputJsonValue;
   }) {
-    try {
-      return await this.prisma.order.create({
-        data: {
-          clientUserId: data.clientUserId,
-          expertUserId: data.expertUserId,
-          serviceId: data.serviceId,
-          agreedServicePrice: data.agreedServicePrice,
-          platformFee: data.platformFee,
-          totalAmount: data.totalAmount,
-          status: OrderStatus.NEGOTIATING,
-          startDate: new Date(),
-          endDate: null,
-          payment: {
-            create: {
-              clientUserId: data.clientUserId,
-              paidAmount: data.paidAmount,
-              status: PaymentStatus.PAID,
-              method: DEFAULT_PAYMENT_METHOD,
-              paymentKey: data.paymentKey,
-              rawData: data.rawData,
-              approvedAt: new Date(),
-            },
+    return this.prisma.order.create({
+      data: {
+        clientUserId: data.clientUserId,
+        expertUserId: data.expertUserId,
+        serviceId: data.serviceId,
+        agreedServicePrice: data.agreedServicePrice,
+        platformFee: data.platformFee,
+        totalAmount: data.totalAmount,
+        status: OrderStatus.NEGOTIATING,
+        startDate: new Date(),
+        endDate: null,
+        payment: {
+          create: {
+            clientUserId: data.clientUserId,
+            status: PaymentStatus.PENDING,
+            paidAmount: 0,
+            method: DEFAULT_PAYMENT_METHOD,
           },
         },
-      });
-    } catch (error: unknown) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new AppException(PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY);
-      }
-      throw error;
-    }
+      },
+    });
   }
 
   async updateOrderStatusOnly(
