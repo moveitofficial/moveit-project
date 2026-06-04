@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { AdminAccountModule } from './admin-account/admin-account.module';
 import { AdminAuthModule } from './admin-auth/admin-auth.module';
+import { AdminCommunityModule } from './admin-community/admin-community.module';
 import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
 import { AdminReportModule } from './admin-report/admin-report.module';
 import { AdminUserModule } from './admin-user/admin-user.module';
@@ -13,6 +14,7 @@ import { AdminUserModule } from './admin-user/admin-user.module';
     AdminDashboardModule,
     AdminUserModule,
     AdminReportModule,
+    AdminCommunityModule,
   ],
 })
 export class AdminModule {}
