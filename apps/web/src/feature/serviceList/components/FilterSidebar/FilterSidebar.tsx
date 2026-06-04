@@ -5,22 +5,27 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import {
-  IT_COACHING_PRICE_FILTERS,
-  IT_COACHING_REGION_FILTERS,
-  IT_COACHING_REGION_VISIBLE_COUNT,
-  IT_COACHING_TECH_STACK_FILTERS,
-  IT_COACHING_TECH_STACK_VISIBLE_COUNT,
+  SERVICE_LIST_PRICE_FILTERS,
+  SERVICE_LIST_REGION_FILTERS,
+  SERVICE_LIST_REGION_VISIBLE_COUNT,
+  SERVICE_LIST_TECH_STACK_FILTERS,
+  SERVICE_LIST_TECH_STACK_VISIBLE_COUNT,
 } from '../../constants';
-import { buildItCoachingHref, type ItCoachingSearchParams } from '../../utils';
+import { buildServiceListHref } from '../../utils';
 
-import * as styles from './ItCoachingFilterSidebar.css';
+import * as styles from './FilterSidebar.css';
 
-import type { ItCoachingFilterCounts } from '../../types';
+import type {
+  ServiceListConfig,
+  ServiceListFilterCounts,
+  ServiceListSearchParams,
+} from '../../types';
 import type { Region, TechStackName } from '@/mocks/types';
 
 interface Props {
-  params: ItCoachingSearchParams;
-  filterCounts: ItCoachingFilterCounts;
+  config: ServiceListConfig;
+  params: ServiceListSearchParams;
+  filterCounts: ServiceListFilterCounts;
 }
 
 function toggleCsvValue<T extends string>(values: T[], value: T): T[] {
@@ -61,7 +66,7 @@ function SectionChevron({ expanded }: { expanded: boolean }) {
   );
 }
 
-export default function ItCoachingFilterSidebar({ params, filterCounts }: Props) {
+export default function FilterSidebar({ config, params, filterCounts }: Props) {
   const router = useRouter();
 
   const [techExpanded, setTechExpanded] = useState(false);
@@ -70,12 +75,12 @@ export default function ItCoachingFilterSidebar({ params, filterCounts }: Props)
   const [regionListExpanded, setRegionListExpanded] = useState(false);
   const [priceExpanded, setPriceExpanded] = useState(false);
 
-  const navigate = (nextParams: ItCoachingSearchParams) => {
-    const href = buildItCoachingHref(nextParams);
+  const navigate = (nextParams: ServiceListSearchParams) => {
+    const href = buildServiceListHref(config, nextParams);
     router.push(href, { scroll: false });
   };
 
-  const pushParams = (updates: Partial<ItCoachingSearchParams>) => {
+  const pushParams = (updates: Partial<ServiceListSearchParams>) => {
     navigate({
       ...params,
       ...updates,
@@ -124,18 +129,21 @@ export default function ItCoachingFilterSidebar({ params, filterCounts }: Props)
   };
 
   const visibleTechStacks = techListExpanded
-    ? IT_COACHING_TECH_STACK_FILTERS
-    : IT_COACHING_TECH_STACK_FILTERS.slice(0, IT_COACHING_TECH_STACK_VISIBLE_COUNT);
+    ? SERVICE_LIST_TECH_STACK_FILTERS
+    : SERVICE_LIST_TECH_STACK_FILTERS.slice(
+        0,
+        SERVICE_LIST_TECH_STACK_VISIBLE_COUNT,
+      );
 
   const visibleRegions = regionListExpanded
-    ? IT_COACHING_REGION_FILTERS
-    : IT_COACHING_REGION_FILTERS.slice(0, IT_COACHING_REGION_VISIBLE_COUNT);
+    ? SERVICE_LIST_REGION_FILTERS
+    : SERVICE_LIST_REGION_FILTERS.slice(0, SERVICE_LIST_REGION_VISIBLE_COUNT);
 
   const activeTags = [
     ...params.techStacks.map((stack) => {
       const label =
-        IT_COACHING_TECH_STACK_FILTERS.find((item) => item.id === stack)?.label ??
-        stack;
+        SERVICE_LIST_TECH_STACK_FILTERS.find((item) => item.id === stack)
+          ?.label ?? stack;
       return {
         key: `tech-${stack}`,
         label,
@@ -146,7 +154,7 @@ export default function ItCoachingFilterSidebar({ params, filterCounts }: Props)
     }),
     ...params.regions.map((region) => {
       const label =
-        IT_COACHING_REGION_FILTERS.find((item) => item.id === region)?.label ??
+        SERVICE_LIST_REGION_FILTERS.find((item) => item.id === region)?.label ??
         region;
       return {
         key: `region-${region}`,
@@ -159,7 +167,7 @@ export default function ItCoachingFilterSidebar({ params, filterCounts }: Props)
   ];
 
   if (params.price !== null) {
-    const priceLabel = IT_COACHING_PRICE_FILTERS.find(
+    const priceLabel = SERVICE_LIST_PRICE_FILTERS.find(
       (item) => item.id === params.price,
     )?.label;
     if (priceLabel) {
@@ -238,8 +246,8 @@ export default function ItCoachingFilterSidebar({ params, filterCounts }: Props)
                 </label>
               );
             })}
-            {IT_COACHING_TECH_STACK_FILTERS.length >
-            IT_COACHING_TECH_STACK_VISIBLE_COUNT ? (
+            {SERVICE_LIST_TECH_STACK_FILTERS.length >
+            SERVICE_LIST_TECH_STACK_VISIBLE_COUNT ? (
               <ListToggleButton
                 expanded={techListExpanded}
                 onClick={() => {
@@ -290,7 +298,8 @@ export default function ItCoachingFilterSidebar({ params, filterCounts }: Props)
                 </label>
               );
             })}
-            {IT_COACHING_REGION_FILTERS.length > IT_COACHING_REGION_VISIBLE_COUNT ? (
+            {SERVICE_LIST_REGION_FILTERS.length >
+            SERVICE_LIST_REGION_VISIBLE_COUNT ? (
               <ListToggleButton
                 expanded={regionListExpanded}
                 onClick={() => {
@@ -316,7 +325,7 @@ export default function ItCoachingFilterSidebar({ params, filterCounts }: Props)
 
         {priceExpanded ? (
           <div className={styles.optionList}>
-            {IT_COACHING_PRICE_FILTERS.map((item) => {
+            {SERVICE_LIST_PRICE_FILTERS.map((item) => {
               const checked = params.price === item.id;
 
               return (

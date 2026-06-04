@@ -1,11 +1,11 @@
-import type { ItCoachingServiceItem } from './types';
+import type { ServiceListServiceItem } from './types';
 import type { TechStackName } from '@/mocks/types';
 import type { CardService } from '@repo/ui/Card';
 
 import { mockExpertList } from '@/mocks/experts';
 import { getTechStackLabel } from '@/mocks/metadata';
 
-export function toCardService(service: ItCoachingServiceItem): CardService {
+export function toCardService(service: ServiceListServiceItem): CardService {
   return {
     id: service.id,
     title: service.title,

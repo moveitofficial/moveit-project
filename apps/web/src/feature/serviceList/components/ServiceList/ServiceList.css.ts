@@ -1,6 +1,7 @@
 import { vars } from '@repo/styles/tokens';
 import { typography } from '@repo/styles/typography';
 import { style } from '@vanilla-extract/css';
+import { recipe } from '@vanilla-extract/recipes';
 
 export const page = style({
   display: 'flex',
@@ -51,13 +52,21 @@ export const heroTitle = style([
   },
 ]);
 
-export const heroDescription = style([
-  typography.f14B,
-  {
+export const heroDescription = recipe({
+  base: {
     margin: 0,
     color: vars.color.gray400,
   },
-]);
+  variants: {
+    weight: {
+      regular: typography.f14R,
+      bold: typography.f14B,
+    },
+  },
+  defaultVariants: {
+    weight: 'bold',
+  },
+});
 
 
 export const categoryChipButton = style({
@@ -80,7 +89,19 @@ export const categoryChipActive = style({
   color: vars.color.white,
 });
 
+export const featuredBand = style({
+  width: '100vw',
+  marginLeft: 'calc(-50vw + 50%)',
+  backgroundColor: vars.color.blue50,
+  padding: '80px 0',
+  display: 'flex',
+  justifyContent: 'center',
+  boxSizing: 'border-box',
+});
+
 export const featuredSection = style({
+  width: '100%',
+  maxWidth: '1176px',
   display: 'flex',
   flexDirection: 'column',
   gap: '16px',
