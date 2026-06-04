@@ -1,18 +1,23 @@
 import {
-  IT_COACHING_FEATURED_COUNT,
-  IT_COACHING_PRICE_FILTERS,
-  IT_COACHING_REGION_FILTERS,
-  IT_COACHING_TECH_STACK_FILTERS,
+  SERVICE_LIST_FEATURED_COUNT,
+  SERVICE_LIST_PRICE_FILTERS,
+  SERVICE_LIST_REGION_FILTERS,
+  SERVICE_LIST_TECH_STACK_FILTERS,
 } from './constants';
 
 import type {
-  GetItCoachingPageDataParams,
-  ItCoachingFilterCounts,
-  ItCoachingPageData,
-  ItCoachingServiceItem,
+  GetServiceListPageDataParams,
+  ServiceListFilterCounts,
+  ServiceListPageData,
+  ServiceListSearchParams,
+  ServiceListServiceItem,
 } from './types';
-import type { ItCoachingSearchParams } from './utils';
-import type { Region, ServiceCategoryName, TechStackName } from '@/mocks/types';
+import type {
+  Region,
+  ServiceCategoryName,
+  ServiceGroupName,
+  TechStackName,
+} from '@/mocks/types';
 
 import { mockExpertList } from '@/mocks/experts';
 import { mockServiceList } from '@/mocks/services';
@@ -29,12 +34,15 @@ const MOCK_EXPERT_REGION: Partial<Record<string, Region>> = {
 
 const expertById = new Map(mockExpertList.map((expert) => [expert.id, expert]));
 
-function buildItCoachingPool(): ItCoachingServiceItem[] {
+const poolByGroup = new Map<ServiceGroupName, ServiceListServiceItem[]>();
+
+function buildServicePool(
+  group: ServiceGroupName,
+): ServiceListServiceItem[] {
   return mockServiceList
     .filter(
       (service) =>
-        service.categoryRef.group === 'IT_COACHING' &&
-        service.status === 'ACTIVE',
+        service.categoryRef.group === group && service.status === 'ACTIVE',
     )
     .map((service) => {
       const expert = expertById.get(service.expert.id);
@@ -47,7 +55,16 @@ function buildItCoachingPool(): ItCoachingServiceItem[] {
     });
 }
 
-const itCoachingPool = buildItCoachingPool();
+function getServicePool(group: ServiceGroupName): ServiceListServiceItem[] {
+  const cached = poolByGroup.get(group);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const pool = buildServicePool(group);
+  poolByGroup.set(group, pool);
+  return pool;
+}
 
 const categoryCountBase: Record<'ALL' | ServiceCategoryName, number> = {
   ALL: 0,
@@ -58,7 +75,7 @@ const categoryCountBase: Record<'ALL' | ServiceCategoryName, number> = {
   DATA_ANALYTICS: 0,
 };
 
-const priceCountBase = IT_COACHING_PRICE_FILTERS.reduce<Record<string, number>>(
+const priceCountBase = SERVICE_LIST_PRICE_FILTERS.reduce<Record<string, number>>(
   (acc, item) => {
     acc[item.id] = 0;
     return acc;
@@ -66,7 +83,7 @@ const priceCountBase = IT_COACHING_PRICE_FILTERS.reduce<Record<string, number>>(
   {},
 );
 
-const techStackCountBase = IT_COACHING_TECH_STACK_FILTERS.reduce<
+const techStackCountBase = SERVICE_LIST_TECH_STACK_FILTERS.reduce<
   Record<TechStackName, number>
 >(
   (acc, item) => {
@@ -76,7 +93,7 @@ const techStackCountBase = IT_COACHING_TECH_STACK_FILTERS.reduce<
   {} as Record<TechStackName, number>,
 );
 
-const regionCountBase = IT_COACHING_REGION_FILTERS.reduce<
+const regionCountBase = SERVICE_LIST_REGION_FILTERS.reduce<
   Record<Region, number>
 >(
   (acc, item) => {
@@ -87,9 +104,9 @@ const regionCountBase = IT_COACHING_REGION_FILTERS.reduce<
 );
 
 function calculateFilterCounts(
-  services: ItCoachingServiceItem[],
-): ItCoachingFilterCounts {
-  const counts: ItCoachingFilterCounts = {
+  services: ServiceListServiceItem[],
+): ServiceListFilterCounts {
+  const counts: ServiceListFilterCounts = {
     totalCount: services.length,
     categoryCounts: { ...categoryCountBase },
     priceCounts: { ...priceCountBase },
@@ -102,7 +119,7 @@ function calculateFilterCounts(
   for (const service of services) {
     counts.categoryCounts[service.categoryRef.category] += 1;
 
-    for (const price of IT_COACHING_PRICE_FILTERS) {
+    for (const price of SERVICE_LIST_PRICE_FILTERS) {
       if (matchesPrice(service, price.id)) {
         counts.priceCounts[price.id] = (counts.priceCounts[price.id] ?? 0) + 1;
       }
@@ -124,7 +141,7 @@ function calculateFilterCounts(
 }
 
 function matchesKeyword(
-  service: ItCoachingServiceItem,
+  service: ServiceListServiceItem,
   keyword: string,
 ): boolean {
   if (keyword.length === 0) {
@@ -140,14 +157,14 @@ function matchesKeyword(
 }
 
 function matchesPrice(
-  service: ItCoachingServiceItem,
+  service: ServiceListServiceItem,
   priceId: string | null,
 ): boolean {
   if (priceId === null) {
     return true;
   }
 
-  const bucket = IT_COACHING_PRICE_FILTERS.find((item) => item.id === priceId);
+  const bucket = SERVICE_LIST_PRICE_FILTERS.find((item) => item.id === priceId);
   if (!bucket) {
     return true;
   }
@@ -164,7 +181,7 @@ function matchesPrice(
 }
 
 function matchesTechStacks(
-  service: ItCoachingServiceItem,
+  service: ServiceListServiceItem,
   techStacks: TechStackName[],
 ): boolean {
   if (techStacks.length === 0) {
@@ -175,8 +192,8 @@ function matchesTechStacks(
 }
 
 function matchesRegions(
-  service: ItCoachingServiceItem,
-  regions: ItCoachingSearchParams['regions'],
+  service: ServiceListServiceItem,
+  regions: ServiceListSearchParams['regions'],
 ): boolean {
   if (regions.length === 0) {
     return true;
@@ -190,9 +207,9 @@ function matchesRegions(
 }
 
 function sortServices(
-  services: ItCoachingServiceItem[],
-  sort: ItCoachingSearchParams['sort'],
-): ItCoachingServiceItem[] {
+  services: ServiceListServiceItem[],
+  sort: ServiceListSearchParams['sort'],
+): ServiceListServiceItem[] {
   const next = [...services];
 
   switch (sort) {
@@ -217,9 +234,10 @@ function sortServices(
 }
 
 function filterServices(
-  params: ItCoachingSearchParams,
-): ItCoachingServiceItem[] {
-  return itCoachingPool.filter((service) => {
+  pool: ServiceListServiceItem[],
+  params: ServiceListSearchParams,
+): ServiceListServiceItem[] {
+  return pool.filter((service) => {
     if (
       params.category !== 'ALL' &&
       service.categoryRef.category !== params.category
@@ -247,44 +265,48 @@ function filterServices(
   });
 }
 
-function countServicesWithParams(params: ItCoachingSearchParams): number {
-  return filterServices(params).length;
+function countServicesWithParams(
+  pool: ServiceListServiceItem[],
+  params: ServiceListSearchParams,
+): number {
+  return filterServices(pool, params).length;
 }
 
 function calculateContextualSidebarCounts(
-  params: ItCoachingSearchParams,
+  pool: ServiceListServiceItem[],
+  params: ServiceListSearchParams,
 ): Pick<
-  ItCoachingFilterCounts,
+  ServiceListFilterCounts,
   'priceCounts' | 'techStackCounts' | 'regionCounts'
 > {
   const priceCounts = { ...priceCountBase };
   const techStackCounts = { ...techStackCountBase };
   const regionCounts = { ...regionCountBase };
 
-  for (const price of IT_COACHING_PRICE_FILTERS) {
-    priceCounts[price.id] = countServicesWithParams({
+  for (const price of SERVICE_LIST_PRICE_FILTERS) {
+    priceCounts[price.id] = countServicesWithParams(pool, {
       ...params,
       price: price.id,
     });
   }
 
-  for (const stack of IT_COACHING_TECH_STACK_FILTERS) {
+  for (const stack of SERVICE_LIST_TECH_STACK_FILTERS) {
     const nextTechStacks = params.techStacks.includes(stack.id)
       ? params.techStacks
       : [...params.techStacks, stack.id];
 
-    techStackCounts[stack.id] = countServicesWithParams({
+    techStackCounts[stack.id] = countServicesWithParams(pool, {
       ...params,
       techStacks: nextTechStacks,
     });
   }
 
-  for (const region of IT_COACHING_REGION_FILTERS) {
+  for (const region of SERVICE_LIST_REGION_FILTERS) {
     const nextRegions = params.regions.includes(region.id)
       ? params.regions
       : [...params.regions, region.id];
 
-    regionCounts[region.id] = countServicesWithParams({
+    regionCounts[region.id] = countServicesWithParams(pool, {
       ...params,
       regions: nextRegions,
     });
@@ -297,22 +319,24 @@ function calculateContextualSidebarCounts(
   };
 }
 
-export function getItCoachingPageData(
-  params: GetItCoachingPageDataParams,
-): Promise<ItCoachingPageData> {
-  const filtered = sortServices(filterServices(params), params.sort);
+export function getServiceListPageData(
+  group: ServiceGroupName,
+  params: GetServiceListPageDataParams,
+): Promise<ServiceListPageData> {
+  const pool = getServicePool(group);
+  const filtered = sortServices(filterServices(pool, params), params.sort);
   const totalCount = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / params.pageSize));
   const currentPage = Math.min(Math.max(1, params.page), totalPages);
   const startIndex = (currentPage - 1) * params.pageSize;
   const items = filtered.slice(startIndex, startIndex + params.pageSize);
 
-  const featured = sortServices(itCoachingPool, 'RECOMMENDED').slice(
+  const featured = sortServices(pool, 'RECOMMENDED').slice(
     0,
-    IT_COACHING_FEATURED_COUNT,
+    SERVICE_LIST_FEATURED_COUNT,
   );
-  const totalAndCategoryCounts = calculateFilterCounts(itCoachingPool);
-  const contextualSidebarCounts = calculateContextualSidebarCounts(params);
+  const totalAndCategoryCounts = calculateFilterCounts(pool);
+  const contextualSidebarCounts = calculateContextualSidebarCounts(pool, params);
 
   return Promise.resolve({
     featured,

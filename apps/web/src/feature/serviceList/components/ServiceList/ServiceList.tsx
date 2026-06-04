@@ -5,29 +5,33 @@ import clsx from 'clsx';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
-import {
-  IT_COACHING_CATEGORY_OPTIONS,
-  IT_COACHING_SORT_OPTIONS,
-} from '../../constants';
+import { SERVICE_LIST_SORT_OPTIONS } from '../../constants';
 import { getExpertTechStackLabels, toCardService } from '../../serviceCard';
-import { buildItCoachingHref, type ItCoachingSearchParams } from '../../utils';
-import { ItCoachingFilterSidebar } from '../ItCoachingFilterSidebar';
-import { ItCoachingSearchBar } from '../ItCoachingSearchBar';
+import { buildServiceListHref } from '../../utils';
+import { FilterSidebar } from '../FilterSidebar';
+import { SearchBar } from '../SearchBar';
 
-import * as styles from './ItCoachingListing.css';
+import * as styles from './ServiceList.css';
 
-import type { ItCoachingFilterCounts, ItCoachingServiceItem } from '../../types';
+import type {
+  ServiceListConfig,
+  ServiceListFilterCounts,
+  ServiceListSearchParams,
+  ServiceListServiceItem,
+} from '../../types';
 
 interface Props {
-  featured: ItCoachingServiceItem[];
-  filterCounts: ItCoachingFilterCounts;
-  items: ItCoachingServiceItem[];
-  params: ItCoachingSearchParams;
+  config: ServiceListConfig;
+  featured: ServiceListServiceItem[];
+  filterCounts: ServiceListFilterCounts;
+  items: ServiceListServiceItem[];
+  params: ServiceListSearchParams;
   page: number;
   totalPages: number;
 }
 
-export default function ItCoachingListing({
+export default function ServiceList({
+  config,
   featured,
   filterCounts,
   items,
@@ -35,27 +39,32 @@ export default function ItCoachingListing({
   page,
   totalPages,
 }: Props) {
+  const heroDescriptionWeight =
+    config.heroDescriptionVariant === 'regular' ? 'regular' : 'bold';
+
   return (
     <div className={styles.page}>
       <section className={styles.heroSection}>
         <div className={styles.heroTextGroup}>
-          <div className={styles.heroEyebrow}>LEVEL UP</div>
-          <h1 className={styles.heroTitle}>IT코칭</h1>
-          <p className={styles.heroDescription}>
-            현업 시니어와 1:1 실무 코칭 · 총{' '}
+          <div className={styles.heroEyebrow}>{config.hero.eyebrow}</div>
+          <h1 className={styles.heroTitle}>{config.hero.title}</h1>
+          <p
+            className={styles.heroDescription({ weight: heroDescriptionWeight })}
+          >
+            {config.hero.descriptionPrefix} · 총{' '}
             {filterCounts.totalCount.toLocaleString()}건
           </p>
         </div>
         <div className={styles.heroControls}>
-          <ItCoachingSearchBar params={params} />
+          <SearchBar config={config} params={params} />
           <div className={styles.categoryFilters}>
-            {IT_COACHING_CATEGORY_OPTIONS.map((option) => {
+            {config.categoryOptions.map((option) => {
               const isActive = option.id === params.category;
 
               return (
                 <Link
                   key={option.id}
-                  href={buildItCoachingHref(params, {
+                  href={buildServiceListHref(config, params, {
                     category: option.id,
                     page: 1,
                   })}
@@ -80,34 +89,45 @@ export default function ItCoachingListing({
         </div>
       </section>
 
-      <section className={styles.featuredSection}>
-        <div className={styles.featuredHeader}>
-          <h2 className={styles.featuredTitle}>IT코칭 대표 서비스</h2>
-          <p className={styles.featuredDescription}>판매량·평점 기준 추천</p>
-        </div>
-        <div className={styles.featuredCardList}>
-          {featured.map((service) => (
-            <Card
-              key={service.id}
-              service={toCardService(service)}
-              expertTechStacks={getExpertTechStackLabels(service.expert.id)}
-            />
-          ))}
+      <section className={styles.featuredBand}>
+        <div className={styles.featuredSection}>
+          <div className={styles.featuredHeader}>
+            <h2 className={styles.featuredTitle}>{config.featured.title}</h2>
+            <p className={styles.featuredDescription}>
+              {config.featured.description}
+            </p>
+          </div>
+          <div className={styles.featuredCardList}>
+            {featured.map((service) => (
+              <Card
+                key={service.id}
+                service={toCardService(service)}
+                expertTechStacks={getExpertTechStackLabels(service.expert.id)}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
       <section className={styles.listSection}>
-        <ItCoachingFilterSidebar params={params} filterCounts={filterCounts} />
+        <FilterSidebar
+          config={config}
+          params={params}
+          filterCounts={filterCounts}
+        />
 
         <div className={styles.listContent}>
           <div className={styles.sortTabs}>
-            {IT_COACHING_SORT_OPTIONS.map((option) => {
+            {SERVICE_LIST_SORT_OPTIONS.map((option) => {
               const isActive = option.id === params.sort;
 
               return (
                 <Link
                   key={option.id}
-                  href={buildItCoachingHref(params, { sort: option.id, page: 1 })}
+                  href={buildServiceListHref(config, params, {
+                    sort: option.id,
+                    page: 1,
+                  })}
                   scroll={false}
                   className={clsx(
                     styles.sortTab,

@@ -11,8 +11,8 @@ const footerMenu: { title: string; items: { label: string; href: Route }[] }[] =
   {
     title: '서비스',
     items: [
-      { label: 'IT코칭', href: '#' },
-      { label: '프로젝트 의뢰', href: '#' },
+      { label: 'IT코칭', href: '/it-coaching' },
+      { label: '프로젝트 의뢰', href: '/project-request' },
       { label: '판매자 인증', href: '#' },
     ],
   },

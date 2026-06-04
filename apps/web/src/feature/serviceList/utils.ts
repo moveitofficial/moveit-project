@@ -1,16 +1,18 @@
 import {
-  IT_COACHING_CATEGORY_OPTIONS,
-  IT_COACHING_PRICE_FILTERS,
-  IT_COACHING_REGION_FILTERS,
-  IT_COACHING_SORT_OPTIONS,
-  IT_COACHING_TECH_STACK_FILTERS,
-  type ItCoachingCategoryFilter,
-  type ItCoachingSort,
+  SERVICE_LIST_PRICE_FILTERS,
+  SERVICE_LIST_REGION_FILTERS,
+  SERVICE_LIST_SORT_OPTIONS,
+  SERVICE_LIST_TECH_STACK_FILTERS,
+  type ServiceListSort,
 } from './constants';
 
+import type {
+  ServiceListCategoryFilter,
+  ServiceListConfig,
+  ServiceListSearchParams,
+} from './types';
 import type { Region, TechStackName } from '@/mocks/types';
 import type { Route } from 'next';
-
 
 export function param(raw: string | string[] | undefined): string | undefined {
   const v = typeof raw === 'string' ? raw : undefined;
@@ -23,26 +25,27 @@ export function parsePage(raw: string | string[] | undefined): number {
 
 export function parseCategory(
   raw: string | string[] | undefined,
-): ItCoachingCategoryFilter {
+  categoryOptions: ServiceListConfig['categoryOptions'],
+): ServiceListCategoryFilter {
   const value = param(raw);
   if (value === undefined) {
     return 'ALL';
   }
 
-  const isValid = IT_COACHING_CATEGORY_OPTIONS.some(
-    (option) => option.id === value,
-  );
-  return isValid ? (value as ItCoachingCategoryFilter) : 'ALL';
+  const isValid = categoryOptions.some((option) => option.id === value);
+  return isValid ? (value as ServiceListCategoryFilter) : 'ALL';
 }
 
-export function parseSort(raw: string | string[] | undefined): ItCoachingSort {
+export function parseSort(raw: string | string[] | undefined): ServiceListSort {
   const value = param(raw);
   if (value === undefined) {
     return 'RECOMMENDED';
   }
 
-  const isValid = IT_COACHING_SORT_OPTIONS.some((option) => option.id === value);
-  return isValid ? (value as ItCoachingSort) : 'RECOMMENDED';
+  const isValid = SERVICE_LIST_SORT_OPTIONS.some(
+    (option) => option.id === value,
+  );
+  return isValid ? (value as ServiceListSort) : 'RECOMMENDED';
 }
 
 export function parseKeyword(raw: string | string[] | undefined): string {
@@ -66,7 +69,7 @@ export function parseTechStacks(
 ): TechStackName[] {
   const values = parseCsv(raw);
   const validNames = new Set(
-    IT_COACHING_TECH_STACK_FILTERS.map((item) => item.id),
+    SERVICE_LIST_TECH_STACK_FILTERS.map((item) => item.id),
   );
 
   return values.filter((value): value is TechStackName =>
@@ -76,7 +79,9 @@ export function parseTechStacks(
 
 export function parseRegions(raw: string | string[] | undefined): Region[] {
   const values = parseCsv(raw);
-  const validNames = new Set(IT_COACHING_REGION_FILTERS.map((item) => item.id));
+  const validNames = new Set(
+    SERVICE_LIST_REGION_FILTERS.map((item) => item.id),
+  );
 
   return values.filter((value): value is Region =>
     validNames.has(value as Region),
@@ -91,25 +96,16 @@ export function parsePriceFilter(
     return null;
   }
 
-  const isValid = IT_COACHING_PRICE_FILTERS.some((item) => item.id === value);
+  const isValid = SERVICE_LIST_PRICE_FILTERS.some((item) => item.id === value);
   return isValid ? value : null;
 }
 
-export interface ItCoachingSearchParams {
-  category: ItCoachingCategoryFilter;
-  page: number;
-  sort: ItCoachingSort;
-  keyword: string;
-  techStacks: TechStackName[];
-  regions: Region[];
-  price: string | null;
-}
-
-export function parseItCoachingSearchParams(
+export function parseServiceListSearchParams(
   raw: Record<string, string | string[] | undefined>,
-): ItCoachingSearchParams {
+  config: ServiceListConfig,
+): ServiceListSearchParams {
   return {
-    category: parseCategory(raw.category),
+    category: parseCategory(raw.category, config.categoryOptions),
     page: parsePage(raw.page),
     sort: parseSort(raw.sort),
     keyword: parseKeyword(raw.q),
@@ -119,11 +115,12 @@ export function parseItCoachingSearchParams(
   };
 }
 
-export function buildItCoachingHref(
-  params: ItCoachingSearchParams,
-  updates: Partial<ItCoachingSearchParams> = {},
+export function buildServiceListHref(
+  config: ServiceListConfig,
+  params: ServiceListSearchParams,
+  updates: Partial<ServiceListSearchParams> = {},
 ): Route {
-  const merged: ItCoachingSearchParams = {
+  const merged: ServiceListSearchParams = {
     ...params,
     ...updates,
   };
@@ -153,5 +150,6 @@ export function buildItCoachingHref(
   }
 
   const query = search.toString();
-  return (query.length > 0 ? `/it-coaching?${query}` : '/it-coaching');
+  const basePath = config.basePath;
+  return query.length > 0 ? `${basePath}?${query}` : basePath;
 }

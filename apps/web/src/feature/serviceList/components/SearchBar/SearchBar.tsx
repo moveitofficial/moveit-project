@@ -3,22 +3,25 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { buildItCoachingHref, type ItCoachingSearchParams } from '../../utils';
+import { buildServiceListHref } from '../../utils';
 
-import * as styles from './ItCoachingSearchBar.css';
+import * as styles from './SearchBar.css';
+
+import type { ServiceListConfig, ServiceListSearchParams } from '../../types';
 
 import { SearchInput } from '@/components/common/SearchInput';
 
 interface Props {
-  params: ItCoachingSearchParams;
+  config: ServiceListConfig;
+  params: ServiceListSearchParams;
 }
 
-export default function ItCoachingSearchBar({ params }: Props) {
+export default function SearchBar({ config, params }: Props) {
   const router = useRouter();
   const [keyword, setKeyword] = useState(params.keyword);
 
   const handleSubmit = () => {
-    const href = buildItCoachingHref({
+    const href = buildServiceListHref(config, {
       ...params,
       keyword: keyword.trim(),
       page: 1,
