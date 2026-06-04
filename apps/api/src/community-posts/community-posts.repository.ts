@@ -187,4 +187,11 @@ export class CommunityPostsRepository {
       where: this.buildCommentListWhere(postId),
     });
   }
+
+  deleteComment(commentId: string): Promise<Comment> {
+    return this.prisma.comment.update({
+      where: { id: commentId },
+      data: { deletedAt: new Date() },
+    });
+  }
 }

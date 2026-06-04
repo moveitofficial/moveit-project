@@ -6,6 +6,10 @@ import { MyPostSort } from './dto/my-posts-query.dto';
 import { myPostListSelect, userWithProfilesInclude } from './users.types';
 
 import type { MyPostListItem, UserWithProfiles } from './users.types';
+import { MyCommentSort } from './dto/my-comments-query.dto';
+import { myCommentListSelect, userWithProfilesInclude } from './users.types';
+
+import type { MyCommentListItem, UserWithProfiles } from './users.types';
 import type { CreateOAuthUserParams } from '../auth/oauth/oauth.types';
 import type {
   AuthProvider,
@@ -108,6 +112,26 @@ export class UsersRepository {
     return this.prisma.communityPost.findMany({
       where,
       select: myPostListSelect,
+  findAllComments(args: {
+    userId: string;
+    skip: number;
+    take: number;
+    sort: MyCommentSort;
+  }): Promise<MyCommentListItem[]> {
+    const orderBy =
+      args.sort === 'oldest'
+        ? { createdAt: 'asc' as const }
+        : { createdAt: 'desc' as const };
+
+    return this.prisma.comment.findMany({
+      where: {
+        userId: args.userId,
+        deletedAt: null,
+        post: {
+          deletedAt: null,
+        },
+      },
+      select: myCommentListSelect,
       orderBy,
       skip: args.skip,
       take: args.take,
@@ -120,6 +144,14 @@ export class UsersRepository {
         userId,
         deletedAt: null,
         ...(category !== undefined && { category }),
+  countComments(userId: string): Promise<number> {
+    return this.prisma.comment.count({
+      where: {
+        userId,
+        deletedAt: null,
+        post: {
+          deletedAt: null,
+        },
       },
     });
   }

@@ -26,6 +26,10 @@ import { MyPostsQueryDto } from './dto/my-posts-query.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MyPostListItemResponseDto } from './dto/user-response.dto';
+import { MyCommentsQueryDto } from './dto/my-comments-query.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { MyCommentListItemResponseDto } from './dto/user-response.dto';
 import { UsersRepository } from './users.repository';
 
 import type { UserWithProfiles } from './users.types';
@@ -258,6 +262,11 @@ export class UsersService {
   ): Promise<Paginated<MyPostListItemResponseDto>> {
     const user = await this.usersRepository.findById(userId);
 
+  async getAllCommentsByUserId(
+    userId: string,
+    query: MyCommentsQueryDto,
+  ): Promise<Paginated<MyCommentListItemResponseDto>> {
+    const user = await this.usersRepository.findById(userId);
     if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
 
     const page = query.page ?? 1;

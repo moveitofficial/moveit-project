@@ -12,6 +12,7 @@ import { toPaginatedResponse } from '../common/utils/list-response.util';
 import {
   mapComment,
   mapCommentListItem,
+  mapCommentToBeDeleted,
   mapPost,
   mapPostDetail,
   mapPostListItem,
@@ -324,5 +325,37 @@ export class CommunityPostsService {
       comments.map((comment) => mapCommentListItem(comment)),
       { page, pageSize, totalCount },
     );
+  }
+
+  async deleteComment(
+    userId: string,
+    postId: string,
+    commentId: string,
+  ): Promise<ReturnType<typeof mapCommentToBeDeleted>> {
+    const post = await this.communityPostsRepository.findByPostId(postId);
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const comment = await this.communityPostsRepository.findComment(commentId);
+
+    if (comment === null) {
+      throw new AppException(COMMENTS_ERRORS.NOT_FOUND);
+    }
+
+    if (comment.deletedAt !== null) {
+      throw new AppException(COMMENTS_ERRORS.ALREADY_DELETED);
+    }
+
+    if (comment.userId !== userId) {
+      throw new AppException(COMMENTS_ERRORS.FORBIDDEN);
+    }
+
+    const toBeDeleted =
+      await this.communityPostsRepository.deleteComment(commentId);
+    return mapCommentToBeDeleted(toBeDeleted);
   }
 }

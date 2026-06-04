@@ -38,4 +38,24 @@ export const myPostListSelect = {
 
 export type MyPostListItem = Prisma.CommunityPostGetPayload<{
   select: typeof myPostListSelect;
+export const myCommentListSelect = {
+  id: true,
+  content: true,
+  createdAt: true,
+  post: {
+    select: {
+      id: true,
+      category: true,
+      title: true,
+      deletedAt: true,
+      _count: {
+        select: {
+          likeRecords: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.CommentSelect;
+export type MyCommentListItem = Prisma.CommentGetPayload<{
+  select: typeof myCommentListSelect;
 }>;
