@@ -5,13 +5,22 @@ import { PAYMENT_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
 
-import { orderPaymentSelect } from './payments.types';
+import { getOrderPaymentSelect, orderPaymentSelect } from './payments.types';
 
 @Injectable()
 export class PaymentsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOrderPayment(orderId: string) {
+  // [P3] 순수 조회 전용 — totalAmount 미포함
+  findOrderPaymentOnly(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: getOrderPaymentSelect,
+    });
+  }
+
+  // confirmPayment 전용 — totalAmount 포함
+  findOrderPayment(orderId: string) {
     return this.prisma.order.findUnique({
       where: { id: orderId },
       select: orderPaymentSelect,
@@ -24,6 +33,8 @@ export class PaymentsRepository {
       paymentKey: string;
       paidAmount: number;
       approvedAt: Date;
+      method: string;
+      installmentMonths: number;
       rawData: Prisma.InputJsonValue;
     },
   ) {
@@ -38,6 +49,8 @@ export class PaymentsRepository {
           paymentKey: data.paymentKey,
           paidAmount: data.paidAmount,
           approvedAt: data.approvedAt,
+          method: data.method,
+          installmentMonths: data.installmentMonths,
           rawData: data.rawData,
         },
       });
