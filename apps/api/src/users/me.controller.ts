@@ -256,12 +256,14 @@ export class MeController {
   @JwtAuth()
   @ApiPaginatedResponse(HttpStatus.OK, MyPostListItemResponseDto)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get('posts')
   getMyPosts(@Req() req: Request, @Query() query: MyPostsQueryDto) {
     const user = req.user as JwtAccessUser;
     return this.usersService.getAllPostsByUserId(user.userId, query);
   }
+
   @ApiOperation({ summary: '내 댓글 목록 조회' })
   @JwtAuth()
   @ApiPaginatedResponse(HttpStatus.OK, MyCommentListItemResponseDto)
