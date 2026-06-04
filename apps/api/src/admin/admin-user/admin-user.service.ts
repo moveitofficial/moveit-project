@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { AdminActionType, Role } from '@prisma/client';
+import { AdminActionType, NotificationCategory, Role } from '@prisma/client';
 
-import { USER_ERRORS } from '../../common/constants/errors';
+import {
+  EXPERT_PROFILE_ERRORS,
+  USER_ERRORS,
+} from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
 import { Paginated } from '../../common/types/paginated.type';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 import { AdminUserRepository } from './admin-user.repository';
 import { UserCommentItemDto } from './dto/detail/user-comments-response.dto';
@@ -24,7 +28,10 @@ import { type PageQueryDto } from './dto/page-query.dto';
 
 @Injectable()
 export class AdminUserService {
-  constructor(private readonly adminUserRepository: AdminUserRepository) {}
+  constructor(
+    private readonly adminUserRepository: AdminUserRepository,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async getUsers(query: GetUsersQueryDto): Promise<Paginated<UserItemDto>> {
     const role = query.role ?? Role.CLIENT;
@@ -357,5 +364,50 @@ export class AdminUserService {
       adminId,
       AdminActionType.BLACKLIST_REMOVED,
     );
+  }
+
+  async approveExpert(userId: string, adminId: string): Promise<void> {
+    const user = await this.adminUserRepository.findById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (user.role !== Role.EXPERT)
+      throw new AppException(USER_ERRORS.ROLE_MISMATCH);
+    if (!user.expertProfile)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
+    if (user.expertProfile.isApproved)
+      throw new AppException(EXPERT_PROFILE_ERRORS.ALREADY_APPROVED);
+    if (!user.expertProfile.isApplied)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_APPLIED);
+
+    await this.adminUserRepository.approveExpert(userId, adminId);
+
+    await this.notificationsService.send({
+      userIds: [userId],
+      category: NotificationCategory.EXPERT_APPROVED,
+    });
+  }
+
+  async rejectExpert(
+    userId: string,
+    adminId: string,
+    rejectReason: string,
+  ): Promise<void> {
+    const user = await this.adminUserRepository.findById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (user.role !== Role.EXPERT)
+      throw new AppException(USER_ERRORS.ROLE_MISMATCH);
+    if (!user.expertProfile)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
+    if (user.expertProfile.isApproved)
+      throw new AppException(EXPERT_PROFILE_ERRORS.ALREADY_APPROVED);
+    if (!user.expertProfile.isApplied)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_APPLIED);
+
+    await this.adminUserRepository.rejectExpert(userId, adminId, rejectReason);
+
+    await this.notificationsService.send({
+      userIds: [userId],
+      category: NotificationCategory.EXPERT_REJECTED,
+      vars: { rejectReason },
+    });
   }
 }

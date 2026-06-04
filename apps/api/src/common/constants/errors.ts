@@ -241,6 +241,11 @@ export const EXPERT_PROFILE_ERRORS = {
     message: '이미 판매자 승인이 완료되었습니다.',
     code: 'EXPERT_PROFILE_ALREADY_APPROVED',
   },
+  NOT_APPLIED: {
+    status: HttpStatus.CONFLICT,
+    message: '전문가 승인 신청 상태가 아닙니다.',
+    code: 'EXPERT_PROFILE_NOT_APPLIED',
+  },
   INCOMPLETE_PROFILE: {
     status: HttpStatus.BAD_REQUEST,
     message: '승인 신청 전 전문가 프로필의 모든 항목을 입력해 주세요.',
