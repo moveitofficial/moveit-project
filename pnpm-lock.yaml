@@ -523,6 +523,9 @@ importers:
       '@repo/styles':
         specifier: workspace:*
         version: link:../styles
+      '@repo/utils':
+        specifier: workspace:^
+        version: link:../utils
       '@vanilla-extract/css':
         specifier: ^1.20.1
         version: 1.20.1
