@@ -5,7 +5,7 @@ import * as styles from './RoundChip.css';
 
 interface Props {
   text: string;
-  size: 'admin' | 'web';
+  size: 'admin' | 'web' | 'order';
   color?:
     | 'labelWhite'
     | 'white'

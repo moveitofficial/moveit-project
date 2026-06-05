@@ -12,7 +12,6 @@ export const roundContainer = recipe({
     alignItems: 'center',
     justifyContent: 'center',
     gap: '8px',
-    borderRadius: 100,
     backgroundColor: `color-mix(in srgb, ${bgColor} ${bgAlpha}, transparent)`,
   },
 
@@ -23,6 +22,7 @@ export const roundContainer = recipe({
         {
           padding: '4px 12px',
           border: 'none',
+          borderRadius: 100,
           color: vars.color.white,
           cursor: 'default',
         },
@@ -30,8 +30,19 @@ export const roundContainer = recipe({
       web: {
         padding: '8px 16px',
         border: '1px solid transparent',
+        borderRadius: 100,
         cursor: 'pointer',
       },
+      order: [
+        typography.f12EB,
+        {
+          padding: '2px 8px',
+          border: 'none',
+          borderRadius: 4,
+          color: vars.color.white,
+          cursor: 'default',
+        },
+      ],
     },
     color: {
       labelWhite: [typography.f14B, { vars: { [bgColor]: vars.color.white } }],
