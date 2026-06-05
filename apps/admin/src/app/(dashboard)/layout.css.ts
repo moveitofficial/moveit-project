@@ -10,11 +10,14 @@ export const main = style({
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
-  overflowY: 'auto',
+  overflow: 'hidden',
   backgroundColor: vars.color.adminBackground,
 });
 
 export const content = style({
   flex: 1,
-  padding: '24px 32px',
+  display: 'flex',
+  flexDirection: 'column',
+  overflowY: 'auto',
+  padding: '32px',
 });
