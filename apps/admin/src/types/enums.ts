@@ -1,7 +1,37 @@
+export type UserRole = 'CLIENT' | 'EXPERT' | 'ADMIN' | 'SUPER_ADMIN';
+export type ExpertApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'; // api 확인 후 수정 예정
+
 export type Provider = 'LOCAL' | 'GOOGLE' | 'KAKAO' | 'NAVER';
+
 export type ServiceType = 'IT_COACHING' | 'PROJECT_REQUEST';
-export type ServiceStatus = 'ON_SALE' | 'STOPPED' | 'DELETED' | 'HIDDEN';
-export type ExpertApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type ServiceCategory = 'WEB' | 'APP' | 'AI' | 'GAME' | 'DATA_ANALYTICS';
+export type ServiceStatus = 'ACTIVE' | 'PAUSED' | 'CLOSED';
+
+export type OrderStatus =
+  | 'NEGOTIATING'
+  | 'CANCEL_REQUESTED'
+  | 'PAYMENT_CANCELLED'
+  | 'IN_PROGRESS'
+  | 'DEADLINE_IMMINENT'
+  | 'EXPIRED'
+  | 'WORK_COMPLETED'
+  | 'PURCHASE_CONFIRMED'
+  | 'SETTLEMENT_REQUESTED'
+  | 'SETTLEMENT_COMPLETED'
+  | 'REFUND_REQUESTED'
+  | 'REFUND_COMPLETED';
+export type PaymentStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REFUNDED';
+export type SettlementStatus = Extract<
+  OrderStatus,
+  'SETTLEMENT_REQUESTED' | 'SETTLEMENT_COMPLETED'
+>;
+export type RefundStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+
 export type ReportReason =
   | 'FALSE_INFORMATION'
   | 'ABUSE'
@@ -9,3 +39,7 @@ export type ReportReason =
   | 'EXTERNAL_CONTACT'
   | 'SPAM'
   | 'OTHER';
+
+export type ReportStatus = 'PENDING' | 'COMPLETED';
+
+export type CSChatStatus = 'OPEN' | 'ASSIGNED' | 'CLOSED';

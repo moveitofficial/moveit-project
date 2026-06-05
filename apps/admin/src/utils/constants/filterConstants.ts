@@ -4,6 +4,7 @@ import type {
   ServiceType,
   ServiceStatus,
   ReportReason,
+  SettlementStatus,
 } from '@/types/enums';
 
 export const PROVIDER_LABEL: Record<Provider, string> = {
@@ -37,10 +38,9 @@ export const SERVICE_TYPE_OPTIONS = (
 ).map(([value, label]) => ({ value, label }));
 
 export const SERVICE_STATUS_LABEL: Record<ServiceStatus, string> = {
-  ON_SALE: '판매중',
-  STOPPED: '판매중지',
-  DELETED: '삭제',
-  HIDDEN: '숨김',
+  ACTIVE: '판매중',
+  PAUSED: '판매 중지',
+  CLOSED: '삭제',
 };
 
 export const SERVICE_STATUS_OPTIONS = (
@@ -89,3 +89,12 @@ export const PAGE_SIZE_OPTIONS: { value: string; label: string }[] = [
   { value: '100', label: '100개씩' },
   { value: '500', label: '500개씩' },
 ];
+
+export const SETTLEMENT_STATUS_LABEL: Record<SettlementStatus, string> = {
+  SETTLEMENT_REQUESTED: '정산요청',
+  SETTLEMENT_COMPLETED: '정산완료',
+};
+
+export const SETTLEMENT_STATUS_OPTIONS = (
+  Object.entries(SETTLEMENT_STATUS_LABEL) as [SettlementStatus, string][]
+).map(([value, label]) => ({ value, label }));

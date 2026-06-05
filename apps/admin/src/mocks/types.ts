@@ -1,32 +1,48 @@
 export type UserRole = 'CLIENT' | 'EXPERT' | 'ADMIN' | 'SUPER_ADMIN';
+export type ExpertApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'; // api 확인 후 수정 예정
+
 export type Provider = 'LOCAL' | 'GOOGLE' | 'KAKAO' | 'NAVER';
+
 export type ServiceType = 'IT_COACHING' | 'PROJECT_REQUEST';
-export type ServiceStatus = 'ON_SALE' | 'STOPPED' | 'DELETED' | 'HIDDEN';
-export type ExpertApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type ServiceCategory = 'WEB' | 'APP' | 'AI' | 'GAME' | 'DATA_ANALYTICS';
+export type ServiceStatus = 'ACTIVE' | 'PAUSED' | 'CLOSED';
+
 export type OrderStatus =
-  | 'PENDING'
+  | 'NEGOTIATING'
+  | 'CANCEL_REQUESTED'
+  | 'PAYMENT_CANCELLED'
   | 'IN_PROGRESS'
+  | 'DEADLINE_IMMINENT'
+  | 'EXPIRED'
   | 'WORK_COMPLETED'
   | 'PURCHASE_CONFIRMED'
   | 'SETTLEMENT_REQUESTED'
   | 'SETTLEMENT_COMPLETED'
-  | 'CANCELED'
-  | 'REFUNDED'
-  | 'EXPIRED';
-export type PaymentStatus = 'PENDING' | 'DONE' | 'FAILED' | 'CANCELED';
-export type RefundStatus =
-  | 'REQUESTED'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'COMPLETED'
-  | 'CANCELED';
-export type ReportStatus = 'PENDING' | 'IN_REVIEW' | 'RESOLVED' | 'REJECTED';
-export type SettlementStatus =
-  | 'REQUESTED'
-  | 'APPROVED'
-  | 'COMPLETED'
-  | 'REJECTED';
-export type CSChatStatus = 'OPEN' | 'CLOSED';
+  | 'REFUND_REQUESTED'
+  | 'REFUND_COMPLETED';
+export type PaymentStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REFUNDED';
+export type SettlementStatus = Extract<
+  OrderStatus,
+  'SETTLEMENT_REQUESTED' | 'SETTLEMENT_COMPLETED'
+>;
+export type RefundStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+
+export type ReportReason =
+  | 'FALSE_INFORMATION'
+  | 'ABUSE'
+  | 'ILLEGAL_ACTIVITY'
+  | 'EXTERNAL_CONTACT'
+  | 'SPAM'
+  | 'OTHER';
+
+export type ReportStatus = 'PENDING' | 'COMPLETED';
+
+export type CSChatStatus = 'OPEN' | 'ASSIGNED' | 'CLOSED';
 
 export interface ApiSuccess<T> {
   success: true;
@@ -104,6 +120,8 @@ export interface AdminService {
 export interface AdminOrder {
   id: string;
   serviceTitle: string;
+  thumbnailUrl: string;
+  categoryName: string;
   expertName: string;
   clientName: string;
   status: OrderStatus;
@@ -135,11 +153,17 @@ export interface AdminSettlement {
   expertId: string;
   expertName: string;
   companyName: string;
+  serviceTitle: string;
+  thumbnailUrl: string;
+  categoryName: string;
+  clientName: string;
   amount: number;
   status: SettlementStatus;
   bankName: string;
   bankAccount: string;
   adminMemo: string | null;
+  startDate: string;
+  endDate: string;
   requestedAt: string;
   processedAt: string | null;
 }
