@@ -1,5 +1,4 @@
-import type { DashboardSummary } from './types';
-import type { ActivityType, PendingTaskType } from '@/mocks/types';
+import type { ActivityType, DashboardSummary, PendingTaskType } from './types';
 import type { RoundChip } from '@repo/ui/RoundChip';
 import type { ComponentProps } from 'react';
 
@@ -24,22 +23,22 @@ export const SUMMARY_CARD_CONFIG: Record<
   keyof DashboardSummary,
   SummaryCardConfig
 > = {
-  pendingExpertCount: {
+  expertApplications: {
     label: '전문가 신청',
     subtext: '대기 중',
     countColor: 'blue300',
   },
-  pendingReportCount: {
+  reports: {
     label: '신고 접수',
     subtext: '처리 필요',
     countColor: 'red200',
   },
-  pendingSettlementCount: {
+  settlements: {
     label: '정산 요청',
     subtext: '처리 필요',
     countColor: 'yellow100',
   },
-  activeOrderCount: {
+  ongoingServices: {
     label: '서비스 진행중',
     subtext: '거래 중',
     countColor: 'blue300',
@@ -47,7 +46,7 @@ export const SUMMARY_CARD_CONFIG: Record<
 };
 
 export const PENDING_TASK_BADGE_CONFIG: Record<PendingTaskType, BadgeConfig> = {
-  EXPERT_APPROVAL: { text: '전문가 신청', color: 'blue300', opacity: 'full' },
+  EXPERT_APPLICATION: { text: '전문가 신청', color: 'blue300', opacity: 'full' },
   REPORT: { text: '신고', color: 'red200', opacity: 'full' },
   CS: { text: 'CS', color: 'yellow100', opacity: 'full' },
   SETTLEMENT: { text: '정산 요청', color: 'blue400', opacity: 'full' },
@@ -73,5 +72,5 @@ export const ACTIVITY_BADGE_CONFIG: Record<ActivityType, BadgeConfig> = {
   REFUND_APPROVED: { text: '환불 승인', color: 'blue300', opacity: 'full' },
   CANCEL_APPROVED: { text: '취소 승인', color: 'red200', opacity: 'full' },
   CS_ASSIGNED: { text: '문의 처리중', color: 'yellow100', opacity: 'full' },
-  CS_CLOSED: { text: '문의 처리완료', color: 'blue400', opacity: 'full' },
+  CS_CLOSED: { text: '문의 처리 완료', color: 'blue400', opacity: 'full' },
 };
