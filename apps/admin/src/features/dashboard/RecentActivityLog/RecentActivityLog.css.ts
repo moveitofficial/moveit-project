@@ -2,11 +2,14 @@ import { vars } from '@repo/styles/tokens';
 import { style } from '@vanilla-extract/css';
 
 export const section = style({
+  flex: 1,
   display: 'flex',
   flexDirection: 'column',
   backgroundColor: vars.color.white,
   border: `1px solid ${vars.color.line200}`,
   borderRadius: '8px',
+  overflow: 'hidden',
+  minHeight: 0,
 });
 
 export const titleGroup = style({
@@ -26,8 +29,11 @@ export const subtitle = style({
 });
 
 export const list = style({
+  flex: 1,
   display: 'flex',
   flexDirection: 'column',
+  overflowY: 'auto',
+  minHeight: 0,
 });
 
 export const item = style({
@@ -35,6 +41,7 @@ export const item = style({
   alignItems: 'center',
   gap: '12px',
   height: '56px',
+  flexShrink: 0,
   borderBottom: `1px solid ${vars.color.line200}`,
 
   selectors: {
@@ -47,7 +54,7 @@ export const item = style({
 export const badgeWrapper = style({
   display: 'flex',
   justifyContent: 'center',
-  width: '120px',
+  width: '130px',
   flexShrink: 0,
 });
 
@@ -75,4 +82,10 @@ export const adminName = style({
 
 export const date = style({
   color: vars.color.gray400,
+});
+
+export const loadingRow = style({
+  display: 'flex',
+  justifyContent: 'center',
+  padding: '12px',
 });
