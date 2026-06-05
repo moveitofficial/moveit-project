@@ -4,6 +4,7 @@ import type {
   ServiceType,
   ServiceStatus,
   ReportReason,
+  SettlementStatus,
 } from '@/types/enums';
 
 import {
@@ -12,6 +13,7 @@ import {
   SERVICE_TYPE_OPTIONS,
   SERVICE_STATUS_OPTIONS,
   REPORT_REASON_OPTIONS,
+  SETTLEMENT_STATUS_OPTIONS,
 } from '@/utils/constants';
 
 export function isProvider(v: string): v is Provider {
@@ -32,4 +34,8 @@ export function isServiceStatus(v: string): v is ServiceStatus {
 
 export function isReportReason(v: string): v is ReportReason {
   return REPORT_REASON_OPTIONS.some((option) => option.value === v);
+}
+
+export function isSettlementStatus(v: string): v is SettlementStatus {
+  return SETTLEMENT_STATUS_OPTIONS.some((option) => option.value === v);
 }

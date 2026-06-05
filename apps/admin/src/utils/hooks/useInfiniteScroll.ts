@@ -12,14 +12,12 @@ export function useInfiniteScroll<T>(
   const [items, setItems] = useState(initialItems);
   const [hasNext, setHasNext] = useState(initialHasNext);
   const [isLoading, setIsLoading] = useState(false);
+  const [sentinelEl, setSentinelEl] = useState<Element | null>(null);
   const pageRef = useRef(1);
   const isLoadingRef = useRef(false);
-  const sentinelRef = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
-    const sentinel = sentinelRef.current;
-
-    if (!sentinel) {
+    if (!sentinelEl) {
       return;
     }
 
@@ -48,12 +46,16 @@ export function useInfiniteScroll<T>(
         });
     });
 
-    observer.observe(sentinel);
+    observer.observe(sentinelEl);
 
     return () => {
       observer.disconnect();
     };
-  }, [fetchMore]);
+  }, [sentinelEl, fetchMore]);
+
+  const sentinelRef = (el: Element | null) => {
+    setSentinelEl(el);
+  };
 
   return { items, hasNext, isLoading, sentinelRef };
 }

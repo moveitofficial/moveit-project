@@ -11,7 +11,7 @@ import { SERVICE_STATUS_LABEL, SERVICE_TYPE_LABEL } from '@/utils/constants';
 function renderStatus(status: AdminService['status']) {
   const label = SERVICE_STATUS_LABEL[status];
 
-  if (status === 'DELETED') {
+  if (status === 'CLOSED') {
     return <span className={styles.statusDeleted}>{label}</span>;
   }
 
