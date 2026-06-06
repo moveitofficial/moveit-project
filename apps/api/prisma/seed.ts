@@ -1252,12 +1252,17 @@ class Seeder {
   // ─── 21. AdminActivityLogs ─────────────────────────────────────────
   async #seedAdminActivityLogs(admins: Admin[]): Promise<void> {
     // 실제로 가리킬 수 있는 id 후보 미리 조회 → enrich 시 매칭되도록
-    const [users, faqs, csChatRooms, mainSettings] = await Promise.all([
-      this.#prisma.user.findMany({ select: { id: true, role: true } }),
-      this.#prisma.faq.findMany({ select: { id: true } }),
-      this.#prisma.csChatRoom.findMany({ select: { id: true } }),
-      this.#prisma.mainSetting.findMany({ select: { id: true } }),
-    ]);
+    const [users, faqs, csChatRooms, mainSettings, settledOrders] =
+      await Promise.all([
+        this.#prisma.user.findMany({ select: { id: true, role: true } }),
+        this.#prisma.faq.findMany({ select: { id: true } }),
+        this.#prisma.csChatRoom.findMany({ select: { id: true } }),
+        this.#prisma.mainSetting.findMany({ select: { id: true } }),
+        this.#prisma.order.findMany({
+          where: { status: OrderStatus.SETTLEMENT_COMPLETED },
+          select: { id: true },
+        }),
+      ]);
 
     // 액션의 의미에 맞게 user 풀 분리
     // - 전문가 승인/거절 → expert role
@@ -1290,6 +1295,9 @@ class Seeder {
     const MAIN_ACTIONS = new Set<AdminActionType>([
       AdminActionType.MAIN_UPDATED,
     ]);
+    const SETTLEMENT_ACTIONS = new Set<AdminActionType>([
+      AdminActionType.SETTLEMENT_COMPLETED,
+    ]);
 
     const pickRefId = (actionType: AdminActionType): string | null => {
       if (EXPERT_TARGET_ACTIONS.has(actionType)) return pick(expertUsers).id;
@@ -1300,6 +1308,10 @@ class Seeder {
       if (MAIN_ACTIONS.has(actionType)) {
         if (mainSettings.length === 0) return null;
         return pick(mainSettings).id;
+      }
+      if (SETTLEMENT_ACTIONS.has(actionType)) {
+        if (settledOrders.length === 0) return null;
+        return pick(settledOrders).id;
       }
       return null;
     };
