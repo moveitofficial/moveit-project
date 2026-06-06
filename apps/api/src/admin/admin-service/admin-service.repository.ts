@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 import { ORDER_TAB_STATUSES } from './dto/order-tab.enum';
 
+import type { GetServicesQueryDto } from './dto/list/services-query.dto';
 import type {
   OrderSort,
   ServiceOrdersQueryDto,
@@ -100,5 +101,46 @@ export class AdminServiceRepository {
       return { endDate: 'desc' };
     }
     return { createdAt: 'desc' };
+  }
+
+  countServices(query: GetServicesQueryDto): Promise<number> {
+    return this.prisma.service.count({
+      where: this.#buildServicesWhere(query),
+    });
+  }
+
+  findServices(query: GetServicesQueryDto, skip: number, take: number) {
+    return this.prisma.service.findMany({
+      where: this.#buildServicesWhere(query),
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        servicePrice: true,
+        status: true,
+        createdAt: true,
+        serviceGroup: { select: { name: true } },
+        expertUser: {
+          select: {
+            expertProfile: { select: { businessName: true } },
+          },
+        },
+        _count: { select: { orders: true } },
+      },
+    });
+  }
+
+  #buildServicesWhere(query: GetServicesQueryDto): Prisma.ServiceWhereInput {
+    const { categoryGroup, status, search } = query;
+
+    return {
+      ...(categoryGroup && { serviceGroup: { name: categoryGroup } }),
+      ...(status && { status }),
+      ...(search && {
+        title: { contains: search, mode: 'insensitive' },
+      }),
+    };
   }
 }

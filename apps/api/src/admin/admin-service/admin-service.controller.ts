@@ -11,11 +11,17 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { COMMON_ERRORS, SERVICE_ERRORS } from '../../common/constants/errors';
 import { ApiErrorResponse } from '../../common/decorators/api-error-response.decorator';
-import { ApiSuccessResponse } from '../../common/decorators/api-success-response.decorator';
+import {
+  ApiPaginatedResponse,
+  ApiSuccessResponse,
+} from '../../common/decorators/api-success-response.decorator';
 import { AppException } from '../../common/exceptions/app.exception';
+import { Paginated } from '../../common/types/paginated.type';
 import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
 
 import { AdminServiceService } from './admin-service.service';
+import { GetServicesQueryDto } from './dto/list/services-query.dto';
+import { ServiceItemDto } from './dto/list/services-response.dto';
 import { ServiceOrdersQueryDto } from './dto/service-orders-query.dto';
 import {
   ServiceOrderCountsDto,
@@ -72,5 +78,21 @@ export class AdminServiceController {
     serviceId: string,
   ): Promise<ServiceOrderCountsDto> {
     return this.adminServiceService.getServiceOrderCounts(serviceId);
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 서비스 리스트',
+    description:
+      '전체 서비스 리스트. 카테고리 그룹·상태로 필터, 서비스명 부분 일치 검색. 등록일 최근순. 소프트딜리트(CLOSED) 포함 모든 상태 노출.',
+  })
+  @ApiPaginatedResponse(HttpStatus.OK, ServiceItemDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get()
+  getServices(
+    @Query() query: GetServicesQueryDto,
+  ): Promise<Paginated<ServiceItemDto>> {
+    return this.adminServiceService.getServices(query);
   }
 }

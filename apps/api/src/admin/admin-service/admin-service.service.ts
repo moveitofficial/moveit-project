@@ -3,8 +3,12 @@ import { OrderStatus } from '@prisma/client';
 
 import { SERVICE_ERRORS } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
+import { Paginated } from '../../common/types/paginated.type';
+import { toPaginatedResponse } from '../../common/utils/list-response.util';
 
 import { AdminServiceRepository } from './admin-service.repository';
+import { GetServicesQueryDto } from './dto/list/services-query.dto';
+import { ServiceItemDto } from './dto/list/services-response.dto';
 import { ORDER_TAB_STATUSES } from './dto/order-tab.enum';
 import {
   type ServiceOrderCountsDto,
@@ -99,5 +103,31 @@ export class AdminServiceService {
       expired: sumOf(ORDER_TAB_STATUSES.expired),
       cancelRefund: sumOf(ORDER_TAB_STATUSES.cancelRefund),
     };
+  }
+
+  async getServices(
+    query: GetServicesQueryDto,
+  ): Promise<Paginated<ServiceItemDto>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 50;
+    const skip = (page - 1) * pageSize;
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminServiceRepository.findServices(query, skip, pageSize),
+      this.adminServiceRepository.countServices(query),
+    ]);
+
+    const items: ServiceItemDto[] = rows.map((s) => ({
+      id: s.id,
+      title: s.title,
+      categoryGroup: s.serviceGroup.name,
+      businessName: s.expertUser.expertProfile?.businessName ?? null,
+      status: s.status,
+      servicePrice: s.servicePrice,
+      createdAt: s.createdAt,
+      orderCount: s._count.orders,
+    }));
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
   }
 }
