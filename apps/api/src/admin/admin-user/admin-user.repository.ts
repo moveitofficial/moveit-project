@@ -7,6 +7,7 @@ import { ExpertApprovalStatus } from './dto/list/expert-approval-status.enum';
 
 import type { GetBlacklistQueryDto } from './dto/blacklist/blacklist-query.dto';
 import type { GetUsersQueryDto } from './dto/list/users-query.dto';
+import type { GetWithdrawnQueryDto } from './dto/withdrawn/withdrawn-query.dto';
 import type { ServiceGroupName } from '@prisma/client';
 
 @Injectable()
@@ -438,6 +439,49 @@ export class AdminUserRepository {
               { name: { contains: search, mode: 'insensitive' } },
               { email: { contains: search, mode: 'insensitive' } },
             ],
+      }),
+    };
+  }
+
+  countWithdrawn(query: GetWithdrawnQueryDto): Promise<number> {
+    return this.prisma.user.count({ where: this.#buildWithdrawnWhere(query) });
+  }
+
+  findWithdrawn(query: GetWithdrawnQueryDto, skip: number, take: number) {
+    return this.prisma.user.findMany({
+      where: this.#buildWithdrawnWhere(query),
+      skip,
+      take,
+      orderBy: { deletedAt: 'desc' },
+      select: {
+        id: true,
+        email: true,
+        provider: true,
+        deletionReason: true,
+        createdAt: true,
+        deletedAt: true,
+      },
+    });
+  }
+
+  countWithdrawnByRole(role: Role): Promise<number> {
+    return this.prisma.user.count({
+      where: { role, isDeleted: true },
+    });
+  }
+
+  #buildWithdrawnWhere(query: GetWithdrawnQueryDto): Prisma.UserWhereInput {
+    const { role, search } = query;
+
+    return {
+      role,
+      isDeleted: true,
+      deletedAt: { not: null },
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ],
       }),
     };
   }

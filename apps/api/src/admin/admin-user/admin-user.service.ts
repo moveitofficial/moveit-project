@@ -30,6 +30,9 @@ import { UserCounstDto } from './dto/list/users-counts-response.dto';
 import { GetUsersQueryDto } from './dto/list/users-query.dto';
 import { UserItemDto } from './dto/list/users-response.dto';
 import { type PageQueryDto } from './dto/page-query.dto';
+import { WithdrawnCountsDto } from './dto/withdrawn/withdrawn-counts-response.dto';
+import { GetWithdrawnQueryDto } from './dto/withdrawn/withdrawn-query.dto';
+import { WithdrawnItemDto } from './dto/withdrawn/withdrawn-response.dto';
 
 @Injectable()
 export class AdminUserService {
@@ -482,6 +485,51 @@ export class AdminUserService {
     const [client, expert] = await Promise.all([
       this.adminUserRepository.countBlacklistByRole(Role.CLIENT),
       this.adminUserRepository.countBlacklistByRole(Role.EXPERT),
+    ]);
+    return { client, expert };
+  }
+
+  async getWithdrawn(
+    query: GetWithdrawnQueryDto,
+  ): Promise<Paginated<WithdrawnItemDto>> {
+    const role = query.role ?? Role.CLIENT;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 50;
+    const skip = (page - 1) * pageSize;
+
+    const resolvedQuery: GetWithdrawnQueryDto = {
+      role,
+      page: query.page,
+      pageSize: query.pageSize,
+      search: query.search,
+    };
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findWithdrawn(resolvedQuery, skip, pageSize),
+      this.adminUserRepository.countWithdrawn(resolvedQuery),
+    ]);
+
+    const items: WithdrawnItemDto[] = rows.flatMap((u) => {
+      if (!u.deletedAt) return [];
+      return [
+        {
+          id: u.id,
+          email: u.email,
+          deletionReason: u.deletionReason,
+          provider: u.provider,
+          createdAt: u.createdAt,
+          deletedAt: u.deletedAt,
+        },
+      ];
+    });
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async getWithdrawnCounts(): Promise<WithdrawnCountsDto> {
+    const [client, expert] = await Promise.all([
+      this.adminUserRepository.countWithdrawnByRole(Role.CLIENT),
+      this.adminUserRepository.countWithdrawnByRole(Role.EXPERT),
     ]);
     return { client, expert };
   }

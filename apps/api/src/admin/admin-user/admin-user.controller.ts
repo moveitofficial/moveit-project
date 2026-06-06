@@ -44,6 +44,9 @@ import { UserCounstDto } from './dto/list/users-counts-response.dto';
 import { GetUsersQueryDto } from './dto/list/users-query.dto';
 import { UserItemDto } from './dto/list/users-response.dto';
 import { PageQueryDto } from './dto/page-query.dto';
+import { WithdrawnCountsDto } from './dto/withdrawn/withdrawn-counts-response.dto';
+import { GetWithdrawnQueryDto } from './dto/withdrawn/withdrawn-query.dto';
+import { WithdrawnItemDto } from './dto/withdrawn/withdrawn-response.dto';
 
 import type { AdminJwtAccessUser } from '../admin-auth/jwt/admin-jwt-access.strategy';
 import type { Request } from 'express';
@@ -101,6 +104,36 @@ export class AdminUserController {
   @Get('blacklist/counts')
   getBlacklistCounts(): Promise<BlacklistCountsDto> {
     return this.adminUserService.getBlacklistCounts();
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 탈퇴유저 리스트',
+    description:
+      '탈퇴한(isDeleted=true) 유저를 role 별로 조회. role 미지정 시 CLIENT. 검색은 이름+이메일 부분 일치. 최근 탈퇴(deletedAt) 순.',
+  })
+  @ApiPaginatedResponse(HttpStatus.OK, WithdrawnItemDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get('withdrawn')
+  getWithdrawn(
+    @Query() query: GetWithdrawnQueryDto,
+  ): Promise<Paginated<WithdrawnItemDto>> {
+    return this.adminUserService.getWithdrawn(query);
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 탈퇴유저 탭 카운트',
+    description:
+      '탈퇴한 일반(CLIENT) / 판매자(EXPERT) 인원 카운트. 필터 무관 전체 카운트.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK, WithdrawnCountsDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get('withdrawn/counts')
+  getWithdrawnCounts(): Promise<WithdrawnCountsDto> {
+    return this.adminUserService.getWithdrawnCounts();
   }
 
   @ApiOperation({ summary: '어드민 유저 상세 (일반/판매자 통합)' })

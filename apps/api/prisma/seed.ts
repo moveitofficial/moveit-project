@@ -143,6 +143,9 @@ class Seeder {
       `✅ 유저 — CLIENT ${clients.length.toString()}, EXPERT ${experts.length.toString()}`,
     );
 
+    await this.#seedWithdrawnUsers(passwordHash);
+    console.warn(`✅ 탈퇴 유저 — CLIENT 30, EXPERT 30 (사유 다양)`);
+
     const expertProfiles = await this.#seedExpertProfiles(
       experts,
       techStacks,
@@ -414,6 +417,63 @@ class Seeder {
     );
 
     return { clients, experts };
+  }
+
+  // ─── 4-b. 탈퇴 유저 (탈퇴유저 페이지 시드) ────────────────────────────────
+  async #seedWithdrawnUsers(passwordHash: string): Promise<void> {
+    const regions = Object.values(Region);
+    const providers = Object.values(AuthProvider);
+
+    // 길이 다양 — 짧음 / 중간 / 매우 김 / null(미입력) 섞기
+    const DELETION_REASONS: (string | null)[] = [
+      '서비스를 더 이상 사용하지 않습니다.',
+      '비슷한 다른 서비스를 이용 중입니다.',
+      '개인정보 보호 차원에서 탈퇴합니다.',
+      '계정을 잠시 사용하지 않을 예정입니다.',
+      '원하는 서비스를 찾기 어려웠습니다.',
+      '가격이 부담스럽습니다.',
+      '플랫폼 사용법이 어려워서 탈퇴합니다.',
+      '거래 중 문제가 있어서 탈퇴합니다.',
+      '앱이 자주 느려져서 탈퇴합니다.',
+      '알림이 너무 많이 와서 탈퇴합니다.',
+      null,
+      null,
+      '한 번 탈퇴 후 다시 가입할지 고민 중입니다. 잠시 보류하려고 합니다.',
+      '본 서비스의 정책에 동의할 수 없는 부분이 있어 탈퇴합니다. 특히 데이터 활용 정책 및 마케팅 동의 관련 부분에서 우려되는 점이 있어 검토 후 재가입을 고려해보겠습니다.',
+      '오랜 기간 서비스를 사용하면서 여러 가지 불편한 점들을 경험했습니다. 처음에는 단순한 문제들이라 생각하고 넘겼지만, 시간이 지날수록 누적되어 결국 결정을 내리게 되었습니다. 우선 매칭 시스템이 기대했던 만큼 정확하지 않았고, 응답 속도도 느린 편이었습니다. 또한 결제 과정에서 자주 오류가 발생했고, 환불 처리가 지연되는 경우가 많았습니다. 고객센터에 문의를 해도 해결까지 며칠씩 걸렸으며, 같은 문제가 반복적으로 발생했습니다. 무엇보다 거래 상대방과의 분쟁 조정 절차가 명확하지 않아 불안감이 컸습니다. 이러한 이유들로 인해 다른 플랫폼을 알아보게 되었고, 최종적으로 탈퇴를 결정하게 되었습니다. 그동안 이용해 주신 점 감사드립니다.',
+      '탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.탈퇴사유입니다.',
+    ];
+
+    const createWithdrawn = (i: number, role: Role) => {
+      const provider = pick(providers);
+      const isLocal = provider === AuthProvider.LOCAL;
+      const createdAt = faker.date.past({ years: 3 });
+      const deletedAt = faker.date.between({ from: createdAt, to: new Date() });
+      const isClient = role === Role.CLIENT;
+      const namePrefix = isClient ? '탈퇴클라이언트' : '탈퇴전문가';
+      const emailPrefix = isClient ? 'withdrawn_client' : 'withdrawn_expert';
+      const suffix = (i + 1).toString();
+
+      return this.#prisma.user.create({
+        data: {
+          email: `${emailPrefix}${suffix}@moveit.com`,
+          name: `${namePrefix}${suffix}`,
+          password: isLocal ? passwordHash : null,
+          provider,
+          providerId: isLocal ? null : faker.string.numeric(15),
+          role,
+          region: pick(regions),
+          phoneNumber: faker.phone.number(),
+          isDeleted: true,
+          deletedAt,
+          deletionReason: pick(DELETION_REASONS),
+          createdAt,
+        },
+      });
+    };
+
+    await Promise.all(range(30).map((i) => createWithdrawn(i, Role.CLIENT)));
+    await Promise.all(range(30).map((i) => createWithdrawn(i, Role.EXPERT)));
   }
 
   // ─── 5. ExpertProfile + 매핑 ──────────────────────────────────────────
