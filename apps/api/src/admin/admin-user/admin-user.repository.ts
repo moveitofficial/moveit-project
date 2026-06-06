@@ -3,7 +3,10 @@ import { AdminActionType, Prisma, Role } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 
+import { ExpertApprovalStatus } from './dto/list/expert-approval-status.enum';
+
 import type { GetUsersQueryDto } from './dto/list/users-query.dto';
+import type { ServiceGroupName } from '@prisma/client';
 
 @Injectable()
 export class AdminUserRepository {
@@ -33,13 +36,30 @@ export class AdminUserRepository {
             receivedReports: true,
           },
         },
+        expertProfile: {
+          select: {
+            businessName: true,
+            isApplied: true,
+            isApproved: true,
+            rejectedAt: true,
+            specialtyCategories: {
+              select: { serviceGroup: { select: { name: true } } },
+            },
+          },
+        },
       },
     });
   }
 
   // 베이스(role, isDeleted=false 즉 탈퇴 회원 제외)는 항상 / optional 필터는 값 있을 때만 합성
+  // role=EXPERT 일 때만 status·specialtyGroup 이 expertProfile 조건으로 합성됨
   #buildWhere(query: GetUsersQueryDto): Prisma.UserWhereInput {
-    const { role, provider, region, search } = query;
+    const { role, provider, region, search, status, specialtyGroup } = query;
+    const expertProfileWhere = this.#buildExpertProfileWhere(
+      role,
+      status,
+      specialtyGroup,
+    );
 
     return {
       role,
@@ -52,7 +72,37 @@ export class AdminUserRepository {
           { email: { contains: search, mode: 'insensitive' } },
         ],
       }),
+      ...(expertProfileWhere && { expertProfile: expertProfileWhere }),
     };
+  }
+
+  #buildExpertProfileWhere(
+    role: Role | undefined,
+    status: ExpertApprovalStatus | undefined,
+    specialtyGroup: ServiceGroupName | undefined,
+  ): Prisma.ExpertProfileWhereInput | null {
+    if (role !== Role.EXPERT) return null;
+    if (!status && !specialtyGroup) return null;
+
+    const where: Prisma.ExpertProfileWhereInput = {};
+
+    if (status === ExpertApprovalStatus.PENDING) {
+      where.isApplied = true;
+      where.isApproved = false;
+      where.rejectedAt = null;
+    } else if (status === ExpertApprovalStatus.APPROVED) {
+      where.isApproved = true;
+    } else if (status === ExpertApprovalStatus.REJECTED) {
+      where.rejectedAt = { not: null };
+    }
+
+    if (specialtyGroup) {
+      where.specialtyCategories = {
+        some: { serviceGroup: { name: specialtyGroup } },
+      };
+    }
+
+    return where;
   }
 
   countByRole(role: Role): Promise<number> {
