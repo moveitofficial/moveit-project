@@ -20,7 +20,7 @@ import { AppException } from '../common/exceptions/app.exception';
 
 import { HasUnreadResponseDto } from './dto/has-unread-response.dto';
 import { NotificationListResponseDto } from './dto/notification-list-response.dto';
-import { PageQueryDto } from './dto/page-query.dto';
+import { NotificationsPageQueryDto } from './dto/page-query.dto';
 import { NotificationsService } from './notifications.service';
 
 import type { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
@@ -38,7 +38,7 @@ export class NotificationsController {
   @Get()
   list(
     @Req() req: Request & { user: JwtAccessUser },
-    @Query() query: PageQueryDto,
+    @Query() query: NotificationsPageQueryDto,
   ): Promise<NotificationListResponseDto> {
     return this.notificationsService.list(
       req.user.userId,

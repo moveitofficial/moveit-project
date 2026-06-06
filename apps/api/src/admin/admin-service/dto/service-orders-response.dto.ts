@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { OrderStatus } from '@prisma/client';
 
-class OrderClientRefDto {
+class OrderListClientDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
 
@@ -9,7 +9,7 @@ class OrderClientRefDto {
   declare name: string | null;
 }
 
-class OrderServiceRefDto {
+class OrderListServiceDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
 
@@ -37,11 +37,11 @@ export class ServiceOrderItemDto {
   @ApiProperty({ enum: OrderStatus, example: OrderStatus.IN_PROGRESS })
   declare status: OrderStatus;
 
-  @ApiProperty({ type: OrderClientRefDto })
-  declare client: OrderClientRefDto;
+  @ApiProperty({ type: OrderListClientDto })
+  declare client: OrderListClientDto;
 
-  @ApiProperty({ type: OrderServiceRefDto })
-  declare service: OrderServiceRefDto;
+  @ApiProperty({ type: OrderListServiceDto })
+  declare service: OrderListServiceDto;
 
   @ApiProperty({ example: 80_000_000 })
   declare totalAmount: number;
