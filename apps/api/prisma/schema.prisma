@@ -162,50 +162,50 @@ enum NotificationType {
 
 enum NotificationCategory {
   // 커뮤니티
-  POST_COMMENT             // 내 게시글에 댓글이 달렸어요 (게시글 작성자에게)
-  POST_REPLY               // 내 댓글에 답글이 달렸어요 (댓글 작성자에게)
-  POST_LIKE                // 내 게시글에 좋아요가 달렸어요 (게시글 작성자에게)
-  POST_DELETED_BY_ADMIN    // 게시글이 삭제되었어요 (게시글 작성자에게)
+  POST_COMMENT // 내 게시글에 댓글이 달렸어요 (게시글 작성자에게)
+  POST_REPLY // 내 댓글에 답글이 달렸어요 (댓글 작성자에게)
+  POST_LIKE // 내 게시글에 좋아요가 달렸어요 (게시글 작성자에게)
+  POST_DELETED_BY_ADMIN // 게시글이 삭제되었어요 (게시글 작성자에게)
   COMMENT_DELETED_BY_ADMIN // 댓글이 삭제되었어요 (댓글 작성자에게)
 
   // 계정
-  EXPERT_APPROVED          // 전문가 승인이 완료되었어요 (본인에게)
-  EXPERT_REJECTED          // 전문가 승인이 거절되었어요 (본인에게)
+  EXPERT_APPROVED // 전문가 승인이 완료되었어요 (본인에게)
+  EXPERT_REJECTED // 전문가 승인이 거절되었어요 (본인에게)
 
   // 거래 - 주문
-  ORDER_CREATED            // 새 주문이 생성되었어요 (판매자에게)
-  PAYMENT_SUCCESS          // 결제가 완료되었어요 (구매자/판매자에게)
+  ORDER_CREATED // 새 주문이 생성되었어요 (판매자에게)
+  PAYMENT_SUCCESS // 결제가 완료되었어요 (구매자/판매자에게)
 
   // 거래 - 취소
-  ORDER_CANCEL_REQUESTED   // 취소 요청이 들어왔어요 (판매자에게)
+  ORDER_CANCEL_REQUESTED // 취소 요청이 들어왔어요 (판매자에게)
   ORDER_CANCEL_APPROVED_BY_EXPERT // 판매자가 취소 요청을 승인했어요 (구매자에게)
-  ORDER_CANCEL_APPROVED_BY_ADMIN    // 어드민이 취소 요청을 승인했어요 (구매자/판매자에게)
-  ORDER_CANCELLED          // 주문이 취소되었어요 (구매자에게)
+  ORDER_CANCEL_APPROVED_BY_ADMIN // 어드민이 취소 요청을 승인했어요 (구매자/판매자에게)
+  ORDER_CANCELLED // 주문이 취소되었어요 (구매자에게)
 
   // 거래 - 환불
-  REFUND_REQUESTED         // 환불 요청이 들어왔어요 (판매자에게)
+  REFUND_REQUESTED // 환불 요청이 들어왔어요 (판매자에게)
   REFUND_APPROVED_BY_EXPERT // 판매자가 환불 요청을 승인했어요 (구매자에게)
-  REFUND_APPROVED_BY_ADMIN          // 어드민이 환불 요청을 승인했어요 (구매자/판매자에게)
+  REFUND_APPROVED_BY_ADMIN // 어드민이 환불 요청을 승인했어요 (구매자/판매자에게)
 
   // 거래 - 작업/구매확정/정산
-  WORK_COMPLETED            // 작업이 완료되었어요 (구매자에게)
-  PURCHASE_CONFIRM_REQUEST  // 구매확정을 요청해주세요 (구매자에게)
+  WORK_COMPLETED // 작업이 완료되었어요 (구매자에게)
+  PURCHASE_CONFIRM_REQUEST // 구매확정을 요청해주세요 (구매자에게)
   PURCHASE_CONFIRM_REMINDER // 아직 구매확정되지 않은 작업물이 있어요 (구매자에게)
-  PURCHASE_CONFIRM_PENDING  // 아직 구매확정되지 않은 주문건이 있어요 (판매자에게)
-  PURCHASE_CONFIRMED        // 구매확정이 완료되었어요 (판매자에게)
-  PURCHASE_AUTO_CONFIRMED   // 기한 경과로 자동 구매확정되었어요 (구매자/판매자에게)
-  SETTLEMENT_REQUEST_REMINDER      // 정산 요청을 해주세요 (판매자에게)
-  SETTLEMENT_DONE           // 정산이 완료되었어요 (판매자에게)
+  PURCHASE_CONFIRM_PENDING // 아직 구매확정되지 않은 주문건이 있어요 (판매자에게)
+  PURCHASE_CONFIRMED // 구매확정이 완료되었어요 (판매자에게)
+  PURCHASE_AUTO_CONFIRMED // 기한 경과로 자동 구매확정되었어요 (구매자/판매자에게)
+  SETTLEMENT_REQUEST_REMINDER // 정산 요청을 해주세요 (판매자에게)
+  SETTLEMENT_DONE // 정산이 완료되었어요 (판매자에게)
 
   // 일정
-  SCHEDULE_REGISTERED      // 일정이 등록되었어요 (구매자/판매자에게)
-  SCHEDULE_CHANGE_REQUEST  // 일정 변경 요청이 왔어요 (구매자에게)
-  SCHEDULE_CHANGED         // 일정이 변경되었어요 (구매자/판매자에게)
-  SCHEDULE_REMINDER        // 일정 시작·마감 리마인더
+  SCHEDULE_REGISTERED // 일정이 등록되었어요 (구매자/판매자에게)
+  SCHEDULE_CHANGE_REQUEST // 일정 변경 요청이 왔어요 (구매자에게)
+  SCHEDULE_CHANGED // 일정이 변경되었어요 (구매자/판매자에게)
+  SCHEDULE_REMINDER // 일정 시작·마감 리마인더
 
   // 리마인더
-  DEADLINE_REMINDER        // 기한이 얼마 남지 않았어요 (구매자/판매자에게)
-  DEADLINE_EXPIRED         // 기한이 만료되었어요 (구매자/판매자에게)
+  DEADLINE_REMINDER // 기한이 얼마 남지 않았어요 (구매자/판매자에게)
+  DEADLINE_EXPIRED // 기한이 만료되었어요 (구매자/판매자에게)
 }
 
 enum ReferenceType {
@@ -281,6 +281,7 @@ enum AdminActionType {
   CANCEL_APPROVED // 취소 승인
   CS_ASSIGNED // 문의 처리중
   CS_CLOSED // 문의 처리 완료
+  SETTLEMENT_COMPLETED // 정산 완료
 }
 
 enum ReportReason {
