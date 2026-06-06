@@ -23,4 +23,30 @@ export class AdminOrderRepository {
       },
     });
   }
+
+  findOrderRefundById(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        agreedServicePrice: true,
+        payment: {
+          select: {
+            approvedAt: true,
+            method: true,
+            installmentMonths: true,
+            refund: {
+              select: {
+                refundAmount: true,
+                type: true,
+                approvedAt: true,
+                adminReason: true,
+                approvedAdmin: { select: { name: true } },
+                expertUser: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 }

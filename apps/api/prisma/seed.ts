@@ -696,10 +696,10 @@ class Seeder {
       ...Array.from({ length: 6 }, () => OrderStatus.SETTLEMENT_COMPLETED),
       // 환불요청 진행 중 (Refund: REFUND/REQUESTED 동반)
       ...Array.from({ length: 2 }, () => OrderStatus.EXPIRED),
-      // 취소완료 (Refund: CANCEL/COMPLETED 동반)
-      ...Array.from({ length: 1 }, () => OrderStatus.PAYMENT_CANCELLED),
-      // 환불완료 (Refund: REFUND/COMPLETED 동반)
-      ...Array.from({ length: 2 }, () => OrderStatus.REFUND_COMPLETED),
+      // 취소완료 (Refund: CANCEL/COMPLETED 동반) — 관리자/판매자 승인 50:50 랜덤
+      ...Array.from({ length: 4 }, () => OrderStatus.PAYMENT_CANCELLED),
+      // 환불완료 (Refund: REFUND/COMPLETED 동반) — 관리자/판매자 승인 50:50 랜덤
+      ...Array.from({ length: 4 }, () => OrderStatus.REFUND_COMPLETED),
     ];
 
     for (const status of orderStatusPlan) {
@@ -785,6 +785,13 @@ class Seeder {
 
       if (refundPlan) {
         const isCompleted = refundPlan.status === RefundStatus.COMPLETED;
+        const isAdminApproved = pick([true, false]);
+        const adminReason = pick([
+          '업체 일정 만료로 인해 전액환불',
+          '결제 잘못하여 취소하였다고 함',
+          '서비스 진행 어려움',
+          '연락 두절',
+        ]);
         await this.#prisma.refund.create({
           data: {
             paymentId: payment.id,
@@ -793,8 +800,8 @@ class Seeder {
             refundAmount: order.totalAmount,
             type: refundPlan.type,
             status: refundPlan.status,
-            adminReason: '서비스 진행 어려움',
-            approvedAdminId: admin.id,
+            adminReason: isAdminApproved ? adminReason : null,
+            approvedAdminId: isAdminApproved ? admin.id : null,
             requestedAt: new Date(),
             approvedAt: isCompleted ? new Date() : null,
             refundedAt: isCompleted ? new Date() : null,
