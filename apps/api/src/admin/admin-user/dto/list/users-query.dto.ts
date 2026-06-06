@@ -1,7 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { AuthProvider, Region, Role } from '@prisma/client';
+import { AuthProvider, Region, Role, ServiceGroupName } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+
+import { ExpertApprovalStatus } from './expert-approval-status.enum';
 
 export class GetUsersQueryDto {
   @ApiPropertyOptional({
@@ -47,4 +49,20 @@ export class GetUsersQueryDto {
   @IsOptional()
   @IsString()
   declare search: string | undefined;
+
+  @ApiPropertyOptional({
+    enum: ExpertApprovalStatus,
+    description: '판매자 상태 필터 (role=EXPERT 일 때만 적용)',
+  })
+  @IsOptional()
+  @IsEnum(ExpertApprovalStatus)
+  declare status: ExpertApprovalStatus | undefined;
+
+  @ApiPropertyOptional({
+    enum: ServiceGroupName,
+    description: '전문분야 그룹 필터 (role=EXPERT 일 때만 적용)',
+  })
+  @IsOptional()
+  @IsEnum(ServiceGroupName)
+  declare specialtyGroup: ServiceGroupName | undefined;
 }

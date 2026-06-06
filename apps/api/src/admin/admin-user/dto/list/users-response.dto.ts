@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AuthProvider, Region } from '@prisma/client';
+import { AuthProvider, Region, ServiceGroupName } from '@prisma/client';
+
+import { ExpertApprovalStatus } from './expert-approval-status.enum';
 
 export class UserItemDto {
   @ApiProperty({ format: 'uuid' })
@@ -26,6 +28,30 @@ export class UserItemDto {
 
   @ApiProperty({ example: 0, description: '본인이 당한 신고 수' })
   declare reportCount: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '(주)디자인커넥트랩',
+    description: 'role=EXPERT 일 때 회사명, CLIENT 면 null',
+  })
+  declare businessName: string | null;
+
+  @ApiProperty({
+    enum: ServiceGroupName,
+    nullable: true,
+    example: ServiceGroupName.IT_COACHING,
+    description: 'role=EXPERT 일 때 전문분야 그룹 (1개), CLIENT 면 null',
+  })
+  declare specialtyGroup: ServiceGroupName | null;
+
+  @ApiProperty({
+    enum: ExpertApprovalStatus,
+    nullable: true,
+    example: ExpertApprovalStatus.APPROVED,
+    description: 'role=EXPERT 일 때 상태, CLIENT 면 null',
+  })
+  declare approvalStatus: ExpertApprovalStatus | null;
 
   @ApiProperty({ example: '2026-05-27T05:02:46.228Z' })
   declare createdAt: Date;

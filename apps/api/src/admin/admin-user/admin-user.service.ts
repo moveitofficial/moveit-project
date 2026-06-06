@@ -21,6 +21,7 @@ import {
 import { UserReportReceivedItemDto } from './dto/detail/user-reports-received-response.dto';
 import { UserReportSentItemDto } from './dto/detail/user-reports-sent-response.dto';
 import { UserServiceItemDto } from './dto/detail/user-services-response.dto';
+import { ExpertApprovalStatus } from './dto/list/expert-approval-status.enum';
 import { UserCounstDto } from './dto/list/users-counts-response.dto';
 import { GetUsersQueryDto } from './dto/list/users-query.dto';
 import { UserItemDto } from './dto/list/users-response.dto';
@@ -38,6 +39,7 @@ export class AdminUserService {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 50;
     const skip = (page - 1) * pageSize;
+    const isExpert = role === Role.EXPERT;
 
     const resolvedQuery: GetUsersQueryDto = {
       role,
@@ -46,6 +48,8 @@ export class AdminUserService {
       provider: query.provider,
       region: query.region,
       search: query.search,
+      status: query.status,
+      specialtyGroup: query.specialtyGroup,
     };
 
     const [rows, totalCount] = await Promise.all([
@@ -59,15 +63,35 @@ export class AdminUserService {
       email: u.email,
       provider: u.provider,
       region: u.region,
-      paymentCount:
-        role === Role.CLIENT
-          ? u._count.ordersAsClient
-          : u._count.ordersAsExpert,
+      paymentCount: isExpert
+        ? u._count.ordersAsExpert
+        : u._count.ordersAsClient,
       reportCount: u._count.receivedReports,
+      businessName: isExpert ? (u.expertProfile?.businessName ?? null) : null,
+      specialtyGroup: isExpert
+        ? (u.expertProfile?.specialtyCategories[0]?.serviceGroup.name ?? null)
+        : null,
+      approvalStatus: isExpert
+        ? this.#deriveApprovalStatus(u.expertProfile)
+        : null,
       createdAt: u.createdAt,
     }));
 
     return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  #deriveApprovalStatus(
+    profile: {
+      isApplied: boolean;
+      isApproved: boolean;
+      rejectedAt: Date | null;
+    } | null,
+  ): ExpertApprovalStatus | null {
+    if (!profile) return null;
+    if (profile.rejectedAt) return ExpertApprovalStatus.REJECTED;
+    if (profile.isApproved) return ExpertApprovalStatus.APPROVED;
+    if (profile.isApplied) return ExpertApprovalStatus.PENDING;
+    return null;
   }
 
   async getCounts(): Promise<UserCounstDto> {
