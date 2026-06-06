@@ -11,6 +11,10 @@ import { toPaginatedResponse } from '../../common/utils/list-response.util';
 import { NotificationsService } from '../../notifications/notifications.service';
 
 import { AdminUserRepository } from './admin-user.repository';
+import { BlacklistCountsDto } from './dto/blacklist/blacklist-counts-response.dto';
+import { GetBlacklistQueryDto } from './dto/blacklist/blacklist-query.dto';
+import { BlacklistItemDto } from './dto/blacklist/blacklist-response.dto';
+import { BlacklistStatus } from './dto/blacklist/blacklist-status.enum';
 import { UserCommentItemDto } from './dto/detail/user-comments-response.dto';
 import { UserDetailResponseDto } from './dto/detail/user-detail-response.dto';
 import { UserOrderItemDto } from './dto/detail/user-orders-response.dto';
@@ -433,5 +437,52 @@ export class AdminUserService {
       category: NotificationCategory.EXPERT_REJECTED,
       vars: { rejectReason },
     });
+  }
+
+  async getBlacklist(
+    query: GetBlacklistQueryDto,
+  ): Promise<Paginated<BlacklistItemDto>> {
+    const role = query.role ?? Role.CLIENT;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 50;
+    const skip = (page - 1) * pageSize;
+    const isExpert = role === Role.EXPERT;
+
+    const resolvedQuery: GetBlacklistQueryDto = {
+      role,
+      page: query.page,
+      pageSize: query.pageSize,
+      search: query.search,
+    };
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findBlacklist(resolvedQuery, skip, pageSize),
+      this.adminUserRepository.countBlacklist(resolvedQuery),
+    ]);
+
+    const items: BlacklistItemDto[] = rows.map((u) => ({
+      id: u.id,
+      name: u.name,
+      businessName: isExpert ? (u.expertProfile?.businessName ?? null) : null,
+      email: u.email,
+      provider: u.provider,
+      region: u.region,
+      paymentCount: isExpert
+        ? u._count.ordersAsExpert
+        : u._count.ordersAsClient,
+      reportCount: u._count.receivedReports,
+      status: BlacklistStatus.BLACKLISTED,
+      createdAt: u.createdAt,
+    }));
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async getBlacklistCounts(): Promise<BlacklistCountsDto> {
+    const [client, expert] = await Promise.all([
+      this.adminUserRepository.countBlacklistByRole(Role.CLIENT),
+      this.adminUserRepository.countBlacklistByRole(Role.EXPERT),
+    ]);
+    return { client, expert };
   }
 }

@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 import { ExpertApprovalStatus } from './dto/list/expert-approval-status.enum';
 
+import type { GetBlacklistQueryDto } from './dto/blacklist/blacklist-query.dto';
 import type { GetUsersQueryDto } from './dto/list/users-query.dto';
 import type { ServiceGroupName } from '@prisma/client';
 
@@ -86,14 +87,21 @@ export class AdminUserRepository {
 
     const where: Prisma.ExpertProfileWhereInput = {};
 
-    if (status === ExpertApprovalStatus.PENDING) {
-      where.isApplied = true;
-      where.isApproved = false;
-      where.rejectedAt = null;
-    } else if (status === ExpertApprovalStatus.APPROVED) {
-      where.isApproved = true;
-    } else if (status === ExpertApprovalStatus.REJECTED) {
-      where.rejectedAt = { not: null };
+    switch (status) {
+      case ExpertApprovalStatus.PENDING: {
+        where.isApplied = true;
+        where.isApproved = false;
+        where.rejectedAt = null;
+        break;
+      }
+      case ExpertApprovalStatus.APPROVED: {
+        where.isApproved = true;
+        break;
+      }
+      case ExpertApprovalStatus.REJECTED: {
+        where.rejectedAt = { not: null };
+        break;
+      }
     }
 
     if (specialtyGroup) {
@@ -369,5 +377,68 @@ export class AdminUserRepository {
         },
       }),
     ]);
+  }
+
+  countBlacklist(query: GetBlacklistQueryDto): Promise<number> {
+    return this.prisma.user.count({ where: this.#buildBlacklistWhere(query) });
+  }
+
+  findBlacklist(query: GetBlacklistQueryDto, skip: number, take: number) {
+    return this.prisma.user.findMany({
+      where: this.#buildBlacklistWhere(query),
+      skip,
+      take,
+      orderBy: { blockedAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        provider: true,
+        region: true,
+        createdAt: true,
+        _count: {
+          select: {
+            ordersAsClient: true,
+            ordersAsExpert: true,
+            receivedReports: true,
+          },
+        },
+        expertProfile: {
+          select: { businessName: true },
+        },
+      },
+    });
+  }
+
+  countBlacklistByRole(role: Role): Promise<number> {
+    return this.prisma.user.count({
+      where: { role, isBlocked: true, isDeleted: false },
+    });
+  }
+
+  #buildBlacklistWhere(query: GetBlacklistQueryDto): Prisma.UserWhereInput {
+    const { role, search } = query;
+    const isExpert = role === Role.EXPERT;
+
+    return {
+      role,
+      isBlocked: true,
+      isDeleted: false,
+      ...(search && {
+        OR: isExpert
+          ? [
+              {
+                expertProfile: {
+                  businessName: { contains: search, mode: 'insensitive' },
+                },
+              },
+              { email: { contains: search, mode: 'insensitive' } },
+            ]
+          : [
+              { name: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+            ],
+      }),
+    };
   }
 }

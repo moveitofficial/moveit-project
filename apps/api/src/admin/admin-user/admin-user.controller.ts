@@ -29,6 +29,9 @@ import { type Paginated } from '../../common/types/paginated.type';
 import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
 
 import { AdminUserService } from './admin-user.service';
+import { BlacklistCountsDto } from './dto/blacklist/blacklist-counts-response.dto';
+import { GetBlacklistQueryDto } from './dto/blacklist/blacklist-query.dto';
+import { BlacklistItemDto } from './dto/blacklist/blacklist-response.dto';
 import { UserCommentItemDto } from './dto/detail/user-comments-response.dto';
 import { UserDetailResponseDto } from './dto/detail/user-detail-response.dto';
 import { UserOrderItemDto } from './dto/detail/user-orders-response.dto';
@@ -68,6 +71,36 @@ export class AdminUserController {
   @Get('counts')
   getCounts(): Promise<UserCounstDto> {
     return this.adminUserService.getCounts();
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 블랙리스트 리스트',
+    description:
+      '차단된(isBlocked=true) 유저를 role 별로 조회. role 미지정 시 CLIENT. 검색은 role=CLIENT 면 이름+이메일, EXPERT 면 회사명+이메일 부분 일치. 최근 차단(blockedAt) 순.',
+  })
+  @ApiPaginatedResponse(HttpStatus.OK, BlacklistItemDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get('blacklist')
+  getBlacklist(
+    @Query() query: GetBlacklistQueryDto,
+  ): Promise<Paginated<BlacklistItemDto>> {
+    return this.adminUserService.getBlacklist(query);
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 블랙리스트 탭 카운트',
+    description:
+      '차단된 일반(CLIENT) / 판매자(EXPERT) 인원 카운트. 필터 무관 전체 카운트.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK, BlacklistCountsDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get('blacklist/counts')
+  getBlacklistCounts(): Promise<BlacklistCountsDto> {
+    return this.adminUserService.getBlacklistCounts();
   }
 
   @ApiOperation({ summary: '어드민 유저 상세 (일반/판매자 통합)' })
