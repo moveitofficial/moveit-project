@@ -4,7 +4,7 @@ import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
 
 import { NotificationTab } from '../notification-tab.enum';
 
-export class PageQueryDto {
+export class NotificationsPageQueryDto {
   @ApiProperty({ enum: NotificationTab, example: NotificationTab.TRANSACTION })
   @IsEnum(NotificationTab)
   declare tab: NotificationTab;
