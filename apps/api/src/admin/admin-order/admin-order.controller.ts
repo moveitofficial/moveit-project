@@ -6,6 +6,7 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -13,11 +14,18 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { COMMON_ERRORS, ORDER_ERRORS } from '../../common/constants/errors';
 import { ApiErrorResponse } from '../../common/decorators/api-error-response.decorator';
-import { ApiSuccessResponse } from '../../common/decorators/api-success-response.decorator';
+import {
+  ApiPaginatedResponse,
+  ApiSuccessResponse,
+} from '../../common/decorators/api-success-response.decorator';
 import { AppException } from '../../common/exceptions/app.exception';
+import { Paginated } from '../../common/types/paginated.type';
 import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
 
 import { AdminOrderService } from './admin-order.service';
+import { OrdersCountsDto } from './dto/list/orders-counts-response.dto';
+import { GetOrdersQueryDto } from './dto/list/orders-query.dto';
+import { OrderItemDto } from './dto/list/orders-response.dto';
 import { OrderRefundResponseDto } from './dto/order-refund-response.dto';
 import { OrderSettlementPreviewResponseDto } from './dto/order-settlement-preview-response.dto';
 import { OrderSettlementResponseDto } from './dto/order-settlement-response.dto';
@@ -147,5 +155,35 @@ export class AdminOrderController {
     orderId: string,
   ): Promise<OrderSettlementResponseDto> {
     return this.adminOrderService.getOrderSettlement(orderId);
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 전체 주문 리스트',
+    description:
+      '전체 주문 내역. 탭 (all/working/workCompleted/purchaseConfirmed/settlement/expired/deadlineImminent/cancelRefund) + 정렬 (latest/deadline) + 검색 (구매자 이름 + 판매자 회사명 OR).',
+  })
+  @ApiPaginatedResponse(HttpStatus.OK, OrderItemDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get()
+  getOrders(
+    @Query() query: GetOrdersQueryDto,
+  ): Promise<Paginated<OrderItemDto>> {
+    return this.adminOrderService.getOrders(query);
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 전체 주문 탭 카운트',
+    description:
+      '탭별 주문 수 (필터 무관). 전체/작업·논의중/작업완료/구매확정/정산요청·완료/기한만료/마감임박/환불·취소.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK, OrdersCountsDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get('counts')
+  getOrdersCounts(): Promise<OrdersCountsDto> {
+    return this.adminOrderService.getOrdersCounts();
   }
 }

@@ -3,10 +3,16 @@ import { NotificationCategory } from '@prisma/client';
 
 import { ORDER_ERRORS } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
+import { Paginated } from '../../common/types/paginated.type';
+import { toPaginatedResponse } from '../../common/utils/list-response.util';
 import { NotificationsService } from '../../notifications/notifications.service';
 
 import { AdminOrderRepository } from './admin-order.repository';
+import { ORDER_TAB_STATUSES, type OrderTab } from './dto/list/orders-tab.enum';
 
+import type { OrdersCountsDto } from './dto/list/orders-counts-response.dto';
+import type { GetOrdersQueryDto } from './dto/list/orders-query.dto';
+import type { OrderItemDto } from './dto/list/orders-response.dto';
 import type { OrderRefundResponseDto } from './dto/order-refund-response.dto';
 import type { OrderSettlementPreviewResponseDto } from './dto/order-settlement-preview-response.dto';
 import type { OrderSettlementResponseDto } from './dto/order-settlement-response.dto';
@@ -123,5 +129,59 @@ export class AdminOrderService {
       settledAt: order.settledAt,
       settledByAdminName: order.settledByAdmin?.name ?? null,
     };
+  }
+
+  async getOrders(query: GetOrdersQueryDto): Promise<Paginated<OrderItemDto>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 50;
+    const skip = (page - 1) * pageSize;
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminOrderRepository.findOrders(query, skip, pageSize),
+      this.adminOrderRepository.countOrders(query),
+    ]);
+
+    const items: OrderItemDto[] = rows.map((o) => ({
+      id: o.id,
+      status: o.status,
+      totalAmount: o.totalAmount,
+      startDate: o.startDate,
+      endDate: o.endDate,
+      client: {
+        id: o.clientUser.id,
+        name: o.clientUser.name,
+      },
+      expert: {
+        id: o.expertUser.id,
+        businessName: o.expertUser.expertProfile?.businessName ?? null,
+      },
+      service: {
+        id: o.service.id,
+        title: o.service.title,
+        thumbnailUrl: o.service.images[0]?.imgUrl ?? null,
+        categoryGroup: o.service.serviceGroup.name,
+        categoryName: o.service.serviceCategory.name,
+      },
+    }));
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async getOrdersCounts(): Promise<OrdersCountsDto> {
+    const tabs = Object.keys(ORDER_TAB_STATUSES) as Exclude<OrderTab, 'all'>[];
+    const [all, ...counts] = await Promise.all([
+      this.adminOrderRepository.countOrdersByStatuses([]),
+      ...tabs.map((tab) =>
+        this.adminOrderRepository.countOrdersByStatuses(
+          ORDER_TAB_STATUSES[tab],
+        ),
+      ),
+    ]);
+
+    const result = { all } as OrdersCountsDto;
+    for (const [i, tab] of tabs.entries()) {
+      result[tab] = counts[i] ?? 0;
+    }
+    return result;
   }
 }
