@@ -26,6 +26,8 @@ import { AdminOrderService } from './admin-order.service';
 import { OrdersCountsDto } from './dto/list/orders-counts-response.dto';
 import { GetOrdersQueryDto } from './dto/list/orders-query.dto';
 import { OrderItemDto } from './dto/list/orders-response.dto';
+import { GetSettlementsQueryDto } from './dto/list/settlements-query.dto';
+import { SettlementItemDto } from './dto/list/settlements-response.dto';
 import { OrderRefundResponseDto } from './dto/order-refund-response.dto';
 import { OrderSettlementPreviewResponseDto } from './dto/order-settlement-preview-response.dto';
 import { OrderSettlementResponseDto } from './dto/order-settlement-response.dto';
@@ -185,5 +187,21 @@ export class AdminOrderController {
   @Get('counts')
   getOrdersCounts(): Promise<OrdersCountsDto> {
     return this.adminOrderService.getOrdersCounts();
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 정산 리스트',
+    description:
+      '정산 단계 주문 리스트. 상태(SETTLEMENT_REQUESTED/SETTLEMENT_COMPLETED) 필터 + 구매자명 검색. 미지정 시 두 상태 모두. 최근 등록 순(createdAt desc).',
+  })
+  @ApiPaginatedResponse(HttpStatus.OK, SettlementItemDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @Get('settlements')
+  getSettlements(
+    @Query() query: GetSettlementsQueryDto,
+  ): Promise<Paginated<SettlementItemDto>> {
+    return this.adminOrderService.getSettlements(query);
   }
 }

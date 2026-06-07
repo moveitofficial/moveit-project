@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ORDER_TAB_STATUSES, type OrderTab } from './dto/list/orders-tab.enum';
 
 import type { GetOrdersQueryDto } from './dto/list/orders-query.dto';
+import type { GetSettlementsQueryDto } from './dto/list/settlements-query.dto';
 
 @Injectable()
 export class AdminOrderRepository {
@@ -200,5 +201,68 @@ export class AdminOrderRepository {
       return { endDate: { sort: 'asc', nulls: 'last' } };
     }
     return { createdAt: 'desc' };
+  }
+
+  countSettlements(query: GetSettlementsQueryDto): Promise<number> {
+    return this.prisma.order.count({
+      where: this.#buildSettlementsWhere(query),
+    });
+  }
+
+  findSettlements(query: GetSettlementsQueryDto, skip: number, take: number) {
+    return this.prisma.order.findMany({
+      where: this.#buildSettlementsWhere(query),
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        status: true,
+        totalAmount: true,
+        startDate: true,
+        endDate: true,
+        settledAt: true,
+        settledByAdmin: { select: { name: true } },
+        clientUser: { select: { id: true, name: true } },
+        expertUser: {
+          select: {
+            id: true,
+            expertProfile: { select: { businessName: true } },
+          },
+        },
+        service: {
+          select: {
+            id: true,
+            title: true,
+            serviceGroup: { select: { name: true } },
+            serviceCategory: { select: { name: true } },
+            images: {
+              where: { isMain: true },
+              take: 1,
+              select: { imgUrl: true },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  #buildSettlementsWhere(
+    query: GetSettlementsQueryDto,
+  ): Prisma.OrderWhereInput {
+    const { status, search } = query;
+
+    return {
+      status: status ?? {
+        in: [
+          OrderStatus.SETTLEMENT_REQUESTED,
+          OrderStatus.SETTLEMENT_COMPLETED,
+        ],
+      },
+
+      ...(search && {
+        clientUser: { name: { contains: search, mode: 'insensitive' } },
+      }),
+    };
   }
 }
