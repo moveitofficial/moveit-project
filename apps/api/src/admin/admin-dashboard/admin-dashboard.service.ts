@@ -3,17 +3,11 @@ import { Injectable } from '@nestjs/common';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { type Paginated } from '../../common/types/paginated.type';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
+import { AdminActivityService } from '../admin-activity/admin-activity.service';
+import { ActivityItemDto } from '../admin-activity/dto/activity-item.dto';
 
 import { AdminDashboardRepository } from './admin-dashboard.repository';
-import {
-  CS_TARGET_ACTIONS,
-  FAQ_TARGET_ACTIONS,
-  MAIN_SECTION_LABELS,
-  MAIN_TARGET_ACTIONS,
-  PendingType,
-  USER_TARGET_ACTIONS,
-} from './admin-dashboard.types';
-import { ActivityItemDto } from './dto/activities-response.dto';
+import { PendingType } from './admin-dashboard.types';
 import { PendingItemDto } from './dto/pending-response.dto';
 import { SummaryResponseDataDto } from './dto/summary-response.dto';
 
@@ -21,6 +15,7 @@ import { SummaryResponseDataDto } from './dto/summary-response.dto';
 export class AdminDashboardService {
   constructor(
     private readonly adminDashboardRepository: AdminDashboardRepository,
+    private readonly adminActivityService: AdminActivityService,
   ) {}
 
   async getSummary(): Promise<SummaryResponseDataDto> {
@@ -97,75 +92,12 @@ export class AdminDashboardService {
     return toPaginatedResponse(sliced, { page, pageSize, totalCount });
   }
 
-  async getActivities(
+  getActivities(
     query: PaginationQueryDto,
   ): Promise<Paginated<ActivityItemDto>> {
-    const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 20;
-    const skip = (page - 1) * pageSize;
-
-    const [rows, totalCount] = await Promise.all([
-      this.adminDashboardRepository.findActivities(skip, pageSize),
-      this.adminDashboardRepository.countActivities(),
-    ]);
-
-    // referenceId를 카테고리별로 묶어서 한 번에 batch 조회 → N+1 회피
-    const userIds: string[] = [];
-    const faqIds: string[] = [];
-    const csIds: string[] = [];
-    const mainIds: string[] = [];
-    for (const r of rows) {
-      if (r.referenceId === null) continue;
-      if (USER_TARGET_ACTIONS.has(r.actionType)) {
-        userIds.push(r.referenceId);
-      } else if (FAQ_TARGET_ACTIONS.has(r.actionType)) {
-        faqIds.push(r.referenceId);
-      } else if (CS_TARGET_ACTIONS.has(r.actionType)) {
-        csIds.push(r.referenceId);
-      } else if (MAIN_TARGET_ACTIONS.has(r.actionType)) {
-        mainIds.push(r.referenceId);
-      }
-    }
-
-    const [users, faqs, csRooms, mainSettings] = await Promise.all([
-      this.adminDashboardRepository.findUsersByIds(userIds),
-      this.adminDashboardRepository.findFaqsByIds(faqIds),
-      this.adminDashboardRepository.findCsChatRoomsByIds(csIds),
-      this.adminDashboardRepository.findMainSettingsByIds(mainIds),
-    ]);
-
-    const userNameMap = new Map(users.map((u) => [u.id, u.name]));
-    const faqTitleMap = new Map(faqs.map((f) => [f.id, f.title]));
-    const csUserNameMap = new Map(csRooms.map((c) => [c.id, c.user.name]));
-    const mainSectionMap = new Map(
-      mainSettings.map((m) => [m.id, MAIN_SECTION_LABELS[m.sectionType]]),
-    );
-
-    const items: ActivityItemDto[] = rows.map((r) => {
-      let targetName: string | null = null;
-
-      if (r.referenceId !== null) {
-        if (USER_TARGET_ACTIONS.has(r.actionType)) {
-          targetName = userNameMap.get(r.referenceId) ?? null;
-        } else if (FAQ_TARGET_ACTIONS.has(r.actionType)) {
-          targetName = faqTitleMap.get(r.referenceId) ?? null;
-        } else if (CS_TARGET_ACTIONS.has(r.actionType)) {
-          targetName = csUserNameMap.get(r.referenceId) ?? null;
-        } else if (MAIN_TARGET_ACTIONS.has(r.actionType)) {
-          const label = mainSectionMap.get(r.referenceId);
-          targetName = label ? `${label} 노출 수정` : null;
-        }
-      }
-      return {
-        id: r.id,
-        actionType: r.actionType,
-        referenceId: r.referenceId,
-        targetName,
-        adminName: r.admin.name,
-        createdAt: r.createdAt,
-      };
+    return this.adminActivityService.getActivities({
+      page: query.page,
+      pageSize: query.pageSize,
     });
-
-    return toPaginatedResponse(items, { page, pageSize, totalCount });
   }
 }
