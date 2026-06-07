@@ -1,10 +1,7 @@
-/**
- * 실제 API 작성 시 수정 예정
- */
-import type { ServiceFilterParams } from './types';
-import type { AdminService, ApiSuccess, PaginatedResult } from '@/mocks';
+import { api } from '@repo/fetcher';
 
-import { mockAdminServices } from '@/mocks';
+import type { ServiceFilterParams, ServiceItem } from './types';
+import type { ApiSuccess, PaginatedResult } from '@/types/api';
 
 export interface GetPagedServicesParams extends ServiceFilterParams {
   page: number;
@@ -13,33 +10,22 @@ export interface GetPagedServicesParams extends ServiceFilterParams {
 
 export function getPagedServices(
   params: GetPagedServicesParams,
-): Promise<ApiSuccess<PaginatedResult<AdminService>>> {
-  const filtered = mockAdminServices.filter((item) => {
-    if (params.serviceType !== undefined && item.serviceType !== params.serviceType)
-      return false;
-    if (params.status !== undefined && item.status !== params.status) return false;
-    if (params.search !== undefined) {
-      const q = params.search.toLowerCase().trim();
-      if (!item.title.toLowerCase().includes(q)) return false;
-    }
-    return true;
+): Promise<ApiSuccess<PaginatedResult<ServiceItem>>> {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    pageSize: String(params.pageSize),
   });
+  if (params.search !== undefined) {
+    query.set('search', params.search);
+  }
+  if (params.categoryGroup !== undefined) {
+    query.set('categoryGroup', params.categoryGroup);
+  }
+  if (params.status !== undefined) {
+    query.set('status', params.status);
+  }
 
-  const totalCount = filtered.length;
-  const startIndex = (params.page - 1) * params.pageSize;
-  const pagedItems = filtered.slice(startIndex, startIndex + params.pageSize);
-
-  return Promise.resolve({
-    success: true,
-    message: '서비스 목록을 조회했습니다.',
-    data: {
-      items: pagedItems,
-      pagination: {
-        page: params.page,
-        pageSize: params.pageSize,
-        totalCount,
-        hasNext: startIndex + params.pageSize < totalCount,
-      },
-    },
-  });
+  return api.get<ApiSuccess<PaginatedResult<ServiceItem>>>(
+    `/admin/services?${query.toString()}`,
+  );
 }

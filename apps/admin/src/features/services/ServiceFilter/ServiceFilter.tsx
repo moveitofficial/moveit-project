@@ -6,7 +6,11 @@ import type { ServiceFilterParams } from '@/features/services/types';
 
 import { FilterDropdown } from '@/components/common/FilterDropdown';
 import { SearchBar } from '@/components/common/SearchBar';
-import { PAGE_SIZE_OPTIONS, SERVICE_STATUS_OPTIONS, SERVICE_TYPE_OPTIONS } from '@/utils/constants';
+import {
+  PAGE_SIZE_OPTIONS,
+  SERVICE_STATUS_OPTIONS,
+  SERVICE_TYPE_OPTIONS,
+} from '@/utils/constants';
 import { useUpdateParam } from '@/utils/hooks';
 
 interface Props {
@@ -30,9 +34,9 @@ export default function ServiceFilter({ params }: Props) {
 
       <FilterDropdown
         options={SERVICE_TYPE_OPTIONS}
-        value={params.serviceType}
+        value={params.categoryGroup}
         onChange={(value) => {
-          updateParam('serviceType', value);
+          updateParam('categoryGroup', value);
         }}
         placeholder="카테고리"
       />
@@ -48,7 +52,9 @@ export default function ServiceFilter({ params }: Props) {
 
       <FilterDropdown
         options={PAGE_SIZE_OPTIONS}
-        value={params.pageSize === undefined ? undefined : String(params.pageSize)}
+        value={
+          params.pageSize === undefined ? undefined : String(params.pageSize)
+        }
         onChange={(value) => {
           updateParam('pageSize', value);
         }}
