@@ -32,8 +32,7 @@ export default async function BlacklistPage({ searchParams }: Props) {
 
   const totalPages = calcTotalPages(paginationMeta.totalCount, pageSize);
 
-  const filterParams: BlacklistFilterParams =
-    tab === 'CLIENT' ? { tab, search, pageSize } : { tab, search, pageSize };
+  const filterParams: BlacklistFilterParams = { tab, search, pageSize };
 
   return (
     <TabListLayout

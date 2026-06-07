@@ -30,7 +30,6 @@ export const colCompanyName = style({
 export const colEmailHeader = style({
   ...cellBase,
   flex: 1,
-  flexShrink: 1,
   minWidth: 0,
   padding: '0 16px',
 });
@@ -54,7 +53,7 @@ export const emailText = style({
 
 export const colProvider = style({
   ...cellBase,
-  width: '120px',
+  width: '140px',
 });
 
 export const colStatus = style({
@@ -68,7 +67,7 @@ export const statusText = style({
 
 export const colRegion = style({
   ...cellBase,
-  width: '120px',
+  width: '140px',
 });
 
 export const colCount = style({
@@ -78,12 +77,12 @@ export const colCount = style({
 
 export const colReport = style({
   ...cellBase,
-  width: '80px',
+  width: '100px',
 });
 
 export const colDate = style({
   ...cellBase,
-  width: '150px',
+  width: '220px',
   borderRight: 'none',
 });
 

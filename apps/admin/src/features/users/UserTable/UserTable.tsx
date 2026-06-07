@@ -4,7 +4,7 @@ import * as styles from './UserTable.css';
 
 import type { ColDef } from '@/components/common/AdminTable';
 import type { UserTabType } from '@/components/common/UserTabs';
-import type { AdminExpert, AdminUser } from '@/mocks/types';
+import type { UserItem } from '@/features/users/types';
 
 import { AdminTable } from '@/components/common/AdminTable';
 import {
@@ -21,7 +21,7 @@ function renderReportCount(count: number) {
   return <span className={className}>{count}</span>;
 }
 
-const CLIENT_COLS: ColDef<AdminUser>[] = [
+const CLIENT_COLS: ColDef<UserItem>[] = [
   {
     key: 'no',
     header: '번호',
@@ -34,55 +34,53 @@ const CLIENT_COLS: ColDef<AdminUser>[] = [
     header: '이름',
     headerStyle: styles.colName,
     cellStyle: styles.colName,
-    render: (client) => client.name,
+    render: (item) => item.name ?? '-',
   },
   {
     key: 'email',
     header: '이메일',
     headerStyle: styles.colEmailHeader,
     cellStyle: styles.colEmail,
-    render: (client) => (
-      <span className={styles.emailText}>{client.email}</span>
-    ),
+    render: (item) => <span className={styles.emailText}>{item.email}</span>,
   },
   {
     key: 'provider',
     header: '가입경로',
     headerStyle: styles.colProvider,
     cellStyle: styles.colProvider,
-    render: (client) => PROVIDER_LABEL[client.provider],
+    render: (item) => PROVIDER_LABEL[item.provider],
   },
   {
     key: 'region',
     header: '지역',
     headerStyle: styles.colRegion,
     cellStyle: styles.colRegion,
-    render: (client) => REGION_LABEL[client.region] ?? '-',
+    render: (item) => REGION_LABEL[item.region ?? ''] ?? '-',
   },
   {
-    key: 'orderCount',
+    key: 'paymentCount',
     header: '결제(건)',
     headerStyle: styles.colCount,
     cellStyle: styles.colCount,
-    render: (client) => client.orderCount,
+    render: (item) => item.paymentCount,
   },
   {
     key: 'reportCount',
     header: '신고',
     headerStyle: styles.colReport,
     cellStyle: styles.colReport,
-    render: (client) => renderReportCount(client.reportCount),
+    render: (item) => renderReportCount(item.reportCount),
   },
   {
     key: 'createdAt',
     header: '가입일',
     headerStyle: styles.colDate,
     cellStyle: styles.colDate,
-    render: (client) => formatDate(client.createdAt),
+    render: (item) => formatDate(item.createdAt),
   },
 ];
 
-const EXPERT_COLS: ColDef<AdminExpert>[] = [
+const EXPERT_COLS: ColDef<UserItem>[] = [
   {
     key: 'no',
     header: '번호',
@@ -91,47 +89,50 @@ const EXPERT_COLS: ColDef<AdminExpert>[] = [
     render: (_, n) => n,
   },
   {
-    key: 'companyName',
+    key: 'businessName',
     header: '회사명',
     headerStyle: styles.colCompanyName,
     cellStyle: styles.colCompanyName,
-    render: (expert) => expert.companyName,
+    render: (item) => item.businessName ?? '-',
   },
   {
     key: 'email',
     header: '이메일',
     headerStyle: styles.colEmailHeader,
     cellStyle: styles.colEmail,
-    render: (expert) => (
-      <span className={styles.emailText}>{expert.email}</span>
-    ),
+    render: (item) => <span className={styles.emailText}>{item.email}</span>,
   },
   {
-    key: 'serviceType',
+    key: 'specialtyGroup',
     header: '전문분야',
-    headerStyle: styles.colServiceType,
-    cellStyle: styles.colServiceType,
-    render: (expert) => SERVICE_TYPE_LABEL[expert.serviceType],
+    headerStyle: styles.colSpecialtyGroup,
+    cellStyle: styles.colSpecialtyGroup,
+    render: (item) =>
+      item.specialtyGroup === null
+        ? '-'
+        : SERVICE_TYPE_LABEL[item.specialtyGroup],
   },
   {
     key: 'provider',
     header: '가입경로',
     headerStyle: styles.colProvider,
     cellStyle: styles.colProvider,
-    render: (expert) => PROVIDER_LABEL[expert.provider],
+    render: (item) => PROVIDER_LABEL[item.provider],
   },
   {
     key: 'approvalStatus',
     header: '상태',
     headerStyle: styles.colStatus,
     cellStyle: styles.colStatus,
-    render: (expert) => (
+    render: (item) => (
       <span
         className={
-          expert.approvalStatus === 'REJECTED' ? styles.reportRed : undefined
+          item.approvalStatus === 'REJECTED' ? styles.reportRed : undefined
         }
       >
-        {EXPERT_STATUS_LABEL[expert.approvalStatus]}
+        {item.approvalStatus === null
+          ? '-'
+          : EXPERT_STATUS_LABEL[item.approvalStatus]}
       </span>
     ),
   },
@@ -140,56 +141,45 @@ const EXPERT_COLS: ColDef<AdminExpert>[] = [
     header: '지역',
     headerStyle: styles.colRegion,
     cellStyle: styles.colRegion,
-    render: (expert) => REGION_LABEL[expert.region] ?? '-',
+    render: (item) => REGION_LABEL[item.region ?? ''] ?? '-',
   },
   {
-    key: 'totalOrders',
+    key: 'paymentCount',
     header: '판매(건)',
     headerStyle: styles.colCount,
     cellStyle: styles.colCount,
-    render: (expert) => expert.totalOrders,
+    render: (item) => item.paymentCount,
   },
   {
     key: 'reportCount',
     header: '신고',
     headerStyle: styles.colReport,
     cellStyle: styles.colReport,
-    render: (expert) => renderReportCount(expert.reportCount),
+    render: (item) => renderReportCount(item.reportCount),
   },
   {
     key: 'createdAt',
     header: '가입일',
     headerStyle: styles.colDate,
     cellStyle: styles.colDate,
-    render: (expert) => formatDate(expert.createdAt),
+    render: (item) => formatDate(item.createdAt),
   },
 ];
 
 interface Props {
   tab: UserTabType;
-  items: (AdminUser | AdminExpert)[];
+  items: UserItem[];
   page: number;
   pageSize: number;
 }
 
 export default function UserTable({ tab, items, page, pageSize }: Props) {
-  if (tab === 'CLIENT') {
-    return (
-      <AdminTable
-        cols={CLIENT_COLS}
-        items={items as AdminUser[]}
-        getKey={(item) => item.id}
-        getHref={(item) => `/users/${item.id}`}
-        page={page}
-        pageSize={pageSize}
-      />
-    );
-  }
+  const cols = tab === 'CLIENT' ? CLIENT_COLS : EXPERT_COLS;
 
   return (
     <AdminTable
-      cols={EXPERT_COLS}
-      items={items as AdminExpert[]}
+      cols={cols}
+      items={items}
       getKey={(item) => item.id}
       getHref={(item) => `/users/${item.id}`}
       page={page}

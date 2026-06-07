@@ -1,14 +1,7 @@
-/**
- * 실제 API 작성 시 수정 예정
- */
-import type {
-  AdminWithdrawnExpert,
-  AdminWithdrawnUser,
-  ApiSuccess,
-  PaginatedResult,
-} from '@/mocks';
+import { api } from '@repo/fetcher';
 
-import { mockWithdrawnExperts, mockWithdrawnUsers } from '@/mocks';
+import type { WithdrawnItem } from './types';
+import type { ApiSuccess, PaginatedResult } from '@/types/api';
 
 export interface GetPagedWithdrawnParams {
   tab: 'CLIENT' | 'EXPERT';
@@ -17,48 +10,30 @@ export interface GetPagedWithdrawnParams {
   pageSize: number;
 }
 
-export function getWithdrawnTabCounts(): Promise<{
+export async function getWithdrawnTabCounts(): Promise<{
   clientCount: number;
   expertCount: number;
 }> {
-  return Promise.resolve({
-    clientCount: mockWithdrawnUsers.length,
-    expertCount: mockWithdrawnExperts.length,
-  });
+  const res = await api.get<ApiSuccess<{ client: number; expert: number }>>(
+    '/admin/users/withdrawn/counts',
+  );
+  return { clientCount: res.data.client, expertCount: res.data.expert };
 }
 
 export function getPagedWithdrawn(
   params: GetPagedWithdrawnParams,
-): Promise<
-  ApiSuccess<PaginatedResult<AdminWithdrawnUser | AdminWithdrawnExpert>>
-> {
-  const baseData: (AdminWithdrawnUser | AdminWithdrawnExpert)[] =
-    params.tab === 'CLIENT' ? mockWithdrawnUsers : mockWithdrawnExperts;
-
-  const filtered = baseData.filter((item) => {
-    if (params.search === undefined) {
-      return true;
-    }
-
-    const q = params.search.toLowerCase().trim();
-    return item.email.toLowerCase().includes(q);
+): Promise<ApiSuccess<PaginatedResult<WithdrawnItem>>> {
+  const query = new URLSearchParams({
+    role: params.tab,
+    page: String(params.page),
+    pageSize: String(params.pageSize),
   });
 
-  const totalCount = filtered.length;
-  const startIndex = (params.page - 1) * params.pageSize;
-  const pagedItems = filtered.slice(startIndex, startIndex + params.pageSize);
+  if (params.search !== undefined) {
+    query.set('search', params.search);
+  }
 
-  return Promise.resolve({
-    success: true,
-    message: '조회 성공',
-    data: {
-      items: pagedItems,
-      pagination: {
-        page: params.page,
-        pageSize: params.pageSize,
-        totalCount,
-        hasNext: startIndex + params.pageSize < totalCount,
-      },
-    },
-  });
+  return api.get<ApiSuccess<PaginatedResult<WithdrawnItem>>>(
+    `/admin/users/withdrawn?${query.toString()}`,
+  );
 }

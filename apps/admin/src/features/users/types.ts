@@ -1,8 +1,18 @@
-import type {
-  ExpertApprovalStatus,
-  Provider,
-  ServiceType,
-} from '@/mocks/types';
+import type { ExpertApprovalStatus, Provider, ServiceType } from '@/types/enums';
+
+export interface UserItem {
+  id: string;
+  name: string | null;
+  email: string;
+  provider: Provider;
+  region: string | null;
+  paymentCount: number;
+  reportCount: number;
+  businessName: string | null;
+  specialtyGroup: ServiceType | null;
+  approvalStatus: ExpertApprovalStatus | null;
+  createdAt: string;
+}
 
 export interface ClientUserFilterParams {
   tab: 'CLIENT';
