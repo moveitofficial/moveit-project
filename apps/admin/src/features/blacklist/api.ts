@@ -1,14 +1,7 @@
-/**
- * 실제 API 작성 시 수정 예정
- */
-import type {
-  AdminBlacklistExpert,
-  AdminBlacklistUser,
-  ApiSuccess,
-  PaginatedResult,
-} from '@/mocks';
+import { api } from '@repo/fetcher';
 
-import { mockBlacklistedExperts, mockBlacklistedUsers } from '@/mocks';
+import type { BlacklistItem } from './types';
+import type { ApiSuccess, PaginatedResult } from '@/types/api';
 
 export interface GetPagedBlacklistParams {
   tab: 'CLIENT' | 'EXPERT';
@@ -17,52 +10,30 @@ export interface GetPagedBlacklistParams {
   pageSize: number;
 }
 
-export function getBlacklistTabCounts(): Promise<{
+export async function getBlacklistTabCounts(): Promise<{
   clientCount: number;
   expertCount: number;
 }> {
-  return Promise.resolve({
-    clientCount: mockBlacklistedUsers.length,
-    expertCount: mockBlacklistedExperts.length,
-  });
+  const res = await api.get<ApiSuccess<{ client: number; expert: number }>>(
+    '/admin/users/blacklist/counts',
+  );
+  return { clientCount: res.data.client, expertCount: res.data.expert };
 }
 
 export function getPagedBlacklist(
   params: GetPagedBlacklistParams,
-): Promise<
-  ApiSuccess<PaginatedResult<AdminBlacklistUser | AdminBlacklistExpert>>
-> {
-  const baseData: (AdminBlacklistUser | AdminBlacklistExpert)[] =
-    params.tab === 'CLIENT' ? mockBlacklistedUsers : mockBlacklistedExperts;
-
-  const filtered = baseData.filter((item) => {
-    if (params.search === undefined) {
-      return true;
-    }
-    
-    const q = params.search.toLowerCase().trim();
-    return (
-      item.name.toLowerCase().includes(q) ||
-      item.email.toLowerCase().includes(q) ||
-      ('companyName' in item && item.companyName.toLowerCase().includes(q))
-    );
+): Promise<ApiSuccess<PaginatedResult<BlacklistItem>>> {
+  const query = new URLSearchParams({
+    role: params.tab,
+    page: String(params.page),
+    pageSize: String(params.pageSize),
   });
 
-  const totalCount = filtered.length;
-  const startIndex = (params.page - 1) * params.pageSize;
-  const pagedItems = filtered.slice(startIndex, startIndex + params.pageSize);
+  if (params.search !== undefined) {
+    query.set('search', params.search);
+  }
 
-  return Promise.resolve({
-    success: true,
-    message: '조회 성공',
-    data: {
-      items: pagedItems,
-      pagination: {
-        page: params.page,
-        pageSize: params.pageSize,
-        totalCount,
-        hasNext: startIndex + params.pageSize < totalCount,
-      },
-    },
-  });
+  return api.get<ApiSuccess<PaginatedResult<BlacklistItem>>>(
+    `/admin/users/blacklist?${query.toString()}`,
+  );
 }

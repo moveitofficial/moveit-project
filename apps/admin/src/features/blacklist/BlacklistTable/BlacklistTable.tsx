@@ -4,7 +4,7 @@ import * as styles from './BlacklistTable.css';
 
 import type { ColDef } from '@/components/common/AdminTable';
 import type { UserTabType } from '@/components/common/UserTabs';
-import type { AdminBlacklistExpert, AdminBlacklistUser } from '@/mocks/types';
+import type { BlacklistItem } from '@/features/blacklist/types';
 
 import { AdminTable } from '@/components/common/AdminTable';
 import { PROVIDER_LABEL, REGION_LABEL } from '@/utils/constants';
@@ -16,7 +16,7 @@ function renderReportCount(count: number) {
   return <span className={className}>{count}</span>;
 }
 
-const CLIENT_COLS: ColDef<AdminBlacklistUser>[] = [
+const CLIENT_COLS: ColDef<BlacklistItem>[] = [
   {
     key: 'no',
     header: '번호',
@@ -29,7 +29,7 @@ const CLIENT_COLS: ColDef<AdminBlacklistUser>[] = [
     header: '이름',
     headerStyle: styles.colName,
     cellStyle: styles.colName,
-    render: (item) => item.name,
+    render: (item) => item.name ?? '-',
   },
   {
     key: 'email',
@@ -57,14 +57,14 @@ const CLIENT_COLS: ColDef<AdminBlacklistUser>[] = [
     header: '지역',
     headerStyle: styles.colRegion,
     cellStyle: styles.colRegion,
-    render: (item) => REGION_LABEL[item.region] ?? '-',
+    render: (item) => REGION_LABEL[item.region ?? ''] ?? '-',
   },
   {
-    key: 'orderCount',
+    key: 'paymentCount',
     header: '결제(건)',
     headerStyle: styles.colCount,
     cellStyle: styles.colCount,
-    render: (item) => item.orderCount,
+    render: (item) => item.paymentCount,
   },
   {
     key: 'reportCount',
@@ -82,7 +82,7 @@ const CLIENT_COLS: ColDef<AdminBlacklistUser>[] = [
   },
 ];
 
-const EXPERT_COLS: ColDef<AdminBlacklistExpert>[] = [
+const EXPERT_COLS: ColDef<BlacklistItem>[] = [
   {
     key: 'no',
     header: '번호',
@@ -91,11 +91,11 @@ const EXPERT_COLS: ColDef<AdminBlacklistExpert>[] = [
     render: (_, n) => n,
   },
   {
-    key: 'companyName',
+    key: 'businessName',
     header: '회사명',
     headerStyle: styles.colCompanyName,
     cellStyle: styles.colCompanyName,
-    render: (item) => item.companyName,
+    render: (item) => item.businessName ?? '-',
   },
   {
     key: 'email',
@@ -123,14 +123,14 @@ const EXPERT_COLS: ColDef<AdminBlacklistExpert>[] = [
     header: '지역',
     headerStyle: styles.colRegion,
     cellStyle: styles.colRegion,
-    render: (item) => REGION_LABEL[item.region] ?? '-',
+    render: (item) => REGION_LABEL[item.region ?? ''] ?? '-',
   },
   {
-    key: 'totalOrders',
+    key: 'paymentCount',
     header: '판매(건)',
     headerStyle: styles.colCount,
     cellStyle: styles.colCount,
-    render: (item) => item.totalOrders,
+    render: (item) => item.paymentCount,
   },
   {
     key: 'reportCount',
@@ -150,28 +150,18 @@ const EXPERT_COLS: ColDef<AdminBlacklistExpert>[] = [
 
 interface Props {
   tab: UserTabType;
-  items: (AdminBlacklistUser | AdminBlacklistExpert)[];
+  items: BlacklistItem[];
   page: number;
   pageSize: number;
 }
 
 export default function BlacklistTable({ tab, items, page, pageSize }: Props) {
-  if (tab === 'CLIENT') {
-    return (
-      <AdminTable
-        cols={CLIENT_COLS}
-        items={items as AdminBlacklistUser[]}
-        getKey={(item) => item.id}
-        page={page}
-        pageSize={pageSize}
-      />
-    );
-  }
+  const cols = tab === 'CLIENT' ? CLIENT_COLS : EXPERT_COLS;
 
   return (
     <AdminTable
-      cols={EXPERT_COLS}
-      items={items as AdminBlacklistExpert[]}
+      cols={cols}
+      items={items}
       getKey={(item) => item.id}
       page={page}
       pageSize={pageSize}
