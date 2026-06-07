@@ -3,12 +3,12 @@ import { formatDate, formatPrice } from '@repo/utils';
 import * as styles from './ServiceTable.css';
 
 import type { ColDef } from '@/components/common/AdminTable';
-import type { AdminService } from '@/mocks/types';
+import type { ServiceItem } from '@/features/services/types';
 
 import { AdminTable } from '@/components/common/AdminTable';
 import { SERVICE_STATUS_LABEL, SERVICE_TYPE_LABEL } from '@/utils/constants';
 
-function renderStatus(status: AdminService['status']) {
+function renderStatus(status: ServiceItem['status']) {
   const label = SERVICE_STATUS_LABEL[status];
 
   if (status === 'CLOSED') {
@@ -18,7 +18,7 @@ function renderStatus(status: AdminService['status']) {
   return label;
 }
 
-const COLS: ColDef<AdminService>[] = [
+const COLS: ColDef<ServiceItem>[] = [
   {
     key: 'no',
     header: '번호',
@@ -34,18 +34,18 @@ const COLS: ColDef<AdminService>[] = [
     render: (item) => <span className={styles.titleText}>{item.title}</span>,
   },
   {
-    key: 'serviceType',
+    key: 'categoryGroup',
     header: '카테고리',
     headerStyle: styles.colCategory,
     cellStyle: styles.colCategory,
-    render: (item) => SERVICE_TYPE_LABEL[item.serviceType],
+    render: (item) => SERVICE_TYPE_LABEL[item.categoryGroup],
   },
   {
-    key: 'expertName',
+    key: 'businessName',
     header: '회사명',
     headerStyle: styles.colName,
     cellStyle: styles.colName,
-    render: (item) => item.expertName,
+    render: (item) => item.businessName ?? '-',
   },
   {
     key: 'status',
@@ -55,11 +55,11 @@ const COLS: ColDef<AdminService>[] = [
     render: (item) => renderStatus(item.status),
   },
   {
-    key: 'price',
+    key: 'servicePrice',
     header: '판매금액',
     headerStyle: styles.colPrice,
     cellStyle: styles.colPrice,
-    render: (item) => formatPrice(item.price),
+    render: (item) => formatPrice(item.servicePrice),
   },
   {
     key: 'createdAt',
@@ -69,16 +69,16 @@ const COLS: ColDef<AdminService>[] = [
     render: (item) => formatDate(item.createdAt),
   },
   {
-    key: 'reviewCount',
+    key: 'orderCount',
     header: '판매 건수',
     headerStyle: styles.colSalesCount,
     cellStyle: styles.colSalesCount,
-    render: (item) => `${item.reviewCount}건`,
+    render: (item) => `${item.orderCount}건`,
   },
 ];
 
 interface Props {
-  items: AdminService[];
+  items: ServiceItem[];
   page: number;
   pageSize: number;
 }

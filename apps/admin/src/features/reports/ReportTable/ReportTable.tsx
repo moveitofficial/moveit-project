@@ -3,13 +3,12 @@ import { formatDate } from '@repo/utils';
 import * as styles from './ReportTable.css';
 
 import type { ColDef } from '@/components/common/AdminTable';
-import type { AdminReport } from '@/mocks/types';
+import type { ReportItem } from '@/features/reports/types';
 
 import { AdminTable } from '@/components/common/AdminTable';
 import { REPORT_REASON_LABEL } from '@/utils/constants';
-import { isReportReason } from '@/utils/filterValidators';
 
-const COLS: ColDef<AdminReport>[] = [
+const COLS: ColDef<ReportItem>[] = [
   {
     key: 'no',
     header: '번호',
@@ -18,18 +17,18 @@ const COLS: ColDef<AdminReport>[] = [
     render: (_, n) => n,
   },
   {
-    key: 'reporterName',
+    key: 'reporter',
     header: '신고한 유저',
     headerStyle: styles.colUser,
     cellStyle: styles.colUserText,
-    render: (item) => item.reporterName,
+    render: (item) => item.reporter.name ?? '-',
   },
   {
-    key: 'targetUserName',
+    key: 'reported',
     header: '신고 대상',
     headerStyle: styles.colUser,
     cellStyle: styles.colUserText,
-    render: (item) => item.targetUserName,
+    render: (item) => item.reported.name ?? '-',
   },
   {
     key: 'detail',
@@ -43,10 +42,7 @@ const COLS: ColDef<AdminReport>[] = [
     header: '사유',
     headerStyle: styles.colReason,
     cellStyle: styles.colReason,
-    render: (item) =>
-      isReportReason(item.reason)
-        ? REPORT_REASON_LABEL[item.reason]
-        : item.reason,
+    render: (item) => REPORT_REASON_LABEL[item.reason],
   },
   {
     key: 'createdAt',
@@ -58,7 +54,7 @@ const COLS: ColDef<AdminReport>[] = [
 ];
 
 interface Props {
-  items: AdminReport[];
+  items: ReportItem[];
   page: number;
   pageSize: number;
 }

@@ -16,24 +16,36 @@ export default async function ServicesPage({ searchParams }: Props) {
   const rawParams = await searchParams;
 
   const search = param(rawParams.search);
-  const serviceType = validated(param(rawParams.serviceType), isServiceType);
+  const categoryGroup = validated(
+    param(rawParams.categoryGroup),
+    isServiceType,
+  );
   const status = validated(param(rawParams.status), isServiceStatus);
   const page = parsePage(rawParams.page);
   const pageSize = parsePageSize(rawParams.pageSize);
 
-  const pagedResult = await getPagedServices({ search, serviceType, status, page, pageSize });
+  const pagedResult = await getPagedServices({
+    search,
+    categoryGroup,
+    status,
+    page,
+    pageSize,
+  });
 
   const { items, pagination: paginationMeta } = pagedResult.data;
   const totalPages = calcTotalPages(paginationMeta.totalCount, pageSize);
 
-  const filterParams: ServiceFilterParams = { search, serviceType, status, pageSize };
+  const filterParams: ServiceFilterParams = {
+    search,
+    categoryGroup,
+    status,
+    pageSize,
+  };
 
   return (
     <ListLayout
       filterSlot={<ServiceFilter params={filterParams} />}
-      tableSlot={
-        <ServiceTable items={items} page={page} pageSize={pageSize} />
-      }
+      tableSlot={<ServiceTable items={items} page={page} pageSize={pageSize} />}
       page={page}
       totalPages={totalPages}
     />
