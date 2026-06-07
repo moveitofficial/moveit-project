@@ -31,7 +31,8 @@ export type ActivityType =
   | 'REFUND_APPROVED'
   | 'CANCEL_APPROVED'
   | 'CS_ASSIGNED'
-  | 'CS_CLOSED';
+  | 'CS_CLOSED'
+  | 'SETTLEMENT_COMPLETED';
 
 export interface RecentActivity {
   id: string;

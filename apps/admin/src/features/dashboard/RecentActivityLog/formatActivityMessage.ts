@@ -20,6 +20,8 @@ const ACTIVITY_MESSAGE_FORMAT: Record<
   FAQ_DELETED: (title) => `FAQ ${wrapFaqTitle(title ?? FALLBACK_TARGET)} 삭제`,
   CS_ASSIGNED: (title) => `${title ?? FALLBACK_TARGET} 문의 처리중`,
   CS_CLOSED: (title) => `${title ?? FALLBACK_TARGET} 문의 처리 완료`,
+  SETTLEMENT_COMPLETED: (title) =>
+    title === null ? '정산 완료' : `${title} 판매자 정산 완료`,
   MAIN_UPDATED: (title) => {
     if (title === null) {
       return '메인 노출 수정';

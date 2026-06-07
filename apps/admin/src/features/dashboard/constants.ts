@@ -73,4 +73,9 @@ export const ACTIVITY_BADGE_CONFIG: Record<ActivityType, BadgeConfig> = {
   CANCEL_APPROVED: { text: '취소 승인', color: 'red200', opacity: 'full' },
   CS_ASSIGNED: { text: '문의 처리중', color: 'yellow100', opacity: 'full' },
   CS_CLOSED: { text: '문의 처리 완료', color: 'blue400', opacity: 'full' },
+  SETTLEMENT_COMPLETED: {
+    text: '정산 완료',
+    color: 'blue400',
+    opacity: 'full',
+  },
 };
