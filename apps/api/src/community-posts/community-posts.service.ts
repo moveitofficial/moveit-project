@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { NotificationCategory, type CommunityCategory } from '@prisma/client';
 
 import {
   COMMENTS_ERRORS,
@@ -8,6 +9,7 @@ import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
+import { NotificationsService } from '../notifications/notifications.service';
 
 import {
   mapComment,
@@ -38,12 +40,11 @@ import {
   PostListItemResponseDto,
 } from './dto/post-response.dto';
 
-import type { CommunityCategory } from '@prisma/client';
-
 @Injectable()
 export class CommunityPostsService {
   constructor(
     private readonly communityPostsRepository: CommunityPostsRepository,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createPost(
@@ -243,6 +244,16 @@ export class CommunityPostsService {
       userId,
       dto,
     );
+
+    if (post.userId !== userId) {
+      await this.notificationsService.send({
+        userIds: [post.userId],
+        category: NotificationCategory.POST_COMMENT,
+        vars: { postTitle: post.title },
+        referenceId: postId,
+      });
+    }
+
     return mapComment(comment);
   }
 
