@@ -24,6 +24,8 @@ import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
 
 import { ConfirmPaymentRequestDto } from './dto/confirm-payment-request.dto';
 import { OrderPaymentDto } from './dto/order-payment-response.dto';
+import { PreparePaymentRequestDto } from './dto/prepare-payment-request.dto';
+import { PreparePaymentResponseDto } from './dto/prepare-payment-response.dto';
 import { PaymentsService } from './payments.service';
 
 import type { Request } from 'express';
@@ -45,6 +47,28 @@ export class MeOrdersPaymentsController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.paymentsService.getOrderPayment(user.userId, orderId);
+  }
+
+  @ApiOperation({ summary: '결제창 연동 정보 조회' })
+  @RoleAuth(Role.CLIENT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK, PreparePaymentResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(PAYMENT_ERRORS.NOT_FOUND, PAYMENT_ERRORS.ALREADY_CONFIRMED)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post('prepare')
+  preparePayment(
+    @Req() req: Request,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Body() dto: PreparePaymentRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.paymentsService.preparePayment(user.userId, orderId, {
+      orderName: dto.orderName,
+      method: dto.method,
+      installmentMonths: dto.installmentMonths,
+    });
   }
 
   @ApiOperation({ summary: '결제 승인 (Toss Payments)' })

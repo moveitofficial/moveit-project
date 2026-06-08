@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { PaymentStatus } from '@prisma/client';
 
-import { AppException } from '../common/exceptions/app.exception';
+import { ORDER_ERRORS, PAYMENT_ERRORS } from '../common/constants/errors';
 
 import { PaymentsRepository } from './payments.repository';
 import { PaymentsService } from './payments.service';
@@ -34,7 +34,12 @@ describe('PaymentsService - confirmPayment', () => {
   };
 
   const mockConfigService = {
-    getOrThrow: jest.fn().mockReturnValue('test_secret_key_1234567890'),
+    getOrThrow: jest.fn((key: string) => {
+      if (key === 'TOSS_CLIENT_KEY') {
+        return '';
+      }
+      return '';
+    }),
   };
 
   beforeEach(async () => {
@@ -164,6 +169,135 @@ describe('PaymentsService - confirmPayment', () => {
 
     await expect(
       service.confirmPayment(USER_ID, ORDER_ID, PAYMENT_KEY, PAYMENT_AMOUNT),
-    ).rejects.toThrow(AppException);
+    ).rejects.toMatchObject({
+      message: PAYMENT_ERRORS.ALREADY_CONFIRMED.message,
+    });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(mockPaymentsRepository.updatePaymentStatus).not.toHaveBeenCalled();
+  });
+});
+
+describe('PaymentsService - preparePayment', () => {
+  let service: PaymentsService;
+
+  const mockPaymentsRepository = {
+    findOrderForPrepare: jest.fn(),
+  };
+
+  const mockConfigService = {
+    getOrThrow: jest.fn((key: string) => {
+      if (key === 'TOSS_CLIENT_KEY') {
+        return 'test_client_key_1234567890';
+      }
+      return 'test_secret_key_1234567890';
+    }),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        PaymentsService,
+        { provide: PaymentsRepository, useValue: mockPaymentsRepository },
+        { provide: ConfigService, useValue: mockConfigService },
+      ],
+    }).compile();
+
+    service = module.get<PaymentsService>(PaymentsService);
+    jest.clearAllMocks();
+  });
+
+  const pendingOrder = {
+    id: ORDER_ID,
+    clientUserId: USER_ID,
+    totalAmount: PAYMENT_AMOUNT,
+    service: { title: '코칭 서비스' },
+    payment: {
+      id: 'payment-1',
+      status: PaymentStatus.PENDING,
+      method: 'CARD',
+      installmentMonths: 1,
+    },
+  };
+
+  it('PENDING 주문이면 위젯 파라미터를 반환한다', async () => {
+    mockPaymentsRepository.findOrderForPrepare.mockResolvedValueOnce(
+      pendingOrder,
+    );
+
+    const result = await service.preparePayment(USER_ID, ORDER_ID, {
+      orderName: '커스텀 주문명',
+      installmentMonths: 3,
+    });
+
+    expect(result).toEqual({
+      orderId: ORDER_ID,
+      amount: PAYMENT_AMOUNT,
+      orderName: '커스텀 주문명',
+      clientKey: 'test_client_key_1234567890',
+      customerKey: USER_ID,
+      paymentId: 'payment-1',
+      method: 'CARD',
+      installmentMonths: 3,
+    });
+  });
+
+  it('orderName 미전달 시 서비스 타이틀로 fallback한다', async () => {
+    mockPaymentsRepository.findOrderForPrepare.mockResolvedValueOnce(
+      pendingOrder,
+    );
+
+    const result = await service.preparePayment(USER_ID, ORDER_ID);
+
+    expect(result.orderName).toBe('코칭 서비스');
+  });
+
+  it('주문이 없으면 ORDER_ERRORS.NOT_FOUND 예외를 던진다', async () => {
+    mockPaymentsRepository.findOrderForPrepare.mockResolvedValueOnce(null);
+
+    await expect(
+      service.preparePayment(USER_ID, ORDER_ID),
+    ).rejects.toMatchObject({
+      message: ORDER_ERRORS.NOT_FOUND.message,
+    });
+  });
+
+  it('주문 소유자가 아니면 ORDER_ERRORS.FORBIDDEN_NOT_OWNER 예외를 던진다', async () => {
+    mockPaymentsRepository.findOrderForPrepare.mockResolvedValueOnce({
+      ...pendingOrder,
+      clientUserId: 'other-user',
+    });
+
+    await expect(
+      service.preparePayment(USER_ID, ORDER_ID),
+    ).rejects.toMatchObject({
+      message: ORDER_ERRORS.FORBIDDEN_NOT_OWNER.message,
+    });
+  });
+
+  it('결제 행이 없으면 PAYMENT_ERRORS.NOT_FOUND 예외를 던진다', async () => {
+    mockPaymentsRepository.findOrderForPrepare.mockResolvedValueOnce({
+      ...pendingOrder,
+      payment: null,
+    });
+
+    await expect(
+      service.preparePayment(USER_ID, ORDER_ID),
+    ).rejects.toMatchObject({
+      message: PAYMENT_ERRORS.NOT_FOUND.message,
+    });
+  });
+
+  it('이미 PAID 상태이면 PAYMENT_ERRORS.ALREADY_CONFIRMED 예외를 던진다', async () => {
+    mockPaymentsRepository.findOrderForPrepare.mockResolvedValueOnce({
+      ...pendingOrder,
+      payment: { ...pendingOrder.payment, status: PaymentStatus.PAID },
+    });
+
+    await expect(
+      service.preparePayment(USER_ID, ORDER_ID),
+    ).rejects.toMatchObject({
+      message: PAYMENT_ERRORS.ALREADY_CONFIRMED.message,
+    });
   });
 });

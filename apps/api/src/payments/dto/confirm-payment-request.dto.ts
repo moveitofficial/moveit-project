@@ -12,8 +12,7 @@ export class ConfirmPaymentRequestDto {
   declare paymentKey: string;
 
   @ApiProperty({
-    description:
-      '결제 승인 요청 금액(원). 주문 totalAmount와 일치해야 합니다.',
+    description: '결제 승인 요청 금액(원). 주문 totalAmount와 일치해야 합니다.',
     example: 1_100_000,
   })
   @Type(() => Number)

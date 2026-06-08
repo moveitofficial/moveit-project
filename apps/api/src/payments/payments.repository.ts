@@ -5,7 +5,11 @@ import { PAYMENT_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
 
-import { getOrderPaymentSelect, orderPaymentSelect } from './payments.types';
+import {
+  getOrderPaymentSelect,
+  orderPaymentSelect,
+  orderPrepareSelect,
+} from './payments.types';
 
 @Injectable()
 export class PaymentsRepository {
@@ -16,6 +20,14 @@ export class PaymentsRepository {
     return this.prisma.order.findUnique({
       where: { id: orderId },
       select: getOrderPaymentSelect,
+    });
+  }
+
+  // preparePayment 전용 — 서비스 타이틀·소유자·금액·결제 상태 포함
+  findOrderForPrepare(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: orderPrepareSelect,
     });
   }
 

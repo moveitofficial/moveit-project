@@ -12,10 +12,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
-import {
-  COMMON_ERRORS,
-  SERVICE_ERRORS,
-} from '../common/constants/errors';
+import { COMMON_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import {
   ApiPaginatedResponse,
@@ -51,7 +48,10 @@ export class MeOrdersController {
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.CREATED, CreateOrderResponseDto)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(SERVICE_ERRORS.NOT_AVAILABLE, COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(
+    SERVICE_ERRORS.NOT_AVAILABLE,
+    COMMON_ERRORS.VALIDATION_ERROR,
+  )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
   @Post()

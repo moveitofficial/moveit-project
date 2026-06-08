@@ -43,6 +43,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 @Injectable()
 export class PaymentsService {
   private readonly tossBasicToken: string;
+  private readonly tossClientKey: string;
 
   constructor(
     private readonly paymentsRepository: PaymentsRepository,
@@ -51,6 +52,44 @@ export class PaymentsService {
     this.tossBasicToken = Buffer.from(
       `${config.getOrThrow<string>('TOSS_SECRET_KEY')}:`,
     ).toString('base64');
+    this.tossClientKey = config.getOrThrow<string>('TOSS_CLIENT_KEY');
+  }
+
+  async preparePayment(
+    userId: string,
+    orderId: string,
+    options?: {
+      orderName?: string;
+      method?: string;
+      installmentMonths?: number;
+    },
+  ) {
+    const order = await this.paymentsRepository.findOrderForPrepare(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    if (order.clientUserId !== userId) {
+      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+    }
+
+    if (!order.payment) {
+      throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+    }
+
+    if (order.payment.status !== PaymentStatus.PENDING) {
+      throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
+    }
+
+    return {
+      orderId: order.id,
+      amount: order.totalAmount,
+      orderName: options?.orderName ?? order.service.title,
+      clientKey: this.tossClientKey,
+      customerKey: userId,
+      paymentId: order.payment.id,
+      method: options?.method ?? order.payment.method,
+      installmentMonths:
+        options?.installmentMonths ?? order.payment.installmentMonths,
+    };
   }
 
   async getOrderPayment(userId: string, orderId: string) {

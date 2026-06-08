@@ -63,6 +63,26 @@ export const orderPaymentSelect = {
   },
 } satisfies Prisma.OrderSelect;
 
+// preparePayment 전용 — 서비스 타이틀·clientUserId·totalAmount·결제 상태 포함
+export const orderPrepareSelect = {
+  id: true,
+  clientUserId: true,
+  totalAmount: true,
+  service: {
+    select: {
+      title: true,
+    },
+  },
+  payment: {
+    select: {
+      id: true,
+      status: true,
+      method: true,
+      installmentMonths: true,
+    },
+  },
+} satisfies Prisma.OrderSelect;
+
 type OrderPaymentRow = Prisma.OrderGetPayload<{
   select: typeof orderPaymentSelect;
 }>;
