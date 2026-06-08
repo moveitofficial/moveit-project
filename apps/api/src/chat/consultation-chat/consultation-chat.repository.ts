@@ -73,7 +73,25 @@ export class ConsultationChatRepository {
       where: {
         OR: [{ clientUserId: userId }, { expertUserId: userId }],
       },
-      include: { lastMessage: true },
+      include: {
+        clientUser: {
+          select: {
+            id: true,
+            name: true,
+            profileImageUrl: true,
+            clientProfile: { select: { nickname: true } },
+          },
+        },
+        expertUser: {
+          select: {
+            id: true,
+            profileImageUrl: true,
+            expertProfile: { select: { businessName: true } },
+          },
+        },
+        lastMessage: { select: { id: true, content: true, createdAt: true } },
+        participants: { select: { userId: true, lastReadMessageId: true } },
+      },
       orderBy: { lastMessage: { createdAt: 'desc' } },
     });
   }

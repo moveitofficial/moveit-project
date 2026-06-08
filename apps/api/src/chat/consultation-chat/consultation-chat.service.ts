@@ -57,7 +57,27 @@ export class ConsultationChatService {
   }
 
   async getRooms(userId: string) {
-    return await this.consultationChatRepository.findAllRooms(userId);
+    const rooms = await this.consultationChatRepository.findAllRooms(userId);
+    return rooms.map((room) => ({
+      id: room.id,
+      currentServiceId: room.currentServiceId,
+      clientUser: {
+        id: room.clientUser.id,
+        profileImageUrl: room.clientUser.profileImageUrl,
+        nickname:
+          room.clientUser.clientProfile?.nickname ?? room.clientUser.name,
+      },
+      expertUser: {
+        id: room.expertUser.id,
+        profileImageUrl: room.expertUser.profileImageUrl,
+        businessName: room.expertUser.expertProfile?.businessName ?? null,
+      },
+      lastMessage: room.lastMessage,
+      myLastReadMessageId:
+        room.participants.find((p) => p.userId === userId)?.lastReadMessageId ??
+        null,
+      createdAt: room.createdAt,
+    }));
   }
 
   async getMessages(roomId: string, userId: string) {
