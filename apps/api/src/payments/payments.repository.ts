@@ -15,7 +15,6 @@ import {
 export class PaymentsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // [P3] 순수 조회 전용 — totalAmount 미포함
   findOrderPaymentOnly(orderId: string) {
     return this.prisma.order.findUnique({
       where: { id: orderId },
@@ -23,7 +22,6 @@ export class PaymentsRepository {
     });
   }
 
-  // preparePayment 전용 — 서비스 타이틀·소유자·금액·결제 상태 포함
   findOrderForPrepare(orderId: string) {
     return this.prisma.order.findUnique({
       where: { id: orderId },
@@ -31,7 +29,6 @@ export class PaymentsRepository {
     });
   }
 
-  // confirmPayment 전용 — totalAmount 포함
   findOrderPayment(orderId: string) {
     return this.prisma.order.findUnique({
       where: { id: orderId },

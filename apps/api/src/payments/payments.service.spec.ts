@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { PaymentStatus } from '@prisma/client';
 
 import { ORDER_ERRORS, PAYMENT_ERRORS } from '../common/constants/errors';
+import { isRecord } from '../common/utils/is-record.util';
 
 import { PaymentsRepository } from './payments.repository';
 import { PaymentsService } from './payments.service';
@@ -15,10 +16,6 @@ const ORDER_ID = 'order-1';
 const USER_ID = 'user-1';
 const PAYMENT_KEY = 'toss_key';
 const PAYMENT_AMOUNT = 50_000;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
 
 describe('PaymentsService - confirmPayment', () => {
   let service: PaymentsService;
@@ -36,9 +33,9 @@ describe('PaymentsService - confirmPayment', () => {
   const mockConfigService = {
     getOrThrow: jest.fn((key: string) => {
       if (key === 'TOSS_CLIENT_KEY') {
-        return '';
+        return 'test_client_key_1234567890';
       }
-      return '';
+      return 'test_secret_key_1234567890';
     }),
   };
 
@@ -174,6 +171,38 @@ describe('PaymentsService - confirmPayment', () => {
     });
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(mockPaymentsRepository.updatePaymentStatus).not.toHaveBeenCalled();
+  });
+
+  it('토스 승인 응답에 approvedAt이 없으면 FAILED 예외를 던진다', async () => {
+    const mockOrder = {
+      id: ORDER_ID,
+      clientUserId: USER_ID,
+      totalAmount: PAYMENT_AMOUNT,
+      payment: {
+        id: 'payment-1',
+        status: PaymentStatus.PENDING,
+        paidAmount: PAYMENT_AMOUNT,
+        refund: null,
+      },
+    };
+    mockPaymentsRepository.findOrderPayment.mockResolvedValueOnce(mockOrder);
+
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          method: 'CARD',
+          card: { installmentPlanMonths: 0 },
+        }),
+    } as Response);
+
+    await expect(
+      service.confirmPayment(USER_ID, ORDER_ID, PAYMENT_KEY, PAYMENT_AMOUNT),
+    ).rejects.toMatchObject({
+      message: PAYMENT_ERRORS.FAILED.message,
+    });
+
     expect(mockPaymentsRepository.updatePaymentStatus).not.toHaveBeenCalled();
   });
 });

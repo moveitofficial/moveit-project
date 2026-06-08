@@ -52,9 +52,9 @@ export class MeOrdersPaymentsController {
   @ApiOperation({ summary: '결제창 연동 정보 조회' })
   @RoleAuth(Role.CLIENT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiSuccessResponse(HttpStatus.OK, PreparePaymentResponseDto)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(PAYMENT_ERRORS.NOT_FOUND, PAYMENT_ERRORS.ALREADY_CONFIRMED)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, PAYMENT_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(PAYMENT_ERRORS.ALREADY_CONFIRMED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.OK)
   @Post('prepare')
@@ -74,15 +74,16 @@ export class MeOrdersPaymentsController {
   @ApiOperation({ summary: '결제 승인 (Toss Payments)' })
   @RoleAuth(Role.CLIENT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
   @ApiSuccessResponse(HttpStatus.OK, OrderPaymentDto)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, PAYMENT_ERRORS.NOT_FOUND)
   @ApiErrorResponse(
-    PAYMENT_ERRORS.NOT_FOUND,
     PAYMENT_ERRORS.AMOUNT_MISMATCH,
     PAYMENT_ERRORS.FAILED,
+    COMMON_ERRORS.VALIDATION_ERROR,
   )
-  @ApiErrorResponse(PAYMENT_ERRORS.ALREADY_CONFIRMED)
-  @ApiErrorResponse(PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(
+    PAYMENT_ERRORS.ALREADY_CONFIRMED,
+    PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY,
+  )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.OK)
   @Post('confirm')

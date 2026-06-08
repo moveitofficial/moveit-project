@@ -155,10 +155,6 @@ export const ORDER_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '유효하지 않은 주문 상태입니다.',
   },
-  AMOUNT_MISMATCH: {
-    status: HttpStatus.BAD_REQUEST,
-    message: '결제 요청 금액이 실제 주문 금액과 일치하지 않습니다.',
-  },
   ALREADY_PROCESSED: {
     status: HttpStatus.CONFLICT,
     message: '이미 결제가 완료되었거나 취소된 주문건입니다.',

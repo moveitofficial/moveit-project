@@ -8,6 +8,7 @@ import {
   PAYMENT_ERRORS,
 } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
+import { isRecord } from '../common/utils/is-record.util';
 import { DEFAULT_PAYMENT_METHOD } from '../orders/orders.constants';
 
 import { mapOrderPayment } from './payments.mapper';
@@ -35,10 +36,6 @@ interface TossConfirmErrorResponse {
 type TossConfirmResponse =
   | TossConfirmSuccessResponse
   | TossConfirmErrorResponse;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
 
 @Injectable()
 export class PaymentsService {
@@ -215,14 +212,17 @@ export class PaymentsService {
       throw new AppException(PAYMENT_ERRORS.FAILED);
     }
 
-    const approvedAt =
-      'approvedAt' in tossData && typeof tossData.approvedAt === 'string'
-        ? new Date(tossData.approvedAt)
-        : new Date();
+    if (
+      !('approvedAt' in tossData) ||
+      typeof tossData.approvedAt !== 'string'
+    ) {
+      throw new AppException(PAYMENT_ERRORS.FAILED);
+    }
 
-    const finalApprovedAt = Number.isNaN(approvedAt.getTime())
-      ? new Date()
-      : approvedAt;
+    const approvedAt = new Date(tossData.approvedAt);
+    if (Number.isNaN(approvedAt.getTime())) {
+      throw new AppException(PAYMENT_ERRORS.FAILED);
+    }
 
     const method =
       'method' in tossData && typeof tossData.method === 'string'
@@ -241,10 +241,10 @@ export class PaymentsService {
         : 1;
 
     return {
-      approvedAt: finalApprovedAt,
+      approvedAt,
       method,
       installmentMonths,
-      rawData: tossData as unknown as Prisma.InputJsonValue,
+      rawData: tossData as Prisma.InputJsonValue,
     };
   }
 }
