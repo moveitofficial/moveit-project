@@ -513,3 +513,36 @@ export const BANNER_ERRORS = {
     code: 'BANNER_NOT_FOUND',
   },
 } as const;
+
+export const CATEGORY_FEATURED_ERRORS = {
+  LIMIT_EXCEEDED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '카테고리 대표서비스는 그룹당 최대 4개까지 등록할 수 있습니다.',
+    code: 'CATEGORY_FEATURED_LIMIT_EXCEEDED',
+  },
+  GROUP_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '서비스 그룹과 대상의 카테고리가 일치하지 않습니다.',
+    code: 'CATEGORY_FEATURED_GROUP_MISMATCH',
+  },
+  DUPLICATE: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 등록된 항목이 포함되어 있습니다.',
+    code: 'CATEGORY_FEATURED_DUPLICATE',
+  },
+  TARGET_NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '등록 대상 서비스를 찾을 수 없습니다.',
+    code: 'CATEGORY_FEATURED_TARGET_NOT_FOUND',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '삭제할 카테고리 대표서비스 항목을 찾을 수 없습니다.',
+    code: 'CATEGORY_FEATURED_NOT_FOUND',
+  },
+  GROUP_MISMATCH_ON_DELETE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '삭제 대상이 지정한 서비스 그룹에 속하지 않습니다.',
+    code: 'CATEGORY_FEATURED_GROUP_MISMATCH_ON_DELETE',
+  },
+} as const;
