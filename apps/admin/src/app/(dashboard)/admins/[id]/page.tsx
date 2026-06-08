@@ -1,3 +1,8 @@
+import * as styles from './page.css';
+
+import { AdminActivityList } from '@/features/admins/AdminActivityList';
+import { AdminDetail } from '@/features/admins/AdminDetail';
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -5,5 +10,10 @@ interface Props {
 export default async function AdminDetailPage({ params }: Props) {
   const { id } = await params;
 
-  return <div>{id} 관리자 상세 페이지</div>;
+  return (
+    <div className={styles.wrapper}>
+      <AdminDetail id={id} />
+      <AdminActivityList adminId={id} />
+    </div>
+  );
 }

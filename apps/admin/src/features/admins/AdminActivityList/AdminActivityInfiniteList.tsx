@@ -4,26 +4,45 @@ import { typography } from '@repo/styles/typography';
 import { RoundChip } from '@repo/ui/RoundChip';
 import { formatRelativeTime } from '@repo/utils';
 
-import * as styles from './RecentActivityLog.css';
+import * as styles from './AdminActivityList.css';
 
-import type { RecentActivity } from '@/features/dashboard/types';
+import type { RecentActivity } from '@/features/admins/types';
+import type { InfiniteScrollPage } from '@/types/api';
 
-import { fetchMoreActivities } from '@/features/dashboard/actions';
+import { fetchMoreAdminActivities } from '@/features/admins/actions';
 import { ACTIVITY_BADGE_CONFIG } from '@/utils/constants/activityConstants';
 import { formatActivityMessage } from '@/utils/formatActivityMessage';
 import { useInfiniteScroll } from '@/utils/hooks';
 
 interface Props {
+  adminId: string;
   initialItems: RecentActivity[];
   initialHasNext: boolean;
 }
 
-export function ActivityInfiniteList({ initialItems, initialHasNext }: Props) {
+export default function AdminActivityInfiniteList({
+  adminId,
+  initialItems,
+  initialHasNext,
+}: Props) {
+  const fetchMore = (
+    page: number,
+  ): Promise<InfiniteScrollPage<RecentActivity>> =>
+    fetchMoreAdminActivities(adminId, page);
+
   const { items, hasNext, isLoading, sentinelRef } = useInfiniteScroll(
     initialItems,
     initialHasNext,
-    fetchMoreActivities,
+    fetchMore,
   );
+
+  if (items.length === 0 && !isLoading) {
+    return (
+      <p className={`${typography.f14R} ${styles.emptyMessage}`}>
+        활동 내역이 없습니다.
+      </p>
+    );
+  }
 
   return (
     <ul className={styles.list}>

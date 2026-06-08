@@ -1,13 +1,13 @@
 import { formatDate, formatRelativeTime } from '@repo/utils';
 
-import * as styles from './AdminManagerTable.css';
+import * as styles from './AdminListTable.css';
 
 import type { ColDef } from '@/components/common/AdminTable';
-import type { AdminManager } from '@/mocks/types';
+import type { AdminItem } from '@/features/admins/types';
 
 import { AdminTable } from '@/components/common/AdminTable';
 
-const COLS: ColDef<AdminManager>[] = [
+const COLS: ColDef<AdminItem>[] = [
   {
     key: 'no',
     header: '번호',
@@ -47,12 +47,12 @@ const COLS: ColDef<AdminManager>[] = [
 ];
 
 interface Props {
-  items: AdminManager[];
+  items: AdminItem[];
   page: number;
   pageSize: number;
 }
 
-export default function AdminManagerTable({ items, page, pageSize }: Props) {
+export default function AdminListTable({ items, page, pageSize }: Props) {
   return (
     <AdminTable
       cols={COLS}

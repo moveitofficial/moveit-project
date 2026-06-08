@@ -1,3 +1,5 @@
+import type { ActivityType } from '@/types/enums';
+
 export interface DashboardSummary {
   expertApplications: number;
   reports: number;
@@ -18,21 +20,6 @@ export interface PendingTask {
   requesterName: string;
   createdAt: string;
 }
-
-export type ActivityType =
-  | 'EXPERT_APPROVED'
-  | 'EXPERT_REJECTED'
-  | 'MAIN_UPDATED'
-  | 'FAQ_CREATED'
-  | 'FAQ_UPDATED'
-  | 'FAQ_DELETED'
-  | 'BLACKLIST_ADDED'
-  | 'BLACKLIST_REMOVED'
-  | 'REFUND_APPROVED'
-  | 'CANCEL_APPROVED'
-  | 'CS_ASSIGNED'
-  | 'CS_CLOSED'
-  | 'SETTLEMENT_COMPLETED';
 
 export interface RecentActivity {
   id: string;
