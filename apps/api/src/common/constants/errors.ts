@@ -500,3 +500,16 @@ export const MAIN_SETTING_ERRORS = {
     code: 'MAIN_SETTING_SECTION_MISMATCH',
   },
 } as const;
+
+export const BANNER_ERRORS = {
+  LIMIT_EXCEEDED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '띠배너는 최대 1개까지 등록할 수 있습니다.',
+    code: 'BANNER_LIMIT_EXCEEDED',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '삭제할 띠배너를 찾을 수 없습니다.',
+    code: 'BANNER_NOT_FOUND',
+  },
+} as const;

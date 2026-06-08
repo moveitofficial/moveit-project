@@ -5,9 +5,13 @@ import {
   ServiceGroupName,
 } from '@prisma/client';
 
-import { MAIN_SETTING_ERRORS } from '../../common/constants/errors';
+import {
+  MAIN_SETTING_ERRORS,
+  BANNER_ERRORS,
+} from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
+import { UploadService } from '../../upload/upload.service';
 
 import { AdminMainSettingRepository } from './admin-main-setting.repository';
 
@@ -20,12 +24,15 @@ import type {
   ServiceCandidateItemDto,
   ServiceCandidatesResponseDto,
 } from './dto/candidates-response.dto';
+import type { DeleteBannerDto } from './dto/delete-banner.dto';
 import type { DeleteMainSettingDto } from './dto/delete-request.dto';
 import type {
   ExpertMainItemDto,
   MainSettingResponseDto,
   ServiceMainItemDto,
+  BannerItemDto,
 } from './dto/main-setting-response.dto';
+import type { RegisterBannerDto } from './dto/register-banner.dto';
 import type { RegisterMainSettingDto } from './dto/register-request.dto';
 
 const SERVICE_SECTION_TYPES_SET = new Set<MainSectionType>([
@@ -45,11 +52,13 @@ const SECTION_TO_GROUP: Record<MainSectionType, ServiceGroupName> = {
 };
 
 const SECTION_LIMIT = 4;
+const BANNER_LIMIT = 1;
 
 @Injectable()
 export class AdminMainSettingService {
   constructor(
     private readonly adminMainSettingRepository: AdminMainSettingRepository,
+    private readonly uploadService: UploadService,
   ) {}
 
   async getMainSettings(): Promise<MainSettingResponseDto> {
@@ -356,5 +365,61 @@ export class AdminMainSettingService {
       mainSettingIds,
       adminId,
     });
+  }
+
+  async registerBanner(
+    file: Express.Multer.File | undefined,
+    body: RegisterBannerDto,
+    adminId: string,
+  ): Promise<BannerItemDto> {
+    // 1. 한도 검증 — S3 업로드 전!
+    const count = await this.adminMainSettingRepository.countBanners();
+    if (count >= BANNER_LIMIT) {
+      throw new AppException(BANNER_ERRORS.LIMIT_EXCEEDED);
+    }
+
+    // 2. S3 업로드
+    const { url } = await this.uploadService.uploadBannerImage(file);
+
+    // 3. DB 저장 + 활동로그 (트랜잭션)
+    const created = await this.adminMainSettingRepository.createBanner({
+      imageUrl: url,
+      actionUrl: body.actionUrl,
+      adminId,
+    });
+
+    return {
+      id: created.id,
+      imageUrl: url,
+      actionUrl: body.actionUrl,
+      createdAt: new Date(),
+    };
+  }
+
+  async deleteBanners(dto: DeleteBannerDto, adminId: string): Promise<void> {
+    // 1. 존재 검증 + imageUrl 가져옴
+    const banners = await this.adminMainSettingRepository.findBannersByIds(
+      dto.bannerIds,
+    );
+    if (banners.length !== dto.bannerIds.length) {
+      throw new AppException(BANNER_ERRORS.NOT_FOUND);
+    }
+
+    // 2. S3 키 추출
+    const keys = banners.map((b) => this.#extractS3Key(b.imageUrl));
+
+    // 3. DB 삭제 (트랜잭션, 활동로그 같이)
+    await this.adminMainSettingRepository.deleteBanners({
+      bannerIds: dto.bannerIds,
+      adminId,
+    });
+
+    // 4. S3 정리 (DB 트랜잭션 완료 후 — 실패해도 orphan S3만 남음)
+    await this.uploadService.deleteImages(keys);
+  }
+
+  // S3 URL → key 추출
+  #extractS3Key(imageUrl: string): string {
+    return new URL(imageUrl).pathname.slice(1);
   }
 }
