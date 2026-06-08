@@ -5,7 +5,6 @@ export const registerButton = style({
   flexShrink: 0,
   padding: '16px 40px',
   marginLeft: '12px',
-  // border: 'none',
   borderRadius: '8px',
   backgroundColor: vars.color.blue300,
   color: vars.color.white,
@@ -32,11 +31,20 @@ export const form = style({
   width: '100%',
 });
 
-export const fields = style({
+const fieldsBase = {
   display: 'flex',
   flexDirection: 'column',
   gap: '24px',
+} as const;
+
+export const fields = style({
+  ...fieldsBase,
   marginBottom: '40px',
+});
+
+export const fieldsCompact = style({
+  ...fieldsBase,
+  marginBottom: '16px',
 });
 
 export const fieldGroup = style({
@@ -61,6 +69,11 @@ export const fieldInput = style({
       borderColor: vars.color.blue300,
     },
   },
+});
+
+export const errorMessage = style({
+  margin: '0 0 24px',
+  color: vars.color.red200,
 });
 
 export const formActions = style({

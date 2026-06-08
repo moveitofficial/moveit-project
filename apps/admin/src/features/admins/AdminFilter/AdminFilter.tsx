@@ -30,7 +30,7 @@ export default function AdminFilter({ params }: Props) {
 
       <FilterDropdown
         options={PAGE_SIZE_OPTIONS}
-        value={params.pageSize === undefined ? undefined : String(params.pageSize)}
+        value={params.pageSize?.toString()}
         onChange={(value) => {
           updateParam('pageSize', value);
         }}
