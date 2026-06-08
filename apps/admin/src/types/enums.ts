@@ -3,6 +3,21 @@ export type ExpertApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'; // api í
 
 export type Provider = 'LOCAL' | 'GOOGLE' | 'KAKAO' | 'NAVER';
 
+export type ActivityType =
+  | 'EXPERT_APPROVED'
+  | 'EXPERT_REJECTED'
+  | 'MAIN_UPDATED'
+  | 'FAQ_CREATED'
+  | 'FAQ_UPDATED'
+  | 'FAQ_DELETED'
+  | 'BLACKLIST_ADDED'
+  | 'BLACKLIST_REMOVED'
+  | 'REFUND_APPROVED'
+  | 'CANCEL_APPROVED'
+  | 'CS_ASSIGNED'
+  | 'CS_CLOSED'
+  | 'SETTLEMENT_COMPLETED';
+
 export type ServiceType = 'IT_COACHING' | 'PROJECT_REQUEST';
 export type ServiceCategory = 'WEB' | 'APP' | 'AI' | 'GAME' | 'DATA_ANALYTICS';
 export type ServiceStatus = 'ACTIVE' | 'PAUSED' | 'CLOSED';
