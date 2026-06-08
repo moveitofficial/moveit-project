@@ -1,4 +1,9 @@
-import type { ActivityType, RecentActivity } from '../types';
+import type { ActivityType } from '@/types/enums';
+
+interface RecentActivity {
+  actionType: ActivityType;
+  targetName: string | null;
+}
 
 const FALLBACK_TARGET = '이름없음';
 const MAIN_EXPOSURE_SUFFIX = ' 노출 수정';
@@ -14,8 +19,10 @@ const ACTIVITY_MESSAGE_FORMAT: Record<
   BLACKLIST_ADDED: (title) => `${title ?? FALLBACK_TARGET} 블랙리스트 등록`,
   BLACKLIST_REMOVED: (title) => `${title ?? FALLBACK_TARGET} 블랙리스트 삭제`,
   CANCEL_APPROVED: (title) => `${title ?? FALLBACK_TARGET} 취소 승인`,
-  REFUND_APPROVED: (title) => (title === null ? '환불 승인' : `${title} 환불 승인`),
-  FAQ_CREATED: (title) => `FAQ ${wrapFaqTitle(title ?? FALLBACK_TARGET)} 신규등록`,
+  REFUND_APPROVED: (title) =>
+    title === null ? '환불 승인' : `${title} 환불 승인`,
+  FAQ_CREATED: (title) =>
+    `FAQ ${wrapFaqTitle(title ?? FALLBACK_TARGET)} 신규등록`,
   FAQ_UPDATED: (title) => `FAQ ${wrapFaqTitle(title ?? FALLBACK_TARGET)} 수정`,
   FAQ_DELETED: (title) => `FAQ ${wrapFaqTitle(title ?? FALLBACK_TARGET)} 삭제`,
   CS_ASSIGNED: (title) => `${title ?? FALLBACK_TARGET} 문의 처리중`,

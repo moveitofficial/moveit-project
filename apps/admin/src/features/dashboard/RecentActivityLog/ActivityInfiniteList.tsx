@@ -4,13 +4,13 @@ import { typography } from '@repo/styles/typography';
 import { RoundChip } from '@repo/ui/RoundChip';
 import { formatRelativeTime } from '@repo/utils';
 
-import { formatActivityMessage } from './formatActivityMessage';
 import * as styles from './RecentActivityLog.css';
 
 import type { RecentActivity } from '@/features/dashboard/types';
 
 import { fetchMoreActivities } from '@/features/dashboard/actions';
-import { ACTIVITY_BADGE_CONFIG } from '@/features/dashboard/constants';
+import { ACTIVITY_BADGE_CONFIG } from '@/utils/constants/activityConstants';
+import { formatActivityMessage } from '@/utils/formatActivityMessage';
 import { useInfiniteScroll } from '@/utils/hooks';
 
 interface Props {
@@ -30,7 +30,7 @@ export function ActivityInfiniteList({ initialItems, initialHasNext }: Props) {
       {items.map((activity) => {
         const badge = ACTIVITY_BADGE_CONFIG[activity.actionType];
         const message = formatActivityMessage(activity);
-        
+
         return (
           <li key={activity.id} className={`${typography.f14R} ${styles.item}`}>
             <div className={styles.badgeWrapper}>
