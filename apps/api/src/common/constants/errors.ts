@@ -467,3 +467,11 @@ export const REPORT_ERRORS = {
     code: 'REPORT_NOT_FOUND',
   },
 } as const;
+
+export const FAQ_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: 'FAQ를 찾을 수 없습니다.',
+    code: 'FAQ_NOT_FOUND',
+  },
+} as const;
