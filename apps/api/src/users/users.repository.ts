@@ -3,11 +3,25 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 import { MyCommentSort } from './dto/my-comments-query.dto';
-import { myCommentListSelect, userWithProfilesInclude } from './users.types';
+import { MyPostSort } from './dto/my-posts-query.dto';
+import {
+  myCommentListSelect,
+  myPostListSelect,
+  userWithProfilesInclude,
+} from './users.types';
 
-import type { MyCommentListItem, UserWithProfiles } from './users.types';
+import type {
+  MyCommentListItem,
+  MyPostListItem,
+  UserWithProfiles,
+} from './users.types';
 import type { CreateOAuthUserParams } from '../auth/oauth/oauth.types';
-import type { AuthProvider, Prisma, User } from '@prisma/client';
+import type {
+  AuthProvider,
+  CommunityCategory,
+  Prisma,
+  User,
+} from '@prisma/client';
 
 @Injectable()
 export class UsersRepository {
@@ -73,6 +87,49 @@ export class UsersRepository {
     return this.prisma.user.update({
       where: { id },
       data: { password: hashedPassword },
+    });
+  }
+
+  findAllPostsByUserId(args: {
+    userId: string;
+    skip: number;
+    take: number;
+    sort: MyPostSort;
+    category?: CommunityCategory;
+  }): Promise<MyPostListItem[]> {
+    const where: Prisma.CommunityPostWhereInput = {
+      userId: args.userId,
+      deletedAt: null,
+      ...(args.category !== undefined && { category: args.category }),
+    };
+    const orderBy =
+      args.sort === 'likes'
+        ? [
+            { likeRecords: { _count: 'desc' as const } },
+            { createdAt: 'desc' as const },
+          ]
+        : args.sort === 'comments'
+          ? [
+              { comments: { _count: 'desc' as const } },
+              { createdAt: 'desc' as const },
+            ]
+          : [{ createdAt: 'desc' as const }];
+    return this.prisma.communityPost.findMany({
+      where,
+      select: myPostListSelect,
+      orderBy,
+      skip: args.skip,
+      take: args.take,
+    });
+  }
+
+  countPosts(userId: string, category?: CommunityCategory): Promise<number> {
+    return this.prisma.communityPost.count({
+      where: {
+        userId,
+        deletedAt: null,
+        ...(category !== undefined && { category }),
+      },
     });
   }
 

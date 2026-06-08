@@ -1,14 +1,7 @@
-import { Role } from '@prisma/client';
+import { resolveAuthorDisplayName } from '../common/utils/users.util';
 
 import type { CommentListItem, PostListItem } from './community-posts.types';
 import type { Comment, CommunityPost } from '@prisma/client';
-
-function resolveAuthorDisplayName(user: PostListItem['user']): string {
-  if (user.role === Role.EXPERT) {
-    return user.expertProfile?.businessName ?? '';
-  }
-  return user.clientProfile?.nickname ?? user.name ?? '';
-}
 
 export function mapPostListItem(post: PostListItem) {
   return {
