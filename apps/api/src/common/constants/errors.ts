@@ -467,3 +467,36 @@ export const REPORT_ERRORS = {
     code: 'REPORT_NOT_FOUND',
   },
 } as const;
+
+export const MAIN_SETTING_ERRORS = {
+  LIMIT_EXCEEDED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '섹션당 최대 4개까지 등록할 수 있습니다.',
+    code: 'MAIN_SETTING_LIMIT_EXCEEDED',
+  },
+  GROUP_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '섹션과 대상의 카테고리가 일치하지 않습니다.',
+    code: 'MAIN_SETTING_GROUP_MISMATCH',
+  },
+  DUPLICATE: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 등록된 항목이 포함되어 있습니다.',
+    code: 'MAIN_SETTING_DUPLICATE',
+  },
+  TARGET_NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '등록 대상을 찾을 수 없습니다.',
+    code: 'MAIN_SETTING_TARGET_NOT_FOUND',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '삭제할 메인세팅 항목을 찾을 수 없습니다.',
+    code: 'MAIN_SETTING_NOT_FOUND',
+  },
+  SECTION_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '삭제 대상이 지정한 섹션에 속하지 않습니다.',
+    code: 'MAIN_SETTING_SECTION_MISMATCH',
+  },
+} as const;
