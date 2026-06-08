@@ -434,4 +434,65 @@ export class AdminMainSettingRepository {
       });
     });
   }
+
+  // 한도 검증용 (최대 1개)
+  countBanners(): Promise<number> {
+    return this.prisma.banner.count();
+  }
+
+  // 삭제 시 S3 cleanup + 존재 검증용
+  findBannersByIds(ids: string[]) {
+    return this.prisma.banner.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, imageUrl: true },
+    });
+  }
+
+  // 등록 트랜잭션 — Banner.create + 활동로그
+  createBanner(params: {
+    imageUrl: string;
+    actionUrl: string;
+    adminId: string;
+  }): Promise<{ id: string }> {
+    const { imageUrl, actionUrl, adminId } = params;
+
+    return this.prisma.$transaction(async (tx) => {
+      const banner = await tx.banner.create({
+        data: { imageUrl, actionUrl },
+        select: { id: true },
+      });
+
+      await tx.adminActivityLog.create({
+        data: {
+          adminId,
+          actionType: AdminActionType.MAIN_UPDATED,
+          referenceId: banner.id,
+        },
+      });
+
+      return banner;
+    });
+  }
+
+  // 삭제 트랜잭션 — 활동로그 createMany + Banner.deleteMany
+  deleteBanners(params: {
+    bannerIds: string[];
+    adminId: string;
+  }): Promise<void> {
+    const { bannerIds, adminId } = params;
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.adminActivityLog.createMany({
+        data: bannerIds.map((id) => ({
+          adminId,
+          actionType: AdminActionType.MAIN_UPDATED,
+          referenceId: id,
+        })),
+      });
+
+      await tx.banner.deleteMany({
+        where: { id: { in: bannerIds } },
+      });
+    });
+  }
 }

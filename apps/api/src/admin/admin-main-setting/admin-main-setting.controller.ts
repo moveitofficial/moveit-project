@@ -9,12 +9,17 @@ import {
   Query,
   Req,
   UseGuards,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiOperation, ApiTags, ApiBody, ApiConsumes } from '@nestjs/swagger';
 
 import {
+  BANNER_ERRORS,
   COMMON_ERRORS,
   MAIN_SETTING_ERRORS,
+  UPLOAD_ERRORS,
 } from '../../common/constants/errors';
 import { ApiErrorResponse } from '../../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../../common/decorators/api-success-response.decorator';
@@ -26,8 +31,13 @@ import {
   ExpertCandidatesResponseDto,
   ServiceCandidatesResponseDto,
 } from './dto/candidates-response.dto';
+import { DeleteBannerDto } from './dto/delete-banner.dto';
 import { DeleteMainSettingDto } from './dto/delete-request.dto';
-import { MainSettingResponseDto } from './dto/main-setting-response.dto';
+import {
+  MainSettingResponseDto,
+  BannerItemDto,
+} from './dto/main-setting-response.dto';
+import { RegisterBannerDto } from './dto/register-banner.dto';
 import { RegisterMainSettingDto } from './dto/register-request.dto';
 
 import type { AdminJwtAccessUser } from '../admin-auth/jwt/admin-jwt-access.strategy';
@@ -128,5 +138,62 @@ export class AdminMainSettingController {
   ): Promise<void> {
     const { adminId } = req.user as AdminJwtAccessUser;
     await this.adminMainSettingService.delete(body, adminId);
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 띠배너 등록',
+    description:
+      '이미지(multipart) + actionUrl 받아 띠배너 등록. 최대 1개 한도. 이미지는 S3 banners/ 폴더로 업로드. 권장 크기 1176×164.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        actionUrl: {
+          type: 'string',
+          example: 'https://moveit.kr/promo/2026-summer',
+        },
+      },
+      required: ['file', 'actionUrl'],
+    },
+  })
+  @ApiSuccessResponse(HttpStatus.CREATED, BannerItemDto)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(BANNER_ERRORS.LIMIT_EXCEEDED)
+  @ApiErrorResponse(UPLOAD_ERRORS.FILE_NOT_ATTACHED)
+  @ApiErrorResponse(UPLOAD_ERRORS.INVALID_FILE_TYPE)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('banners')
+  registerBanner(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() body: RegisterBannerDto,
+    @Req() req: Request,
+  ): Promise<BannerItemDto> {
+    const { adminId } = req.user as AdminJwtAccessUser;
+    return this.adminMainSettingService.registerBanner(file, body, adminId);
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 띠배너 삭제',
+    description: 'bannerIds 다중 삭제. DB + S3 같이 정리.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(BANNER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @UseGuards(AdminJwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @Delete('banners')
+  async deleteBanners(
+    @Body() body: DeleteBannerDto,
+    @Req() req: Request,
+  ): Promise<void> {
+    const { adminId } = req.user as AdminJwtAccessUser;
+    await this.adminMainSettingService.deleteBanners(body, adminId);
   }
 }
