@@ -11,6 +11,7 @@ import { ClientProfilesModule } from './client-profiles/client-profiles.module';
 import { RolesGuard } from './common/guards/roles.guard';
 import { CommunityPostsModule } from './community-posts/community-posts.module';
 import { ExpertProfilesModule } from './expert-profiles/expert-profiles.module';
+import { FaqsModule } from './faqs/faqs.module';
 import { HealthModule } from './health/health.module';
 import { MailerModule } from './mailer/mailer.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -45,6 +46,7 @@ import { UsersModule } from './users/users.module';
     MailerModule,
     CommunityPostsModule,
     NotificationsModule,
+    FaqsModule,
   ],
   controllers: [AppController],
   providers: [AppService, RolesGuard],
