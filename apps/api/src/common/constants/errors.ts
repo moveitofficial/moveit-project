@@ -514,6 +514,19 @@ export const BANNER_ERRORS = {
   },
 } as const;
 
+export const FAQ_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: 'FAQ를 찾을 수 없습니다.',
+    code: 'FAQ_NOT_FOUND',
+  },
+  NOTHING_TO_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '수정할 항목이 없습니다.',
+    code: 'FAQ_NOTHING_TO_UPDATE',
+  },
+} as const;
+
 export const CATEGORY_FEATURED_ERRORS = {
   LIMIT_EXCEEDED: {
     status: HttpStatus.BAD_REQUEST,
