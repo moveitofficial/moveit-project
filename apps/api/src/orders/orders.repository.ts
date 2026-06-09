@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 
-import { PAYMENT_ERRORS } from '../common/constants/errors';
+import { ORDER_ERRORS, PAYMENT_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -11,7 +11,6 @@ import {
   ServiceReviewStats,
 } from '../services/services.types';
 
-import { DEFAULT_PAYMENT_METHOD } from './orders.constants';
 import {
   orderListSelect,
   orderPolicySelect,
@@ -212,7 +211,8 @@ export class OrdersRepository {
     });
   }
 
-  async createPaidOrder(data: {
+  async createOrder(data: {
+    id: string;
     clientUserId: string;
     expertUserId: string;
     serviceId: string;
@@ -220,12 +220,15 @@ export class OrdersRepository {
     platformFee: number;
     totalAmount: number;
     paymentKey: string;
-    paidAmount: number;
+    approvedAt: Date;
+    method: string;
+    installmentMonths: number;
     rawData: Prisma.InputJsonValue;
   }) {
     try {
-      return await this.prisma.order.create({
+      const created = await this.prisma.order.create({
         data: {
+          id: data.id,
           clientUserId: data.clientUserId,
           expertUserId: data.expertUserId,
           serviceId: data.serviceId,
@@ -238,22 +241,34 @@ export class OrdersRepository {
           payment: {
             create: {
               clientUserId: data.clientUserId,
-              paidAmount: data.paidAmount,
               status: PaymentStatus.PAID,
-              method: DEFAULT_PAYMENT_METHOD,
+              paidAmount: data.totalAmount,
+              method: data.method,
+              installmentMonths: data.installmentMonths,
               paymentKey: data.paymentKey,
               rawData: data.rawData,
-              approvedAt: new Date(),
+              approvedAt: data.approvedAt,
             },
           },
         },
+        include: { payment: true },
       });
+      return created as typeof created & {
+        payment: NonNullable<typeof created.payment>;
+      };
     } catch (error: unknown) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new AppException(PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY);
+        const target = error.meta?.target;
+        const targets = Array.isArray(target) ? target : [];
+        if (targets.includes('payment_key')) {
+          throw new AppException(PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY);
+        }
+        if (targets.includes('id')) {
+          throw new AppException(ORDER_ERRORS.DUPLICATE_ORDER_ID);
+        }
       }
       throw error;
     }

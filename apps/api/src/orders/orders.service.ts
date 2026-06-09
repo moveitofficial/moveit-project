@@ -1,15 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OrderStatus, Role, ServiceStatus } from '@prisma/client';
 
 import {
   COMMON_ERRORS,
   ORDER_ERRORS,
+  PAYMENT_ERRORS,
   REVIEW_ERRORS,
   SERVICE_ERRORS,
 } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
+import { PaymentsService } from '../payments/payments.service';
 import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
 import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
 import { MyReviewListItemResponseDto } from '../services/dto/service-response.dto';
@@ -18,13 +20,11 @@ import { mapMyReviewListItem, mapReview } from '../services/services.mapper';
 import { REVIEWABLE_ORDER_STATUSES } from '../services/services.types';
 
 import {
+  calculatePlatformFee,
   ORDER_LIST_DEFAULT_SORT,
   ORDER_LIST_USER_ID_FIELD,
   ORDERS_LIST_DEFAULT_PAGE,
   ORDERS_LIST_DEFAULT_PAGE_SIZE,
-  PG_STUB_PROVIDER,
-  PG_STUB_RECEIPT_URL,
-  PLATFORM_FEE_RATE,
 } from './orders.constants';
 import {
   mapCreateOrderResponse,
@@ -48,7 +48,12 @@ import type { UpdateOrderStatusRequestDto } from './dto/update-order-status-requ
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly ordersRepository: OrdersRepository) {}
+  private readonly logger = new Logger(OrdersService.name);
+
+  constructor(
+    private readonly ordersRepository: OrdersRepository,
+    private readonly paymentsService: PaymentsService,
+  ) {}
 
   async getOrders(userId: string, query: GetOrdersQueryDto) {
     const page = query.page ?? ORDERS_LIST_DEFAULT_PAGE;
@@ -83,7 +88,7 @@ export class OrdersService {
     );
   }
 
-  async initializeOrder(clientUserId: string, dto: CreateOrderRequestDto) {
+  async createOrder(clientUserId: string, dto: CreateOrderRequestDto) {
     const service = await this.ordersRepository.findServiceById(dto.serviceId);
     if (!service) throw new AppException(SERVICE_ERRORS.NOT_FOUND);
 
@@ -92,35 +97,42 @@ export class OrdersService {
     }
 
     const agreedServicePrice = service.servicePrice;
-    const platformFee = Math.floor(agreedServicePrice * PLATFORM_FEE_RATE);
+    const platformFee = calculatePlatformFee(agreedServicePrice);
     const totalAmount = agreedServicePrice + platformFee;
 
-    const pgVerifiedAmount = await this.fetchAmountFromExternalPG(
-      dto.paymentKey,
-      dto.paidAmount,
-    );
-
-    if (totalAmount !== dto.paidAmount || pgVerifiedAmount !== totalAmount) {
-      throw new AppException(ORDER_ERRORS.AMOUNT_MISMATCH);
+    if (totalAmount !== dto.amount) {
+      throw new AppException(PAYMENT_ERRORS.AMOUNT_MISMATCH);
     }
 
-    const order = await this.ordersRepository.createPaidOrder({
-      clientUserId,
-      expertUserId: service.expertUserId,
-      serviceId: service.id,
-      agreedServicePrice,
-      platformFee,
+    const toss = await this.paymentsService.confirmTossPayment(
+      dto.paymentKey,
+      dto.orderId,
       totalAmount,
-      paymentKey: dto.paymentKey,
-      paidAmount: dto.paidAmount,
-      rawData: {
-        provider: PG_STUB_PROVIDER,
-        receiptUrl: PG_STUB_RECEIPT_URL,
-        approvedAt: new Date().toISOString(),
-      },
-    });
+    );
 
-    return mapCreateOrderResponse(order);
+    try {
+      const order = await this.ordersRepository.createOrder({
+        id: dto.orderId,
+        clientUserId,
+        expertUserId: service.expertUserId,
+        serviceId: service.id,
+        agreedServicePrice,
+        platformFee,
+        totalAmount,
+        paymentKey: dto.paymentKey,
+        approvedAt: toss.approvedAt,
+        method: toss.method,
+        installmentMonths: toss.installmentMonths,
+        rawData: toss.rawData,
+      });
+      return mapCreateOrderResponse(order);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Toss 승인 후 Order 생성 실패. orderId=${dto.orderId}, paymentKey=${dto.paymentKey}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw error;
+    }
   }
 
   async updateOrderStatus(
@@ -203,13 +215,6 @@ export class OrdersService {
     );
     if (!updated) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
     return mapUpdateOrderStatusResponse(updated);
-  }
-
-  private fetchAmountFromExternalPG(
-    _paymentKey: string,
-    paidAmount: number,
-  ): Promise<number> {
-    return Promise.resolve(paidAmount);
   }
 
   async createReview(
