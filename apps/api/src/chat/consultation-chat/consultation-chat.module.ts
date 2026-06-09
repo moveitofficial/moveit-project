@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
+import { ConsultationChatController } from './consultation-chat.controller';
 import { ConsultationChatGateway } from './consultation-chat.gateway';
 import { ConsultationChatRepository } from './consultation-chat.repository';
 import { ConsultationChatService } from './consultation-chat.service';
@@ -21,5 +22,6 @@ import { ConsultationChatService } from './consultation-chat.service';
     ConsultationChatService,
     ConsultationChatRepository,
   ],
+  controllers: [ConsultationChatController],
 })
 export class ConsultationChatModule {}

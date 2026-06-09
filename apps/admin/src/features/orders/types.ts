@@ -1,5 +1,4 @@
-import type { ServiceCategory, ServiceType } from '@/types/enums';
-import type { OrderStatus } from '@/types/enums';
+import type { ServiceCategory, ServiceType, OrderStatus  } from '@/types/enums';
 
 export const ORDER_TAB_KEYS = [
   'working',
