@@ -1,20 +1,17 @@
 import type { SettlementStatus } from '@/types/enums';
 import type { OrderCardAction } from '@repo/ui/OrderCard';
-import type { RoundChip } from '@repo/ui/RoundChip';
-import type { ComponentProps } from 'react';
-
-type ChipColor = NonNullable<ComponentProps<typeof RoundChip>['color']>;
+import type { RectLabelColor } from '@repo/ui/RectLabel';
 
 interface BadgeConfig {
   text: string;
-  color: ChipColor;
+  color: RectLabelColor;
 }
 
 export const SETTLEMENT_STATUS_BADGE_CONFIG: Record<
   SettlementStatus,
   BadgeConfig
 > = {
-  SETTLEMENT_REQUESTED: { text: '정산요청', color: 'yellow100' },
+  SETTLEMENT_REQUESTED: { text: '정산요청', color: 'yellow' },
   SETTLEMENT_COMPLETED: { text: '정산완료', color: 'blue400' },
 };
 
