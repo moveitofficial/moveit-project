@@ -9,11 +9,11 @@ import {
   ApiSuccessResponse,
 } from '../../common/decorators/api-success-response.decorator';
 import { JwtAuth } from '../../common/decorators/jwt-auth.decorator';
+import { FindMessagesQueryDto } from '../common/dto/find-messages-query.dto';
 
 import { ConsultationChatService } from './consultation-chat.service';
 import { ChatMessageListResponseDto } from './dto/chat-message-response.dto';
 import { ChatRoomResponseDto } from './dto/chat-room-response.dto';
-import { FindMessagesQueryDto } from './dto/find-messages-query.dto';
 import { FindRoomsQueryDto } from './dto/find-rooms-query.dto';
 
 import type { Request } from 'express';

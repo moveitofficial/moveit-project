@@ -10,4 +10,5 @@ export const CS_EVENTS = {
   JOINED_ROOM: 'joinedRoom',
   RECEIVE_MESSAGE: 'receiveMessage',
   TICKET_CLOSED: 'ticketClosed',
+  ADMIN_ASSIGNED: 'adminAssigned',
 } as const;

@@ -413,6 +413,11 @@ export const CS_CHAT_ERRORS = {
     message: '관리자만 이 작업을 수행할 수 있습니다.',
     code: 'CS_CHAT_FORBIDDEN_NOT_ADMIN',
   },
+  ALREADY_ASSIGNED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '이미 상담원이 배정된 문의입니다.',
+    code: 'CS_CHAT_ALREADY_ASSIGNED',
+  },
 } as const;
 
 export const COMMENTS_ERRORS = {
