@@ -1,14 +1,19 @@
 'use client';
 
+import { ApiError } from '@repo/fetcher';
 import { typography } from '@repo/styles/typography';
 import { ConfirmModal, Modal } from '@repo/ui/Modal';
+import { useRouter } from 'next/navigation';
 import { useId, useState, type ChangeEvent, type FormEvent } from 'react';
 
 import * as styles from './AdminRegisterButton.css';
 
-/**
- * 실제 등록은 아직 미구현
- */
+import { createAdmin } from '@/features/admins/api';
+
+interface Props {
+  isSuper: boolean;
+}
+
 const INITIAL_FORM = { email: '', name: '', password: '', passwordConfirm: '' };
 
 function isRegisterFormValid(form: typeof INITIAL_FORM): boolean {
@@ -22,7 +27,8 @@ function isRegisterFormValid(form: typeof INITIAL_FORM): boolean {
   );
 }
 
-export default function AdminRegisterButton() {
+export default function AdminRegisterButton({ isSuper }: Props) {
+  const router = useRouter();
   const formTitleId = useId();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -30,15 +36,19 @@ export default function AdminRegisterButton() {
 
   const [form, setForm] = useState({ ...INITIAL_FORM });
   const [submittedName, setSubmittedName] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+    setErrorMessage(null);
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setForm({ ...INITIAL_FORM });
+    setErrorMessage(null);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -48,11 +58,29 @@ export default function AdminRegisterButton() {
       return;
     }
 
-    setSubmittedName(form.name.trim());
-    setIsFormOpen(false);
-    setIsSuccessOpen(true);
-    setForm({ ...INITIAL_FORM });
+    setIsSubmitting(true);
+    void createAdmin(form)
+      .then(() => {
+        setSubmittedName(form.name.trim());
+        setIsFormOpen(false);
+        setIsSuccessOpen(true);
+        setForm({ ...INITIAL_FORM });
+        setErrorMessage(null);
+        router.refresh();
+      })
+      .catch((error: unknown) => {
+        if (error instanceof ApiError && error.status === 409) {
+          setErrorMessage('이미 등록된 이메일입니다.');
+        } else {
+          setErrorMessage('관리자 등록에 실패했습니다. 다시 시도해주세요.');
+        }
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
+
+  if (!isSuper) return null;
 
   return (
     <>
@@ -80,7 +108,11 @@ export default function AdminRegisterButton() {
           </h2>
 
           <form className={styles.form} onSubmit={handleSubmit}>
-            <div className={styles.fields}>
+            <div
+              className={
+                errorMessage === null ? styles.fields : styles.fieldsCompact
+              }
+            >
               <div className={styles.fieldGroup}>
                 <label htmlFor="admin-email" className={typography.f14EB}>
                   이메일
@@ -149,13 +181,19 @@ export default function AdminRegisterButton() {
               </div>
             </div>
 
+            {errorMessage !== null && (
+              <p className={`${typography.f14R} ${styles.errorMessage}`}>
+                {errorMessage}
+              </p>
+            )}
+
             <div className={styles.formActions}>
               <button
                 type="submit"
                 className={`${typography.f16EB} ${styles.submitButton}`}
-                disabled={!isRegisterFormValid(form)}
+                disabled={!isRegisterFormValid(form) || isSubmitting}
               >
-                관리자 등록
+                {isSubmitting ? '등록 중...' : '관리자 등록'}
               </button>
               <button
                 type="button"

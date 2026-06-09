@@ -1,7 +1,8 @@
-import type { AdminReport, ApiSuccess, PaginatedResult } from '@/mocks';
-import type { ReportReason } from '@/types/enums';
+import { api } from '@repo/fetcher';
 
-import { mockAdminReports } from '@/mocks';
+import type { ReportItem } from './types';
+import type { ApiSuccess, PaginatedResult } from '@/types/api';
+import type { ReportReason } from '@/types/enums';
 
 export interface GetPagedReportsParams {
   search?: string;
@@ -12,38 +13,19 @@ export interface GetPagedReportsParams {
 
 export function getPagedReports(
   params: GetPagedReportsParams,
-): Promise<ApiSuccess<PaginatedResult<AdminReport>>> {
-  const filtered = mockAdminReports.filter((item) => {
-    if (params.reason !== undefined && item.reason !== params.reason) {
-      return false;
-    }
-
-    if (params.search !== undefined) {
-      const q = params.search.toLowerCase().trim();
-      return (
-        item.reporterName.toLowerCase().includes(q) ||
-        item.targetUserName.toLowerCase().includes(q)
-      );
-    }
-
-    return true;
+): Promise<ApiSuccess<PaginatedResult<ReportItem>>> {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    pageSize: String(params.pageSize),
   });
+  if (params.search !== undefined) {
+    query.set('search', params.search);
+  }
+  if (params.reason !== undefined) {
+    query.set('reason', params.reason);
+  }
 
-  const totalCount = filtered.length;
-  const startIndex = (params.page - 1) * params.pageSize;
-  const pagedItems = filtered.slice(startIndex, startIndex + params.pageSize);
-
-  return Promise.resolve({
-    success: true,
-    message: '신고 내역을 조회했습니다.',
-    data: {
-      items: pagedItems,
-      pagination: {
-        page: params.page,
-        pageSize: params.pageSize,
-        totalCount,
-        hasNext: startIndex + params.pageSize < totalCount,
-      },
-    },
-  });
+  return api.get<ApiSuccess<PaginatedResult<ReportItem>>>(
+    `/admin/reports?${query.toString()}`,
+  );
 }

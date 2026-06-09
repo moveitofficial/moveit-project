@@ -59,11 +59,10 @@ export const navLinkActive = style({
     '&::after': {
       content: '',
       position: 'absolute',
-      left: '50%',
+      left: 0,
+      right: 0,
       bottom: '-1px',
-      width: '73px',
       height: '4px',
-      transform: 'translateX(-50%)',
       backgroundColor: vars.color.blue300,
     },
   },

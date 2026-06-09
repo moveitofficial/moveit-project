@@ -40,6 +40,7 @@ import {
   UpdatePostRequestDto,
 } from './dto/post-request.dto';
 import {
+  CommentDeletionResponseDto,
   CommentListItemResponseDto,
   CommentResponseDto,
   PostDeletionResponseDto,
@@ -201,5 +202,28 @@ export class CommunityPostsController {
     @Query() query: PaginationQueryDto,
   ) {
     return this.communityPostsService.getComments(postId, query);
+  }
+
+  @ApiOperation({ summary: '댓글 삭제' })
+  @JwtAuth(COMMENTS_ERRORS.FORBIDDEN)
+  @ApiSuccessResponse(HttpStatus.OK, CommentDeletionResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND, COMMENTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    COMMUNITY_POSTS_ERRORS.ALREADY_DELETED,
+    COMMENTS_ERRORS.ALREADY_DELETED,
+  )
+  @Delete(':id/comments/:commentId')
+  deleteComment(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) postId: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.deleteComment(
+      user.userId,
+      postId,
+      commentId,
+    );
   }
 }

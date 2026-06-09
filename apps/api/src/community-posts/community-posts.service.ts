@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { NotificationCategory, type CommunityCategory } from '@prisma/client';
 
 import {
   COMMENTS_ERRORS,
@@ -8,10 +9,12 @@ import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
+import { NotificationsService } from '../notifications/notifications.service';
 
 import {
   mapComment,
   mapCommentListItem,
+  mapCommentToBeDeleted,
   mapPost,
   mapPostDetail,
   mapPostListItem,
@@ -37,12 +40,11 @@ import {
   PostListItemResponseDto,
 } from './dto/post-response.dto';
 
-import type { CommunityCategory } from '@prisma/client';
-
 @Injectable()
 export class CommunityPostsService {
   constructor(
     private readonly communityPostsRepository: CommunityPostsRepository,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createPost(
@@ -242,6 +244,16 @@ export class CommunityPostsService {
       userId,
       dto,
     );
+
+    if (post.userId !== userId) {
+      await this.notificationsService.send({
+        userIds: [post.userId],
+        category: NotificationCategory.POST_COMMENT,
+        vars: { postTitle: post.title },
+        referenceId: postId,
+      });
+    }
+
     return mapComment(comment);
   }
 
@@ -324,5 +336,37 @@ export class CommunityPostsService {
       comments.map((comment) => mapCommentListItem(comment)),
       { page, pageSize, totalCount },
     );
+  }
+
+  async deleteComment(
+    userId: string,
+    postId: string,
+    commentId: string,
+  ): Promise<ReturnType<typeof mapCommentToBeDeleted>> {
+    const post = await this.communityPostsRepository.findByPostId(postId);
+    if (post === null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.NOT_FOUND);
+    }
+    if (post.deletedAt !== null) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED);
+    }
+
+    const comment = await this.communityPostsRepository.findComment(commentId);
+
+    if (comment === null) {
+      throw new AppException(COMMENTS_ERRORS.NOT_FOUND);
+    }
+
+    if (comment.deletedAt !== null) {
+      throw new AppException(COMMENTS_ERRORS.ALREADY_DELETED);
+    }
+
+    if (comment.userId !== userId) {
+      throw new AppException(COMMENTS_ERRORS.FORBIDDEN);
+    }
+
+    const toBeDeleted =
+      await this.communityPostsRepository.deleteComment(commentId);
+    return mapCommentToBeDeleted(toBeDeleted);
   }
 }

@@ -3,13 +3,11 @@ import { formatDate } from '@repo/utils';
 import * as styles from './WithdrawnTable.css';
 
 import type { ColDef } from '@/components/common/AdminTable';
-import type { AdminWithdrawnExpert, AdminWithdrawnUser } from '@/mocks/types';
+import type { WithdrawnItem } from '@/features/withdrawn/types';
 
 import { AdminTable } from '@/components/common/AdminTable';
 import { ReasonModalTrigger } from '@/features/withdrawn/ReasonModalTrigger';
 import { PROVIDER_LABEL } from '@/utils/constants';
-
-type WithdrawnItem = AdminWithdrawnUser | AdminWithdrawnExpert;
 
 const COLS: ColDef<WithdrawnItem>[] = [
   {
@@ -27,12 +25,12 @@ const COLS: ColDef<WithdrawnItem>[] = [
     render: (item) => <span className={styles.emailText}>{item.email}</span>,
   },
   {
-    key: 'withdrawReason',
+    key: 'deletionReason',
     header: '탈퇴 사유',
     headerStyle: styles.colReasonHeader,
     cellStyle: styles.colReason,
     render: (item) => (
-      <ReasonModalTrigger reason={item.withdrawReason} />
+      <ReasonModalTrigger reason={item.deletionReason ?? '-'} />
     ),
   },
   {
@@ -50,11 +48,11 @@ const COLS: ColDef<WithdrawnItem>[] = [
     render: (item) => formatDate(item.createdAt),
   },
   {
-    key: 'withdrawnAt',
+    key: 'deletedAt',
     header: '탈퇴일',
     headerStyle: styles.colWithdrawnDate,
     cellStyle: styles.colWithdrawnDate,
-    render: (item) => formatDate(item.withdrawnAt),
+    render: (item) => formatDate(item.deletedAt),
   },
 ];
 

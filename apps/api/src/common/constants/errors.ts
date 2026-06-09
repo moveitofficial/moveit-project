@@ -241,6 +241,11 @@ export const EXPERT_PROFILE_ERRORS = {
     message: '이미 판매자 승인이 완료되었습니다.',
     code: 'EXPERT_PROFILE_ALREADY_APPROVED',
   },
+  NOT_APPLIED: {
+    status: HttpStatus.CONFLICT,
+    message: '전문가 승인 신청 상태가 아닙니다.',
+    code: 'EXPERT_PROFILE_NOT_APPLIED',
+  },
   INCOMPLETE_PROFILE: {
     status: HttpStatus.BAD_REQUEST,
     message: '승인 신청 전 전문가 프로필의 모든 항목을 입력해 주세요.',
@@ -450,5 +455,112 @@ export const COMMENTS_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '댓글 내용은 최대 1000자 이하여야 합니다.',
     code: 'COMMENTS_CONTENT_TOO_LONG',
+  },
+} as const;
+
+export const NOTIFICATION_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '알림을 찾을 수 없습니다.',
+  },
+} as const;
+
+export const REPORT_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '신고 내역을 찾을 수 없습니다.',
+    code: 'REPORT_NOT_FOUND',
+  },
+} as const;
+
+export const MAIN_SETTING_ERRORS = {
+  LIMIT_EXCEEDED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '섹션당 최대 4개까지 등록할 수 있습니다.',
+    code: 'MAIN_SETTING_LIMIT_EXCEEDED',
+  },
+  GROUP_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '섹션과 대상의 카테고리가 일치하지 않습니다.',
+    code: 'MAIN_SETTING_GROUP_MISMATCH',
+  },
+  DUPLICATE: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 등록된 항목이 포함되어 있습니다.',
+    code: 'MAIN_SETTING_DUPLICATE',
+  },
+  TARGET_NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '등록 대상을 찾을 수 없습니다.',
+    code: 'MAIN_SETTING_TARGET_NOT_FOUND',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '삭제할 메인세팅 항목을 찾을 수 없습니다.',
+    code: 'MAIN_SETTING_NOT_FOUND',
+  },
+  SECTION_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '삭제 대상이 지정한 섹션에 속하지 않습니다.',
+    code: 'MAIN_SETTING_SECTION_MISMATCH',
+  },
+} as const;
+
+export const BANNER_ERRORS = {
+  LIMIT_EXCEEDED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '띠배너는 최대 1개까지 등록할 수 있습니다.',
+    code: 'BANNER_LIMIT_EXCEEDED',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '삭제할 띠배너를 찾을 수 없습니다.',
+    code: 'BANNER_NOT_FOUND',
+  },
+} as const;
+
+export const FAQ_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: 'FAQ를 찾을 수 없습니다.',
+    code: 'FAQ_NOT_FOUND',
+  },
+  NOTHING_TO_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '수정할 항목이 없습니다.',
+    code: 'FAQ_NOTHING_TO_UPDATE',
+  },
+} as const;
+
+export const CATEGORY_FEATURED_ERRORS = {
+  LIMIT_EXCEEDED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '카테고리 대표서비스는 그룹당 최대 4개까지 등록할 수 있습니다.',
+    code: 'CATEGORY_FEATURED_LIMIT_EXCEEDED',
+  },
+  GROUP_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '서비스 그룹과 대상의 카테고리가 일치하지 않습니다.',
+    code: 'CATEGORY_FEATURED_GROUP_MISMATCH',
+  },
+  DUPLICATE: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 등록된 항목이 포함되어 있습니다.',
+    code: 'CATEGORY_FEATURED_DUPLICATE',
+  },
+  TARGET_NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '등록 대상 서비스를 찾을 수 없습니다.',
+    code: 'CATEGORY_FEATURED_TARGET_NOT_FOUND',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '삭제할 카테고리 대표서비스 항목을 찾을 수 없습니다.',
+    code: 'CATEGORY_FEATURED_NOT_FOUND',
+  },
+  GROUP_MISMATCH_ON_DELETE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '삭제 대상이 지정한 서비스 그룹에 속하지 않습니다.',
+    code: 'CATEGORY_FEATURED_GROUP_MISMATCH_ON_DELETE',
   },
 } as const;

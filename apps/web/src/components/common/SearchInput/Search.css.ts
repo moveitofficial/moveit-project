@@ -25,3 +25,16 @@ export const searchIcon = style({
   right: 32,
   top: 12,
 });
+
+export const searchSubmitButton = style([
+  searchIcon,
+  {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+  },
+]);

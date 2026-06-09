@@ -90,3 +90,13 @@ export class CommentListItemResponseDto extends CommentResponseDto {
   })
   declare authorProfileImageUrl: string | null;
 }
+
+export class CommentDeletionResponseDto extends OmitType(CommentResponseDto, [
+  'content',
+] as const) {
+  @ApiProperty({
+    example: '2026-05-28T10:00:00.000Z',
+    description: '삭제 일시',
+  })
+  declare deletedAt: Date;
+}

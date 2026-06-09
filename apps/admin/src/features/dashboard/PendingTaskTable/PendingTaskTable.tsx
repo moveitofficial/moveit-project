@@ -1,18 +1,15 @@
 import { typography } from '@repo/styles/typography';
-import { RoundChip } from '@repo/ui/RoundChip';
-import { formatRelativeTime } from '@repo/utils';
 
+import { PendingTaskInfiniteList } from './PendingTaskInfiniteList';
 import * as styles from './PendingTaskTable.css';
 
-import type { PendingTask } from '@/features/dashboard/types';
+import { getDashboardPending } from '@/features/dashboard/api';
 
-import { PENDING_TASK_BADGE_CONFIG } from '@/features/dashboard/constants';
-
-interface Props {
-  tasks: PendingTask[];
-}
-
-export default function PendingTaskTable({ tasks }: Props) {
+export default async function PendingTaskTable() {
+  const {
+    data: { items, pagination },
+  } = await getDashboardPending();
+  
   return (
     <section className={styles.section}>
       <div className={styles.titleGroup}>
@@ -30,35 +27,12 @@ export default function PendingTaskTable({ tasks }: Props) {
           <span className={styles.colDate}>시간</span>
         </div>
 
-        <ul className={styles.list}>
-          {tasks.map((task, index) => {
-            const badge = PENDING_TASK_BADGE_CONFIG[task.type];
-
-            return (
-              <li
-                key={index}
-                className={`${typography.f14R} ${styles.listItem}`}
-              >
-                <div className={styles.colBadge}>
-                  <RoundChip
-                    text={badge.text}
-                    size="admin"
-                    color={badge.color}
-                    opacity={badge.opacity}
-                  />
-                </div>
-
-                <span className={styles.colTitle} title={task.title}>
-                  {task.title}
-                </span>
-                <span className={styles.colRequester}>{task.requester}</span>
-                <span className={styles.colDate}>
-                  {formatRelativeTime(task.createdAt)}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        <div className={styles.listScroll}>
+          <PendingTaskInfiniteList
+            initialItems={items}
+            initialHasNext={pagination.hasNext}
+          />
+        </div>
       </div>
     </section>
   );

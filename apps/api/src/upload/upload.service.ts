@@ -80,4 +80,23 @@ export class UploadService {
   async deleteImages(keys: string[]): Promise<void> {
     await Promise.all(keys.map((key) => this.s3Service.delete(key)));
   }
+
+  async uploadBannerImage(
+    file: Express.Multer.File | undefined,
+  ): Promise<{ key: string; url: string }> {
+    if (!file) {
+      throw new AppException(UPLOAD_ERRORS.FILE_NOT_ATTACHED);
+    }
+
+    if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
+      throw new AppException(UPLOAD_ERRORS.INVALID_FILE_TYPE);
+    }
+
+    return this.s3Service.upload({
+      buffer: file.buffer,
+      folder: 'banners',
+      contentType: file.mimetype,
+      originalName: file.originalname,
+    });
+  }
 }

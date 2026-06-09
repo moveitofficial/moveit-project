@@ -1,12 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { AdminActionType, Role } from '@prisma/client';
+import { AdminActionType, NotificationCategory, Role } from '@prisma/client';
 
-import { USER_ERRORS } from '../../common/constants/errors';
+import {
+  EXPERT_PROFILE_ERRORS,
+  USER_ERRORS,
+} from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
 import { Paginated } from '../../common/types/paginated.type';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 import { AdminUserRepository } from './admin-user.repository';
+import { BlacklistCountsDto } from './dto/blacklist/blacklist-counts-response.dto';
+import { GetBlacklistQueryDto } from './dto/blacklist/blacklist-query.dto';
+import { BlacklistItemDto } from './dto/blacklist/blacklist-response.dto';
+import { BlacklistStatus } from './dto/blacklist/blacklist-status.enum';
 import { UserCommentItemDto } from './dto/detail/user-comments-response.dto';
 import { UserDetailResponseDto } from './dto/detail/user-detail-response.dto';
 import { UserOrderItemDto } from './dto/detail/user-orders-response.dto';
@@ -17,20 +25,28 @@ import {
 import { UserReportReceivedItemDto } from './dto/detail/user-reports-received-response.dto';
 import { UserReportSentItemDto } from './dto/detail/user-reports-sent-response.dto';
 import { UserServiceItemDto } from './dto/detail/user-services-response.dto';
+import { ExpertApprovalStatus } from './dto/list/expert-approval-status.enum';
 import { UserCounstDto } from './dto/list/users-counts-response.dto';
 import { GetUsersQueryDto } from './dto/list/users-query.dto';
 import { UserItemDto } from './dto/list/users-response.dto';
 import { type PageQueryDto } from './dto/page-query.dto';
+import { WithdrawnCountsDto } from './dto/withdrawn/withdrawn-counts-response.dto';
+import { GetWithdrawnQueryDto } from './dto/withdrawn/withdrawn-query.dto';
+import { WithdrawnItemDto } from './dto/withdrawn/withdrawn-response.dto';
 
 @Injectable()
 export class AdminUserService {
-  constructor(private readonly adminUserRepository: AdminUserRepository) {}
+  constructor(
+    private readonly adminUserRepository: AdminUserRepository,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async getUsers(query: GetUsersQueryDto): Promise<Paginated<UserItemDto>> {
     const role = query.role ?? Role.CLIENT;
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 50;
     const skip = (page - 1) * pageSize;
+    const isExpert = role === Role.EXPERT;
 
     const resolvedQuery: GetUsersQueryDto = {
       role,
@@ -39,6 +55,8 @@ export class AdminUserService {
       provider: query.provider,
       region: query.region,
       search: query.search,
+      status: query.status,
+      specialtyGroup: query.specialtyGroup,
     };
 
     const [rows, totalCount] = await Promise.all([
@@ -52,15 +70,35 @@ export class AdminUserService {
       email: u.email,
       provider: u.provider,
       region: u.region,
-      paymentCount:
-        role === Role.CLIENT
-          ? u._count.ordersAsClient
-          : u._count.ordersAsExpert,
+      paymentCount: isExpert
+        ? u._count.ordersAsExpert
+        : u._count.ordersAsClient,
       reportCount: u._count.receivedReports,
+      businessName: isExpert ? (u.expertProfile?.businessName ?? null) : null,
+      specialtyGroup: isExpert
+        ? (u.expertProfile?.specialtyCategories[0]?.serviceGroup.name ?? null)
+        : null,
+      approvalStatus: isExpert
+        ? this.#deriveApprovalStatus(u.expertProfile)
+        : null,
       createdAt: u.createdAt,
     }));
 
     return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  #deriveApprovalStatus(
+    profile: {
+      isApplied: boolean;
+      isApproved: boolean;
+      rejectedAt: Date | null;
+    } | null,
+  ): ExpertApprovalStatus | null {
+    if (!profile) return null;
+    if (profile.rejectedAt) return ExpertApprovalStatus.REJECTED;
+    if (profile.isApproved) return ExpertApprovalStatus.APPROVED;
+    if (profile.isApplied) return ExpertApprovalStatus.PENDING;
+    return null;
   }
 
   async getCounts(): Promise<UserCounstDto> {
@@ -357,5 +395,142 @@ export class AdminUserService {
       adminId,
       AdminActionType.BLACKLIST_REMOVED,
     );
+  }
+
+  async approveExpert(userId: string, adminId: string): Promise<void> {
+    const user = await this.adminUserRepository.findById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (user.role !== Role.EXPERT)
+      throw new AppException(USER_ERRORS.ROLE_MISMATCH);
+    if (!user.expertProfile)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
+    if (user.expertProfile.isApproved)
+      throw new AppException(EXPERT_PROFILE_ERRORS.ALREADY_APPROVED);
+    if (!user.expertProfile.isApplied)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_APPLIED);
+
+    await this.adminUserRepository.approveExpert(userId, adminId);
+
+    await this.notificationsService.send({
+      userIds: [userId],
+      category: NotificationCategory.EXPERT_APPROVED,
+    });
+  }
+
+  async rejectExpert(
+    userId: string,
+    adminId: string,
+    rejectReason: string,
+  ): Promise<void> {
+    const user = await this.adminUserRepository.findById(userId);
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (user.role !== Role.EXPERT)
+      throw new AppException(USER_ERRORS.ROLE_MISMATCH);
+    if (!user.expertProfile)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
+    if (user.expertProfile.isApproved)
+      throw new AppException(EXPERT_PROFILE_ERRORS.ALREADY_APPROVED);
+    if (!user.expertProfile.isApplied)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_APPLIED);
+
+    await this.adminUserRepository.rejectExpert(userId, adminId, rejectReason);
+
+    await this.notificationsService.send({
+      userIds: [userId],
+      category: NotificationCategory.EXPERT_REJECTED,
+      vars: { rejectReason },
+    });
+  }
+
+  async getBlacklist(
+    query: GetBlacklistQueryDto,
+  ): Promise<Paginated<BlacklistItemDto>> {
+    const role = query.role ?? Role.CLIENT;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 50;
+    const skip = (page - 1) * pageSize;
+    const isExpert = role === Role.EXPERT;
+
+    const resolvedQuery: GetBlacklistQueryDto = {
+      role,
+      page: query.page,
+      pageSize: query.pageSize,
+      search: query.search,
+    };
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findBlacklist(resolvedQuery, skip, pageSize),
+      this.adminUserRepository.countBlacklist(resolvedQuery),
+    ]);
+
+    const items: BlacklistItemDto[] = rows.map((u) => ({
+      id: u.id,
+      name: u.name,
+      businessName: isExpert ? (u.expertProfile?.businessName ?? null) : null,
+      email: u.email,
+      provider: u.provider,
+      region: u.region,
+      paymentCount: isExpert
+        ? u._count.ordersAsExpert
+        : u._count.ordersAsClient,
+      reportCount: u._count.receivedReports,
+      status: BlacklistStatus.BLACKLISTED,
+      createdAt: u.createdAt,
+    }));
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async getBlacklistCounts(): Promise<BlacklistCountsDto> {
+    const [client, expert] = await Promise.all([
+      this.adminUserRepository.countBlacklistByRole(Role.CLIENT),
+      this.adminUserRepository.countBlacklistByRole(Role.EXPERT),
+    ]);
+    return { client, expert };
+  }
+
+  async getWithdrawn(
+    query: GetWithdrawnQueryDto,
+  ): Promise<Paginated<WithdrawnItemDto>> {
+    const role = query.role ?? Role.CLIENT;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 50;
+    const skip = (page - 1) * pageSize;
+
+    const resolvedQuery: GetWithdrawnQueryDto = {
+      role,
+      page: query.page,
+      pageSize: query.pageSize,
+      search: query.search,
+    };
+
+    const [rows, totalCount] = await Promise.all([
+      this.adminUserRepository.findWithdrawn(resolvedQuery, skip, pageSize),
+      this.adminUserRepository.countWithdrawn(resolvedQuery),
+    ]);
+
+    const items: WithdrawnItemDto[] = rows.flatMap((u) => {
+      if (!u.deletedAt) return [];
+      return [
+        {
+          id: u.id,
+          email: u.email,
+          deletionReason: u.deletionReason,
+          provider: u.provider,
+          createdAt: u.createdAt,
+          deletedAt: u.deletedAt,
+        },
+      ];
+    });
+
+    return toPaginatedResponse(items, { page, pageSize, totalCount });
+  }
+
+  async getWithdrawnCounts(): Promise<WithdrawnCountsDto> {
+    const [client, expert] = await Promise.all([
+      this.adminUserRepository.countWithdrawnByRole(Role.CLIENT),
+      this.adminUserRepository.countWithdrawnByRole(Role.EXPERT),
+    ]);
+    return { client, expert };
   }
 }

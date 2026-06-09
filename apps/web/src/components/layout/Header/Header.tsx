@@ -11,8 +11,8 @@ import { usePathname } from 'next/navigation';
 import * as styles from './Header.css';
 
 const navItems: { label: string; href: Route }[] = [
-  { label: 'IT코칭', href: '#' },
-  { label: '프로젝트의뢰', href: '#' },
+  { label: 'IT코칭', href: '/it-coaching' },
+  { label: '프로젝트의뢰', href: '/project-request' },
   { label: '자유게시판', href: '/community' },
   { label: 'FAQ', href: '#' },
 ];
@@ -39,7 +39,13 @@ export default function Header() {
                 (pathname === item.href ||
                   (item.href === '/community' &&
                     (pathname === '/community' ||
-                      pathname.startsWith('/community/'))));
+                      pathname.startsWith('/community/'))) ||
+                  (item.href === '/it-coaching' &&
+                    (pathname === '/it-coaching' ||
+                      pathname.startsWith('/it-coaching/'))) ||
+                  (item.href === '/project-request' &&
+                    (pathname === '/project-request' ||
+                      pathname.startsWith('/project-request/'))));
 
               return (
                 <Link

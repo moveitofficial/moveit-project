@@ -4,7 +4,6 @@ import { style } from '@vanilla-extract/css';
 const cellBase = {
   flexShrink: 0,
   textAlign: 'center' as const,
-
   borderRight: `1px solid ${vars.color.line200}`,
   alignSelf: 'stretch',
   display: 'flex',
@@ -19,7 +18,7 @@ export const colNo = style({
 
 export const colName = style({
   ...cellBase,
-  width: '120px',
+  width: '200px',
 });
 
 export const colCompanyName = style({
@@ -51,24 +50,24 @@ export const emailText = style({
   textAlign: 'left',
 });
 
-export const colServiceType = style({
+export const colSpecialtyGroup = style({
   ...cellBase,
-  width: '150px',
+  width: '160px',
 });
 
 export const colProvider = style({
   ...cellBase,
-  width: '120px',
+  width: '140px',
 });
 
 export const colStatus = style({
   ...cellBase,
-  width: '120px',
+  width: '150px',
 });
 
 export const colRegion = style({
   ...cellBase,
-  width: '120px',
+  width: '140px',
 });
 
 export const colCount = style({
@@ -78,12 +77,12 @@ export const colCount = style({
 
 export const colReport = style({
   ...cellBase,
-  width: '80px',
+  width: '100px',
 });
 
 export const colDate = style({
   ...cellBase,
-  width: '150px',
+  width: '180px',
   borderRight: 'none',
 });
 
