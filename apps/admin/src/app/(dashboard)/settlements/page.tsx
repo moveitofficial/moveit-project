@@ -33,8 +33,7 @@ export default async function SettlementsPage({ searchParams }: Props) {
           key={`${search ?? ''}-${status ?? ''}`}
           initialItems={items}
           initialHasNext={pagination.hasNext}
-          search={search}
-          status={status}
+          params={filterParams}
         />
       </div>
     </div>
