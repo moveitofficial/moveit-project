@@ -1,4 +1,8 @@
 import { mapServiceCategoryRef } from '../common/utils/service-category.util';
+import {
+  calculatePlatformFee,
+  calculateTotalAmount,
+} from '../orders/orders.constants';
 
 import type {
   MyReviewListItem,
@@ -107,6 +111,8 @@ export function mapServiceDetail(service: ServiceDetail, isFavorite: boolean) {
     revisionCount: rest.revisionCount,
     serviceScope: rest.serviceScope,
     servicePrice: rest.servicePrice,
+    platformFee: calculatePlatformFee(rest.servicePrice),
+    totalAmount: calculateTotalAmount(rest.servicePrice),
     description: rest.description,
     preparationNotes: rest.preparationNotes,
     refundPolicy: rest.refundPolicy,

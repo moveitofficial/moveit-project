@@ -1,7 +1,12 @@
-import type { OrderListRow } from './orders.types';
-import type { Order } from '@prisma/client';
+import {
+  extractPaymentCard,
+  extractPaymentReceiptUrl,
+} from '../payments/payments.mapper';
 
-export function mapCreateOrderResponse(order: Order) {
+import type { OrderListRow } from './orders.types';
+import type { Order, Payment } from '@prisma/client';
+
+export function mapCreateOrderResponse(order: Order & { payment: Payment }) {
   return {
     id: order.id,
     status: order.status,
@@ -11,6 +16,18 @@ export function mapCreateOrderResponse(order: Order) {
     startDate: order.startDate,
     endDate: order.endDate,
     createdAt: order.createdAt,
+    payment: {
+      id: order.payment.id,
+      status: order.payment.status,
+      method: order.payment.method,
+      paidAmount: order.payment.paidAmount,
+      installmentMonths: order.payment.installmentMonths,
+      paymentKey: order.payment.paymentKey,
+      createdAt: order.payment.createdAt,
+      approvedAt: order.payment.approvedAt,
+      card: extractPaymentCard(order.payment.rawData),
+      receiptUrl: extractPaymentReceiptUrl(order.payment.rawData),
+    },
   };
 }
 

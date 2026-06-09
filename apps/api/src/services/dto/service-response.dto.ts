@@ -450,8 +450,21 @@ export class ServiceDetailResponseDto {
   @ApiProperty()
   declare serviceScope: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 10_000 })
   declare servicePrice: number;
+
+  @ApiProperty({
+    example: 1000,
+    description: '플랫폼 수수료 (servicePrice × 10%, 소수점 버림)',
+  })
+  declare platformFee: number;
+
+  @ApiProperty({
+    example: 11_000,
+    description:
+      '결제 위젯에 전달할 최종 결제 금액 (servicePrice + platformFee)',
+  })
+  declare totalAmount: number;
 
   @ApiProperty()
   declare description: string;

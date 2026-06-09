@@ -1,12 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PaymentStatus } from '@prisma/client';
 
-import {
-  COMMON_ERRORS,
-  ORDER_ERRORS,
-  PAYMENT_ERRORS,
-} from '../common/constants/errors';
+import { ORDER_ERRORS, PAYMENT_ERRORS } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { isRecord } from '../common/utils/is-record.util';
 import { DEFAULT_PAYMENT_METHOD } from '../orders/orders.constants';
@@ -39,8 +34,8 @@ type TossConfirmResponse =
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
   private readonly tossBasicToken: string;
-  private readonly tossClientKey: string;
 
   constructor(
     private readonly paymentsRepository: PaymentsRepository,
@@ -49,48 +44,10 @@ export class PaymentsService {
     this.tossBasicToken = Buffer.from(
       `${config.getOrThrow<string>('TOSS_SECRET_KEY')}:`,
     ).toString('base64');
-    this.tossClientKey = config.getOrThrow<string>('TOSS_CLIENT_KEY');
-  }
-
-  async preparePayment(
-    userId: string,
-    orderId: string,
-    options?: {
-      orderName?: string;
-      method?: string;
-      installmentMonths?: number;
-    },
-  ) {
-    const order = await this.paymentsRepository.findOrderForPrepare(orderId);
-    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
-
-    if (order.clientUserId !== userId) {
-      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-    }
-
-    if (!order.payment) {
-      throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
-    }
-
-    if (order.payment.status !== PaymentStatus.PENDING) {
-      throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
-    }
-
-    return {
-      orderId: order.id,
-      amount: order.totalAmount,
-      orderName: options?.orderName ?? order.service.title,
-      clientKey: this.tossClientKey,
-      customerKey: userId,
-      paymentId: order.payment.id,
-      method: options?.method ?? order.payment.method,
-      installmentMonths:
-        options?.installmentMonths ?? order.payment.installmentMonths,
-    };
   }
 
   async getOrderPayment(userId: string, orderId: string) {
-    const order = await this.paymentsRepository.findOrderPaymentOnly(orderId);
+    const order = await this.paymentsRepository.findOrderPayment(orderId);
     if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
 
     if (order.clientUserId !== userId && order.expertUserId !== userId) {
@@ -104,59 +61,7 @@ export class PaymentsService {
     return mapOrderPayment(order.payment);
   }
 
-  async confirmPayment(
-    userId: string,
-    orderId: string,
-    paymentKey: string,
-    amount: number,
-  ) {
-    const order = await this.paymentsRepository.findOrderPayment(orderId);
-    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
-
-    if (order.clientUserId !== userId) {
-      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-    }
-
-    if (!order.payment) {
-      throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
-    }
-
-    if (order.totalAmount !== amount) {
-      throw new AppException(PAYMENT_ERRORS.AMOUNT_MISMATCH);
-    }
-
-    if (order.payment.status !== PaymentStatus.PENDING) {
-      throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
-    }
-
-    const { approvedAt, method, installmentMonths, rawData } =
-      await this.#confirmWithToss(paymentKey, orderId, amount);
-
-    const { count } = await this.paymentsRepository.updatePaymentStatus(
-      order.payment.id,
-      {
-        paymentKey,
-        paidAmount: amount,
-        approvedAt,
-        method,
-        installmentMonths,
-        rawData,
-      },
-    );
-
-    if (count === 0) {
-      throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
-    }
-
-    const updated = await this.paymentsRepository.findOrderPaymentOnly(orderId);
-    if (!updated?.payment) {
-      throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
-    }
-
-    return mapOrderPayment(updated.payment);
-  }
-
-  async #confirmWithToss(
+  async confirmTossPayment(
     paymentKey: string,
     orderId: string,
     amount: number,
@@ -179,13 +84,17 @@ export class PaymentsService {
         headers: {
           Authorization: `Basic ${this.tossBasicToken}`,
           'Content-Type': 'application/json',
-          [TOSS_IDEMPOTENCY_KEY_HEADER]: orderId,
+          [TOSS_IDEMPOTENCY_KEY_HEADER]: paymentKey,
         },
         body: JSON.stringify({ paymentKey, orderId, amount }),
         signal: controller.signal,
       });
-    } catch {
-      throw new AppException(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
+    } catch (error) {
+      this.logger.error(
+        `Toss 결제 승인 요청 실패 (네트워크/타임아웃). orderId=${orderId}, paymentKey=${paymentKey}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new AppException(PAYMENT_ERRORS.FAILED);
     } finally {
       clearTimeout(timeoutId);
     }
@@ -193,7 +102,11 @@ export class PaymentsService {
     let data: unknown;
     try {
       data = await response.json();
-    } catch {
+    } catch (error) {
+      this.logger.error(
+        `Toss 응답 JSON 파싱 실패. orderId=${orderId}, paymentKey=${paymentKey}, status=${response.status}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       throw new AppException(PAYMENT_ERRORS.FAILED);
     }
 
@@ -209,6 +122,9 @@ export class PaymentsService {
       ) {
         throw new AppException(PAYMENT_ERRORS.ALREADY_CONFIRMED);
       }
+      this.logger.warn(
+        `Toss 결제 승인 거절. orderId=${orderId}, paymentKey=${paymentKey}, status=${response.status}, response=${JSON.stringify(tossData)}`,
+      );
       throw new AppException(PAYMENT_ERRORS.FAILED);
     }
 
@@ -216,11 +132,17 @@ export class PaymentsService {
       !('approvedAt' in tossData) ||
       typeof tossData.approvedAt !== 'string'
     ) {
+      this.logger.error(
+        `Toss 응답에 approvedAt 누락. orderId=${orderId}, paymentKey=${paymentKey}, response=${JSON.stringify(tossData)}`,
+      );
       throw new AppException(PAYMENT_ERRORS.FAILED);
     }
 
     const approvedAt = new Date(tossData.approvedAt);
     if (Number.isNaN(approvedAt.getTime())) {
+      this.logger.error(
+        `Toss 응답의 approvedAt 파싱 실패. orderId=${orderId}, paymentKey=${paymentKey}, value=${tossData.approvedAt}`,
+      );
       throw new AppException(PAYMENT_ERRORS.FAILED);
     }
 

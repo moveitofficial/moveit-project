@@ -12,7 +12,12 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
-import { COMMON_ERRORS, SERVICE_ERRORS } from '../common/constants/errors';
+import {
+  COMMON_ERRORS,
+  ORDER_ERRORS,
+  PAYMENT_ERRORS,
+  SERVICE_ERRORS,
+} from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import {
   ApiPaginatedResponse,
@@ -44,19 +49,26 @@ export class MeOrdersController {
     return this.ordersService.getOrders(user.userId, query);
   }
 
-  @ApiOperation({ summary: '주문 생성 (결제 대기)' })
+  @ApiOperation({ summary: '주문 생성 (결제 완료)' })
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.CREATED, CreateOrderResponseDto)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(
     SERVICE_ERRORS.NOT_AVAILABLE,
+    PAYMENT_ERRORS.AMOUNT_MISMATCH,
+    PAYMENT_ERRORS.FAILED,
     COMMON_ERRORS.VALIDATION_ERROR,
+  )
+  @ApiErrorResponse(
+    ORDER_ERRORS.DUPLICATE_ORDER_ID,
+    PAYMENT_ERRORS.ALREADY_CONFIRMED,
+    PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY,
   )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
   @Post()
   createOrder(@Req() req: Request, @Body() dto: CreateOrderRequestDto) {
     const user = req.user as JwtAccessUser;
-    return this.ordersService.initializeOrder(user.userId, dto);
+    return this.ordersService.createOrder(user.userId, dto);
   }
 }

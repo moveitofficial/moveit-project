@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -18,15 +17,12 @@ import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import {
   COMMON_ERRORS,
   ORDER_ERRORS,
-  PAYMENT_ERRORS,
   REVIEW_ERRORS,
   SERVICE_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
-import { OrderPaymentDto } from '../payments/dto/order-payment-response.dto';
-import { PaymentsService } from '../payments/payments.service';
 import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
 import { ReviewResponseDto } from '../services/dto/service-response.dto';
 import { UpdateReviewRequestDto } from '../services/dto/update-review-request.dto';
@@ -42,24 +38,7 @@ import type { Request } from 'express';
 @ApiTags('orders')
 @Controller('orders')
 export class OrdersController {
-  constructor(
-    private readonly ordersService: OrdersService,
-    private readonly paymentsService: PaymentsService,
-  ) {}
-
-  @ApiOperation({ summary: '주문 결제·환불 상세 (거래상세)' })
-  @JwtAuth(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
-  @ApiSuccessResponse(HttpStatus.OK, OrderPaymentDto)
-  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, PAYMENT_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @Get(':id/payment')
-  getOrderPayment(
-    @Req() req: Request,
-    @Param('id', ParseUUIDPipe) orderId: string,
-  ) {
-    const user = req.user as JwtAccessUser;
-    return this.paymentsService.getOrderPayment(user.userId, orderId);
-  }
+  constructor(private readonly ordersService: OrdersService) {}
 
   @ApiOperation({ summary: '주문 상태 전이' })
   @JwtAuth(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)

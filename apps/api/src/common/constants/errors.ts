@@ -159,6 +159,10 @@ export const ORDER_ERRORS = {
     status: HttpStatus.CONFLICT,
     message: '이미 결제가 완료되었거나 취소된 주문건입니다.',
   },
+  DUPLICATE_ORDER_ID: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 사용된 주문 ID입니다.',
+  },
 } as const;
 
 export const PAYMENT_ERRORS = {

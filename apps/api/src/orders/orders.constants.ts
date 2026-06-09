@@ -28,4 +28,12 @@ export const ORDER_LIST_MAIN_IMAGE_LIMIT = 1;
 // 플랫폼 수수료율 (10%)
 export const PLATFORM_FEE_RATE = 0.1;
 
+export function calculatePlatformFee(servicePrice: number): number {
+  return Math.floor(servicePrice * PLATFORM_FEE_RATE);
+}
+
+export function calculateTotalAmount(servicePrice: number): number {
+  return servicePrice + calculatePlatformFee(servicePrice);
+}
+
 export const DEFAULT_PAYMENT_METHOD = 'CARD' as const;
