@@ -9,7 +9,7 @@ export function useInfiniteScroll<T>(
   initialHasNext: boolean,
   fetchMore: (page: number) => Promise<InfiniteScrollPage<T>>,
 ) {
-  const [items, setItems] = useState(initialItems);
+  const [items, setItems] = useState<T[]>(initialItems);
   const [hasNext, setHasNext] = useState(initialHasNext);
   const [isLoading, setIsLoading] = useState(false);
   const [sentinelEl, setSentinelEl] = useState<Element | null>(null);
@@ -57,5 +57,5 @@ export function useInfiniteScroll<T>(
     setSentinelEl(el);
   };
 
-  return { items, hasNext, isLoading, sentinelRef };
+  return { items, setItems, hasNext, isLoading, sentinelRef };
 }
