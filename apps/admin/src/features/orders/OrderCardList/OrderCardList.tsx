@@ -2,52 +2,46 @@
 
 import { OrderCard } from '@repo/ui/OrderCard';
 
-import * as styles from './SettlementList.css';
+import * as styles from './OrderCardList.css';
 
-import type {
-  SettlementFilterParams,
-  SettlementItem,
-} from '@/features/settlements/types';
+import type { OrderFilterParams, OrderItem } from '@/features/orders/types';
 
-import { fetchMoreSettlements } from '@/features/settlements/actions';
+import { fetchMoreOrders } from '@/features/orders/actions';
 import {
-  SETTLEMENT_STATUS_ACTIONS_CONFIG,
-  SETTLEMENT_STATUS_BADGE_CONFIG,
-} from '@/features/settlements/constants';
+  ORDER_STATUS_ACTIONS_CONFIG,
+  ORDER_STATUS_BADGE_CONFIG,
+} from '@/features/orders/constants';
 import { formatServiceCategory } from '@/utils/formatServiceCategory';
 import { useInfiniteScroll } from '@/utils/hooks';
 
 interface Props {
-  initialItems: SettlementItem[];
+  initialItems: OrderItem[];
   initialHasNext: boolean;
-  params: SettlementFilterParams;
+  params: OrderFilterParams;
 }
 
-export default function SettlementList({
+export default function OrderCardList({
   initialItems,
   initialHasNext,
   params,
 }: Props) {
-  const { search, status } = params;
+  const { tab, sort, search } = params;
   const { items, hasNext, isLoading, sentinelRef } = useInfiniteScroll(
     initialItems,
     initialHasNext,
-    (page) => fetchMoreSettlements(page, search, status),
+    (page) => fetchMoreOrders(page, tab, sort, search),
   );
 
   return (
     <div className={styles.list}>
       {items.map((item) => {
-        const badge = SETTLEMENT_STATUS_BADGE_CONFIG[item.status];
-        const actions = SETTLEMENT_STATUS_ACTIONS_CONFIG[item.status];
-        const category = formatServiceCategory(
-          item.service.categoryGroup,
-          item.service.categoryName,
-        );
+        const badge = ORDER_STATUS_BADGE_CONFIG[item.status];
+        const actions = ORDER_STATUS_ACTIONS_CONFIG[item.status];
+        const category = formatServiceCategory(item.service.categoryGroup, item.service.categoryName);
         return (
           <OrderCard
             key={item.id}
-            variant="admin-settlement"
+            variant="admin-orders"
             thumbnailUrl={item.service.thumbnailUrl}
             badge={badge}
             buyerName={item.client.name ?? ''}
@@ -62,7 +56,9 @@ export default function SettlementList({
         );
       })}
       {hasNext && <div ref={sentinelRef} />}
-      {isLoading && <div className={styles.loadingRow}>불러오는 중...</div>}
+      {isLoading && (
+        <div className={styles.loadingRow}>불러오는 중...</div>
+      )}
     </div>
   );
 }

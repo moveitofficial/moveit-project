@@ -1,9 +1,10 @@
 import type {
   ExpertApprovalStatus,
+  OrderStatus,
   Provider,
-  ServiceType,
-  ServiceStatus,
   ReportReason,
+  ServiceStatus,
+  ServiceType,
   SettlementStatus,
 } from '@/types/enums';
 
@@ -98,3 +99,43 @@ export const SETTLEMENT_STATUS_LABEL: Record<SettlementStatus, string> = {
 export const SETTLEMENT_STATUS_OPTIONS = (
   Object.entries(SETTLEMENT_STATUS_LABEL) as [SettlementStatus, string][]
 ).map(([value, label]) => ({ value, label }));
+
+export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  NEGOTIATING: '협의중',
+  CANCEL_REQUESTED: '취소신청',
+  PAYMENT_CANCELLED: '결제취소',
+  IN_PROGRESS: '진행중',
+  DEADLINE_IMMINENT: '마감임박',
+  EXPIRED: '기간만료',
+  WORK_COMPLETED: '작업완료',
+  PURCHASE_CONFIRMED: '구매확정',
+  SETTLEMENT_REQUESTED: '정산요청',
+  SETTLEMENT_COMPLETED: '정산완료',
+  REFUND_REQUESTED: '환불요청',
+  REFUND_COMPLETED: '환불완료',
+};
+
+export const REFUND_KIND_LABEL: Record<string, string> = {
+  CANCEL_REQUESTED: '취소신청',
+  CANCEL_APPROVED: '취소승인',
+  CANCEL_REJECTED: '취소거절',
+  CANCEL_COMPLETED: '취소완료',
+  REFUND_REQUESTED: '환불신청',
+  REFUND_APPROVED: '환불승인',
+  REFUND_REJECTED: '환불거절',
+  REFUND_COMPLETED: '환불완료',
+};
+
+export const COMMUNITY_STATUS_LABEL: Record<string, string> = {
+  VISIBLE: '노출중',
+  USER_DELETED: '본인삭제',
+  ADMIN_DELETED: '관리자삭제',
+};
+
+export const SERVICE_CATEGORY_LABEL: Record<string, string> = {
+  WEB: '웹 개발',
+  APP: '앱 개발',
+  AI: 'AI',
+  GAME: '게임 개발',
+  DATA_ANALYTICS: '데이터 분석',
+};

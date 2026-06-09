@@ -3,9 +3,11 @@ import { formatDate, formatPrice } from '@repo/utils';
 import clsx from 'clsx';
 import Image from 'next/image';
 
+import { RectLabel } from '@repo/ui/RectLabel';
+
 import * as styles from './OrderCard.css';
 
-import type { ReactNode } from 'react';
+import type { RectLabelColor } from '@repo/ui/RectLabel';
 
 interface OrderCardAction {
   label: string;
@@ -14,11 +16,11 @@ interface OrderCardAction {
 }
 
 type OrderCardProps = {
-  thumbnailUrl: string;
-  badge: ReactNode;
+  thumbnailUrl: string | null;
+  badge: { text: string; color: RectLabelColor };
   title: string;
   startDate: string;
-  endDate: string;
+  endDate?: string;
   amount: number;
   actions?: OrderCardAction[];
 } & (
@@ -44,6 +46,18 @@ export default function OrderCard(props: OrderCardProps) {
   const { thumbnailUrl, badge, title, startDate, endDate, amount, actions } =
     props;
 
+  const thumbnailImg = thumbnailUrl ? (
+    <Image
+      src={thumbnailUrl}
+      alt={title}
+      width={100}
+      height={80}
+      className={styles.thumbnail}
+    />
+  ) : (
+    <div className={styles.thumbnailPlaceholder} />
+  );
+
   const showBuyer = props.variant !== 'web';
   const showSeller =
     props.variant === 'admin-orders' || props.variant === 'admin-settlement';
@@ -51,19 +65,11 @@ export default function OrderCard(props: OrderCardProps) {
 
   return (
     <div className={styles.card}>
-      <div className={styles.thumbnailWrapper}>
-        <Image
-          src={thumbnailUrl}
-          alt={title}
-          width={100}
-          height={80}
-          className={styles.thumbnail}
-        />
-      </div>
+      <div className={styles.thumbnailWrapper}>{thumbnailImg}</div>
 
       <div className={styles.content}>
         <div className={styles.metaRow}>
-          {badge}
+          <RectLabel text={badge.text} color={badge.color} />
           {showBuyer && (
             <span className={clsx(typography.f14R, styles.buyerText)}>
               구매자 : {props.buyerName}
@@ -82,7 +88,8 @@ export default function OrderCard(props: OrderCardProps) {
         </div>
         <p className={clsx(typography.f16B, styles.title)}>{title}</p>
         <p className={clsx(typography.f14R, styles.date)}>
-          일정: {formatDate(startDate)} ~ {formatDate(endDate)}
+          일정: {formatDate(startDate)} ~{' '}
+          {endDate === undefined ? '미정' : formatDate(endDate)}
         </p>
       </div>
 
@@ -90,6 +97,7 @@ export default function OrderCard(props: OrderCardProps) {
         <p className={clsx(typography.f18EB, styles.amount)}>
           {formatPrice(amount)}
         </p>
+        
         {actions !== undefined && actions.length > 0 && (
           <div className={styles.actions}>
             {actions.map((action) => (
@@ -97,7 +105,7 @@ export default function OrderCard(props: OrderCardProps) {
                 key={action.label}
                 type="button"
                 className={clsx(
-                  typography.f14R,
+                  typography.f12R,
                   action.variant === 'blue'
                     ? styles.blueButton
                     : action.variant === 'red'
