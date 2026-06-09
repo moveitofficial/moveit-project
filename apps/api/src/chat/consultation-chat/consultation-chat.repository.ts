@@ -68,11 +68,62 @@ export class ConsultationChatRepository {
     return message;
   }
 
-  findAllRooms(userId: string) {
+  #buildRoomsWhere(userId: string, search?: string) {
+    return {
+      AND: [
+        { OR: [{ clientUserId: userId }, { expertUserId: userId }] },
+        { lastMessage: { isNot: null } },
+        ...(search
+          ? [
+              {
+                OR: [
+                  {
+                    clientUser: {
+                      clientProfile: {
+                        nickname: {
+                          contains: search,
+                          mode: 'insensitive' as const,
+                        },
+                      },
+                    },
+                  },
+                  {
+                    clientUser: {
+                      name: {
+                        contains: search,
+                        mode: 'insensitive' as const,
+                      },
+                    },
+                  },
+                  {
+                    expertUser: {
+                      expertProfile: {
+                        businessName: {
+                          contains: search,
+                          mode: 'insensitive' as const,
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
+      ],
+    };
+  }
+
+  countRooms(userId: string, search?: string) {
+    return this.prisma.chatRoom.count({
+      where: this.#buildRoomsWhere(userId, search),
+    });
+  }
+
+  findAllRooms(userId: string, search?: string, page = 1, limit = 20) {
     return this.prisma.chatRoom.findMany({
-      where: {
-        OR: [{ clientUserId: userId }, { expertUserId: userId }],
-      },
+      skip: (page - 1) * limit,
+      take: limit,
+      where: this.#buildRoomsWhere(userId, search),
       include: {
         clientUser: {
           select: {
@@ -96,10 +147,12 @@ export class ConsultationChatRepository {
     });
   }
 
-  findMessages(roomId: string) {
+  findMessages(roomId: string, cursor?: string, limit = 30) {
     return this.prisma.message.findMany({
       where: { chatRoomId: roomId },
-      orderBy: { createdAt: 'asc' },
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      take: limit,
+      orderBy: { createdAt: 'desc' },
     });
   }
 }
