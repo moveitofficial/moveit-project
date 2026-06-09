@@ -99,7 +99,7 @@ export class FavoritesService {
   async addFavoriteService(
     clientUserId: string,
     serviceId: string,
-  ): Promise<object> {
+  ): Promise<void> {
     const service = await this.servicesRepository.findById(serviceId);
 
     if (service === null) {
@@ -120,13 +120,12 @@ export class FavoritesService {
     }
 
     await this.favoritesRepository.addFavoriteService(clientUserId, serviceId);
-    return {};
   }
 
   async removeFavoriteService(
     clientUserId: string,
     serviceId: string,
-  ): Promise<object> {
+  ): Promise<void> {
     const deleted = await this.favoritesRepository.removeFavoriteService(
       clientUserId,
       serviceId,
@@ -135,14 +134,12 @@ export class FavoritesService {
     if (!deleted) {
       throw new AppException(FAVORITES_ERRORS.NOT_FOUND);
     }
-
-    return {};
   }
 
   async addFavoriteExpert(
     clientUserId: string,
     expertUserId: string,
-  ): Promise<object> {
+  ): Promise<void> {
     await this.assertFavoriteableExpert(expertUserId);
 
     const isFavorite = await this.favoritesRepository.isFavoriteExpert(
@@ -158,13 +155,12 @@ export class FavoritesService {
       clientUserId,
       expertUserId,
     );
-    return {};
   }
 
   async removeFavoriteExpert(
     clientUserId: string,
     expertUserId: string,
-  ): Promise<object> {
+  ): Promise<void> {
     const deleted = await this.favoritesRepository.removeFavoriteExpert(
       clientUserId,
       expertUserId,
@@ -173,8 +169,6 @@ export class FavoritesService {
     if (!deleted) {
       throw new AppException(FAVORITES_ERRORS.NOT_FOUND);
     }
-
-    return {};
   }
 
   private async assertFavoriteableExpert(expertUserId: string): Promise<void> {
@@ -186,7 +180,7 @@ export class FavoritesService {
     }
 
     if (expert.role !== Role.EXPERT) {
-      throw new AppException(USER_ERRORS.NOT_FOUND);
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
     }
 
     if (expert.expertProfile === null) {
