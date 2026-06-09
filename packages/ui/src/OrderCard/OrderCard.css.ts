@@ -3,7 +3,7 @@ import { style } from '@vanilla-extract/css';
 
 export const card = style({
   display: 'flex',
-  alignItems: 'center',
+  alignItems: 'stretch',
   height: '80px',
   gap: '12px',
   backgroundColor: vars.color.white,
@@ -22,6 +22,12 @@ export const thumbnail = style({
   height: '100%',
   objectFit: 'cover',
   display: 'block',
+});
+
+export const thumbnailPlaceholder = style({
+  width: '100%',
+  height: '100%',
+  backgroundColor: vars.color.gray100,
 });
 
 export const content = style({
@@ -63,9 +69,7 @@ export const right = style({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'flex-end',
-  justifyContent: 'space-between',
-  gap: '12px',
-  minWidth: '160px',
+  gap: '8px',
 });
 
 export const amount = style({
@@ -74,12 +78,12 @@ export const amount = style({
 
 export const actions = style({
   display: 'flex',
-  gap: '8px',
+  gap: '12px',
 });
 
 const buttonBase = style({
-  padding: '8px 16px',
-  borderRadius: '6px',
+  padding: '8px 14px',
+  borderRadius: '8px',
   cursor: 'pointer',
   whiteSpace: 'nowrap',
 });
