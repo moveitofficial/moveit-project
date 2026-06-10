@@ -80,6 +80,17 @@ export class CommunityPostsController {
     return this.communityPostsService.getAllPosts(query);
   }
 
+  @ApiOperation({
+    summary: '인기 게시글 (메인용)',
+    description: '좋아요 상위 20개 풀에서 랜덤 4개 반환. 삭제된 글 제외.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK, [PostListItemResponseDto])
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get('popular')
+  getPopularPosts(): Promise<PostListItemResponseDto[]> {
+    return this.communityPostsService.getPopularPosts();
+  }
+
   @ApiOperation({ summary: '게시글 상세 조회' })
   @OptionalJwtAuth()
   @ApiSuccessResponse(HttpStatus.OK, PostDetailResponseDto)

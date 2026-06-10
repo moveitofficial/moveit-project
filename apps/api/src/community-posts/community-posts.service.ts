@@ -380,4 +380,13 @@ export class CommunityPostsService {
       await this.communityPostsRepository.deleteComment(commentId);
     return mapCommentToBeDeleted(toBeDeleted);
   }
+
+  async getPopularPosts(): Promise<PostListItemResponseDto[]> {
+    const POOL_SIZE = 20;
+    const PICK = 4;
+    const pool =
+      await this.communityPostsRepository.findPopularPostsPool(POOL_SIZE);
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, PICK).map((post) => mapPostListItem(post));
+  }
 }

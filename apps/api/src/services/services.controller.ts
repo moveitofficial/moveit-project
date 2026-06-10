@@ -31,6 +31,7 @@ import { ApiErrorResponse } from '../common/decorators/api-error-response.decora
 import { ApiFileBody } from '../common/decorators/api-file-body.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import {
+  JwtAuth,
   OptionalJwtAuth,
   RoleAuth,
 } from '../common/decorators/jwt-auth.decorator';
@@ -68,6 +69,45 @@ export class ServicesController {
   @Get()
   findAll(@Query() query: ServiceListQueryDto) {
     return this.servicesService.getServices(query);
+  }
+
+  @ApiOperation({
+    summary: '새로 등록된 서비스 (메인용)',
+    description: '최근 등록 50개 풀에서 랜덤 4개 반환. ACTIVE 상태만.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK, [ServiceListItemResponseDto])
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get('recent')
+  getRecentServices() {
+    return this.servicesService.getRecentServices();
+  }
+
+  @ApiOperation({
+    summary: '관심사 기반 추천 서비스 (메인용)',
+    description:
+      '로그인한 구매자의 관심 카테고리 매칭 풀(최대 50개)에서 랜덤 4개. 관심사 없으면 빈 배열.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK, [ServiceListItemResponseDto])
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @JwtAuth()
+  @Get('recommended-by-interest')
+  getRecommendedByInterest(@Req() req: Request) {
+    const user = req.user as JwtAccessUser;
+    return this.servicesService.getRecommendedByInterest(user.userId);
+  }
+
+  @ApiOperation({
+    summary: '지역 기반 추천 서비스 (메인용)',
+    description:
+      '로그인한 사용자의 region과 같은 지역의 전문가가 등록한 ACTIVE 서비스 풀(최대 50개)에서 랜덤 4개. region 없으면 빈 배열.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK, [ServiceListItemResponseDto])
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @JwtAuth()
+  @Get('by-region')
+  getServicesByRegion(@Req() req: Request) {
+    const user = req.user as JwtAccessUser;
+    return this.servicesService.getServicesByRegion(user.userId);
   }
 
   @OptionalJwtAuth()
