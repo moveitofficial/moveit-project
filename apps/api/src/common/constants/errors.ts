@@ -186,6 +186,10 @@ export const PAYMENT_ERRORS = {
     status: HttpStatus.CONFLICT,
     message: '이미 사용된 결제 키입니다.',
   },
+  CANCEL_FAILED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '결제 취소에 실패했습니다.',
+  },
 } as const;
 
 export const REFUND_ERRORS = {
@@ -194,12 +198,24 @@ export const REFUND_ERRORS = {
     message: '환불 정보를 찾을 수 없습니다.',
   },
   ALREADY_REQUESTED: {
-    status: HttpStatus.BAD_REQUEST,
-    message: '이미 환불 요청된 주문입니다.',
+    status: HttpStatus.CONFLICT,
+    message: '이미 취소/환불 요청된 주문입니다.',
   },
   INVALID_STATUS: {
     status: HttpStatus.BAD_REQUEST,
     message: '유효하지 않은 환불 상태입니다.',
+  },
+  CANCEL_NOT_ALLOWED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '작업 시작 전 상태에서만 취소 요청할 수 있습니다.',
+  },
+  REFUND_NOT_ALLOWED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '기한 만료 상태에서만 환불 요청할 수 있습니다.',
+  },
+  NOT_APPROVABLE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '승인할 수 없는 취소·환불 요청입니다.',
   },
 } as const;
 
