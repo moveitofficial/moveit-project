@@ -206,20 +206,20 @@ export class CommunityPostsService {
       userId,
     );
 
-    await (isLiked
-      ? this.communityPostsRepository.unlikePost(postId, userId)
-      : this.communityPostsRepository
-          .likePost(postId, userId)
-          .then(async () => {
-            if (post.userId !== userId) {
-              await this.notificationsService.send({
-                userIds: [post.userId],
-                category: NotificationCategory.POST_LIKE,
-                vars: { postTitle: post.title },
-                referenceId: postId,
-              });
-            }
-          }));
+    if (isLiked) {
+      await this.communityPostsRepository.unlikePost(postId, userId);
+    } else {
+      await this.communityPostsRepository.likePost(postId, userId);
+
+      if (post.userId !== userId) {
+        await this.notificationsService.send({
+          userIds: [post.userId],
+          category: NotificationCategory.POST_LIKE,
+          vars: { postTitle: post.title },
+          referenceId: postId,
+        });
+      }
+    }
 
     return { isLiked: !isLiked };
   }
