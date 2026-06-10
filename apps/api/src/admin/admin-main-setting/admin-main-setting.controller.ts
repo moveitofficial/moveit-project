@@ -8,7 +8,6 @@ import {
   Post,
   Query,
   Req,
-  UseGuards,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -23,7 +22,7 @@ import {
 } from '../../common/constants/errors';
 import { ApiErrorResponse } from '../../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../../common/decorators/api-success-response.decorator';
-import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
+import { AdminJwtAuth } from '../admin-auth/jwt/admin-jwt-auth.decorator';
 
 import { AdminMainSettingService } from './admin-main-setting.service';
 import { GetCandidatesQueryDto } from './dto/candidates-query.dto';
@@ -58,7 +57,7 @@ export class AdminMainSettingController {
   @ApiSuccessResponse(HttpStatus.OK, MainSettingResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get()
   getMainSettings(): Promise<MainSettingResponseDto> {
     return this.adminMainSettingService.getMainSettings();
@@ -72,7 +71,7 @@ export class AdminMainSettingController {
   @ApiSuccessResponse(HttpStatus.OK, ServiceCandidatesResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('services/candidates')
   getServiceCandidates(
     @Query() query: GetCandidatesQueryDto,
@@ -88,7 +87,7 @@ export class AdminMainSettingController {
   @ApiSuccessResponse(HttpStatus.OK, ExpertCandidatesResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('experts/candidates')
   getExpertCandidates(
     @Query() query: GetCandidatesQueryDto,
@@ -108,7 +107,7 @@ export class AdminMainSettingController {
   @ApiErrorResponse(MAIN_SETTING_ERRORS.GROUP_MISMATCH)
   @ApiErrorResponse(MAIN_SETTING_ERRORS.TARGET_NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async register(
@@ -129,7 +128,7 @@ export class AdminMainSettingController {
   @ApiErrorResponse(MAIN_SETTING_ERRORS.NOT_FOUND)
   @ApiErrorResponse(MAIN_SETTING_ERRORS.SECTION_MISMATCH)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Delete()
   async delete(
@@ -165,7 +164,7 @@ export class AdminMainSettingController {
   @ApiErrorResponse(UPLOAD_ERRORS.FILE_NOT_ATTACHED)
   @ApiErrorResponse(UPLOAD_ERRORS.INVALID_FILE_TYPE)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor('file'))
   @Post('banners')
@@ -186,7 +185,7 @@ export class AdminMainSettingController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(BANNER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Delete('banners')
   async deleteBanners(
