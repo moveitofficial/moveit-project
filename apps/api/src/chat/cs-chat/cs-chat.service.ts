@@ -71,6 +71,41 @@ export class CsChatService {
     await this.csChatRepository.assignAdmin(roomId, socketData.adminId);
   }
 
+  async sendFileMessage(
+    roomId: string,
+    sender: {
+      senderType: SenderType;
+      senderUserId?: string;
+      senderAdminId?: string;
+    },
+    attachment: {
+      url: string;
+      fileName: string;
+      fileType: string;
+      fileSize: number;
+    },
+  ) {
+    const room = await this.csChatRepository.findRoom(roomId);
+    if (!room) throw new AppException(CS_CHAT_ERRORS.ROOM_NOT_FOUND);
+    if (
+      sender.senderType === SenderType.USER &&
+      room.userId !== sender.senderUserId
+    )
+      throw new AppException(CS_CHAT_ERRORS.FORBIDDEN);
+    return this.csChatRepository.createFileMessage({
+      chatRoomId: roomId,
+      senderType: sender.senderType,
+      senderUserId: sender.senderUserId,
+      senderAdminId: sender.senderAdminId,
+      attachment: {
+        fileUrl: attachment.url,
+        fileName: attachment.fileName,
+        fileType: attachment.fileType,
+        fileSize: attachment.fileSize,
+      },
+    });
+  }
+
   async createRoom(userId: string, content: string) {
     const room = await this.csChatRepository.createRoomWithFirstMessage(
       userId,

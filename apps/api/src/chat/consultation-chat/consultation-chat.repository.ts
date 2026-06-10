@@ -5,36 +5,121 @@ import {
   SystemMessageType,
 } from '@prisma/client';
 
+import { CHAT_ERRORS } from '../../common/constants/errors';
+import { AppException } from '../../common/exceptions/app.exception';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class ConsultationChatRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOrCreateRoom(
-    clientUserId: string,
-    expertUserId: string,
-    currentServiceId: string,
-  ) {
-    return this.prisma.chatRoom.upsert({
-      where: {
-        clientUserId_expertUserId_currentServiceId: {
-          clientUserId,
-          expertUserId,
-          currentServiceId,
-        },
-      },
-      create: {
-        clientUserId,
-        expertUserId,
-        currentServiceId,
-        participants: {
-          createMany: {
-            data: [{ userId: clientUserId }, { userId: expertUserId }],
+  async createRoom(data: {
+    clientUserId: string;
+    expertUserId: string;
+    serviceId: string;
+    content: string;
+    roomId?: string;
+    files?: {
+      url: string;
+      fileName: string;
+      fileType: string;
+      fileSize: number;
+    }[];
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const service = await tx.service.findUnique({
+        where: { id: data.serviceId },
+        select: { expertUserId: true },
+      });
+      if (service?.expertUserId !== data.expertUserId) {
+        throw new AppException(CHAT_ERRORS.INVALID_EXPERT);
+      }
+
+      const existing = await tx.chatRoom.findUnique({
+        where: {
+          clientUserId_expertUserId_currentServiceId: {
+            clientUserId: data.clientUserId,
+            expertUserId: data.expertUserId,
+            currentServiceId: data.serviceId,
           },
         },
-      },
-      update: {},
+        select: { id: true },
+      });
+      if (existing) throw new AppException(CHAT_ERRORS.ROOM_ALREADY_EXISTS);
+
+      const room = await tx.chatRoom.create({
+        data: {
+          ...(data.roomId ? { id: data.roomId } : {}),
+          clientUserId: data.clientUserId,
+          expertUserId: data.expertUserId,
+          currentServiceId: data.serviceId,
+          participants: {
+            createMany: {
+              data: [
+                { userId: data.clientUserId },
+                { userId: data.expertUserId },
+              ],
+            },
+          },
+        },
+      });
+
+      const textMessage = await tx.message.create({
+        data: {
+          chatRoomId: room.id,
+          senderId: data.clientUserId,
+          type: MessageType.TEXT,
+          content: data.content,
+        },
+      });
+
+      let lastMessageId = textMessage.id;
+
+      if (data.files && data.files.length > 0) {
+        for (const file of data.files) {
+          const fileMessage = await tx.message.create({
+            data: {
+              chatRoomId: room.id,
+              senderId: data.clientUserId,
+              type: MessageType.FILE,
+              content: '파일을 보냈습니다.',
+              attachments: {
+                create: {
+                  fileUrl: file.url,
+                  fileName: file.fileName,
+                  fileType: file.fileType,
+                  fileSize: file.fileSize,
+                },
+              },
+            },
+          });
+          lastMessageId = fileMessage.id;
+        }
+      }
+
+      return tx.chatRoom.update({
+        where: { id: room.id },
+        data: { lastMessageId },
+        include: {
+          clientUser: {
+            select: {
+              id: true,
+              name: true,
+              profileImageUrl: true,
+              clientProfile: { select: { nickname: true } },
+            },
+          },
+          expertUser: {
+            select: {
+              id: true,
+              profileImageUrl: true,
+              expertProfile: { select: { businessName: true } },
+            },
+          },
+          lastMessage: { select: { id: true, content: true, createdAt: true } },
+          participants: { select: { userId: true, lastReadMessageId: true } },
+        },
+      });
     });
   }
 
@@ -48,6 +133,35 @@ export class ConsultationChatRepository {
     return this.prisma.chatParticipant.update({
       where: { chatRoomId_userId: { chatRoomId: roomId, userId } },
       data: { lastReadMessageId: messageId },
+    });
+  }
+
+  async createFileMessage(data: {
+    chatRoomId: string;
+    senderId: string;
+    attachment: {
+      fileUrl: string;
+      fileName: string;
+      fileType: string;
+      fileSize: number;
+    };
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const message = await tx.message.create({
+        data: {
+          chatRoomId: data.chatRoomId,
+          senderId: data.senderId,
+          type: MessageType.FILE,
+          content: '파일을 보냈습니다.',
+          attachments: { create: data.attachment },
+        },
+        include: { attachments: true },
+      });
+      await tx.chatRoom.update({
+        where: { id: data.chatRoomId },
+        data: { lastMessageId: message.id },
+      });
+      return message;
     });
   }
 

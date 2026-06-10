@@ -46,6 +46,39 @@ export class CsChatRepository {
     return message;
   }
 
+  async createFileMessage(data: {
+    chatRoomId: string;
+    senderType: SenderType;
+    senderUserId?: string;
+    senderAdminId?: string;
+    attachment: {
+      fileUrl: string;
+      fileName: string;
+      fileType: string;
+      fileSize: number;
+    };
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const message = await tx.csMessage.create({
+        data: {
+          chatRoomId: data.chatRoomId,
+          senderType: data.senderType,
+          senderUserId: data.senderUserId,
+          senderAdminId: data.senderAdminId,
+          type: MessageType.FILE,
+          content: '파일을 보냈습니다.',
+          attachments: { create: data.attachment },
+        },
+        include: { attachments: true },
+      });
+      await tx.csChatRoom.update({
+        where: { id: data.chatRoomId },
+        data: { lastMessageId: message.id },
+      });
+      return message;
+    });
+  }
+
   async createRoomWithFirstMessage(userId: string, content: string) {
     return this.prisma.$transaction(async (tx) => {
       const room = await tx.csChatRoom.create({
