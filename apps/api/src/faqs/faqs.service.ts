@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { FAQ_ERRORS } from '../common/constants/errors';
+import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 
@@ -36,7 +37,7 @@ export class FaqsService {
     const faq = await this.faqsRepository.findById(id);
 
     if (faq === null) {
-      throw new NotFoundException(FAQ_ERRORS.NOT_FOUND);
+      throw new AppException(FAQ_ERRORS.NOT_FOUND);
     }
 
     return this.mapFaq(faq);
