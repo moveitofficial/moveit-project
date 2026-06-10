@@ -9,12 +9,11 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Role } from '@prisma/client';
 import { CHAT_EVENTS, SOCKET_NAMESPACES } from '@repo/socket-events';
 import { Server, Socket } from 'socket.io';
 
 import { ACCESS_COOKIE_NAME, JWT_ACCESS_TYP } from '../../auth/auth.constants';
-import { CHAT_ERRORS, COMMON_ERRORS } from '../../common/constants/errors';
+import { COMMON_ERRORS } from '../../common/constants/errors';
 import { WsExceptionFilter } from '../../common/filters/ws-exception.filter';
 import { toWsException } from '../../common/utils/ws-exception.util';
 import { JoinRoomDto } from '../common/dto/join-room.dto';
@@ -22,7 +21,6 @@ import { MarkReadDto } from '../common/dto/mark-read.dto';
 import { parseCookies } from '../common/utils/parse-cookies.util';
 
 import { ConsultationChatService } from './consultation-chat.service';
-import { GetOrCreateRoomDto } from './dto/get-or-create-room.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 
 import type { JwtAccessPayload } from '../../auth/auth.types';
@@ -99,21 +97,8 @@ export class ConsultationChatGateway
     this.logger.log(`연결 해제: ${socket.id}`);
   }
 
-  @SubscribeMessage(CHAT_EVENTS.GET_OR_CREATE_ROOM)
-  async handleGetOrCreateRoom(
-    @ConnectedSocket() socket: ConsultationSocket,
-    @MessageBody() dto: GetOrCreateRoomDto,
-  ) {
-    if (socket.data.role !== Role.CLIENT) {
-      throw toWsException(CHAT_ERRORS.FORBIDDEN_NOT_CLIENT);
-    }
-    const room = await this.consultationChatService.getOrCreateRoom(
-      socket.data.userId,
-      dto.expertUserId,
-      dto.serviceId,
-    );
-    await socket.join(room.id);
-    socket.emit(CHAT_EVENTS.ROOM_READY, { roomId: room.id });
+  broadcastMessage(roomId: string, message: unknown) {
+    this.server.to(roomId).emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
   }
 
   @SubscribeMessage(CHAT_EVENTS.JOIN_ROOM)

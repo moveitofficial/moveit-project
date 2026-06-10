@@ -14,16 +14,73 @@ export class ConsultationChatService {
     private readonly consultationChatRepository: ConsultationChatRepository,
   ) {}
 
-  async getOrCreateRoom(
+  async createRoom(
     clientUserId: string,
-    expertUserId: string,
-    serviceId: string,
+    data: {
+      expertUserId: string;
+      serviceId: string;
+      content: string;
+      roomId?: string;
+      files?: {
+        url: string;
+        fileName: string;
+        fileType: string;
+        fileSize: number;
+      }[];
+    },
   ) {
-    return this.consultationChatRepository.findOrCreateRoom(
+    const room = await this.consultationChatRepository.createRoom({
       clientUserId,
-      expertUserId,
-      serviceId,
+      ...data,
+    });
+    return {
+      id: room.id,
+      currentServiceId: room.currentServiceId,
+      clientUser: {
+        id: room.clientUser.id,
+        profileImageUrl: room.clientUser.profileImageUrl,
+        nickname:
+          room.clientUser.clientProfile?.nickname ?? room.clientUser.name,
+      },
+      expertUser: {
+        id: room.expertUser.id,
+        profileImageUrl: room.expertUser.profileImageUrl,
+        businessName: room.expertUser.expertProfile?.businessName ?? null,
+      },
+      lastMessage: room.lastMessage,
+      myLastReadMessageId:
+        room.participants.find((p) => p.userId === clientUserId)
+          ?.lastReadMessageId ?? null,
+      createdAt: room.createdAt,
+    };
+  }
+
+  async sendFileMessage(
+    roomId: string,
+    senderId: string,
+    attachment: {
+      url: string;
+      fileName: string;
+      fileType: string;
+      fileSize: number;
+    },
+  ) {
+    const participant = await this.consultationChatRepository.findRoom(
+      roomId,
+      senderId,
     );
+    if (!participant)
+      throw new AppException(CHAT_ERRORS.FORBIDDEN_NOT_PARTICIPANT);
+    return this.consultationChatRepository.createFileMessage({
+      chatRoomId: roomId,
+      senderId,
+      attachment: {
+        fileUrl: attachment.url,
+        fileName: attachment.fileName,
+        fileType: attachment.fileType,
+        fileSize: attachment.fileSize,
+      },
+    });
   }
 
   async validateParticipant(roomId: string, userId: string) {

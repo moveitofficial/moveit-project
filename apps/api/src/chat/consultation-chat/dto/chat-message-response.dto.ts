@@ -18,6 +18,26 @@ export class ChatMessageListResponseDto {
   declare nextCursor: string | null;
 }
 
+export class MessageAttachmentResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({
+    example:
+      'https://bucket.s3.region.amazonaws.com/consultation/uuid/file.pdf',
+  })
+  declare fileUrl: string;
+
+  @ApiProperty({ example: '기획서.pdf' })
+  declare fileName: string;
+
+  @ApiProperty({ example: 'application/pdf' })
+  declare fileType: string;
+
+  @ApiProperty({ example: 204_800 })
+  declare fileSize: number;
+}
+
 export class ChatMessageResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
@@ -28,16 +48,29 @@ export class ChatMessageResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare senderId: string;
 
-  @ApiProperty({ enum: MessageType })
+  @ApiProperty({ enum: MessageType, example: MessageType.FILE })
   declare type: MessageType;
 
-  @ApiPropertyOptional({ enum: SystemMessageType })
+  @ApiPropertyOptional({
+    enum: SystemMessageType,
+    nullable: true,
+    example: null,
+  })
   declare systemType: SystemMessageType | null;
 
-  @ApiPropertyOptional({ enum: MessageReferenceType })
+  @ApiPropertyOptional({
+    enum: MessageReferenceType,
+    nullable: true,
+    example: null,
+  })
   declare referenceType: MessageReferenceType | null;
 
-  @ApiPropertyOptional({ type: String, format: 'uuid', nullable: true })
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+  })
   declare referenceId: string | null;
 
   @ApiProperty({ example: '안녕하세요' })
@@ -45,4 +78,7 @@ export class ChatMessageResponseDto {
 
   @ApiProperty()
   declare createdAt: Date;
+
+  @ApiProperty({ type: [MessageAttachmentResponseDto] })
+  declare attachments: MessageAttachmentResponseDto[];
 }

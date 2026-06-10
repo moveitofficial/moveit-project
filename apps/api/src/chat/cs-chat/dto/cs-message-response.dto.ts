@@ -1,6 +1,25 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MessageType, SenderType } from '@prisma/client';
 
+class CsMessageAttachmentResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({
+    example: 'https://bucket.s3.region.amazonaws.com/cs/uuid/file.pdf',
+  })
+  declare fileUrl: string;
+
+  @ApiProperty({ example: '기획서.pdf' })
+  declare fileName: string;
+
+  @ApiProperty({ example: 'application/pdf' })
+  declare fileType: string;
+
+  @ApiProperty({ example: 204_800 })
+  declare fileSize: number;
+}
+
 export class CsMessageListResponseDto {
   @ApiProperty({ type: () => [CsMessageResponseDto] })
   declare items: CsMessageResponseDto[];
@@ -30,7 +49,7 @@ export class CsMessageResponseDto {
   @ApiPropertyOptional({ type: String, format: 'uuid', nullable: true })
   declare senderAdminId: string | null;
 
-  @ApiProperty({ enum: MessageType })
+  @ApiProperty({ enum: MessageType, example: MessageType.FILE })
   declare type: MessageType;
 
   @ApiProperty({ example: '안녕하세요' })
@@ -38,4 +57,7 @@ export class CsMessageResponseDto {
 
   @ApiProperty()
   declare createdAt: Date;
+
+  @ApiProperty({ type: [CsMessageAttachmentResponseDto] })
+  declare attachments: CsMessageAttachmentResponseDto[];
 }
