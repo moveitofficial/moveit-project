@@ -5,7 +5,6 @@ import {
   Param,
   ParseUUIDPipe,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -17,7 +16,7 @@ import {
 } from '../../common/decorators/api-success-response.decorator';
 import { AppException } from '../../common/exceptions/app.exception';
 import { Paginated } from '../../common/types/paginated.type';
-import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
+import { AdminJwtAuth } from '../admin-auth/jwt/admin-jwt-auth.decorator';
 
 import { AdminServiceService } from './admin-service.service';
 import { GetServicesQueryDto } from './dto/list/services-query.dto';
@@ -42,7 +41,7 @@ export class AdminServiceController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':serviceId/orders')
   getServiceOrders(
     @Param(
@@ -66,7 +65,7 @@ export class AdminServiceController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':serviceId/orders/counts')
   getServiceOrderCounts(
     @Param(
@@ -88,7 +87,7 @@ export class AdminServiceController {
   @ApiPaginatedResponse(HttpStatus.OK, ServiceItemDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get()
   getServices(
     @Query() query: GetServicesQueryDto,

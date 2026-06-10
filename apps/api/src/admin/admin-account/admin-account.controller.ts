@@ -8,7 +8,6 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -26,8 +25,10 @@ import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { Paginated } from '../../common/types/paginated.type';
 import { ActivityItemDto } from '../admin-activity/dto/activity-item.dto';
-import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
-import { AdminSuperGuard } from '../admin-auth/jwt/admin-super.guard';
+import {
+  AdminJwtAuth,
+  AdminSuperAuth,
+} from '../admin-auth/jwt/admin-jwt-auth.decorator';
 
 import { AdminAccountService } from './admin-account.service';
 import { AdminDetailResponseDto } from './dto/admin-detail-response.dto';
@@ -47,7 +48,7 @@ export class AdminAccountController {
   @ApiErrorResponse(COMMON_ERRORS.FORBIDDEN)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(AdminJwtAccessGuard, AdminSuperGuard)
+  @AdminSuperAuth()
   @Post()
   async createAdmin(@Body() body: CreateAdminRequestDto) {
     const admin = await this.adminAccountService.createAdmin(body);
@@ -66,7 +67,7 @@ export class AdminAccountController {
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(AdminJwtAccessGuard, AdminSuperGuard)
+  @AdminSuperAuth()
   @Post(':id/password-reset')
   async resetPassword(
     @Param(
@@ -88,7 +89,7 @@ export class AdminAccountController {
   @ApiPaginatedResponse(HttpStatus.OK, AdminItemDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get()
   getAdmins(
     @Query() query: GetAdminsQueryDto,
@@ -101,7 +102,7 @@ export class AdminAccountController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':id')
   getAdminDetail(
     @Param(
@@ -123,7 +124,7 @@ export class AdminAccountController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':id/activities')
   getAdminActivities(
     @Param(

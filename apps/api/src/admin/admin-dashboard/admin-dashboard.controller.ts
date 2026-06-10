@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { COMMON_ERRORS } from '../../common/constants/errors';
@@ -10,7 +10,7 @@ import {
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { type Paginated } from '../../common/types/paginated.type';
 import { ActivityItemDto } from '../admin-activity/dto/activity-item.dto';
-import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
+import { AdminJwtAuth } from '../admin-auth/jwt/admin-jwt-auth.decorator';
 
 import { AdminDashboardService } from './admin-dashboard.service';
 import { PendingItemDto } from './dto/pending-response.dto';
@@ -25,7 +25,7 @@ export class AdminDashboardController {
   @ApiSuccessResponse(HttpStatus.OK, SummaryResponseDataDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('summary')
   getSummary(): Promise<SummaryResponseDataDto> {
     return this.adminDashboardService.getSummary();
@@ -35,7 +35,7 @@ export class AdminDashboardController {
   @ApiPaginatedResponse(HttpStatus.OK, PendingItemDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('pending')
   getPending(
     @Query() query: PaginationQueryDto,
@@ -47,7 +47,7 @@ export class AdminDashboardController {
   @ApiPaginatedResponse(HttpStatus.OK, ActivityItemDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('activities')
   getActivities(
     @Query() query: PaginationQueryDto,
