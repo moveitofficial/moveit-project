@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ServiceStatus, type Prisma } from '@prisma/client';
+import { Region, ServiceStatus, type Prisma } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -184,6 +184,88 @@ export class ServicesRepository {
   findExpertProfileByUserId(userId: string) {
     return this.prisma.expertProfile.findUnique({
       where: { userId },
+    });
+  }
+
+  findRecentServicesPool(take: number) {
+    return this.prisma.service.findMany({
+      where: { status: ServiceStatus.ACTIVE },
+      orderBy: { createdAt: 'desc' },
+      take,
+      include: serviceListInclude,
+    });
+  }
+
+  findClientInterestPairs(userId: string) {
+    return this.prisma.clientInterestCategory.findMany({
+      where: { clientProfile: { userId } },
+      select: { serviceGroupId: true, serviceCategoryId: true },
+    });
+  }
+
+  findServicesByCategoryPairs(
+    pairs: { serviceGroupId: string; serviceCategoryId: string }[],
+    take: number,
+  ) {
+    if (pairs.length === 0) return Promise.resolve([]);
+    return this.prisma.service.findMany({
+      where: {
+        status: ServiceStatus.ACTIVE,
+        OR: pairs.map((p) => ({
+          serviceGroupId: p.serviceGroupId,
+          serviceCategoryId: p.serviceCategoryId,
+        })),
+      },
+      orderBy: { createdAt: 'desc' },
+      take,
+      include: serviceListInclude,
+    });
+  }
+
+  findUserRegion(userId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { region: true },
+    });
+  }
+
+  findServicesByExpertRegion(region: Region, take: number) {
+    return this.prisma.service.findMany({
+      where: {
+        status: ServiceStatus.ACTIVE,
+        expertUser: { region },
+      },
+      orderBy: { createdAt: 'desc' },
+      take,
+      include: serviceListInclude,
+    });
+  }
+
+  findRecentlyViewedByUser(userId: string, take: number) {
+    return this.prisma.recentlyViewedService.findMany({
+      where: { clientUserId: userId },
+      orderBy: { viewedAt: 'desc' },
+      take,
+      select: {
+        service: { include: serviceListInclude },
+      },
+    });
+  }
+
+  findSimilarActiveServices(
+    serviceCategoryId: string,
+    excludeIds: string[],
+    take: number,
+  ) {
+    return this.prisma.service.findMany({
+      where: {
+        status: ServiceStatus.ACTIVE,
+        serviceCategoryId,
+        id: { notIn: excludeIds },
+      },
+      orderBy: { createdAt: 'desc' },
+      take,
+      include: serviceListInclude,
     });
   }
 }

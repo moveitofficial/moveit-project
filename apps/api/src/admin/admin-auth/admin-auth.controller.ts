@@ -7,7 +7,6 @@ import {
   Req,
   Res,
   Patch,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -23,7 +22,7 @@ import { AdminAuthService } from './admin-auth.service';
 import { AdminSignInRequestDto } from './dto/admin-sign-in-request.dto';
 import { AdminSignInResponseDataDto } from './dto/admin-sign-in-response.dto';
 import { AdminUpdatePasswordRequestDto } from './dto/admin-update-password-request.dto';
-import { AdminJwtAccessGuard } from './jwt/admin-jwt-access.guard';
+import { AdminJwtAuth } from './jwt/admin-jwt-auth.decorator';
 
 import type { AdminJwtAccessUser } from './jwt/admin-jwt-access.strategy';
 import type { Request, Response } from 'express';
@@ -69,7 +68,7 @@ export class AdminAuthController {
   @ApiErrorResponse(USER_ERRORS.INVALID_PASSWORD)
   @ApiErrorResponse(USER_ERRORS.PASSWORD_MISMATCH)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Patch('password')
   updatePassword(

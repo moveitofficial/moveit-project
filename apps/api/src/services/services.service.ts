@@ -491,4 +491,92 @@ export class ServicesService {
 
     return mapService(updated);
   }
+
+  async getRecentServices(): Promise<ServiceListItemResponse[]> {
+    const POOL_SIZE = 50;
+    const PICK = 4;
+    const pool =
+      await this.servicesRepository.findRecentServicesPool(POOL_SIZE);
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, PICK);
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      picked.map((s) => s.id),
+    );
+    return this.toListItems(picked, statsMap);
+  }
+
+  async getRecommendedByInterest(
+    userId: string,
+  ): Promise<ServiceListItemResponse[]> {
+    const POOL_SIZE = 50;
+    const PICK = 4;
+
+    const pairs = await this.servicesRepository.findClientInterestPairs(userId);
+    if (pairs.length === 0) return [];
+
+    const pool = await this.servicesRepository.findServicesByCategoryPairs(
+      pairs,
+      POOL_SIZE,
+    );
+    if (pool.length === 0) return [];
+
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, PICK);
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      picked.map((s) => s.id),
+    );
+    return this.toListItems(picked, statsMap);
+  }
+
+  async getServicesByRegion(
+    userId: string,
+  ): Promise<ServiceListItemResponse[]> {
+    const POOL_SIZE = 50;
+    const PICK = 4;
+
+    const user = await this.servicesRepository.findUserRegion(userId);
+    if (!user?.region) return [];
+
+    const pool = await this.servicesRepository.findServicesByExpertRegion(
+      user.region,
+      POOL_SIZE,
+    );
+    if (pool.length === 0) return [];
+
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, PICK);
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      picked.map((s) => s.id),
+    );
+    return this.toListItems(picked, statsMap);
+  }
+
+  async getMyRecentlyViewedServices(
+    userId: string,
+  ): Promise<ServiceListItemResponse[]> {
+    const PICK = 4;
+
+    const viewed = await this.servicesRepository.findRecentlyViewedByUser(
+      userId,
+      PICK,
+    );
+    if (viewed.length === 0) return [];
+
+    const services = viewed.map((v) => v.service);
+
+    const first = services[0];
+    if (services.length === 1 && first) {
+      const similar = await this.servicesRepository.findSimilarActiveServices(
+        first.serviceCategoryId,
+        [first.id],
+        3,
+      );
+      services.push(...similar);
+    }
+
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      services.map((s) => s.id),
+    );
+    return this.toListItems(services, statsMap);
+  }
 }

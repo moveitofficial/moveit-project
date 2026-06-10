@@ -188,6 +188,15 @@ export class CommunityPostsRepository {
     });
   }
 
+  findPopularPostsPool(take: number) {
+    return this.prisma.communityPost.findMany({
+      where: { deletedAt: null },
+      orderBy: { likeRecords: { _count: 'desc' } },
+      take,
+      select: postListSelect,
+    });
+  }
+
   deleteComment(commentId: string): Promise<Comment> {
     return this.prisma.comment.update({
       where: { id: commentId },

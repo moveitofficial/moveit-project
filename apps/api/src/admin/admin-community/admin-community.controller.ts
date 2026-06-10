@@ -8,7 +8,6 @@ import {
   Param,
   ParseUUIDPipe,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -20,7 +19,7 @@ import {
 import { ApiErrorResponse } from '../../common/decorators/api-error-response.decorator';
 import { ApiSuccessResponse } from '../../common/decorators/api-success-response.decorator';
 import { AppException } from '../../common/exceptions/app.exception';
-import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
+import { AdminJwtAuth } from '../admin-auth/jwt/admin-jwt-auth.decorator';
 
 import { AdminCommunityService } from './admin-community.service';
 import { AdminDeleteRequestDto } from './dto/admin-delete-request.dto';
@@ -41,7 +40,7 @@ export class AdminCommunityController {
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Delete('posts/:postId')
   deletePost(
@@ -70,7 +69,7 @@ export class AdminCommunityController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('posts/:postId/deletion')
   getPostDeletion(
     @Param(
@@ -92,7 +91,7 @@ export class AdminCommunityController {
   @ApiErrorResponse(COMMENTS_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMENTS_ERRORS.ALREADY_DELETED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Delete('comments/:commentId')
   deleteComment(
@@ -120,7 +119,7 @@ export class AdminCommunityController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMENTS_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('comments/:commentId/deletion')
   getCommentDeletion(
     @Param(

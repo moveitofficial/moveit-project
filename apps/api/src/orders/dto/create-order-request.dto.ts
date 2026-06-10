@@ -11,19 +11,27 @@ export class CreateOrderRequestDto {
   declare serviceId: string;
 
   @ApiProperty({
-    description: 'PG사 발급 결제 고유 키',
-    example: 'tgen_20260527_example',
+    description:
+      '결제 위젯에 전달했던 주문 UUID. 동일한 값이 우리 Order.id로 저장됩니다.',
+    example: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+  })
+  @IsUUID()
+  declare orderId: string;
+
+  @ApiProperty({
+    description: 'Toss가 발급한 결제 고유 키',
+    example: 'tgen_20260604153000',
   })
   @IsString()
   @IsNotEmpty()
   declare paymentKey: string;
 
   @ApiProperty({
-    description: '클라이언트가 최종 결제 완료한 금액(원)',
+    description: '결제 위젯에서 승인된 금액(원). 서버에서 재계산해 검증합니다.',
     example: 1_100_000,
   })
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  declare paidAmount: number;
+  declare amount: number;
 }

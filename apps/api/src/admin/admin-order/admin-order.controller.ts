@@ -8,7 +8,6 @@ import {
   Patch,
   Query,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -20,7 +19,7 @@ import {
 } from '../../common/decorators/api-success-response.decorator';
 import { AppException } from '../../common/exceptions/app.exception';
 import { Paginated } from '../../common/types/paginated.type';
-import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
+import { AdminJwtAuth } from '../admin-auth/jwt/admin-jwt-auth.decorator';
 
 import { AdminOrderService } from './admin-order.service';
 import { OrdersCountsDto } from './dto/list/orders-counts-response.dto';
@@ -50,7 +49,7 @@ export class AdminOrderController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':orderId/transaction')
   getOrderTransaction(
     @Param(
@@ -73,7 +72,7 @@ export class AdminOrderController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':orderId/refund')
   getOrderRefund(
     @Param(
@@ -96,7 +95,7 @@ export class AdminOrderController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':orderId/settlement/preview')
   getOrderSettlementPreview(
     @Param(
@@ -119,7 +118,7 @@ export class AdminOrderController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Patch(':orderId/settlement')
   completeSettlement(
@@ -145,7 +144,7 @@ export class AdminOrderController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':orderId/settlement')
   getOrderSettlement(
     @Param(
@@ -167,7 +166,7 @@ export class AdminOrderController {
   @ApiPaginatedResponse(HttpStatus.OK, OrderItemDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get()
   getOrders(
     @Query() query: GetOrdersQueryDto,
@@ -183,7 +182,7 @@ export class AdminOrderController {
   @ApiSuccessResponse(HttpStatus.OK, OrdersCountsDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('counts')
   getOrdersCounts(): Promise<OrdersCountsDto> {
     return this.adminOrderService.getOrdersCounts();
@@ -197,7 +196,7 @@ export class AdminOrderController {
   @ApiPaginatedResponse(HttpStatus.OK, SettlementItemDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('settlements')
   getSettlements(
     @Query() query: GetSettlementsQueryDto,

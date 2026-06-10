@@ -208,7 +208,18 @@ export class CommunityPostsService {
 
     await (isLiked
       ? this.communityPostsRepository.unlikePost(postId, userId)
-      : this.communityPostsRepository.likePost(postId, userId));
+      : this.communityPostsRepository
+          .likePost(postId, userId)
+          .then(async () => {
+            if (post.userId !== userId) {
+              await this.notificationsService.send({
+                userIds: [post.userId],
+                category: NotificationCategory.POST_LIKE,
+                vars: { postTitle: post.title },
+                referenceId: postId,
+              });
+            }
+          }));
 
     return { isLiked: !isLiked };
   }
@@ -368,5 +379,14 @@ export class CommunityPostsService {
     const toBeDeleted =
       await this.communityPostsRepository.deleteComment(commentId);
     return mapCommentToBeDeleted(toBeDeleted);
+  }
+
+  async getPopularPosts(): Promise<PostListItemResponseDto[]> {
+    const POOL_SIZE = 20;
+    const PICK = 4;
+    const pool =
+      await this.communityPostsRepository.findPopularPostsPool(POOL_SIZE);
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, PICK).map((post) => mapPostListItem(post));
   }
 }

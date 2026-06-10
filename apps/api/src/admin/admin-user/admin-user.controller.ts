@@ -8,7 +8,6 @@ import {
   Post,
   Query,
   Req,
-  UseGuards,
   ParseUUIDPipe,
   Body,
 } from '@nestjs/common';
@@ -26,7 +25,7 @@ import {
 } from '../../common/decorators/api-success-response.decorator';
 import { AppException } from '../../common/exceptions/app.exception';
 import { type Paginated } from '../../common/types/paginated.type';
-import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
+import { AdminJwtAuth } from '../admin-auth/jwt/admin-jwt-auth.decorator';
 
 import { AdminUserService } from './admin-user.service';
 import { BlacklistCountsDto } from './dto/blacklist/blacklist-counts-response.dto';
@@ -60,7 +59,7 @@ export class AdminUserController {
   @ApiPaginatedResponse(HttpStatus.OK, UserItemDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get()
   getUsers(@Query() query: GetUsersQueryDto): Promise<Paginated<UserItemDto>> {
     return this.adminUserService.getUsers(query);
@@ -70,7 +69,7 @@ export class AdminUserController {
   @ApiSuccessResponse(HttpStatus.OK, UserCounstDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('counts')
   getCounts(): Promise<UserCounstDto> {
     return this.adminUserService.getCounts();
@@ -84,7 +83,7 @@ export class AdminUserController {
   @ApiPaginatedResponse(HttpStatus.OK, BlacklistItemDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('blacklist')
   getBlacklist(
     @Query() query: GetBlacklistQueryDto,
@@ -100,7 +99,7 @@ export class AdminUserController {
   @ApiSuccessResponse(HttpStatus.OK, BlacklistCountsDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('blacklist/counts')
   getBlacklistCounts(): Promise<BlacklistCountsDto> {
     return this.adminUserService.getBlacklistCounts();
@@ -114,7 +113,7 @@ export class AdminUserController {
   @ApiPaginatedResponse(HttpStatus.OK, WithdrawnItemDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('withdrawn')
   getWithdrawn(
     @Query() query: GetWithdrawnQueryDto,
@@ -130,7 +129,7 @@ export class AdminUserController {
   @ApiSuccessResponse(HttpStatus.OK, WithdrawnCountsDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get('withdrawn/counts')
   getWithdrawnCounts(): Promise<WithdrawnCountsDto> {
     return this.adminUserService.getWithdrawnCounts();
@@ -141,7 +140,7 @@ export class AdminUserController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':id')
   getUserDetail(
     @Param(
@@ -161,7 +160,7 @@ export class AdminUserController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':id/orders')
   getUserOrders(
     @Param(
@@ -184,7 +183,7 @@ export class AdminUserController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':id/services')
   getUserServices(
     @Param(
@@ -204,7 +203,7 @@ export class AdminUserController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':id/reports/received')
   getUserReportsReceived(
     @Param(
@@ -224,7 +223,7 @@ export class AdminUserController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':id/reports/sent')
   getUserReportsSent(
     @Param(
@@ -244,7 +243,7 @@ export class AdminUserController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':id/posts')
   getUserPosts(
     @Param(
@@ -264,7 +263,7 @@ export class AdminUserController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get(':id/comments')
   getUserComments(
     @Param(
@@ -285,7 +284,7 @@ export class AdminUserController {
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(USER_ERRORS.ALREADY_BLOCKED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Post(':id/blacklist')
   blockUser(
@@ -308,7 +307,7 @@ export class AdminUserController {
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
   @ApiErrorResponse(USER_ERRORS.NOT_BLOCKED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Delete(':id/blacklist')
   unblockUser(
@@ -334,7 +333,7 @@ export class AdminUserController {
   @ApiErrorResponse(EXPERT_PROFILE_ERRORS.ALREADY_APPROVED)
   @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_APPLIED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Post(':id/expert/approve')
   approveExpert(
@@ -360,7 +359,7 @@ export class AdminUserController {
   @ApiErrorResponse(EXPERT_PROFILE_ERRORS.ALREADY_APPROVED)
   @ApiErrorResponse(EXPERT_PROFILE_ERRORS.NOT_APPLIED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Post(':id/expert/reject')
   rejectExpert(
