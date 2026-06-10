@@ -6,10 +6,10 @@ import { Check, ChevronDown } from 'lucide-react';
 
 import * as styles from './FaqCard.css';
 
-import type { AdminFaq } from '@/mocks/types';
+import type { FaqItem } from '@/features/faq/types';
 
 interface Props {
-  faq: AdminFaq;
+  faq: FaqItem;
   isExpanded: boolean;
   isSelected: boolean;
   onToggle: () => void;
