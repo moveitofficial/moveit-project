@@ -4,11 +4,11 @@ import type { Prisma } from '@prisma/client';
 
 export const favoriteExpertUserSelect = {
   id: true,
-  name: true,
   profileImageUrl: true,
   expertProfile: {
     select: {
       businessName: true,
+      foundedYear: true,
       techStacks: {
         select: {
           techStack: { select: { name: true } },

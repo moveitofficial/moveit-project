@@ -7,8 +7,8 @@ export function mapFavoriteExpertListItem(
 ): FavoriteExpertListItemResponseDto {
   return {
     id: expert.id,
-    name: expert.name ?? '',
-    companyName: expert.expertProfile?.businessName ?? expert.name ?? '',
+    companyName: expert.expertProfile?.businessName ?? '',
+    foundedYear: expert.expertProfile?.foundedYear ?? 0,
     profileImageUrl: expert.profileImageUrl,
     techStacks:
       expert.expertProfile?.techStacks.map(({ techStack }) => techStack.name) ??

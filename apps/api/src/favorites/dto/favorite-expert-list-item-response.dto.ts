@@ -6,10 +6,10 @@ export class FavoriteExpertListItemResponseDto {
   declare id: string;
 
   @ApiProperty({ example: '코드잇 에이전시' })
-  declare name: string;
-
-  @ApiProperty({ example: '코드잇 에이전시' })
   declare companyName: string;
+
+  @ApiProperty({ example: '202005' })
+  declare foundedYear: number | null;
 
   @ApiProperty({ nullable: true, example: 'https://...' })
   declare profileImageUrl: string | null;
