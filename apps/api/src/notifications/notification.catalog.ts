@@ -10,6 +10,7 @@ export interface NotificationContentVars {
   deleteReason?: string;
   adminReason?: string;
   serviceTitle?: string;
+  clientName?: string;
 }
 
 interface NotificationMeta {
@@ -83,7 +84,13 @@ export const NOTIFICATION_CATALOG: Record<
     type: NotificationType.TRANSACTION,
     referenceType: ReferenceType.ORDER,
     buildContent: (vars) =>
-      `'${vars?.serviceTitle ?? ''}' 취소 요청이 들어왔어요. MyPage > 판매관리에서 확인해주세요`,
+      `'${vars?.clientName ?? ''}'님이 '${vars?.serviceTitle ?? ''}' 취소 요청을 보냈어요. MyPage > 판매관리에서 확인해주세요`,
+  },
+  [NotificationCategory.ORDER_CANCEL_REQUESTED_TO_CLIENT]: {
+    type: NotificationType.TRANSACTION,
+    referenceType: ReferenceType.ORDER,
+    buildContent: (vars) =>
+      `'${vars?.serviceTitle ?? ''}' 취소 요청이 완료되었어요`,
   },
   [NotificationCategory.ORDER_CANCEL_APPROVED_BY_EXPERT]: {
     type: NotificationType.TRANSACTION,
@@ -97,6 +104,12 @@ export const NOTIFICATION_CATALOG: Record<
     buildContent: (vars) =>
       `'${vars?.adminReason ?? ''}' '${vars?.serviceTitle ?? ''}' 주문 취소 요청이 승인되었습니다`,
   },
+  [NotificationCategory.ORDER_CANCEL_REJECTED_BY_EXPERT]: {
+    type: NotificationType.TRANSACTION,
+    referenceType: ReferenceType.ORDER,
+    buildContent: (vars) =>
+      `'${vars?.serviceTitle ?? ''}' 주문 취소 요청이 거절되었습니다`,
+  },
   [NotificationCategory.ORDER_CANCELLED]: {
     type: NotificationType.TRANSACTION,
     referenceType: ReferenceType.ORDER,
@@ -108,7 +121,14 @@ export const NOTIFICATION_CATALOG: Record<
     type: NotificationType.TRANSACTION,
     referenceType: ReferenceType.REFUND,
     buildContent: (vars) =>
-      `'${vars?.serviceTitle ?? ''}' 환불 요청이 들어왔어요. MyPage > 판매관리에서 확인해주세요`,
+      `'${vars?.clientName ?? ''}'님이 '${vars?.serviceTitle ?? ''}' 환불 요청을 보냈어요. MyPage > 판매관리에서 확인해주세요`,
+  },
+
+  [NotificationCategory.REFUND_REQUESTED_TO_CLIENT]: {
+    type: NotificationType.TRANSACTION,
+    referenceType: ReferenceType.REFUND,
+    buildContent: (vars) =>
+      `'${vars?.serviceTitle ?? ''}' 환불 요청이 완료되었어요`,
   },
   [NotificationCategory.REFUND_APPROVED_BY_EXPERT]: {
     type: NotificationType.TRANSACTION,
@@ -121,6 +141,12 @@ export const NOTIFICATION_CATALOG: Record<
     referenceType: ReferenceType.REFUND,
     buildContent: (vars) =>
       `'${vars?.adminReason ?? ''}' '${vars?.serviceTitle ?? ''}' 환불 요청이 승인되었습니다`,
+  },
+  [NotificationCategory.REFUND_REJECTED_BY_EXPERT]: {
+    type: NotificationType.TRANSACTION,
+    referenceType: ReferenceType.REFUND,
+    buildContent: (vars) =>
+      `'${vars?.serviceTitle ?? ''}' 환불 요청이 거절되었습니다`,
   },
 
   // ───── 거래 - 작업/구매확정/정산 ─────
