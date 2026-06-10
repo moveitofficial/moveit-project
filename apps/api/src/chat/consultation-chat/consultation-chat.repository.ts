@@ -67,4 +67,92 @@ export class ConsultationChatRepository {
     });
     return message;
   }
+
+  #buildRoomsWhere(userId: string, search?: string) {
+    return {
+      AND: [
+        { OR: [{ clientUserId: userId }, { expertUserId: userId }] },
+        { lastMessage: { isNot: null } },
+        ...(search
+          ? [
+              {
+                OR: [
+                  {
+                    clientUser: {
+                      clientProfile: {
+                        nickname: {
+                          contains: search,
+                          mode: 'insensitive' as const,
+                        },
+                      },
+                    },
+                  },
+                  {
+                    clientUser: {
+                      name: {
+                        contains: search,
+                        mode: 'insensitive' as const,
+                      },
+                    },
+                  },
+                  {
+                    expertUser: {
+                      expertProfile: {
+                        businessName: {
+                          contains: search,
+                          mode: 'insensitive' as const,
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
+      ],
+    };
+  }
+
+  countRooms(userId: string, search?: string) {
+    return this.prisma.chatRoom.count({
+      where: this.#buildRoomsWhere(userId, search),
+    });
+  }
+
+  findAllRooms(userId: string, search?: string, page = 1, limit = 20) {
+    return this.prisma.chatRoom.findMany({
+      skip: (page - 1) * limit,
+      take: limit,
+      where: this.#buildRoomsWhere(userId, search),
+      include: {
+        clientUser: {
+          select: {
+            id: true,
+            name: true,
+            profileImageUrl: true,
+            clientProfile: { select: { nickname: true } },
+          },
+        },
+        expertUser: {
+          select: {
+            id: true,
+            profileImageUrl: true,
+            expertProfile: { select: { businessName: true } },
+          },
+        },
+        lastMessage: { select: { id: true, content: true, createdAt: true } },
+        participants: { select: { userId: true, lastReadMessageId: true } },
+      },
+      orderBy: { lastMessage: { createdAt: 'desc' } },
+    });
+  }
+
+  findMessages(roomId: string, cursor?: string, limit = 30) {
+    return this.prisma.message.findMany({
+      where: { chatRoomId: roomId },
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

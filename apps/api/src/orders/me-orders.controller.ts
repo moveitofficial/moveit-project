@@ -55,15 +55,20 @@ export class MeOrdersController {
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(
     SERVICE_ERRORS.NOT_AVAILABLE,
-    ORDER_ERRORS.AMOUNT_MISMATCH,
+    PAYMENT_ERRORS.AMOUNT_MISMATCH,
+    PAYMENT_ERRORS.FAILED,
     COMMON_ERRORS.VALIDATION_ERROR,
   )
-  @ApiErrorResponse(PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY)
+  @ApiErrorResponse(
+    ORDER_ERRORS.DUPLICATE_ORDER_ID,
+    PAYMENT_ERRORS.ALREADY_CONFIRMED,
+    PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY,
+  )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
   @Post()
   createOrder(@Req() req: Request, @Body() dto: CreateOrderRequestDto) {
     const user = req.user as JwtAccessUser;
-    return this.ordersService.initializeOrder(user.userId, dto);
+    return this.ordersService.createOrder(user.userId, dto);
   }
 }

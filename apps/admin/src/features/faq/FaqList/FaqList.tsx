@@ -8,17 +8,31 @@ import { useState } from 'react';
 
 import * as styles from './FaqList.css';
 
-import type { AdminFaq } from '@/mocks/types';
+import type { FaqItem } from '@/features/faq/types';
 
+import { deleteFaqs, getFaqs } from '@/features/faq/api';
 import { FaqCard } from '@/features/faq/FaqCard';
+import { useInfiniteScroll } from '@/utils/hooks/useInfiniteScroll';
 
 interface Props {
-  faqs: AdminFaq[];
+  initialItems: FaqItem[];
+  hasNext: boolean;
 }
 
-export default function FaqList({ faqs }: Props) {
+export default function FaqList({
+  initialItems,
+  hasNext: initialHasNext,
+}: Props) {
   const router = useRouter();
-  const [items, setItems] = useState(faqs);
+  const { items, setItems, isLoading, sentinelRef } = useInfiniteScroll(
+    initialItems,
+    initialHasNext,
+    (page) =>
+      getFaqs(page).then((res) => ({
+        items: res.data.items,
+        hasNext: res.data.pagination.hasNext,
+      })),
+  );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showModal, setShowModal] = useState(false);
@@ -44,11 +58,18 @@ export default function FaqList({ faqs }: Props) {
     setShowModal(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteFaqs([...selectedIds]);
+    } catch {
+      alert('삭제 중 오류가 발생했습니다.');
+      return;
+    }
     setItems((prev) => prev.filter((faq) => !selectedIds.has(faq.id)));
     setSelectedIds(new Set());
     setExpandedId(null);
     setShowModal(false);
+    router.refresh();
   };
 
   return (
@@ -98,7 +119,14 @@ export default function FaqList({ faqs }: Props) {
                 }}
               />
             ))}
+            <li ref={sentinelRef} aria-hidden="true" />
           </ul>
+        )}
+
+        {isLoading && (
+          <p className={clsx(typography.f16R, styles.emptyState)}>
+            불러오는 중...
+          </p>
         )}
       </div>
 
@@ -110,7 +138,13 @@ export default function FaqList({ faqs }: Props) {
         title="FAQ 삭제"
         description="선택하신 FAQ를 삭제하시겠습니까? 삭제 시 FAQ 알림에서도 노출이 되지 않으며, 이 작업은 되돌릴 수 없습니다."
         actions={[
-          { label: '예', variant: 'blue', onClick: handleConfirmDelete },
+          {
+            label: '예',
+            variant: 'blue',
+            onClick: () => {
+              void handleConfirmDelete();
+            },
+          },
           {
             label: '아니오',
             variant: 'white',

@@ -46,6 +46,116 @@ export class CsChatRepository {
     return message;
   }
 
+  async createRoomWithFirstMessage(userId: string, content: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const room = await tx.csChatRoom.create({
+        data: { userId, status: CsChatStatus.OPEN },
+      });
+      const message = await tx.csMessage.create({
+        data: {
+          chatRoomId: room.id,
+          senderType: SenderType.USER,
+          senderUserId: userId,
+          type: MessageType.TEXT,
+          content,
+        },
+      });
+      return tx.csChatRoom.update({
+        where: { id: room.id },
+        data: { lastMessageId: message.id },
+        include: {
+          lastMessage: { select: { id: true, content: true, createdAt: true } },
+        },
+      });
+    });
+  }
+
+  findAllRoomsByUser(userId: string, page = 1, limit = 20) {
+    return this.prisma.csChatRoom.findMany({
+      where: { userId, lastMessage: { isNot: null } },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        lastMessage: { select: { id: true, content: true, createdAt: true } },
+      },
+      orderBy: { lastMessage: { createdAt: 'desc' } },
+    });
+  }
+
+  countRoomsByUser(userId: string) {
+    return this.prisma.csChatRoom.count({
+      where: { userId, lastMessage: { isNot: null } },
+    });
+  }
+
+  #buildAdminWhere(search?: string) {
+    return {
+      lastMessage: { isNot: null },
+      ...(search
+        ? {
+            user: {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' as const } },
+                {
+                  clientProfile: {
+                    nickname: {
+                      contains: search,
+                      mode: 'insensitive' as const,
+                    },
+                  },
+                },
+                {
+                  expertProfile: {
+                    businessName: {
+                      contains: search,
+                      mode: 'insensitive' as const,
+                    },
+                  },
+                },
+              ],
+            },
+          }
+        : {}),
+    };
+  }
+
+  findAllRoomsForAdmin(search?: string, page = 1, limit = 20) {
+    return this.prisma.csChatRoom.findMany({
+      where: this.#buildAdminWhere(search),
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            profileImageUrl: true,
+            clientProfile: { select: { nickname: true } },
+            expertProfile: { select: { businessName: true } },
+          },
+        },
+        assignedAdmin: { select: { id: true, name: true } },
+        lastMessage: { select: { id: true, content: true, createdAt: true } },
+      },
+      orderBy: { lastMessage: { createdAt: 'desc' } },
+    });
+  }
+
+  countRoomsForAdmin(search?: string) {
+    return this.prisma.csChatRoom.count({
+      where: this.#buildAdminWhere(search),
+    });
+  }
+
+  findMessages(roomId: string, cursor?: string, limit = 30) {
+    return this.prisma.csMessage.findMany({
+      where: { chatRoomId: roomId },
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async closeChatRoom(roomId: string) {
     await this.prisma.csChatRoom.update({
       where: { id: roomId },

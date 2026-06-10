@@ -150,6 +150,9 @@ export class CsChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     await this.csChatService.assignAdmin(dto.roomId, socket.data);
     await socket.join(dto.roomId);
+    this.server
+      .to(dto.roomId)
+      .emit(CS_EVENTS.ADMIN_ASSIGNED, { roomId: dto.roomId });
   }
 
   @SubscribeMessage(CS_EVENTS.MARK_READ)

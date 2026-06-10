@@ -155,13 +155,13 @@ export const ORDER_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '유효하지 않은 주문 상태입니다.',
   },
-  AMOUNT_MISMATCH: {
-    status: HttpStatus.BAD_REQUEST,
-    message: '결제 요청 금액이 실제 주문 금액과 일치하지 않습니다.',
-  },
   ALREADY_PROCESSED: {
     status: HttpStatus.CONFLICT,
     message: '이미 결제가 완료되었거나 취소된 주문건입니다.',
+  },
+  DUPLICATE_ORDER_ID: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 사용된 주문 ID입니다.',
   },
 } as const;
 
@@ -418,6 +418,11 @@ export const CS_CHAT_ERRORS = {
     message: '관리자만 이 작업을 수행할 수 있습니다.',
     code: 'CS_CHAT_FORBIDDEN_NOT_ADMIN',
   },
+  ALREADY_ASSIGNED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '이미 상담원이 배정된 문의입니다.',
+    code: 'CS_CHAT_ALREADY_ASSIGNED',
+  },
 } as const;
 
 export const COMMENTS_ERRORS = {
@@ -465,6 +470,14 @@ export const REPORT_ERRORS = {
     status: HttpStatus.NOT_FOUND,
     message: '신고 내역을 찾을 수 없습니다.',
     code: 'REPORT_NOT_FOUND',
+  },
+} as const;
+
+export const FAQ_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: 'FAQ를 찾을 수 없습니다.',
+    code: 'FAQ_NOT_FOUND',
   },
 } as const;
 
