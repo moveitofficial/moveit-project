@@ -312,4 +312,46 @@ export class OrdersRepository {
 
     return this.prisma.order.findUnique({ where: { id: orderId } });
   }
+
+  //마감 임박 대상 조회
+  async findOrdersToImminent(now: Date, threshold: Date) {
+    return this.prisma.order.findMany({
+      where: {
+        status: OrderStatus.IN_PROGRESS,
+        endDate: { gt: now, lte: threshold },
+      },
+      select: {
+        id: true,
+        clientUserId: true,
+        expertUserId: true,
+        service: { select: { title: true } },
+      },
+    });
+  }
+
+  // 기한만료 대상 조회
+  async findOrdersToExpire(now: Date) {
+    return this.prisma.order.findMany({
+      where: {
+        status: {
+          in: [OrderStatus.IN_PROGRESS, OrderStatus.DEADLINE_IMMINENT],
+        },
+        endDate: { lte: now },
+      },
+      select: {
+        id: true,
+        clientUserId: true,
+        expertUserId: true,
+        service: { select: { title: true } },
+      },
+    });
+  }
+  // 상태 일괄변경
+  async updateOrdersStatus(orderIds: string[], status: OrderStatus) {
+    if (orderIds.length === 0) return;
+    await this.prisma.order.updateMany({
+      where: { id: { in: orderIds } },
+      data: { status },
+    });
+  }
 }
