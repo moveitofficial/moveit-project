@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TechStackName } from '@prisma/client';
+import { ServiceGroupName, TechStackName } from '@prisma/client';
 
 export class FavoriteExpertListItemResponseDto {
   @ApiProperty({ format: 'uuid' })
@@ -20,6 +20,13 @@ export class FavoriteExpertListItemResponseDto {
     example: [TechStackName.REACT],
   })
   declare techStacks: TechStackName[];
+
+  @ApiProperty({
+    enum: ServiceGroupName,
+    isArray: true,
+    example: [ServiceGroupName.IT_COACHING],
+  })
+  declare serviceGroups: ServiceGroupName[];
 
   @ApiProperty({ example: 4.9 })
   declare rating: number;

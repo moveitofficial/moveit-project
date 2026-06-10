@@ -14,6 +14,11 @@ export const favoriteExpertUserSelect = {
           techStack: { select: { name: true } },
         },
       },
+      specialtyCategories: {
+        select: {
+          serviceGroup: { select: { name: true } },
+        },
+      },
     },
   },
 } satisfies Prisma.UserSelect;
