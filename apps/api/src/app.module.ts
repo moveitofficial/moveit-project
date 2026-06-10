@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AdminModule } from './admin/admin.module';
 import { AppController } from './app.controller';
@@ -29,6 +30,7 @@ import { UsersModule } from './users/users.module';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV ?? 'development'}`,
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     HealthModule,
