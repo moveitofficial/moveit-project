@@ -2,6 +2,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   HttpStatus,
   Param,
   ParseUUIDPipe,
@@ -21,7 +22,10 @@ import {
   USER_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
-import { ApiPaginatedResponse } from '../common/decorators/api-success-response.decorator';
+import {
+  ApiPaginatedResponse,
+  ApiSuccessResponse,
+} from '../common/decorators/api-success-response.decorator';
 import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { ServiceListItemResponseDto } from '../services/dto/service-response.dto';
@@ -64,9 +68,10 @@ export class FavoritesController {
 
   @ApiOperation({ summary: '서비스 찜 해제' })
   @RoleAuth(Role.CLIENT)
-  @ApiResponse({ status: HttpStatus.NO_CONTENT })
+  @ApiSuccessResponse(HttpStatus.NO_CONTENT)
   @ApiErrorResponse(FAVORITES_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('services/:id')
   removeFavoriteService(
     @Req() req: Request,
@@ -104,9 +109,10 @@ export class FavoritesController {
 
   @ApiOperation({ summary: '전문가 찜 해제' })
   @RoleAuth(Role.CLIENT)
-  @ApiResponse({ status: HttpStatus.NO_CONTENT })
+  @ApiSuccessResponse(HttpStatus.NO_CONTENT)
   @ApiErrorResponse(FAVORITES_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('experts/:id')
   removeFavoriteExpert(
     @Req() req: Request,
