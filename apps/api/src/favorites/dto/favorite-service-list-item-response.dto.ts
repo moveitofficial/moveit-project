@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  Region,
-  ServiceCategoryName,
-  ServiceGroupName,
-  ServiceStatus,
-  TechStackName,
-} from '@prisma/client';
+import { Region, ServiceStatus, TechStackName } from '@prisma/client';
 
 class FavoriteServiceExpertSummaryResponseDto {
   @ApiProperty({ format: 'uuid' })
@@ -23,17 +17,6 @@ class FavoriteServiceExpertSummaryResponseDto {
 
   @ApiProperty({ enum: Region, nullable: true, example: Region.SEOUL })
   declare region: Region | null;
-}
-
-class FavoriteServiceCategoryRefResponseDto {
-  @ApiProperty({
-    enum: ServiceGroupName,
-    example: ServiceGroupName.IT_COACHING,
-  })
-  declare group: ServiceGroupName;
-
-  @ApiProperty({ enum: ServiceCategoryName, example: ServiceCategoryName.WEB })
-  declare category: ServiceCategoryName;
 }
 
 export class FavoriteServiceListItemResponseDto {
@@ -61,9 +44,6 @@ export class FavoriteServiceListItemResponseDto {
   @ApiProperty({ type: FavoriteServiceExpertSummaryResponseDto })
   declare expert: FavoriteServiceExpertSummaryResponseDto;
 
-  @ApiProperty({ type: FavoriteServiceCategoryRefResponseDto })
-  declare categoryRef: FavoriteServiceCategoryRefResponseDto;
-
   @ApiProperty({
     enum: TechStackName,
     isArray: true,
@@ -79,7 +59,4 @@ export class FavoriteServiceListItemResponseDto {
 
   @ApiProperty({ example: 120 })
   declare orderCount: number;
-
-  @ApiProperty({ example: 45 })
-  declare favoriteCount: number;
 }

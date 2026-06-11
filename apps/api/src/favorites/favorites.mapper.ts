@@ -1,5 +1,3 @@
-import { mapServiceCategoryRef } from '../common/utils/service-category.util';
-
 import type { FavoriteExpertListItemResponseDto } from './dto/favorite-expert-list-item-response.dto';
 import type { FavoriteServiceListItemResponseDto } from './dto/favorite-service-list-item-response.dto';
 import type { ExpertReviewStats, FavoriteExpertUser } from './favorites.types';
@@ -38,14 +36,7 @@ export function mapFavoriteServiceListItem(
   service: ServiceListItem,
   stats: ServiceReviewStats,
 ): FavoriteServiceListItemResponseDto {
-  const {
-    serviceGroup,
-    serviceCategory,
-    images,
-    expertUser,
-    techStacks,
-    ...rest
-  } = service;
+  const { images, expertUser, techStacks, ...rest } = service;
 
   return {
     id: rest.id,
@@ -63,10 +54,8 @@ export function mapFavoriteServiceListItem(
       region: expertUser.region,
     },
     techStacks: techStacks.map(({ techStack }) => techStack.name),
-    categoryRef: mapServiceCategoryRef({ serviceGroup, serviceCategory }),
     rating: stats.rating,
     reviewCount: stats.reviewCount,
     orderCount: service._count.orders,
-    favoriteCount: service._count.favoriteServices,
   };
 }
