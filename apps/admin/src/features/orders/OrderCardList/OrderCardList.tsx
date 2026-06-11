@@ -10,7 +10,7 @@ import { fetchMoreOrders } from '@/features/orders/actions';
 import {
   ORDER_STATUS_ACTIONS_CONFIG,
   ORDER_STATUS_BADGE_CONFIG,
-} from '@/features/orders/constants';
+} from '@/utils/constants';
 import { formatServiceCategory } from '@/utils/formatServiceCategory';
 import { useInfiniteScroll } from '@/utils/hooks';
 
