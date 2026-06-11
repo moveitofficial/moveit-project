@@ -33,6 +33,9 @@ import {
   mapUpdateOrderStatusResponse,
 } from './orders.mapper';
 import {
+  validateCancelApprovePolicy,
+  validateCancelRejectPolicy,
+  validateCancelRequestPolicy,
   validateConfirmOrderPolicy,
   validateOrderStatusAuthority,
   validateOrderStatusFlow,
@@ -43,6 +46,7 @@ import { OrdersRepository } from './orders.repository';
 
 import type { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
+import type { RequestCancelDto } from './dto/request-cancel.dto';
 import type { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
 import type { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
 
@@ -331,5 +335,75 @@ export class OrdersService {
     }
 
     await this.ordersRepository.deleteReview(reviewId);
+  }
+
+  async requestCancelOrder(
+    clientUserId: string,
+    orderId: string,
+    dto: RequestCancelDto,
+  ) {
+    const order =
+      await this.ordersRepository.findOrderCancelRequestPolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateCancelRequestPolicy(order, clientUserId);
+
+    const payment = order.payment;
+    if (!payment?.paymentKey) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+    const updated = await this.ordersRepository.requestCancel({
+      orderId,
+      clientUserId: order.clientUserId,
+      expertUserId: order.expertUserId,
+      paidAmount: payment.paidAmount,
+      paymentKey: payment.paymentKey,
+      reason: dto.reason,
+    });
+    return mapUpdateOrderStatusResponse(updated);
+  }
+
+  async approveCancelOrder(expertUserId: string, orderId: string) {
+    const order =
+      await this.ordersRepository.findOrderCancelApprovePolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateCancelApprovePolicy(order, expertUserId);
+
+    const payment = order.payment;
+    if (!payment?.paymentKey) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+    const { canceledAt, rawData } =
+      await this.paymentsService.cancelTossPayment(
+        payment.paymentKey,
+        '전문가 취소 승인',
+        payment.paidAmount,
+      );
+
+    try {
+      const updated = await this.ordersRepository.approveCancel({
+        orderId,
+        refundAmount: payment.paidAmount,
+        canceledAt,
+        rawData,
+      });
+      return mapUpdateOrderStatusResponse(updated);
+    } catch (error) {
+      this.logger.error(
+        `Toss 취소 후 DB 갱신 실패. orderId=${orderId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw error;
+    }
+  }
+
+  async rejectCancelOrder(expertUserId: string, orderId: string) {
+    const order =
+      await this.ordersRepository.findOrderCancelApprovePolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateCancelRejectPolicy(order, expertUserId);
+
+    const updated = await this.ordersRepository.rejectCancel(orderId);
+    return mapUpdateOrderStatusResponse(updated);
   }
 }
