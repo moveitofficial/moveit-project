@@ -32,26 +32,26 @@ import { JwtAuth } from '../../common/decorators/jwt-auth.decorator';
 import { UploadChatFilesResponseDto } from '../../upload/dto/upload-chat-files-response.dto';
 import { UploadService } from '../../upload/upload.service';
 import { FindMessagesQueryDto } from '../common/dto/find-messages-query.dto';
+import { FindRoomsQueryDto } from '../common/dto/find-rooms-query.dto';
 
-import { ConsultationChatGateway } from './consultation-chat.gateway';
-import { ConsultationChatService } from './consultation-chat.service';
+import { ChatGateway } from './chat.gateway';
+import { ChatService } from './chat.service';
 import {
   ChatMessageListResponseDto,
   ChatMessageResponseDto,
 } from './dto/chat-message-response.dto';
 import { ChatRoomResponseDto } from './dto/chat-room-response.dto';
-import { CreateConsultationRoomDto } from './dto/create-consultation-room.dto';
-import { FindRoomsQueryDto } from './dto/find-rooms-query.dto';
+import { CreateChatRoomDto } from './dto/create-chat-room.dto';
 
 import type { Request } from 'express';
 
-@ApiTags('consultation')
-@Controller('consultation')
-export class ConsultationChatController {
+@ApiTags('chat')
+@Controller('chat')
+export class ChatController {
   constructor(
-    private readonly consultationChatService: ConsultationChatService,
+    private readonly chatService: ChatService,
     private readonly uploadService: UploadService,
-    private readonly consultationChatGateway: ConsultationChatGateway,
+    private readonly chatGateway: ChatGateway,
   ) {}
 
   @ApiOperation({ summary: '서비스 문의 채팅방 생성 (+ 첫 메시지)' })
@@ -61,12 +61,9 @@ export class ConsultationChatController {
   @ApiErrorResponse(CHAT_ERRORS.ROOM_ALREADY_EXISTS)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Post('rooms')
-  async createRoom(
-    @Req() req: Request,
-    @Body() body: CreateConsultationRoomDto,
-  ) {
+  async createRoom(@Req() req: Request, @Body() body: CreateChatRoomDto) {
     const user = req.user as JwtAccessUser;
-    return this.consultationChatService.createRoom(user.userId, {
+    return this.chatService.createRoom(user.userId, {
       expertUserId: body.expertUserId,
       serviceId: body.serviceId,
       content: body.content,
@@ -78,7 +75,7 @@ export class ConsultationChatController {
   @ApiOperation({
     summary: '채팅방 생성 전 파일 업로드 (최대 3개, 각 500MB)',
     description:
-      '채팅방 생성 전 파일을 먼저 S3에 업로드합니다. 반환된 roomId와 files를 POST /consultation/rooms 요청에 포함하면 방 생성과 동시에 첨부파일이 저장됩니다.',
+      '채팅방 생성 전 파일을 먼저 S3에 업로드합니다. 반환된 roomId와 files를 POST /chat/rooms 요청에 포함하면 방 생성과 동시에 첨부파일이 저장됩니다.',
   })
   @JwtAuth()
   @ApiSuccessResponse(HttpStatus.CREATED, UploadChatFilesResponseDto)
@@ -97,7 +94,7 @@ export class ConsultationChatController {
     const roomId = randomUUID();
     const uploaded = await this.uploadService.uploadChatFiles(
       files,
-      `consultation/${roomId}`,
+      `chat/${roomId}`,
     );
     return { roomId, files: uploaded };
   }
@@ -127,14 +124,14 @@ export class ConsultationChatController {
     const user = req.user as JwtAccessUser;
     const uploaded = await this.uploadService.uploadChatFile(
       file,
-      `consultation/${roomId}`,
+      `chat/${roomId}`,
     );
-    const message = await this.consultationChatService.sendFileMessage(
+    const message = await this.chatService.sendFileMessage(
       roomId,
       user.userId,
       uploaded,
     );
-    this.consultationChatGateway.broadcastMessage(roomId, message);
+    this.chatGateway.broadcastMessage(roomId, message);
     return message;
   }
 
@@ -145,7 +142,7 @@ export class ConsultationChatController {
   @Get('rooms')
   async findRooms(@Req() req: Request, @Query() query: FindRoomsQueryDto) {
     const user = req.user as JwtAccessUser;
-    return await this.consultationChatService.getRooms(
+    return await this.chatService.getRooms(
       user.userId,
       query.search,
       query.page,
@@ -163,7 +160,7 @@ export class ConsultationChatController {
     @Query() query: FindMessagesQueryDto,
   ) {
     const user = req.user as JwtAccessUser;
-    return await this.consultationChatService.getMessages(
+    return await this.chatService.getMessages(
       roomId,
       user.userId,
       query.cursor,

@@ -5,14 +5,12 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
 import { toWsException } from '../../common/utils/ws-exception.util';
 
-import { ConsultationChatRepository } from './consultation-chat.repository';
+import { ChatRepository } from './chat.repository';
 import { SendMessageDto } from './dto/send-message.dto';
 
 @Injectable()
-export class ConsultationChatService {
-  constructor(
-    private readonly consultationChatRepository: ConsultationChatRepository,
-  ) {}
+export class ChatService {
+  constructor(private readonly chatRepository: ChatRepository) {}
 
   async createRoom(
     clientUserId: string,
@@ -29,7 +27,7 @@ export class ConsultationChatService {
       }[];
     },
   ) {
-    const room = await this.consultationChatRepository.createRoom({
+    const room = await this.chatRepository.createRoom({
       clientUserId,
       ...data,
     });
@@ -65,13 +63,10 @@ export class ConsultationChatService {
       fileSize: number;
     },
   ) {
-    const participant = await this.consultationChatRepository.findRoom(
-      roomId,
-      senderId,
-    );
+    const participant = await this.chatRepository.findRoom(roomId, senderId);
     if (!participant)
       throw new AppException(CHAT_ERRORS.FORBIDDEN_NOT_PARTICIPANT);
-    return this.consultationChatRepository.createFileMessage({
+    return this.chatRepository.createFileMessage({
       chatRoomId: roomId,
       senderId,
       attachment: {
@@ -84,17 +79,14 @@ export class ConsultationChatService {
   }
 
   async validateParticipant(roomId: string, userId: string) {
-    const participant = await this.consultationChatRepository.findRoom(
-      roomId,
-      userId,
-    );
+    const participant = await this.chatRepository.findRoom(roomId, userId);
     if (!participant)
       throw toWsException(CHAT_ERRORS.FORBIDDEN_NOT_PARTICIPANT);
   }
 
   async sendMessage(roomId: string, senderId: string, dto: SendMessageDto) {
     await this.validateParticipant(roomId, senderId);
-    return this.consultationChatRepository.createMessage({
+    return this.chatRepository.createMessage({
       chatRoomId: roomId,
       senderId,
       type: dto.type,
@@ -107,17 +99,13 @@ export class ConsultationChatService {
 
   async markRead(roomId: string, userId: string, messageId: string) {
     await this.validateParticipant(roomId, userId);
-    return this.consultationChatRepository.updateLastRead(
-      roomId,
-      userId,
-      messageId,
-    );
+    return this.chatRepository.updateLastRead(roomId, userId, messageId);
   }
 
   async getRooms(userId: string, search?: string, page = 1, limit = 20) {
     const [rooms, totalCount] = await Promise.all([
-      this.consultationChatRepository.findAllRooms(userId, search, page, limit),
-      this.consultationChatRepository.countRooms(userId, search),
+      this.chatRepository.findAllRooms(userId, search, page, limit),
+      this.chatRepository.countRooms(userId, search),
     ]);
     const items = rooms.map((room) => ({
       id: room.id,
@@ -148,13 +136,10 @@ export class ConsultationChatService {
     cursor?: string,
     limit = 30,
   ) {
-    const participant = await this.consultationChatRepository.findRoom(
-      roomId,
-      userId,
-    );
+    const participant = await this.chatRepository.findRoom(roomId, userId);
     if (!participant)
       throw new AppException(CHAT_ERRORS.FORBIDDEN_NOT_PARTICIPANT);
-    const messages = await this.consultationChatRepository.findMessages(
+    const messages = await this.chatRepository.findMessages(
       roomId,
       cursor,
       limit,

@@ -10,7 +10,7 @@ import { SOCKET_NAMESPACES } from '@repo/socket-events';
 import { Server, Socket } from 'socket.io';
 
 import { ACCESS_COOKIE_NAME, JWT_ACCESS_TYP } from '../auth/auth.constants';
-import { parseCookies } from '../chat/common/utils/parse-cookies.util';
+import { parseCookies } from '../chats/common/utils/parse-cookies.util';
 import { COMMON_ERRORS } from '../common/constants/errors';
 import { WsExceptionFilter } from '../common/filters/ws-exception.filter';
 import { toWsException } from '../common/utils/ws-exception.util';

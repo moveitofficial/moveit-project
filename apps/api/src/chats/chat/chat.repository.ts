@@ -10,7 +10,7 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
-export class ConsultationChatRepository {
+export class ChatRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async createRoom(data: {
