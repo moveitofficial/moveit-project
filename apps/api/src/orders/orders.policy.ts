@@ -140,6 +140,19 @@ export function validateCancelRequestPolicy(
   if (order.clientUserId !== userId) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
   }
+  if (
+    order.status === OrderStatus.CANCEL_REQUESTED ||
+    order.status === OrderStatus.REFUND_REQUESTED
+  ) {
+    throw new AppException(REFUND_ERRORS.ALREADY_REQUESTED);
+  }
+  if (
+    order.status === OrderStatus.PAYMENT_CANCELLED ||
+    order.status === OrderStatus.REFUND_COMPLETED ||
+    order.status === OrderStatus.SETTLEMENT_COMPLETED
+  ) {
+    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+  }
   if (order.status !== OrderStatus.NEGOTIATING) {
     throw new AppException(REFUND_ERRORS.CANCEL_NOT_ALLOWED);
   }
@@ -158,6 +171,9 @@ export function validateCancelApprovePolicy(
 ): void {
   if (order.expertUserId !== userId) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (order.status === OrderStatus.PAYMENT_CANCELLED) {
+    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
   }
   if (order.status !== OrderStatus.CANCEL_REQUESTED) {
     throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
@@ -184,14 +200,17 @@ export function validateCancelRejectPolicy(
   if (order.expertUserId !== userId) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
   }
+  if (order.status === OrderStatus.PAYMENT_CANCELLED) {
+    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+  }
   if (order.status !== OrderStatus.CANCEL_REQUESTED) {
-    throw new AppException(REFUND_ERRORS.INVALID_STATUS);
+    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
   }
   const refund = order.payment?.refund;
   if (
     refund?.type !== RefundType.CANCEL ||
     refund.status !== RefundStatus.REQUESTED
   ) {
-    throw new AppException(REFUND_ERRORS.INVALID_STATUS);
+    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
   }
 }

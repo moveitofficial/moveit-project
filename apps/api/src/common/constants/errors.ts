@@ -215,7 +215,7 @@ export const REFUND_ERRORS = {
   },
   NOT_APPROVABLE: {
     status: HttpStatus.BAD_REQUEST,
-    message: '승인할 수 없는 취소·환불 요청입니다.',
+    message: '처리할 수 없는 취소/환불 요청입니다.',
   },
 } as const;
 
