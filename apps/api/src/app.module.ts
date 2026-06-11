@@ -7,7 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CatalogsModule } from './catalogs/catalogs.module';
-import { ChatModule } from './chat/chat.module';
+import { ChatsModule } from './chats/chats.module';
 import { ClientProfilesModule } from './client-profiles/client-profiles.module';
 import { RolesGuard } from './common/guards/roles.guard';
 import { CommunityPostsModule } from './community-posts/community-posts.module';
@@ -35,7 +35,7 @@ import { UsersModule } from './users/users.module';
     PrismaModule,
     AuthModule,
     HealthModule,
-    ChatModule,
+    ChatsModule,
     UsersModule,
     S3Module,
     UploadModule,

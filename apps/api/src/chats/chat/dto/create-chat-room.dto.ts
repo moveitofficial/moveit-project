@@ -12,13 +12,12 @@ import {
 } from 'class-validator';
 
 export class ChatFileAttachmentDto {
-  @ApiProperty({ example: 'consultation/uuid/file.pdf' })
+  @ApiProperty({ example: 'chat/uuid/file.pdf' })
   @IsString()
   declare key: string;
 
   @ApiProperty({
-    example:
-      'https://bucket.s3.region.amazonaws.com/consultation/uuid/file.pdf',
+    example: 'https://bucket.s3.region.amazonaws.com/chat/uuid/file.pdf',
   })
   @IsString()
   declare url: string;
@@ -37,7 +36,7 @@ export class ChatFileAttachmentDto {
   declare fileSize: number;
 }
 
-export class CreateConsultationRoomDto {
+export class CreateChatRoomDto {
   @ApiProperty({ format: 'uuid' })
   @IsUUID()
   declare expertUserId: string;
@@ -54,7 +53,7 @@ export class CreateConsultationRoomDto {
   @ApiPropertyOptional({
     type: String,
     format: 'uuid',
-    description: '파일 업로드(/consultation/rooms/new/upload) 시 반환된 roomId',
+    description: '파일 업로드(/chat/rooms/new/upload) 시 반환된 roomId',
   })
   @IsOptional()
   @IsUUID()

@@ -20,7 +20,7 @@ import { JoinRoomDto } from '../common/dto/join-room.dto';
 import { MarkReadDto } from '../common/dto/mark-read.dto';
 import { parseCookies } from '../common/utils/parse-cookies.util';
 
-import { ConsultationChatService } from './consultation-chat.service';
+import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 
 import type { JwtAccessPayload } from '../../auth/auth.types';
@@ -39,7 +39,7 @@ import type { ConsultationSocket } from '../common/interfaces/authenticated-sock
 )
 @UseFilters(WsExceptionFilter)
 @WebSocketGateway({
-  namespace: SOCKET_NAMESPACES.CONSULTATION,
+  namespace: SOCKET_NAMESPACES.CHAT,
   cors: {
     origin: (origin, callback) => {
       callback(null, origin === process.env.CLIENT_URL);
@@ -47,17 +47,15 @@ import type { ConsultationSocket } from '../common/interfaces/authenticated-sock
     credentials: true,
   },
 })
-export class ConsultationChatGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   declare server: Server;
 
-  private readonly logger = new Logger(ConsultationChatGateway.name);
+  private readonly logger = new Logger(ChatGateway.name);
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly consultationChatService: ConsultationChatService,
+    private readonly chatService: ChatService,
   ) {}
 
   handleConnection(socket: Socket) {
@@ -106,10 +104,7 @@ export class ConsultationChatGateway
     @ConnectedSocket() socket: ConsultationSocket,
     @MessageBody() dto: JoinRoomDto,
   ) {
-    await this.consultationChatService.validateParticipant(
-      dto.roomId,
-      socket.data.userId,
-    );
+    await this.chatService.validateParticipant(dto.roomId, socket.data.userId);
     await socket.join(dto.roomId);
     socket.emit(CHAT_EVENTS.JOINED_ROOM, { roomId: dto.roomId });
   }
@@ -119,7 +114,7 @@ export class ConsultationChatGateway
     @ConnectedSocket() socket: ConsultationSocket,
     @MessageBody() dto: SendMessageDto,
   ) {
-    const message = await this.consultationChatService.sendMessage(
+    const message = await this.chatService.sendMessage(
       dto.roomId,
       socket.data.userId,
       dto,
@@ -132,7 +127,7 @@ export class ConsultationChatGateway
     @ConnectedSocket() socket: ConsultationSocket,
     @MessageBody() dto: MarkReadDto,
   ) {
-    await this.consultationChatService.markRead(
+    await this.chatService.markRead(
       dto.roomId,
       socket.data.userId,
       dto.messageId,

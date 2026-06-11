@@ -28,7 +28,7 @@ import {
 } from '../../common/decorators/api-success-response.decorator';
 import { UploadService } from '../../upload/upload.service';
 import { FindMessagesQueryDto } from '../common/dto/find-messages-query.dto';
-import { FindRoomsQueryDto } from '../consultation-chat/dto/find-rooms-query.dto';
+import { FindRoomsQueryDto } from '../common/dto/find-rooms-query.dto';
 
 import { CsChatGateway } from './cs-chat.gateway';
 import { CsChatService } from './cs-chat.service';
