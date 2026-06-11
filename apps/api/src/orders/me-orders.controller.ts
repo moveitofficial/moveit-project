@@ -32,7 +32,7 @@ import { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import { CreateOrderResponseDto } from './dto/create-order-response.dto';
 import { GetOrdersQueryDto } from './dto/get-orders-query.dto';
 import { OrderListItemDto } from './dto/order-response.dto';
-import { RequestCancelDto } from './dto/request-cancel.dto';
+import { RequestCancelDto, RequestRefundDto } from './dto/request-cancel.dto';
 import { UpdateOrderStatusResponseDto } from './dto/update-order-status-response.dto';
 import { OrdersService } from './orders.service';
 
@@ -99,5 +99,29 @@ export class MeOrdersController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.requestCancelOrder(user.userId, orderId, dto);
+  }
+
+  @ApiOperation({ summary: '환불 요청' })
+  @RoleAuth(Role.CLIENT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    ORDER_ERRORS.INVALID_STATUS,
+    ORDER_ERRORS.ALREADY_PROCESSED,
+    REFUND_ERRORS.REFUND_NOT_ALLOWED,
+    REFUND_ERRORS.ALREADY_REQUESTED,
+    PAYMENT_ERRORS.NOT_FOUND,
+    COMMON_ERRORS.VALIDATION_ERROR,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':orderId/refund')
+  requestRefund(
+    @Req() req: Request,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Body() dto: RequestRefundDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.requestRefundOrder(user.userId, orderId, dto);
   }
 }

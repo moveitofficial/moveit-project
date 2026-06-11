@@ -36,6 +36,7 @@ import {
   validateCancelApprovePolicy,
   validateCancelRejectPolicy,
   validateCancelRequestPolicy,
+  validateRefundRequestPolicy,
   validateConfirmOrderPolicy,
   validateOrderStatusAuthority,
   validateOrderStatusFlow,
@@ -46,7 +47,10 @@ import { OrdersRepository } from './orders.repository';
 
 import type { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
-import type { RequestCancelDto } from './dto/request-cancel.dto';
+import type {
+  RequestCancelDto,
+  RequestRefundDto,
+} from './dto/request-cancel.dto';
 import type { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
 import type { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
 
@@ -404,6 +408,31 @@ export class OrdersService {
     validateCancelRejectPolicy(order, expertUserId);
 
     const updated = await this.ordersRepository.rejectCancel(orderId);
+    return mapUpdateOrderStatusResponse(updated);
+  }
+
+  async requestRefundOrder(
+    clientUserId: string,
+    orderId: string,
+    dto: RequestRefundDto,
+  ) {
+    const order =
+      await this.ordersRepository.findOrderCancelRequestPolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateRefundRequestPolicy(order, clientUserId);
+
+    const payment = order.payment;
+    if (!payment?.paymentKey) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+    const updated = await this.ordersRepository.requestRefund({
+      orderId,
+      clientUserId: order.clientUserId,
+      expertUserId: order.expertUserId,
+      paidAmount: payment.paidAmount,
+      paymentKey: payment.paymentKey,
+      reason: dto.reason,
+    });
     return mapUpdateOrderStatusResponse(updated);
   }
 }

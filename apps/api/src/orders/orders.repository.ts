@@ -482,6 +482,62 @@ export class OrdersRepository {
     });
   }
 
+  async requestRefund(params: {
+    orderId: string;
+    clientUserId: string;
+    expertUserId: string;
+    paidAmount: number;
+    paymentKey: string;
+    reason?: string;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: params.orderId, status: OrderStatus.EXPIRED },
+        data: {
+          status: OrderStatus.REFUND_REQUESTED,
+          refundReason: params.reason ?? null,
+        },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      return tx.order.update({
+        where: { id: params.orderId },
+        data: {
+          payment: {
+            update: {
+              refund: {
+                upsert: {
+                  create: {
+                    clientUserId: params.clientUserId,
+                    expertUserId: params.expertUserId,
+                    type: RefundType.REFUND,
+                    status: RefundStatus.REQUESTED,
+                    refundAmount: params.paidAmount,
+                    paymentKey: params.paymentKey,
+                    requestedAt: new Date(),
+                  },
+                  update: {
+                    type: RefundType.REFUND,
+                    status: RefundStatus.REQUESTED,
+                    refundAmount: params.paidAmount,
+                    paymentKey: params.paymentKey,
+                    requestedAt: new Date(),
+                    approvedAt: null,
+                    refundedAt: null,
+                    adminReason: null,
+                    approvedAdminId: null,
+                    rawData: Prisma.JsonNull,
+                  },
+                },
+              },
+            },
+          },
+        },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
   async findOrdersToExpire(now: Date) {
     return this.prisma.order.findMany({
       where: {

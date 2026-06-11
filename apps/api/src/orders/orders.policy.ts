@@ -165,6 +165,38 @@ export function validateCancelRequestPolicy(
   }
 }
 
+export function validateRefundRequestPolicy(
+  order: OrderCancelRequestPolicyOrder,
+  userId: string,
+): void {
+  if (order.clientUserId !== userId) {
+    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (
+    order.status === OrderStatus.REFUND_REQUESTED ||
+    order.status === OrderStatus.CANCEL_REQUESTED
+  ) {
+    throw new AppException(REFUND_ERRORS.ALREADY_REQUESTED);
+  }
+  if (
+    order.status === OrderStatus.REFUND_COMPLETED ||
+    order.status === OrderStatus.PAYMENT_CANCELLED ||
+    order.status === OrderStatus.SETTLEMENT_COMPLETED
+  ) {
+    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+  }
+  if (order.status !== OrderStatus.EXPIRED) {
+    throw new AppException(REFUND_ERRORS.REFUND_NOT_ALLOWED);
+  }
+  if (order.payment?.status !== PaymentStatus.PAID) {
+    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+  }
+  const refund = order.payment.refund;
+  if (refund !== null && refund.status !== RefundStatus.REJECTED) {
+    throw new AppException(REFUND_ERRORS.ALREADY_REQUESTED);
+  }
+}
+
 export function validateCancelApprovePolicy(
   order: OrderCancelApprovePolicyOrder,
   userId: string,
