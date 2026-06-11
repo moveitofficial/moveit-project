@@ -21,6 +21,7 @@ import {
   ServiceReviewStats,
 } from '../services/services.types';
 
+import { LISTABLE_PAYMENT_STATUSES } from './orders.constants';
 import {
   orderCancelApprovePolicySelect,
   orderCancelRequestPolicySelect,
@@ -57,9 +58,12 @@ export class OrdersRepository {
     const statusWhere: Prisma.OrderWhereInput = statuses?.length
       ? { status: { in: statuses } }
       : {};
+    const paymentWhere: Prisma.OrderWhereInput = {
+      payment: { is: { status: { in: LISTABLE_PAYMENT_STATUSES } } },
+    };
 
     return this.prisma.order.findMany({
-      where: { ...userWhere, ...statusWhere },
+      where: { ...userWhere, ...statusWhere, ...paymentWhere },
       select: orderListSelect,
       orderBy: sort === 'deadline' ? { endDate: 'asc' } : { createdAt: 'desc' },
       skip,
@@ -80,8 +84,13 @@ export class OrdersRepository {
     const statusWhere: Prisma.OrderWhereInput = statuses?.length
       ? { status: { in: statuses } }
       : {};
+    const paymentWhere: Prisma.OrderWhereInput = {
+      payment: { is: { status: { in: LISTABLE_PAYMENT_STATUSES } } },
+    };
 
-    return this.prisma.order.count({ where: { ...userWhere, ...statusWhere } });
+    return this.prisma.order.count({
+      where: { ...userWhere, ...statusWhere, ...paymentWhere },
+    });
   }
 
   findServiceById(serviceId: string) {

@@ -27,6 +27,14 @@ const PATCH_BLOCKED_TARGETS = new Set<OrderStatus>([
   OrderStatus.REFUND_COMPLETED,
 ]);
 
+export function validateOrderPaidPayment(order: {
+  payment?: { status: PaymentStatus } | null;
+}): void {
+  if (order.payment?.status !== PaymentStatus.PAID) {
+    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+  }
+}
+
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.NEGOTIATING]: [],
   [OrderStatus.CANCEL_REQUESTED]: [],
@@ -78,6 +86,10 @@ export function validateOrderStatusAuthority(
   ) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
   }
+
+  if (next === OrderStatus.WORK_COMPLETED) {
+    validateOrderPaidPayment(order);
+  }
 }
 
 export function validateConfirmOrderPolicy(
@@ -90,6 +102,7 @@ export function validateConfirmOrderPolicy(
   if (order.status !== OrderStatus.WORK_COMPLETED) {
     throw new AppException(ORDER_ERRORS.INVALID_STATUS);
   }
+  validateOrderPaidPayment(order);
 }
 
 export function validateSettlementRequestPolicy(
@@ -102,6 +115,7 @@ export function validateSettlementRequestPolicy(
   if (order.status !== OrderStatus.PURCHASE_CONFIRMED) {
     throw new AppException(ORDER_ERRORS.INVALID_STATUS);
   }
+  validateOrderPaidPayment(order);
 }
 
 export function validateScheduleAuthority(
@@ -112,6 +126,8 @@ export function validateScheduleAuthority(
   if (order.clientUserId !== userId && order.expertUserId !== userId) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
   }
+
+  validateOrderPaidPayment(order);
 
   if (order.status === OrderStatus.NEGOTIATING && order.endDate === null) {
     if (order.expertUserId !== userId || userRole !== Role.EXPERT) {
