@@ -10,7 +10,7 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
@@ -28,6 +28,7 @@ import {
 } from '../common/decorators/api-success-response.decorator';
 import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+
 import { FavoriteExpertListItemResponseDto } from './dto/favorite-expert-list-item-response.dto';
 import { FavoriteServiceListItemResponseDto } from './dto/favorite-service-list-item-response.dto';
 import { FavoritesService } from './favorites.service';
@@ -52,7 +53,7 @@ export class FavoritesController {
 
   @ApiOperation({ summary: '서비스 찜' })
   @RoleAuth(Role.CLIENT)
-  @ApiResponse({ status: HttpStatus.CREATED })
+  @ApiSuccessResponse(HttpStatus.CREATED)
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND, SERVICE_ERRORS.NOT_AVAILABLE)
   @ApiErrorResponse(FAVORITES_ERRORS.ALREADY_FAVORITED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
@@ -93,7 +94,7 @@ export class FavoritesController {
 
   @ApiOperation({ summary: '전문가 찜' })
   @RoleAuth(Role.CLIENT)
-  @ApiResponse({ status: HttpStatus.CREATED })
+  @ApiSuccessResponse(HttpStatus.CREATED)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND, EXPERT_PROFILE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(FAVORITES_ERRORS.ALREADY_FAVORITED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
