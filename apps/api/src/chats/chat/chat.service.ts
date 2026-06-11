@@ -63,10 +63,14 @@ export class ChatService {
       fileSize: number;
     },
   ) {
-    const participant = await this.chatRepository.findRoom(roomId, senderId);
+    const [participant, room] = await Promise.all([
+      this.chatRepository.findRoom(roomId, senderId),
+      this.chatRepository.findRoomParticipantIds(roomId),
+    ]);
     if (!participant)
       throw new AppException(CHAT_ERRORS.FORBIDDEN_NOT_PARTICIPANT);
-    return this.chatRepository.createFileMessage({
+    if (!room) throw new AppException(CHAT_ERRORS.ROOM_NOT_FOUND);
+    const message = await this.chatRepository.createFileMessage({
       chatRoomId: roomId,
       senderId,
       attachment: {
@@ -76,6 +80,9 @@ export class ChatService {
         fileSize: attachment.fileSize,
       },
     });
+    const receiverId =
+      room.clientUserId === senderId ? room.expertUserId : room.clientUserId;
+    return { message, receiverId };
   }
 
   async validateParticipant(roomId: string, userId: string) {
@@ -86,15 +93,22 @@ export class ChatService {
 
   async sendMessage(roomId: string, senderId: string, dto: SendMessageDto) {
     await this.validateParticipant(roomId, senderId);
-    return this.chatRepository.createMessage({
-      chatRoomId: roomId,
-      senderId,
-      type: dto.type,
-      content: dto.content,
-      systemType: dto.systemType,
-      referenceType: dto.referenceType,
-      referenceId: dto.referenceId,
-    });
+    const [message, room] = await Promise.all([
+      this.chatRepository.createMessage({
+        chatRoomId: roomId,
+        senderId,
+        type: dto.type,
+        content: dto.content,
+        systemType: dto.systemType,
+        referenceType: dto.referenceType,
+        referenceId: dto.referenceId,
+      }),
+      this.chatRepository.findRoomParticipantIds(roomId),
+    ]);
+    if (!room) throw new AppException(CHAT_ERRORS.ROOM_NOT_FOUND);
+    const receiverId =
+      room.clientUserId === senderId ? room.expertUserId : room.clientUserId;
+    return { message, receiverId };
   }
 
   async markRead(roomId: string, userId: string, messageId: string) {
@@ -150,5 +164,37 @@ export class ChatService {
       items: messages.toReversed(),
       nextCursor,
     };
+  }
+
+  async getNotifications(userId: string) {
+    const participants = await this.chatRepository.findUnreadRooms(userId);
+    return participants.map((p) => ({
+      id: p.chatRoom.id,
+      currentServiceId: p.chatRoom.currentServiceId,
+      clientUser: {
+        id: p.chatRoom.clientUser.id,
+        profileImageUrl: p.chatRoom.clientUser.profileImageUrl,
+        nickname:
+          p.chatRoom.clientUser.clientProfile?.nickname ??
+          p.chatRoom.clientUser.name,
+      },
+      expertUser: {
+        id: p.chatRoom.expertUser.id,
+        profileImageUrl: p.chatRoom.expertUser.profileImageUrl,
+        businessName: p.chatRoom.expertUser.expertProfile?.businessName ?? null,
+      },
+      lastMessage: p.chatRoom.lastMessage,
+    }));
+  }
+
+  async dismissNotification(userId: string, roomId: string) {
+    const participant = await this.chatRepository.findRoom(roomId, userId);
+    if (!participant)
+      throw new AppException(CHAT_ERRORS.FORBIDDEN_NOT_PARTICIPANT);
+    await this.chatRepository.updateDismissedMessage(roomId, userId);
+  }
+
+  async dismissAllNotifications(userId: string) {
+    await this.chatRepository.updateAllDismissedMessages(userId);
   }
 }

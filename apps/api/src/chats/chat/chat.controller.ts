@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Param,
@@ -40,6 +41,7 @@ import {
   ChatMessageListResponseDto,
   ChatMessageResponseDto,
 } from './dto/chat-message-response.dto';
+import { ChatNotificationResponseDto } from './dto/chat-notification-response.dto';
 import { ChatRoomResponseDto } from './dto/chat-room-response.dto';
 import { CreateChatRoomDto } from './dto/create-chat-room.dto';
 
@@ -126,12 +128,13 @@ export class ChatController {
       file,
       `chat/${roomId}`,
     );
-    const message = await this.chatService.sendFileMessage(
+    const { message, receiverId } = await this.chatService.sendFileMessage(
       roomId,
       user.userId,
       uploaded,
     );
     this.chatGateway.broadcastMessage(roomId, message);
+    this.chatGateway.broadcastNotification(receiverId, message);
     return message;
   }
 
@@ -165,5 +168,38 @@ export class ChatController {
       user.userId,
       query.cursor,
     );
+  }
+
+  @ApiOperation({ summary: '메세지 알림 목록 조회' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, [ChatNotificationResponseDto])
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get('notifications')
+  async getNotifications(@Req() req: Request) {
+    const user = req.user as JwtAccessUser;
+    return await this.chatService.getNotifications(user.userId);
+  }
+
+  @ApiOperation({ summary: '채팅방 알림 삭제' })
+  @JwtAuth(CHAT_ERRORS.FORBIDDEN_NOT_PARTICIPANT)
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Delete('notifications/:roomId')
+  async dismissNotification(
+    @Param('roomId') roomId: string,
+    @Req() req: Request,
+  ) {
+    const user = req.user as JwtAccessUser;
+    await this.chatService.dismissNotification(user.userId, roomId);
+  }
+
+  @ApiOperation({ summary: '채팅 알림 전체 삭제' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Delete('notifications')
+  async dismissAllNotifications(@Req() req: Request) {
+    const user = req.user as JwtAccessUser;
+    await this.chatService.dismissAllNotifications(user.userId);
   }
 }
