@@ -4,7 +4,7 @@ interface RefundModalCopy {
   title: string;
   reasonTitle: string;
   completedDateLabel: string;
-  placeholder: string;
+  placeholder?: string;
   submitLabel: string;
   mode: 'approval' | 'completed';
 }
@@ -30,7 +30,6 @@ export const REFUND_MODAL_COPY: Record<RefundStatus, RefundModalCopy> = {
     title: '취소 완료',
     reasonTitle: '취소 승인 사유',
     completedDateLabel: '취소 완료일',
-    placeholder: '',
     submitLabel: '확인',
     mode: 'completed',
   },
@@ -38,7 +37,6 @@ export const REFUND_MODAL_COPY: Record<RefundStatus, RefundModalCopy> = {
     title: '환불 완료',
     reasonTitle: '환불 승인 사유',
     completedDateLabel: '환불 완료일',
-    placeholder: '',
     submitLabel: '확인',
     mode: 'completed',
   },

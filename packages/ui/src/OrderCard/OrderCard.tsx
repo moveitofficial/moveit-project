@@ -23,6 +23,7 @@ type OrderCardProps = {
   endDate?: string;
   amount: number;
   actions?: OrderCardAction[];
+  onCardClick?: () => void;
 } & (
   | { variant: 'web' }
   | { variant: 'admin-seller-service'; buyerName: string; category: string }
@@ -43,7 +44,7 @@ type OrderCardProps = {
 export type { OrderCardAction };
 
 export default function OrderCard(props: OrderCardProps) {
-  const { thumbnailUrl, badge, title, startDate, endDate, amount, actions } =
+  const { thumbnailUrl, badge, title, startDate, endDate, amount, actions, onCardClick } =
     props;
 
   const thumbnailImg = thumbnailUrl ? (
@@ -63,10 +64,9 @@ export default function OrderCard(props: OrderCardProps) {
     props.variant === 'admin-orders' || props.variant === 'admin-settlement';
   const showCategory = props.variant !== 'web';
 
-  return (
-    <div className={styles.card}>
+  const leftContent = (
+    <>
       <div className={styles.thumbnailWrapper}>{thumbnailImg}</div>
-
       <div className={styles.content}>
         <div className={styles.metaRow}>
           <RectLabel text={badge.text} color={badge.color} />
@@ -92,6 +92,22 @@ export default function OrderCard(props: OrderCardProps) {
           {endDate === undefined ? '미정' : formatDate(endDate)}
         </p>
       </div>
+    </>
+  );
+
+  return (
+    <div className={styles.card}>
+      {onCardClick !== undefined ? (
+        <button
+          type="button"
+          className={clsx(styles.cardLeft, styles.cardLeftClickable)}
+          onClick={onCardClick}
+        >
+          {leftContent}
+        </button>
+      ) : (
+        <div className={styles.cardLeft}>{leftContent}</div>
+      )}
 
       <div className={styles.right}>
         <p className={clsx(typography.f18EB, styles.amount)}>

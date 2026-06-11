@@ -165,6 +165,7 @@ export default function BlacklistTable({ tab, items, page, pageSize }: Props) {
       getKey={(item) => item.id}
       page={page}
       pageSize={pageSize}
+      getHref={(item) => `/users/${item.id}`}
     />
   );
 }

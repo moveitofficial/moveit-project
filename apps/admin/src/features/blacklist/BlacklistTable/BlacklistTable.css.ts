@@ -19,7 +19,7 @@ export const colNo = style({
 
 export const colName = style({
   ...cellBase,
-  width: '120px',
+  width: '200px',
 });
 
 export const colCompanyName = style({

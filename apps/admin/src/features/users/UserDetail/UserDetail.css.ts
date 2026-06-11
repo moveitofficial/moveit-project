@@ -1,7 +1,6 @@
 import { vars } from '@repo/styles/tokens';
 import { style } from '@vanilla-extract/css';
 
-/* 거절 사유 상단 띠 */
 export const rejectReasonStrip = style({
   padding: '16px',
   backgroundColor: vars.color.red200,
@@ -51,11 +50,9 @@ export const profileActions = style({
   alignItems: 'center',
 });
 
-/* 필드 그리드 */
 export const body = style({
   flex: 1,
   minWidth: 0,
-  maxWidth: '1400px',
   display: 'flex',
   flexDirection: 'column',
   gap: '32px',
@@ -130,7 +127,6 @@ export const rangeSeparator = style({
   color: vars.color.black500,
 });
 
-/* 섹션 헤더 */
 export const sectionHeader = style({
   display: 'flex',
   alignItems: 'center',
@@ -205,7 +201,6 @@ export const specialtyPill = style({
   borderRadius: '100px',
 });
 
-/* 소셜 연동 아이콘 */
 export const providerIcons = style({
   display: 'flex',
   gap: '24px',
@@ -223,7 +218,6 @@ export const providerIconInactive = style({
   opacity: 0.4,
 });
 
-/* 포트폴리오 그리드 */
 export const portfolioGrid = style({
   display: 'grid',
   gridTemplateColumns: 'repeat(4, 1fr)',

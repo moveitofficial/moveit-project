@@ -41,6 +41,37 @@ export const ORDER_STATUS_BADGE_CONFIG: Record<OrderStatus, BadgeConfig> = {
 
 const DETAIL_ACTION: OrderCardAction = { label: '거래상세', variant: 'white' };
 
+export type NestedOrderModal =
+  | { type: 'transaction'; orderId: string }
+  | { type: 'settlement'; orderId: string }
+  | { type: 'settlementApprove'; orderId: string }
+  | { type: 'refund'; orderId: string; refundStatus: RefundStatus };
+
+type ModalTemplate =
+  | { type: 'transaction' }
+  | { type: 'settlement' }
+  | { type: 'settlementApprove' }
+  | { type: 'refund'; refundStatus: RefundStatus };
+
+const LABEL_TO_MODAL: Record<string, ModalTemplate> = {
+  거래상세: { type: 'transaction' },
+  정산상세: { type: 'settlement' },
+  정산승인: { type: 'settlementApprove' },
+  취소승인: { type: 'refund', refundStatus: 'CANCEL_REQUESTED' },
+  환불승인: { type: 'refund', refundStatus: 'REFUND_REQUESTED' },
+  취소상세: { type: 'refund', refundStatus: 'CANCEL_COMPLETED' },
+  환불상세: { type: 'refund', refundStatus: 'REFUND_COMPLETED' },
+};
+
+export function getNestedModalFromLabel(
+  label: string,
+  orderId: string,
+): NestedOrderModal | null {
+  const template = LABEL_TO_MODAL[label];
+  if (template === undefined) return null;
+  return { ...template, orderId };
+}
+
 export const ORDER_STATUS_ACTIONS_CONFIG: Record<
   OrderStatus,
   OrderCardAction[]
@@ -50,10 +81,7 @@ export const ORDER_STATUS_ACTIONS_CONFIG: Record<
   DEADLINE_IMMINENT: [DETAIL_ACTION],
   WORK_COMPLETED: [DETAIL_ACTION],
   PURCHASE_CONFIRMED: [DETAIL_ACTION],
-  SETTLEMENT_REQUESTED: [
-    DETAIL_ACTION,
-    { label: '정산승인', variant: 'blue' },
-  ],
+  SETTLEMENT_REQUESTED: [DETAIL_ACTION, { label: '정산승인', variant: 'blue' }],
   SETTLEMENT_COMPLETED: [
     DETAIL_ACTION,
     { label: '정산상세', variant: 'white' },

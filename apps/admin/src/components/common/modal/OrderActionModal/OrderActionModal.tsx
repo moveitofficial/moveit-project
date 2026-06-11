@@ -10,6 +10,13 @@ import {
 } from '@repo/utils';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
+import { completeOrderSettlement } from './actions';
+import {
+  getOrderRefund,
+  getOrderSettlement,
+  getOrderSettlementPreview,
+  getOrderTransaction,
+} from './api';
 import { REFUND_MODAL_COPY } from './orderActionConstants';
 import * as styles from './OrderActionModal.css';
 
@@ -18,15 +25,8 @@ import type {
   OrderSettlement,
   OrderSettlementPreview,
   OrderTransaction,
-} from '@/features/users/types';
+} from './types';
 
-import { completeOrderSettlement } from '@/features/users/actions';
-import {
-  getOrderRefund,
-  getOrderSettlement,
-  getOrderSettlementPreview,
-  getOrderTransaction,
-} from '@/features/users/api';
 import { isRefundStatusApproval, type RefundStatus } from '@/utils/constants';
 
 export type OrderActionModalType =
@@ -164,18 +164,14 @@ function getModalTitle(
   return '';
 }
 
-function getFetchErrorMessage(type: OrderActionModalType) {
-  if (type === 'transaction') {
-    return '거래 정보를 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.';
-  }
-  if (type === 'settlement') {
-    return '정산 정보를 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.';
-  }
-  if (type === 'settlementApprove') {
-    return '입금 정보를 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.';
-  }
-  return '주문 정보를 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.';
-}
+const FETCH_ERROR_MESSAGE: Record<OrderActionModalType, string> = {
+  transaction:
+    '거래 정보를 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.',
+  settlement: '정산 정보를 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.',
+  settlementApprove:
+    '입금 정보를 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.',
+  refund: '주문 정보를 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.',
+};
 
 export default function OrderActionModal(props: OrderActionModalProps) {
   const { orderId, isOpen, onClose, type } = props;
@@ -190,7 +186,7 @@ export default function OrderActionModal(props: OrderActionModalProps) {
     null,
   );
   const [reason, setReason] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const cancelledRef = useRef(false);
 
@@ -265,7 +261,7 @@ export default function OrderActionModal(props: OrderActionModalProps) {
 
         setRefundDetail(data);
       } catch {
-        alert(getFetchErrorMessage(type));
+        alert(FETCH_ERROR_MESSAGE[type]);
         onClose();
       } finally {
         if (!cancelledRef.current) {
