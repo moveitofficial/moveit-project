@@ -11,15 +11,17 @@ import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
-import { mapServiceListItem } from '../services/services.mapper';
 import { ServicesRepository } from '../services/services.repository';
 import { UsersRepository } from '../users/users.repository';
 
-import { mapFavoriteExpertListItem } from './favorites.mapper';
+import {
+  mapFavoriteExpertListItem,
+  mapFavoriteServiceListItem,
+} from './favorites.mapper';
 import { FavoritesRepository } from './favorites.repository';
 
 import type { FavoriteExpertListItemResponseDto } from './dto/favorite-expert-list-item-response.dto';
-import type { ServiceListItemResponse } from '../services/services.mapper';
+import type { FavoriteServiceListItemResponseDto } from './dto/favorite-service-list-item-response.dto';
 
 @Injectable()
 export class FavoritesService {
@@ -32,7 +34,7 @@ export class FavoritesService {
   async getFavoriteServices(
     clientUserId: string,
     query: PaginationQueryDto,
-  ): Promise<Paginated<ServiceListItemResponse>> {
+  ): Promise<Paginated<FavoriteServiceListItemResponseDto>> {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
@@ -53,7 +55,7 @@ export class FavoritesService {
 
     return toPaginatedResponse(
       services.map((service) =>
-        mapServiceListItem(
+        mapFavoriteServiceListItem(
           service,
           statsMap.get(service.id) ?? { rating: 0, reviewCount: 0 },
         ),

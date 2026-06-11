@@ -28,9 +28,8 @@ import {
 } from '../common/decorators/api-success-response.decorator';
 import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
-import { ServiceListItemResponseDto } from '../services/dto/service-response.dto';
-
 import { FavoriteExpertListItemResponseDto } from './dto/favorite-expert-list-item-response.dto';
+import { FavoriteServiceListItemResponseDto } from './dto/favorite-service-list-item-response.dto';
 import { FavoritesService } from './favorites.service';
 
 import type { Request } from 'express';
@@ -42,7 +41,7 @@ export class FavoritesController {
 
   @ApiOperation({ summary: '찜한 서비스 목록' })
   @RoleAuth(Role.CLIENT)
-  @ApiPaginatedResponse(HttpStatus.OK, ServiceListItemResponseDto)
+  @ApiPaginatedResponse(HttpStatus.OK, FavoriteServiceListItemResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get('services')
