@@ -1,4 +1,4 @@
-import type { ServiceOrderSort, ServiceOrderTab } from '@/features/users/types';
+import type { ServiceOrderSort, ServiceOrderTab } from './types';
 
 export const SERVICE_ORDER_TABS: {
   key: ServiceOrderTab;

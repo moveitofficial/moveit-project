@@ -42,7 +42,7 @@ export default function CommunityDeletionModal({
   const [isPending, startTransition] = useTransition();
 
   const [deletionInfo, setDeletionInfo] = useState<CommunityDeletionInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const cancelledRef = useRef(false);
 
   function handleClose() {

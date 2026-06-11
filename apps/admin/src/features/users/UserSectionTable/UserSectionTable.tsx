@@ -27,10 +27,10 @@ import type {
 import type { RefundStatus } from '@/utils/constants';
 
 import { AdminTable } from '@/components/common/AdminTable';
+import { OrderActionModal } from '@/components/common/modal/OrderActionModal';
+import { ReportDetailModal } from '@/components/common/modal/ReportDetailModal';
+import { ServiceOrdersModal } from '@/components/common/modal/ServiceOrdersModal';
 import { CommunityDeletionModal } from '@/features/users/CommunityDeletionModal';
-import { OrderActionModal } from '@/features/users/OrderActionModal';
-import { ReportDetailModal } from '@/features/users/ReportDetailModal';
-import { ServiceOrdersModal } from '@/features/users/ServiceOrdersModal';
 import { isRefundStatus } from '@/utils/constants';
 
 interface BaseProps<T extends { id: string }> {
