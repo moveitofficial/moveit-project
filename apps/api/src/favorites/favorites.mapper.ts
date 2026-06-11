@@ -59,7 +59,7 @@ export function mapFavoriteServiceListItem(
       id: expertUser.id,
       companyName:
         expertUser.expertProfile?.businessName ?? expertUser.name ?? '',
-      profileImageUrl: expertUser.profileImageUrl,
+      profileImageUrl: expertUser.profileImageUrl ?? null,
       region: expertUser.region,
     },
     techStacks: techStacks.map(({ techStack }) => techStack.name),

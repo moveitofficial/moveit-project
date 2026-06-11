@@ -14,7 +14,11 @@ class FavoriteServiceExpertSummaryResponseDto {
   @ApiProperty({ example: '코드잇 에이전시' })
   declare companyName: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({
+    description: '프로필 이미지 url',
+    nullable: true,
+    example: 'https://example.img.com/image.jpg',
+  })
   declare profileImageUrl: string | null;
 
   @ApiProperty({ enum: Region, nullable: true, example: Region.SEOUL })
