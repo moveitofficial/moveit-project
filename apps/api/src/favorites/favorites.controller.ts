@@ -57,6 +57,7 @@ export class FavoritesController {
   @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND, SERVICE_ERRORS.NOT_AVAILABLE)
   @ApiErrorResponse(FAVORITES_ERRORS.ALREADY_FAVORITED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @Post('services/:id')
   addFavoriteService(
     @Req() req: Request,
@@ -98,6 +99,7 @@ export class FavoritesController {
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND, EXPERT_PROFILE_ERRORS.NOT_FOUND)
   @ApiErrorResponse(FAVORITES_ERRORS.ALREADY_FAVORITED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @Post('experts/:id')
   addFavoriteExpert(
     @Req() req: Request,
