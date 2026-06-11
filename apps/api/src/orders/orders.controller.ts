@@ -159,6 +159,46 @@ export class OrdersController {
     return this.ordersService.rejectCancelOrder(user.userId, orderId);
   }
 
+  @ApiOperation({ summary: '환불 승인' })
+  @RoleAuth(Role.EXPERT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    REFUND_ERRORS.NOT_APPROVABLE,
+    PAYMENT_ERRORS.NOT_FOUND,
+    ORDER_ERRORS.ALREADY_PROCESSED,
+    PAYMENT_ERRORS.CANCEL_FAILED,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/refund/approve')
+  approveRefund(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.approveRefundOrder(user.userId, orderId);
+  }
+
+  @ApiOperation({ summary: '환불 거절' })
+  @RoleAuth(Role.EXPERT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    REFUND_ERRORS.NOT_APPROVABLE,
+    ORDER_ERRORS.ALREADY_PROCESSED,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/refund/reject')
+  rejectRefund(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.rejectRefundOrder(user.userId, orderId);
+  }
+
   @ApiOperation({ summary: '리뷰 작성' })
   @RoleAuth(Role.CLIENT)
   @ApiSuccessResponse(HttpStatus.OK, ReviewResponseDto)

@@ -21,6 +21,7 @@ import {
   ServiceReviewStats,
 } from '../services/services.types';
 
+import { LISTABLE_PAYMENT_STATUSES } from './orders.constants';
 import {
   orderCancelApprovePolicySelect,
   orderCancelRequestPolicySelect,
@@ -57,9 +58,12 @@ export class OrdersRepository {
     const statusWhere: Prisma.OrderWhereInput = statuses?.length
       ? { status: { in: statuses } }
       : {};
+    const paymentWhere: Prisma.OrderWhereInput = {
+      payment: { is: { status: { in: LISTABLE_PAYMENT_STATUSES } } },
+    };
 
     return this.prisma.order.findMany({
-      where: { ...userWhere, ...statusWhere },
+      where: { ...userWhere, ...statusWhere, ...paymentWhere },
       select: orderListSelect,
       orderBy: sort === 'deadline' ? { endDate: 'asc' } : { createdAt: 'desc' },
       skip,
@@ -80,8 +84,13 @@ export class OrdersRepository {
     const statusWhere: Prisma.OrderWhereInput = statuses?.length
       ? { status: { in: statuses } }
       : {};
+    const paymentWhere: Prisma.OrderWhereInput = {
+      payment: { is: { status: { in: LISTABLE_PAYMENT_STATUSES } } },
+    };
 
-    return this.prisma.order.count({ where: { ...userWhere, ...statusWhere } });
+    return this.prisma.order.count({
+      where: { ...userWhere, ...statusWhere, ...paymentWhere },
+    });
   }
 
   findServiceById(serviceId: string) {
@@ -477,6 +486,132 @@ export class OrdersRepository {
 
       return tx.order.findUniqueOrThrow({
         where: { id: orderId },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
+  async approveRefund(params: {
+    orderId: string;
+    refundAmount: number;
+    canceledAt: Date;
+    rawData: Prisma.InputJsonValue;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: params.orderId, status: OrderStatus.REFUND_REQUESTED },
+        data: { status: OrderStatus.REFUND_COMPLETED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: paymentCount } = await tx.payment.updateMany({
+        where: { orderId: params.orderId, status: PaymentStatus.PAID },
+        data: {
+          status: PaymentStatus.REFUNDED,
+          rawData: params.rawData,
+        },
+      });
+      if (paymentCount === 0) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId: params.orderId },
+          type: RefundType.REFUND,
+          status: RefundStatus.REQUESTED,
+        },
+        data: {
+          status: RefundStatus.COMPLETED,
+          refundAmount: params.refundAmount,
+          approvedAt: params.canceledAt,
+          refundedAt: params.canceledAt,
+          rawData: params.rawData,
+        },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: params.orderId },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
+  async rejectRefund(orderId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: orderId, status: OrderStatus.REFUND_REQUESTED },
+        data: { status: OrderStatus.EXPIRED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId },
+          type: RefundType.REFUND,
+          status: RefundStatus.REQUESTED,
+        },
+        data: { status: RefundStatus.REJECTED },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
+  async requestRefund(params: {
+    orderId: string;
+    clientUserId: string;
+    expertUserId: string;
+    paidAmount: number;
+    paymentKey: string;
+    reason?: string;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: params.orderId, status: OrderStatus.EXPIRED },
+        data: {
+          status: OrderStatus.REFUND_REQUESTED,
+          refundReason: params.reason ?? null,
+        },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      return tx.order.update({
+        where: { id: params.orderId },
+        data: {
+          payment: {
+            update: {
+              refund: {
+                upsert: {
+                  create: {
+                    clientUserId: params.clientUserId,
+                    expertUserId: params.expertUserId,
+                    type: RefundType.REFUND,
+                    status: RefundStatus.REQUESTED,
+                    refundAmount: params.paidAmount,
+                    paymentKey: params.paymentKey,
+                    requestedAt: new Date(),
+                  },
+                  update: {
+                    type: RefundType.REFUND,
+                    status: RefundStatus.REQUESTED,
+                    refundAmount: params.paidAmount,
+                    paymentKey: params.paymentKey,
+                    requestedAt: new Date(),
+                    approvedAt: null,
+                    refundedAt: null,
+                    adminReason: null,
+                    approvedAdminId: null,
+                    rawData: Prisma.JsonNull,
+                  },
+                },
+              },
+            },
+          },
+        },
         select: orderStatusResponseSelect,
       });
     });

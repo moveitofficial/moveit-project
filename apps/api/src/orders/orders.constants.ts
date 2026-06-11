@@ -1,3 +1,12 @@
+import { PaymentStatus } from '@prisma/client';
+
+// 목록 노출 대상 — PENDING·FAILED(레거시) 제외
+export const LISTABLE_PAYMENT_STATUSES: PaymentStatus[] = [
+  PaymentStatus.PAID,
+  PaymentStatus.CANCELLED,
+  PaymentStatus.REFUNDED,
+];
+
 // GET /users/me/orders 목록 — 페이지네이션 기본값
 export const ORDERS_LIST_DEFAULT_PAGE = 1;
 export const ORDERS_LIST_DEFAULT_PAGE_SIZE = 20;

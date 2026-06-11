@@ -43,6 +43,7 @@ export const orderPolicySelect = {
   clientUserId: true,
   expertUserId: true,
   status: true,
+  payment: { select: { status: true } },
 } satisfies Prisma.OrderSelect;
 
 export type OrderPolicyOrder = Prisma.OrderGetPayload<{
@@ -65,6 +66,7 @@ export const orderSchedulePolicySelect = {
   expertUserId: true,
   status: true,
   endDate: true,
+  payment: { select: { status: true } },
 } satisfies Prisma.OrderSelect;
 
 export type OrderSchedulePolicyOrder = Prisma.OrderGetPayload<{
