@@ -20,6 +20,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { OrdersModule } from './orders/orders.module';
 import { PortfoliosModule } from './portfolios/portfolios.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ReportsModule } from './reports/reports.module';
 import { S3Module } from './s3/s3.module';
 import { ServicesModule } from './services/services.module';
 import { UploadModule } from './upload/upload.module';
@@ -51,6 +52,7 @@ import { UsersModule } from './users/users.module';
     NotificationsModule,
     FaqsModule,
     MainModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService, RolesGuard],
