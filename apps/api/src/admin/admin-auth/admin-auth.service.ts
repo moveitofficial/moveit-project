@@ -91,6 +91,7 @@ export class AdminAuthService {
       sub: admin.id,
       email: admin.email,
       isSuper: admin.isSuper,
+      mustChangePassword: admin.mustChangePassword,
       typ: ADMIN_JWT_ACCESS_TYP,
     };
     const accessToken = this.jwtService.sign(accessPayload, {
