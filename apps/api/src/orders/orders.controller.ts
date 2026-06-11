@@ -17,6 +17,8 @@ import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import {
   COMMON_ERRORS,
   ORDER_ERRORS,
+  PAYMENT_ERRORS,
+  REFUND_ERRORS,
   REVIEW_ERRORS,
   SERVICE_ERRORS,
 } from '../common/constants/errors';
@@ -115,6 +117,43 @@ export class OrdersController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.requestSettlement(user.userId, orderId);
+  }
+
+  @ApiOperation({ summary: '취소 승인' })
+  @RoleAuth(Role.EXPERT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    REFUND_ERRORS.NOT_APPROVABLE,
+    PAYMENT_ERRORS.NOT_FOUND,
+    ORDER_ERRORS.ALREADY_PROCESSED,
+    PAYMENT_ERRORS.CANCEL_FAILED,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/cancel/approve')
+  approveCancel(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.approveCancelOrder(user.userId, orderId);
+  }
+
+  @ApiOperation({ summary: '취소 거절' })
+  @RoleAuth(Role.EXPERT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(REFUND_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/cancel/reject')
+  rejectCancel(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.rejectCancelOrder(user.userId, orderId);
   }
 
   @ApiOperation({ summary: '리뷰 작성' })
