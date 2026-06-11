@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 import { HOURS_PER_DAY, MINUTES_PER_HOUR, MS_PER_MINUTE } from './constants';
 
@@ -22,3 +23,11 @@ export const formatRelativeTime = (iso: string): string => {
 
   return format(new Date(iso), 'yyyy.MM.dd');
 };
+
+/** ISO 문자열을 "YYYY.MM.DD 오후 hh:mm" 형식으로 변환 */
+export const formatPaymentDateTime = (iso: string): string =>
+  format(new Date(iso), 'yyyy.MM.dd a hh:mm', { locale: ko });
+
+/** 결제 할부 개월 수를 표시 문자열로 변환 */
+export const formatInstallment = (months: number): string =>
+  months <= 1 ? '일시불' : `${months}개월 할부`;
