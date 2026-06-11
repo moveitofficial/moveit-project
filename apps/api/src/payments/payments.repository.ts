@@ -8,7 +8,7 @@ import { orderPaymentSelect } from './payments.types';
 export class PaymentsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOrderPayment(orderId: string) {
+  findOrderPayment(orderId: string) {
     return this.prisma.order.findUnique({
       where: { id: orderId },
       select: orderPaymentSelect,

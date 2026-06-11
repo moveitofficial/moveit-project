@@ -113,6 +113,10 @@ export class CsChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`CS 연결 해제: ${socket.id}`);
   }
 
+  broadcastMessage(roomId: string, message: unknown) {
+    this.server.to(roomId).emit(CS_EVENTS.RECEIVE_MESSAGE, message);
+  }
+
   @SubscribeMessage(CS_EVENTS.JOIN_ROOM)
   async handleJoinRoom(
     @ConnectedSocket() socket: CsSocket,
@@ -150,6 +154,9 @@ export class CsChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     await this.csChatService.assignAdmin(dto.roomId, socket.data);
     await socket.join(dto.roomId);
+    this.server
+      .to(dto.roomId)
+      .emit(CS_EVENTS.ADMIN_ASSIGNED, { roomId: dto.roomId });
   }
 
   @SubscribeMessage(CS_EVENTS.MARK_READ)

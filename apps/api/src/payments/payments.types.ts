@@ -12,6 +12,7 @@ export const orderPaymentSelect = {
       paidAmount: true,
       installmentMonths: true,
       paymentKey: true,
+      rawData: true,
       createdAt: true,
       approvedAt: true,
       refund: {

@@ -11,7 +11,6 @@ import {
   Post,
   Query,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -22,7 +21,7 @@ import {
   ApiSuccessResponse,
 } from '../../common/decorators/api-success-response.decorator';
 import { AppException } from '../../common/exceptions/app.exception';
-import { AdminJwtAccessGuard } from '../admin-auth/jwt/admin-jwt-access.guard';
+import { AdminJwtAuth } from '../admin-auth/jwt/admin-jwt-auth.decorator';
 
 import { AdminFaqService } from './admin-faq.service';
 import { CreateFaqDto } from './dto/create-request.dto';
@@ -48,7 +47,7 @@ export class AdminFaqController {
   @ApiPaginatedResponse(HttpStatus.OK, FaqListItemDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @Get()
   getAll(@Query() query: PageQueryDto): Promise<Paginated<FaqListItemDto>> {
     return this.adminFaqService.getAll(query);
@@ -62,7 +61,7 @@ export class AdminFaqController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async create(@Body() body: CreateFaqDto, @Req() req: Request): Promise<void> {
@@ -79,7 +78,7 @@ export class AdminFaqController {
   @ApiErrorResponse(FAQ_ERRORS.NOT_FOUND)
   @ApiErrorResponse(FAQ_ERRORS.NOTHING_TO_UPDATE)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Patch(':id')
   async update(
@@ -105,7 +104,7 @@ export class AdminFaqController {
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
   @ApiErrorResponse(FAQ_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @UseGuards(AdminJwtAccessGuard)
+  @AdminJwtAuth()
   @HttpCode(HttpStatus.OK)
   @Delete()
   async delete(@Body() body: DeleteFaqDto, @Req() req: Request): Promise<void> {

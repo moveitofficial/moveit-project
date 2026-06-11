@@ -155,13 +155,13 @@ export const ORDER_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '유효하지 않은 주문 상태입니다.',
   },
-  AMOUNT_MISMATCH: {
-    status: HttpStatus.BAD_REQUEST,
-    message: '결제 요청 금액이 실제 주문 금액과 일치하지 않습니다.',
-  },
   ALREADY_PROCESSED: {
     status: HttpStatus.CONFLICT,
     message: '이미 결제가 완료되었거나 취소된 주문건입니다.',
+  },
+  DUPLICATE_ORDER_ID: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 사용된 주문 ID입니다.',
   },
 } as const;
 
@@ -349,6 +349,19 @@ export const UPLOAD_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '프로필 이미지의 가로와 세로는 각각 500px 이하여야 합니다.',
   },
+  INVALID_CHAT_FILE_TYPE: {
+    status: HttpStatus.BAD_REQUEST,
+    message:
+      '허용되지 않는 파일 형식입니다. (jpg, jpeg, png, pdf, xlsx, xls, pptx, ppt, docx, doc만 허용)',
+  },
+  CHAT_FILE_TOO_LARGE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '파일 크기는 최대 500MB까지 허용됩니다.',
+  },
+  CHAT_FILES_TOO_MANY: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '파일은 최대 3개까지 업로드할 수 있습니다.',
+  },
 } as const;
 
 export const COMMUNITY_POSTS_ERRORS = {
@@ -395,6 +408,16 @@ export const CHAT_ERRORS = {
     message: '클라이언트만 채팅방을 생성할 수 있습니다.',
     code: 'CHAT_FORBIDDEN_NOT_CLIENT',
   },
+  INVALID_EXPERT: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '해당 서비스의 전문가가 아닙니다.',
+    code: 'CHAT_INVALID_EXPERT',
+  },
+  ROOM_ALREADY_EXISTS: {
+    status: HttpStatus.CONFLICT,
+    message: '해당 서비스로 이미 채팅방이 존재합니다.',
+    code: 'CHAT_ROOM_ALREADY_EXISTS',
+  },
 } as const;
 
 export const CS_CHAT_ERRORS = {
@@ -417,6 +440,11 @@ export const CS_CHAT_ERRORS = {
     status: HttpStatus.FORBIDDEN,
     message: '관리자만 이 작업을 수행할 수 있습니다.',
     code: 'CS_CHAT_FORBIDDEN_NOT_ADMIN',
+  },
+  ALREADY_ASSIGNED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '이미 상담원이 배정된 문의입니다.',
+    code: 'CS_CHAT_ALREADY_ASSIGNED',
   },
 } as const;
 
