@@ -10,6 +10,7 @@ export interface AdminJwtAccessPayload {
   sub: string;
   email: string;
   isSuper: boolean;
+  mustChangePassword: boolean;
   typ: string;
 }
 
