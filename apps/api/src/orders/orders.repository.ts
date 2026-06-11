@@ -482,6 +482,76 @@ export class OrdersRepository {
     });
   }
 
+  async approveRefund(params: {
+    orderId: string;
+    refundAmount: number;
+    canceledAt: Date;
+    rawData: Prisma.InputJsonValue;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: params.orderId, status: OrderStatus.REFUND_REQUESTED },
+        data: { status: OrderStatus.REFUND_COMPLETED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: paymentCount } = await tx.payment.updateMany({
+        where: { orderId: params.orderId, status: PaymentStatus.PAID },
+        data: {
+          status: PaymentStatus.REFUNDED,
+          rawData: params.rawData,
+        },
+      });
+      if (paymentCount === 0) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId: params.orderId },
+          type: RefundType.REFUND,
+          status: RefundStatus.REQUESTED,
+        },
+        data: {
+          status: RefundStatus.COMPLETED,
+          refundAmount: params.refundAmount,
+          approvedAt: params.canceledAt,
+          refundedAt: params.canceledAt,
+          rawData: params.rawData,
+        },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: params.orderId },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
+  async rejectRefund(orderId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: orderId, status: OrderStatus.REFUND_REQUESTED },
+        data: { status: OrderStatus.EXPIRED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId },
+          type: RefundType.REFUND,
+          status: RefundStatus.REQUESTED,
+        },
+        data: { status: RefundStatus.REJECTED },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
   async requestRefund(params: {
     orderId: string;
     clientUserId: string;

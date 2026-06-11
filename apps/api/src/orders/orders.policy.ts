@@ -246,3 +246,59 @@ export function validateCancelRejectPolicy(
     throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
   }
 }
+
+export function validateRefundApprovePolicy(
+  order: OrderCancelApprovePolicyOrder,
+  userId: string,
+): void {
+  if (order.expertUserId !== userId) {
+    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (
+    order.status === OrderStatus.REFUND_COMPLETED ||
+    order.status === OrderStatus.PAYMENT_CANCELLED
+  ) {
+    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+  }
+  if (order.status !== OrderStatus.REFUND_REQUESTED) {
+    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
+  }
+  if (
+    order.payment?.status !== PaymentStatus.PAID ||
+    !order.payment.paymentKey
+  ) {
+    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+  }
+  const refund = order.payment.refund;
+  if (
+    refund?.type !== RefundType.REFUND ||
+    refund.status !== RefundStatus.REQUESTED
+  ) {
+    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
+  }
+}
+
+export function validateRefundRejectPolicy(
+  order: OrderCancelApprovePolicyOrder,
+  userId: string,
+): void {
+  if (order.expertUserId !== userId) {
+    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (
+    order.status === OrderStatus.REFUND_COMPLETED ||
+    order.status === OrderStatus.PAYMENT_CANCELLED
+  ) {
+    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+  }
+  if (order.status !== OrderStatus.REFUND_REQUESTED) {
+    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
+  }
+  const refund = order.payment?.refund;
+  if (
+    refund?.type !== RefundType.REFUND ||
+    refund.status !== RefundStatus.REQUESTED
+  ) {
+    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
+  }
+}
