@@ -22,6 +22,8 @@ const ALLOWED_CHAT_MIME_TYPES = new Set([
 ]);
 const CHAT_FILE_MAX_SIZE = 500 * 1024 * 1024;
 const CHAT_FILES_MAX_COUNT = 3;
+const REPORT_FILES_MAX_SIZE = 5 * 1024 * 1024;
+const REPORT_FILES_MAX_COUNT = 3;
 
 @Injectable()
 export class UploadService {
@@ -165,10 +167,6 @@ export class UploadService {
     };
   }
 
-  async deleteImages(keys: string[]): Promise<void> {
-    await Promise.all(keys.map((key) => this.s3Service.delete(key)));
-  }
-
   async uploadBannerImage(
     file: Express.Multer.File | undefined,
   ): Promise<{ key: string; url: string }> {
@@ -186,5 +184,41 @@ export class UploadService {
       contentType: file.mimetype,
       originalName: file.originalname,
     });
+  }
+
+  async uploadReportImages(
+    files: Express.Multer.File[] | undefined,
+    folder: string,
+  ): Promise<{ key: string; url: string }[]> {
+    if (!files || files.length === 0) {
+      throw new AppException(UPLOAD_ERRORS.FILE_NOT_ATTACHED);
+    }
+
+    if (files.length > REPORT_FILES_MAX_COUNT) {
+      throw new AppException(UPLOAD_ERRORS.REPORT_IMAGES_TOO_MANY);
+    }
+
+    return Promise.all(
+      files.map(async (file) => {
+        if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
+          throw new AppException(UPLOAD_ERRORS.INVALID_FILE_TYPE);
+        }
+
+        if (file.size > REPORT_FILES_MAX_SIZE) {
+          throw new AppException(UPLOAD_ERRORS.REPORT_IMAGE_TOO_LARGE);
+        }
+
+        return this.s3Service.upload({
+          buffer: file.buffer,
+          folder,
+          contentType: file.mimetype,
+          originalName: file.originalname,
+        });
+      }),
+    );
+  }
+
+  async deleteImages(keys: string[]): Promise<void> {
+    await Promise.all(keys.map((key) => this.s3Service.delete(key)));
   }
 }

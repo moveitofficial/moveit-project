@@ -13,6 +13,14 @@ import {
 } from 'class-validator';
 
 export class ReportsRequestDto {
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: '이미지 업로드 시 발급받은 신고 ID',
+  })
+  @IsOptional()
+  @IsUUID()
+  declare reportId?: string;
+
   @ApiProperty({
     format: 'uuid',
     description: '신고 대상 유저 ID',
@@ -30,6 +38,7 @@ export class ReportsRequestDto {
 
   @ApiProperty({
     description: '신고 상세 내용',
+    example: '욕설과 비방을 일삼고 있습니다.',
   })
   @IsString()
   @IsNotEmpty()

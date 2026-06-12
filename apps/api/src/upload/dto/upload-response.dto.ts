@@ -31,3 +31,11 @@ export class UploadServiceImagesResponseDto {
   @ApiProperty({ type: [UploadResponseDto] })
   declare detailImages: UploadResponseDto[];
 }
+
+export class UploadReportImagesResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare reportId: string;
+
+  @ApiProperty({ type: [UploadResponseDto] })
+  declare images: UploadResponseDto[];
+}
