@@ -6,7 +6,7 @@ export class UpdateOrderStatusRequestDto {
   @ApiProperty({
     description: '변경할 주문 상태',
     enum: OrderStatus,
-    example: OrderStatus.CANCEL_REQUESTED,
+    example: OrderStatus.WORK_COMPLETED,
   })
   @IsEnum(OrderStatus)
   declare status: OrderStatus;

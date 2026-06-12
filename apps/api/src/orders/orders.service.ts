@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OrderStatus, Role, ServiceStatus } from '@prisma/client';
+import {
+  NotificationCategory,
+  OrderStatus,
+  Role,
+  ServiceStatus,
+} from '@prisma/client';
 
 import {
   COMMON_ERRORS,
@@ -11,6 +16,7 @@ import {
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentsService } from '../payments/payments.service';
 import { CreateReviewRequestDto } from '../services/dto/create-review-request.dto';
 import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
@@ -33,6 +39,11 @@ import {
   mapUpdateOrderStatusResponse,
 } from './orders.mapper';
 import {
+  validateCancelPolicy,
+  validateCancelRequestPolicy,
+  validateRefundPolicy,
+  validateRefundRequestCancelPolicy,
+  validateRefundRequestPolicy,
   validateConfirmOrderPolicy,
   validateOrderStatusAuthority,
   validateOrderStatusFlow,
@@ -53,6 +64,7 @@ export class OrdersService {
   constructor(
     private readonly ordersRepository: OrdersRepository,
     private readonly paymentsService: PaymentsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getOrders(userId: string, query: GetOrdersQueryDto) {
@@ -331,5 +343,288 @@ export class OrdersService {
     }
 
     await this.ordersRepository.deleteReview(reviewId);
+  }
+
+  async requestCancelOrder(clientUserId: string, orderId: string) {
+    const order =
+      await this.ordersRepository.findOrderCancelRequestPolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateCancelRequestPolicy(order, clientUserId);
+
+    const payment = order.payment;
+    if (!payment?.paymentKey) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+    const updated = await this.ordersRepository.requestCancel({
+      orderId,
+      clientUserId: order.clientUserId,
+      expertUserId: order.expertUserId,
+      paidAmount: payment.paidAmount,
+      paymentKey: payment.paymentKey,
+    });
+
+    await this.notificationsService
+      .send({
+        userIds: [order.expertUserId],
+        category: NotificationCategory.ORDER_CANCEL_REQUESTED,
+        vars: {
+          serviceTitle: order.service.title,
+          clientName: order.clientUser.name ?? '회원',
+        },
+        referenceId: orderId,
+      })
+      .catch((error: unknown) => {
+        this.logger.error(
+          `취소 요청 알림 발송 실패(전문가). orderId=${orderId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      });
+
+    await this.notificationsService
+      .send({
+        userIds: [order.clientUserId],
+        category: NotificationCategory.ORDER_CANCEL_REQUESTED_TO_CLIENT,
+        vars: { serviceTitle: order.service.title },
+        referenceId: orderId,
+      })
+      .catch((error: unknown) => {
+        this.logger.error(
+          `취소 요청 알림 발송 실패(본인). orderId=${orderId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      });
+
+    return mapUpdateOrderStatusResponse(updated);
+  }
+
+  async approveCancelOrder(expertUserId: string, orderId: string) {
+    const order =
+      await this.ordersRepository.findOrderCancelApprovePolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateCancelPolicy(order, expertUserId, 'approve');
+
+    const payment = order.payment;
+    if (!payment?.paymentKey) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+    const { canceledAt, rawData } =
+      await this.paymentsService.cancelTossPayment(
+        payment.paymentKey,
+        '전문가 취소 승인',
+        payment.paidAmount,
+      );
+
+    try {
+      const updated = await this.ordersRepository.approveCancel({
+        orderId,
+        refundAmount: payment.paidAmount,
+        canceledAt,
+        rawData,
+      });
+
+      await this.notificationsService
+        .send({
+          userIds: [order.clientUserId],
+          category: NotificationCategory.ORDER_CANCEL_APPROVED_BY_EXPERT,
+          vars: { serviceTitle: order.service.title },
+          referenceId: orderId,
+        })
+        .catch((error: unknown) => {
+          this.logger.error(
+            `취소 승인 알림 발송 실패. orderId=${orderId}`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        });
+
+      return mapUpdateOrderStatusResponse(updated);
+    } catch (error) {
+      this.logger.error(
+        `Toss 취소 후 DB 갱신 실패. orderId=${orderId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw error;
+    }
+  }
+
+  async rejectCancelOrder(expertUserId: string, orderId: string) {
+    const order =
+      await this.ordersRepository.findOrderCancelApprovePolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateCancelPolicy(order, expertUserId, 'reject');
+
+    const updated = await this.ordersRepository.rejectCancel(orderId);
+
+    await this.notificationsService
+      .send({
+        userIds: [order.clientUserId],
+        category: NotificationCategory.ORDER_CANCEL_REJECTED_BY_EXPERT,
+        vars: { serviceTitle: order.service.title },
+        referenceId: orderId,
+      })
+      .catch((error: unknown) => {
+        this.logger.error(
+          `취소 거절 알림 발송 실패. orderId=${orderId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      });
+
+    return mapUpdateOrderStatusResponse(updated);
+  }
+
+  async requestRefundOrder(clientUserId: string, orderId: string) {
+    const order =
+      await this.ordersRepository.findOrderCancelRequestPolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateRefundRequestPolicy(order, clientUserId);
+
+    const payment = order.payment;
+    if (!payment?.paymentKey) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+    const updated = await this.ordersRepository.requestRefund({
+      orderId,
+      clientUserId: order.clientUserId,
+      expertUserId: order.expertUserId,
+      paidAmount: payment.paidAmount,
+      paymentKey: payment.paymentKey,
+    });
+
+    await this.notificationsService
+      .send({
+        userIds: [order.expertUserId],
+        category: NotificationCategory.REFUND_REQUESTED,
+        vars: {
+          serviceTitle: order.service.title,
+          clientName: order.clientUser.name ?? '회원',
+        },
+        referenceId: orderId,
+      })
+      .catch((error: unknown) => {
+        this.logger.error(
+          `환불 요청 알림 발송 실패(전문가). orderId=${orderId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      });
+
+    await this.notificationsService
+      .send({
+        userIds: [order.clientUserId],
+        category: NotificationCategory.REFUND_REQUESTED_TO_CLIENT,
+        vars: { serviceTitle: order.service.title },
+        referenceId: orderId,
+      })
+      .catch((error: unknown) => {
+        this.logger.error(
+          `환불 요청 알림 발송 실패(본인). orderId=${orderId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      });
+
+    return mapUpdateOrderStatusResponse(updated);
+  }
+
+  async approveRefundOrder(expertUserId: string, orderId: string) {
+    const order =
+      await this.ordersRepository.findOrderCancelApprovePolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateRefundPolicy(order, expertUserId, 'approve');
+
+    const payment = order.payment;
+    if (!payment?.paymentKey) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+    const { canceledAt, rawData } =
+      await this.paymentsService.cancelTossPayment(
+        payment.paymentKey,
+        '전문가 환불 승인',
+        payment.paidAmount,
+      );
+
+    try {
+      const updated = await this.ordersRepository.approveRefund({
+        orderId,
+        refundAmount: payment.paidAmount,
+        canceledAt,
+        rawData,
+      });
+
+      await this.notificationsService
+        .send({
+          userIds: [order.clientUserId],
+          category: NotificationCategory.REFUND_APPROVED_BY_EXPERT,
+          vars: { serviceTitle: order.service.title },
+          referenceId: orderId,
+        })
+        .catch((error: unknown) => {
+          this.logger.error(
+            `환불 승인 알림 발송 실패. orderId=${orderId}`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        });
+
+      return mapUpdateOrderStatusResponse(updated);
+    } catch (error) {
+      this.logger.error(
+        `Toss 환불 승인 후 DB 갱신 실패. orderId=${orderId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw error;
+    }
+  }
+
+  async rejectRefundOrder(expertUserId: string, orderId: string) {
+    const order =
+      await this.ordersRepository.findOrderCancelApprovePolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateRefundPolicy(order, expertUserId, 'reject');
+
+    const updated = await this.ordersRepository.rejectRefund(orderId);
+
+    await this.notificationsService
+      .send({
+        userIds: [order.clientUserId],
+        category: NotificationCategory.REFUND_REJECTED_BY_EXPERT,
+        vars: { serviceTitle: order.service.title },
+        referenceId: orderId,
+      })
+      .catch((error: unknown) => {
+        this.logger.error(
+          `환불 거절 알림 발송 실패. orderId=${orderId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      });
+
+    return mapUpdateOrderStatusResponse(updated);
+  }
+
+  async cancelRefundRequestOrder(clientUserId: string, orderId: string) {
+    const order =
+      await this.ordersRepository.findOrderCancelRequestPolicy(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+
+    validateRefundRequestCancelPolicy(order, clientUserId);
+
+    const updated = await this.ordersRepository.cancelRefundRequest(orderId);
+
+    await this.notificationsService
+      .send({
+        userIds: [order.expertUserId],
+        category: NotificationCategory.REFUND_REQUEST_CANCELLED,
+        vars: {
+          serviceTitle: order.service.title,
+          clientName: order.clientUser.name ?? '회원',
+        },
+        referenceId: orderId,
+      })
+      .catch((error: unknown) => {
+        this.logger.error(
+          `환불 요청 취소 알림 발송 실패. orderId=${orderId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      });
+
+    return mapUpdateOrderStatusResponse(updated);
   }
 }

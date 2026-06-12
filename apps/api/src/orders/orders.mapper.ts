@@ -3,7 +3,7 @@ import {
   extractPaymentReceiptUrl,
 } from '../payments/payments.mapper';
 
-import type { OrderListRow } from './orders.types';
+import type { OrderListRow, OrderStatusResponseRow } from './orders.types';
 import type { Order, Payment } from '@prisma/client';
 
 export function mapCreateOrderResponse(order: Order & { payment: Payment }) {
@@ -31,7 +31,7 @@ export function mapCreateOrderResponse(order: Order & { payment: Payment }) {
   };
 }
 
-export function mapUpdateOrderStatusResponse(order: Order) {
+export function mapUpdateOrderStatusResponse(order: OrderStatusResponseRow) {
   return {
     id: order.id,
     status: order.status,

@@ -1,19 +1,45 @@
-import { OrderStatus, Role } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentStatus,
+  RefundStatus,
+  RefundType,
+  Role,
+} from '@prisma/client';
 
-import { ORDER_ERRORS } from '../common/constants/errors';
+import {
+  ORDER_ERRORS,
+  PAYMENT_ERRORS,
+  REFUND_ERRORS,
+} from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 
 import type {
+  OrderCancelApprovePolicyOrder,
+  OrderCancelRequestPolicyOrder,
   OrderPolicyOrder,
   OrderSchedulePolicyOrder,
 } from './orders.types';
 
+const PATCH_BLOCKED_TARGETS = new Set<OrderStatus>([
+  OrderStatus.CANCEL_REQUESTED,
+  OrderStatus.PAYMENT_CANCELLED,
+  OrderStatus.REFUND_REQUESTED,
+  OrderStatus.REFUND_COMPLETED,
+]);
+
+export function validateOrderPaidPayment(order: {
+  payment?: { status: PaymentStatus } | null;
+}): void {
+  if (order.payment?.status !== PaymentStatus.PAID) {
+    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+  }
+}
+
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  [OrderStatus.NEGOTIATING]: [OrderStatus.CANCEL_REQUESTED],
-  [OrderStatus.CANCEL_REQUESTED]: [OrderStatus.PAYMENT_CANCELLED],
+  [OrderStatus.NEGOTIATING]: [],
+  [OrderStatus.CANCEL_REQUESTED]: [],
   [OrderStatus.PAYMENT_CANCELLED]: [],
   [OrderStatus.IN_PROGRESS]: [OrderStatus.WORK_COMPLETED],
-  // DEADLINE_IMMINENT·EXPIRED → target 전환은 크론 전용 (PATCH 불가)
   [OrderStatus.DEADLINE_IMMINENT]: [OrderStatus.WORK_COMPLETED],
   [OrderStatus.EXPIRED]: [],
   [OrderStatus.WORK_COMPLETED]: [],
@@ -46,18 +72,11 @@ export function validateOrderStatusAuthority(
   userId: string,
   userRole: Role,
 ): void {
+  if (PATCH_BLOCKED_TARGETS.has(next)) {
+    throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+  }
+
   if (order.clientUserId !== userId && order.expertUserId !== userId) {
-    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-  }
-
-  if (next === OrderStatus.CANCEL_REQUESTED && order.clientUserId !== userId) {
-    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-  }
-
-  if (
-    next === OrderStatus.PAYMENT_CANCELLED &&
-    (order.expertUserId !== userId || userRole !== Role.EXPERT)
-  ) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
   }
 
@@ -66,6 +85,10 @@ export function validateOrderStatusAuthority(
     (order.expertUserId !== userId || userRole !== Role.EXPERT)
   ) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+
+  if (next === OrderStatus.WORK_COMPLETED) {
+    validateOrderPaidPayment(order);
   }
 }
 
@@ -79,6 +102,7 @@ export function validateConfirmOrderPolicy(
   if (order.status !== OrderStatus.WORK_COMPLETED) {
     throw new AppException(ORDER_ERRORS.INVALID_STATUS);
   }
+  validateOrderPaidPayment(order);
 }
 
 export function validateSettlementRequestPolicy(
@@ -91,6 +115,7 @@ export function validateSettlementRequestPolicy(
   if (order.status !== OrderStatus.PURCHASE_CONFIRMED) {
     throw new AppException(ORDER_ERRORS.INVALID_STATUS);
   }
+  validateOrderPaidPayment(order);
 }
 
 export function validateScheduleAuthority(
@@ -101,6 +126,8 @@ export function validateScheduleAuthority(
   if (order.clientUserId !== userId && order.expertUserId !== userId) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
   }
+
+  validateOrderPaidPayment(order);
 
   if (order.status === OrderStatus.NEGOTIATING && order.endDate === null) {
     if (order.expertUserId !== userId || userRole !== Role.EXPERT) {
@@ -120,4 +147,151 @@ export function validateScheduleAuthority(
   }
 
   throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+}
+
+export function validateCancelRequestPolicy(
+  order: OrderCancelRequestPolicyOrder,
+  userId: string,
+): void {
+  if (order.clientUserId !== userId) {
+    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (
+    order.status === OrderStatus.CANCEL_REQUESTED ||
+    order.status === OrderStatus.REFUND_REQUESTED
+  ) {
+    throw new AppException(REFUND_ERRORS.ALREADY_REQUESTED);
+  }
+  if (
+    order.status === OrderStatus.PAYMENT_CANCELLED ||
+    order.status === OrderStatus.REFUND_COMPLETED ||
+    order.status === OrderStatus.SETTLEMENT_COMPLETED
+  ) {
+    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+  }
+  if (order.status !== OrderStatus.NEGOTIATING) {
+    throw new AppException(REFUND_ERRORS.CANCEL_NOT_ALLOWED);
+  }
+  if (order.payment?.status !== PaymentStatus.PAID) {
+    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+  }
+  const refund = order.payment.refund;
+  if (refund !== null && refund.status !== RefundStatus.REJECTED) {
+    throw new AppException(REFUND_ERRORS.ALREADY_REQUESTED);
+  }
+}
+
+export function validateRefundRequestPolicy(
+  order: OrderCancelRequestPolicyOrder,
+  userId: string,
+): void {
+  if (order.clientUserId !== userId) {
+    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (
+    order.status === OrderStatus.REFUND_REQUESTED ||
+    order.status === OrderStatus.CANCEL_REQUESTED
+  ) {
+    throw new AppException(REFUND_ERRORS.ALREADY_REQUESTED);
+  }
+  if (
+    order.status === OrderStatus.REFUND_COMPLETED ||
+    order.status === OrderStatus.PAYMENT_CANCELLED ||
+    order.status === OrderStatus.SETTLEMENT_COMPLETED
+  ) {
+    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+  }
+  if (order.status !== OrderStatus.EXPIRED) {
+    throw new AppException(REFUND_ERRORS.REFUND_NOT_ALLOWED);
+  }
+  if (order.payment?.status !== PaymentStatus.PAID) {
+    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+  }
+  const refund = order.payment.refund;
+  if (refund !== null && refund.status !== RefundStatus.REJECTED) {
+    throw new AppException(REFUND_ERRORS.ALREADY_REQUESTED);
+  }
+}
+
+type CancelRefundPolicyKind = 'approve' | 'reject';
+
+export function validateCancelPolicy(
+  order: OrderCancelApprovePolicyOrder,
+  userId: string,
+  kind: CancelRefundPolicyKind,
+): void {
+  if (order.expertUserId !== userId) {
+    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (order.status === OrderStatus.PAYMENT_CANCELLED) {
+    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+  }
+  if (order.status !== OrderStatus.CANCEL_REQUESTED) {
+    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
+  }
+
+  const refund = order.payment?.refund;
+  if (
+    refund?.type !== RefundType.CANCEL ||
+    refund.status !== RefundStatus.REQUESTED
+  ) {
+    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
+  }
+
+  if (
+    kind === 'approve' &&
+    (order.payment?.status !== PaymentStatus.PAID || !order.payment.paymentKey)
+  ) {
+    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+  }
+}
+
+export function validateRefundPolicy(
+  order: OrderCancelApprovePolicyOrder,
+  userId: string,
+  kind: CancelRefundPolicyKind,
+): void {
+  if (order.expertUserId !== userId) {
+    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (
+    order.status === OrderStatus.REFUND_COMPLETED ||
+    order.status === OrderStatus.PAYMENT_CANCELLED
+  ) {
+    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+  }
+  if (order.status !== OrderStatus.REFUND_REQUESTED) {
+    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
+  }
+
+  const refund = order.payment?.refund;
+  if (
+    refund?.type !== RefundType.REFUND ||
+    refund.status !== RefundStatus.REQUESTED
+  ) {
+    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
+  }
+
+  if (
+    kind === 'approve' &&
+    (order.payment?.status !== PaymentStatus.PAID || !order.payment.paymentKey)
+  ) {
+    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+  }
+}
+
+export function validateRefundRequestCancelPolicy(
+  order: OrderCancelRequestPolicyOrder,
+  userId: string,
+): void {
+  if (order.clientUserId !== userId) {
+    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (order.status !== OrderStatus.REFUND_REQUESTED) {
+    throw new AppException(REFUND_ERRORS.REQUEST_NOT_CANCELABLE);
+  }
+  const refund = order.payment?.refund;
+  if (refund?.status !== RefundStatus.REQUESTED) {
+    throw new AppException(REFUND_ERRORS.REQUEST_NOT_CANCELABLE);
+  }
 }
