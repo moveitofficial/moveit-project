@@ -13,6 +13,7 @@ import { RolesGuard } from './common/guards/roles.guard';
 import { CommunityPostsModule } from './community-posts/community-posts.module';
 import { ExpertProfilesModule } from './expert-profiles/expert-profiles.module';
 import { FaqsModule } from './faqs/faqs.module';
+import { FavoritesModule } from './favorites/favorites.module';
 import { HealthModule } from './health/health.module';
 import { MailerModule } from './mailer/mailer.module';
 import { MainModule } from './main/main.module';
@@ -49,6 +50,7 @@ import { UsersModule } from './users/users.module';
     MailerModule,
     CommunityPostsModule,
     NotificationsModule,
+    FavoritesModule,
     FaqsModule,
     MainModule,
   ],
