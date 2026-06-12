@@ -371,15 +371,11 @@ export class OrdersRepository {
     expertUserId: string;
     paidAmount: number;
     paymentKey: string;
-    reason?: string;
   }) {
     return this.prisma.$transaction(async (tx) => {
       const { count } = await tx.order.updateMany({
         where: { id: params.orderId, status: OrderStatus.NEGOTIATING },
-        data: {
-          status: OrderStatus.CANCEL_REQUESTED,
-          refundReason: params.reason ?? null,
-        },
+        data: { status: OrderStatus.CANCEL_REQUESTED },
       });
       if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
 
@@ -561,21 +557,42 @@ export class OrdersRepository {
     });
   }
 
+  async cancelRefundRequest(orderId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: orderId, status: OrderStatus.REFUND_REQUESTED },
+        data: { status: OrderStatus.EXPIRED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId },
+          type: RefundType.REFUND,
+          status: RefundStatus.REQUESTED,
+        },
+        data: { status: RefundStatus.REJECTED },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
   async requestRefund(params: {
     orderId: string;
     clientUserId: string;
     expertUserId: string;
     paidAmount: number;
     paymentKey: string;
-    reason?: string;
   }) {
     return this.prisma.$transaction(async (tx) => {
       const { count } = await tx.order.updateMany({
         where: { id: params.orderId, status: OrderStatus.EXPIRED },
-        data: {
-          status: OrderStatus.REFUND_REQUESTED,
-          refundReason: params.reason ?? null,
-        },
+        data: { status: OrderStatus.REFUND_REQUESTED },
       });
       if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
 

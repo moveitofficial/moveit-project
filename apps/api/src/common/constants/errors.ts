@@ -217,6 +217,10 @@ export const REFUND_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '처리할 수 없는 취소/환불 요청입니다.',
   },
+  REQUEST_NOT_CANCELABLE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '환불 요청 상태에서만 취소할 수 있습니다.',
+  },
 } as const;
 
 export const CLIENT_PROFILE_ERRORS = {

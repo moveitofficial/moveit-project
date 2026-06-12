@@ -87,6 +87,8 @@ export const orderCancelRequestPolicySelect = {
       refund: { select: { id: true, status: true } },
     },
   },
+  service: { select: { title: true } },
+  clientUser: { select: { name: true } },
 } satisfies Prisma.OrderSelect;
 
 export type OrderCancelRequestPolicyOrder = Prisma.OrderGetPayload<{
@@ -107,6 +109,8 @@ export const orderCancelApprovePolicySelect = {
       refund: { select: { id: true, type: true, status: true } },
     },
   },
+  service: { select: { title: true } },
+  clientUser: { select: { name: true } },
 } satisfies Prisma.OrderSelect;
 
 export type OrderCancelApprovePolicyOrder = Prisma.OrderGetPayload<{

@@ -213,37 +213,12 @@ export function validateRefundRequestPolicy(
   }
 }
 
-export function validateCancelApprovePolicy(
-  order: OrderCancelApprovePolicyOrder,
-  userId: string,
-): void {
-  if (order.expertUserId !== userId) {
-    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-  }
-  if (order.status === OrderStatus.PAYMENT_CANCELLED) {
-    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
-  }
-  if (order.status !== OrderStatus.CANCEL_REQUESTED) {
-    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
-  }
-  if (
-    order.payment?.status !== PaymentStatus.PAID ||
-    !order.payment.paymentKey
-  ) {
-    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
-  }
-  const refund = order.payment.refund;
-  if (
-    refund?.type !== RefundType.CANCEL ||
-    refund.status !== RefundStatus.REQUESTED
-  ) {
-    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
-  }
-}
+type CancelRefundPolicyKind = 'approve' | 'reject';
 
-export function validateCancelRejectPolicy(
+export function validateCancelPolicy(
   order: OrderCancelApprovePolicyOrder,
   userId: string,
+  kind: CancelRefundPolicyKind,
 ): void {
   if (order.expertUserId !== userId) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
@@ -254,6 +229,7 @@ export function validateCancelRejectPolicy(
   if (order.status !== OrderStatus.CANCEL_REQUESTED) {
     throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
   }
+
   const refund = order.payment?.refund;
   if (
     refund?.type !== RefundType.CANCEL ||
@@ -261,11 +237,19 @@ export function validateCancelRejectPolicy(
   ) {
     throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
   }
+
+  if (
+    kind === 'approve' &&
+    (order.payment?.status !== PaymentStatus.PAID || !order.payment.paymentKey)
+  ) {
+    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+  }
 }
 
-export function validateRefundApprovePolicy(
+export function validateRefundPolicy(
   order: OrderCancelApprovePolicyOrder,
   userId: string,
+  kind: CancelRefundPolicyKind,
 ): void {
   if (order.expertUserId !== userId) {
     throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
@@ -279,42 +263,35 @@ export function validateRefundApprovePolicy(
   if (order.status !== OrderStatus.REFUND_REQUESTED) {
     throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
   }
-  if (
-    order.payment?.status !== PaymentStatus.PAID ||
-    !order.payment.paymentKey
-  ) {
-    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
-  }
-  const refund = order.payment.refund;
-  if (
-    refund?.type !== RefundType.REFUND ||
-    refund.status !== RefundStatus.REQUESTED
-  ) {
-    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
-  }
-}
 
-export function validateRefundRejectPolicy(
-  order: OrderCancelApprovePolicyOrder,
-  userId: string,
-): void {
-  if (order.expertUserId !== userId) {
-    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
-  }
-  if (
-    order.status === OrderStatus.REFUND_COMPLETED ||
-    order.status === OrderStatus.PAYMENT_CANCELLED
-  ) {
-    throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
-  }
-  if (order.status !== OrderStatus.REFUND_REQUESTED) {
-    throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
-  }
   const refund = order.payment?.refund;
   if (
     refund?.type !== RefundType.REFUND ||
     refund.status !== RefundStatus.REQUESTED
   ) {
     throw new AppException(REFUND_ERRORS.NOT_APPROVABLE);
+  }
+
+  if (
+    kind === 'approve' &&
+    (order.payment?.status !== PaymentStatus.PAID || !order.payment.paymentKey)
+  ) {
+    throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+  }
+}
+
+export function validateRefundRequestCancelPolicy(
+  order: OrderCancelRequestPolicyOrder,
+  userId: string,
+): void {
+  if (order.clientUserId !== userId) {
+    throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+  }
+  if (order.status !== OrderStatus.REFUND_REQUESTED) {
+    throw new AppException(REFUND_ERRORS.REQUEST_NOT_CANCELABLE);
+  }
+  const refund = order.payment?.refund;
+  if (refund?.status !== RefundStatus.REQUESTED) {
+    throw new AppException(REFUND_ERRORS.REQUEST_NOT_CANCELABLE);
   }
 }
