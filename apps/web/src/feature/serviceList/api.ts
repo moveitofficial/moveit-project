@@ -1,8 +1,11 @@
+import { api } from '@repo/fetcher';
+
 import {
   SERVICE_LIST_FEATURED_COUNT,
   SERVICE_LIST_PRICE_FILTERS,
   SERVICE_LIST_REGION_FILTERS,
   SERVICE_LIST_TECH_STACK_FILTERS,
+  type ServiceListSort,
 } from './constants';
 
 import type {
@@ -13,67 +16,48 @@ import type {
   ServiceListServiceItem,
 } from './types';
 import type {
+  ApiSuccess,
+  PaginatedResult,
   Region,
   ServiceCategoryName,
   ServiceGroupName,
+  ServiceListItem,
   TechStackName,
 } from '@/mocks/types';
 
-import { mockExpertList } from '@/mocks/experts';
-import { mockServiceList } from '@/mocks/services';
-
-/** API 연동 전: 전문가 지역 mock 보강 (연동 후에는 응답 item.region 사용) */
-const MOCK_EXPERT_REGION: Partial<Record<string, Region>> = {
-  'expert-003': 'SEOUL',
-  'expert-004': 'GYEONGGI_SOUTH',
-  'expert-005': 'DAEGU',
-  'expert-006': 'BUSAN',
-  'expert-007': 'SEOUL',
-  'expert-008': 'INCHEON',
-};
-
-const expertById = new Map(mockExpertList.map((expert) => [expert.id, expert]));
-
-const poolByGroup = new Map<ServiceGroupName, ServiceListServiceItem[]>();
-
-function buildServicePool(
-  group: ServiceGroupName,
-): ServiceListServiceItem[] {
-  return mockServiceList
-    .filter(
-      (service) =>
-        service.categoryRef.group === group && service.status === 'ACTIVE',
-    )
-    .map((service) => {
-      const expert = expertById.get(service.expert.id);
-
-      return {
-        ...service,
-        techStacks: expert?.techStacks ?? [],
-        region: MOCK_EXPERT_REGION[service.expert.id] ?? null,
-      };
-    });
+interface ServiceListItemApi {
+  id: string;
+  title: string;
+  servicePrice: number;
+  workDuration: number;
+  revisionCount: number;
+  thumbnailUrl: string;
+  status: ServiceListItem['status'];
+  expert: ServiceListItem['expert'] & { region?: Region | null };
+  categoryRef: ServiceListItem['categoryRef'];
+  techStacks: TechStackName[];
+  rating: number;
+  reviewCount: number;
 }
 
-function getServicePool(group: ServiceGroupName): ServiceListServiceItem[] {
-  const cached = poolByGroup.get(group);
-  if (cached !== undefined) {
-    return cached;
-  }
+type ServiceListPaginatedApi = PaginatedResult<ServiceListItemApi>;
 
-  const pool = buildServicePool(group);
-  poolByGroup.set(group, pool);
-  return pool;
+const SERVICE_LIST_FALLBACK_THUMBNAIL =
+  'https://picsum.photos/seed/moveit-fallback/400/300';
+
+function resolveThumbnailUrl(thumbnailUrl: string): string {
+  return thumbnailUrl.trim().length > 0
+    ? thumbnailUrl
+    : SERVICE_LIST_FALLBACK_THUMBNAIL;
 }
 
-const categoryCountBase: Record<'ALL' | ServiceCategoryName, number> = {
-  ALL: 0,
-  WEB: 0,
-  APP: 0,
-  AI: 0,
-  GAME: 0,
-  DATA_ANALYTICS: 0,
-};
+const SERVICE_CATEGORY_NAMES: ServiceCategoryName[] = [
+  'WEB',
+  'APP',
+  'AI',
+  'GAME',
+  'DATA_ANALYTICS',
+];
 
 const priceCountBase = SERVICE_LIST_PRICE_FILTERS.reduce<Record<string, number>>(
   (acc, item) => {
@@ -103,213 +87,256 @@ const regionCountBase = SERVICE_LIST_REGION_FILTERS.reduce<
   {} as Record<Region, number>,
 );
 
-function calculateFilterCounts(
-  services: ServiceListServiceItem[],
-): ServiceListFilterCounts {
-  const counts: ServiceListFilterCounts = {
-    totalCount: services.length,
-    categoryCounts: { ...categoryCountBase },
-    priceCounts: { ...priceCountBase },
-    techStackCounts: { ...techStackCountBase },
-    regionCounts: { ...regionCountBase },
-  };
-
-  counts.categoryCounts.ALL = services.length;
-
-  for (const service of services) {
-    counts.categoryCounts[service.categoryRef.category] += 1;
-
-    for (const price of SERVICE_LIST_PRICE_FILTERS) {
-      if (matchesPrice(service, price.id)) {
-        counts.priceCounts[price.id] = (counts.priceCounts[price.id] ?? 0) + 1;
-      }
+function mapSortToApi(sort: ServiceListSort): string {
+  switch (sort) {
+    case 'RECOMMENDED':
+    case 'SALES': {
+      return 'popular';
     }
-
-    for (const stack of service.techStacks) {
-      if (stack in counts.techStackCounts) {
-        counts.techStackCounts[stack] += 1;
-      }
+    case 'LATEST': {
+      return 'latest';
     }
-
-    const region = service.region;
-    if (region !== null && region in counts.regionCounts) {
-      counts.regionCounts[region] += 1;
+    case 'RATING': {
+      return 'rating';
+    }
+    case 'PRICE_ASC': {
+      return 'price_asc';
     }
   }
-
-  return counts;
 }
 
-function matchesKeyword(
-  service: ServiceListServiceItem,
-  keyword: string,
-): boolean {
-  if (keyword.length === 0) {
-    return true;
-  }
-
-  const lowered = keyword.toLowerCase();
-  return (
-    service.title.toLowerCase().includes(lowered) ||
-    service.expert.name.toLowerCase().includes(lowered) ||
-    service.expert.companyName.toLowerCase().includes(lowered)
-  );
-}
-
-function matchesPrice(
-  service: ServiceListServiceItem,
+function resolvePriceRange(
   priceId: string | null,
-): boolean {
+): { priceMin?: number; priceMax?: number } {
   if (priceId === null) {
-    return true;
+    return {};
   }
 
   const bucket = SERVICE_LIST_PRICE_FILTERS.find((item) => item.id === priceId);
   if (!bucket) {
-    return true;
+    return {};
   }
 
-  if (bucket.min !== null && service.servicePrice < bucket.min) {
-    return false;
-  }
-
-  if (bucket.max !== null && service.servicePrice > bucket.max) {
-    return false;
-  }
-
-  return true;
+  return {
+    ...(bucket.min === null ? {} : { priceMin: bucket.min }),
+    ...(bucket.max === null ? {} : { priceMax: bucket.max }),
+  };
 }
 
-function matchesTechStacks(
-  service: ServiceListServiceItem,
-  techStacks: TechStackName[],
-): boolean {
-  if (techStacks.length === 0) {
-    return true;
-  }
-
-  return techStacks.every((stack) => service.techStacks.includes(stack));
-}
-
-function matchesRegions(
-  service: ServiceListServiceItem,
-  regions: ServiceListSearchParams['regions'],
-): boolean {
-  if (regions.length === 0) {
-    return true;
-  }
-
-  if (service.region === null) {
-    return false;
-  }
-
-  return regions.includes(service.region);
-}
-
-function sortServices(
-  services: ServiceListServiceItem[],
-  sort: ServiceListSearchParams['sort'],
-): ServiceListServiceItem[] {
-  const next = [...services];
-
-  switch (sort) {
-    case 'SALES': {
-      return next.sort((a, b) => b.reviewCount - a.reviewCount);
-    }
-    case 'LATEST': {
-      return next.sort((a, b) => b.id.localeCompare(a.id));
-    }
-    case 'RATING': {
-      return next.sort((a, b) => b.rating - a.rating);
-    }
-    case 'PRICE_ASC': {
-      return next.sort((a, b) => a.servicePrice - b.servicePrice);
-    }
-    default: {
-      return next.sort(
-        (a, b) => b.reviewCount * b.rating - a.reviewCount * a.rating,
-      );
-    }
-  }
-}
-
-function filterServices(
-  pool: ServiceListServiceItem[],
-  params: ServiceListSearchParams,
-): ServiceListServiceItem[] {
-  return pool.filter((service) => {
-    if (
-      params.category !== 'ALL' &&
-      service.categoryRef.category !== params.category
-    ) {
-      return false;
-    }
-
-    if (!matchesKeyword(service, params.keyword)) {
-      return false;
-    }
-
-    if (!matchesPrice(service, params.price)) {
-      return false;
-    }
-
-    if (!matchesTechStacks(service, params.techStacks)) {
-      return false;
-    }
-
-    if (!matchesRegions(service, params.regions)) {
-      return false;
-    }
-
-    return true;
+function buildListQuery(
+  group: ServiceGroupName,
+  params: {
+    page: number;
+    pageSize: number;
+    sort: ServiceListSort;
+    category?: ServiceListSearchParams['category'];
+    keyword?: string;
+    techStacks?: TechStackName[];
+    regions?: Region[];
+    price?: string | null;
+  },
+): string {
+  const query = new URLSearchParams({
+    group,
+    page: String(params.page),
+    pageSize: String(params.pageSize),
+    sort: mapSortToApi(params.sort),
   });
+
+  if (params.category !== undefined && params.category !== 'ALL') {
+    query.set('category', params.category);
+  }
+
+  const keyword = params.keyword?.trim() ?? '';
+  if (keyword.length > 0) {
+    query.set('search', keyword);
+  }
+
+  const techStacks = params.techStacks ?? [];
+  if (techStacks.length > 0) {
+    query.set('techStacks', techStacks.slice(0, 3).join(','));
+  }
+
+  const regions = params.regions ?? [];
+  if (regions.length === 1) {
+    query.set('region', regions[0] ?? '');
+  }
+
+  const priceRange = resolvePriceRange(params.price ?? null);
+  if (priceRange.priceMin !== undefined) {
+    query.set('priceMin', String(priceRange.priceMin));
+  }
+  if (priceRange.priceMax !== undefined) {
+    query.set('priceMax', String(priceRange.priceMax));
+  }
+
+  return query.toString();
 }
 
-function countServicesWithParams(
-  pool: ServiceListServiceItem[],
-  params: ServiceListSearchParams,
-): number {
-  return filterServices(pool, params).length;
+function mapServiceListItem(item: ServiceListItemApi): ServiceListServiceItem {
+  return {
+    id: item.id,
+    title: item.title,
+    servicePrice: item.servicePrice,
+    workDuration: item.workDuration,
+    revisionCount: item.revisionCount,
+    thumbnailUrl: resolveThumbnailUrl(item.thumbnailUrl),
+    status: item.status,
+    expert: {
+      id: item.expert.id,
+      name: item.expert.name,
+      companyName: item.expert.companyName,
+      profileImageUrl: item.expert.profileImageUrl,
+    },
+    categoryRef: item.categoryRef,
+    rating: item.rating,
+    reviewCount: item.reviewCount,
+    isFavorite: false,
+    techStacks: item.techStacks,
+    region: item.expert.region ?? null,
+  };
 }
 
-function calculateContextualSidebarCounts(
-  pool: ServiceListServiceItem[],
-  params: ServiceListSearchParams,
-): Pick<
-  ServiceListFilterCounts,
-  'priceCounts' | 'techStackCounts' | 'regionCounts'
+async function fetchServiceList(
+  query: string,
+): Promise<ServiceListPaginatedApi> {
+  const response = await api.get<ApiSuccess<ServiceListPaginatedApi>>(
+    `/services?${query}`,
+  );
+
+  return response.data;
+}
+
+async function fetchTotalCount(
+  group: ServiceGroupName,
+  params: ServiceListSearchParams & { pageSize: number },
+  overrides: Partial<ServiceListSearchParams> = {},
+): Promise<number> {
+  const merged: ServiceListSearchParams & { pageSize: number } = {
+    ...params,
+    ...overrides,
+    page: 1,
+    pageSize: 1,
+  };
+
+  const data = await fetchServiceList(
+    buildListQuery(group, {
+      page: merged.page,
+      pageSize: merged.pageSize,
+      sort: merged.sort,
+      category: merged.category,
+      keyword: merged.keyword,
+      techStacks: merged.techStacks,
+      regions: merged.regions,
+      price: merged.price,
+    }),
+  );
+
+  return data.pagination.totalCount;
+}
+
+async function fetchCategoryFilterCounts(
+  group: ServiceGroupName,
+): Promise<Pick<ServiceListFilterCounts, 'totalCount' | 'categoryCounts'>> {
+  const [allCount, ...categoryCountsList] = await Promise.all([
+      fetchTotalCount(group, {
+        category: 'ALL',
+        page: 1,
+        sort: 'RECOMMENDED',
+        keyword: '',
+        techStacks: [],
+        regions: [],
+        price: null,
+        pageSize: 1,
+      }),
+      ...SERVICE_CATEGORY_NAMES.map((category) =>
+        fetchTotalCount(group, {
+          category,
+          page: 1,
+          sort: 'RECOMMENDED',
+          keyword: '',
+          techStacks: [],
+          regions: [],
+          price: null,
+          pageSize: 1,
+        }),
+      ),
+    ]);
+
+  const categoryCounts = {
+    ALL: allCount,
+    WEB: categoryCountsList[0] ?? 0,
+    APP: categoryCountsList[1] ?? 0,
+    AI: categoryCountsList[2] ?? 0,
+    GAME: categoryCountsList[3] ?? 0,
+    DATA_ANALYTICS: categoryCountsList[4] ?? 0,
+  };
+
+  return {
+    totalCount: allCount,
+    categoryCounts,
+  };
+}
+
+async function fetchContextualSidebarCounts(
+  group: ServiceGroupName,
+  params: ServiceListSearchParams & { pageSize: number },
+): Promise<
+  Pick<ServiceListFilterCounts, 'priceCounts' | 'techStackCounts' | 'regionCounts'>
 > {
+  const [priceCountsList, techStackCountsList, regionCountsList] =
+    await Promise.all([
+      Promise.all(
+        SERVICE_LIST_PRICE_FILTERS.map(async (price) => ({
+          id: price.id,
+          count: await fetchTotalCount(group, params, {
+            price: price.id,
+          }),
+        })),
+      ),
+      Promise.all(
+        SERVICE_LIST_TECH_STACK_FILTERS.map(async (stack) => {
+          const nextTechStacks = params.techStacks.includes(stack.id)
+            ? params.techStacks
+            : [...params.techStacks, stack.id];
+
+          return {
+            id: stack.id,
+            count: await fetchTotalCount(group, params, {
+              techStacks: nextTechStacks,
+            }),
+          };
+        }),
+      ),
+      Promise.all(
+        SERVICE_LIST_REGION_FILTERS.map(async (region) => {
+          const nextRegions = params.regions.includes(region.id)
+            ? params.regions
+            : [...params.regions, region.id];
+
+          return {
+            id: region.id,
+            count: await fetchTotalCount(group, params, {
+              regions: nextRegions.length === 1 ? nextRegions : [region.id],
+            }),
+          };
+        }),
+      ),
+    ]);
+
   const priceCounts = { ...priceCountBase };
+  for (const item of priceCountsList) {
+    priceCounts[item.id] = item.count;
+  }
+
   const techStackCounts = { ...techStackCountBase };
+  for (const item of techStackCountsList) {
+    techStackCounts[item.id] = item.count;
+  }
+
   const regionCounts = { ...regionCountBase };
-
-  for (const price of SERVICE_LIST_PRICE_FILTERS) {
-    priceCounts[price.id] = countServicesWithParams(pool, {
-      ...params,
-      price: price.id,
-    });
-  }
-
-  for (const stack of SERVICE_LIST_TECH_STACK_FILTERS) {
-    const nextTechStacks = params.techStacks.includes(stack.id)
-      ? params.techStacks
-      : [...params.techStacks, stack.id];
-
-    techStackCounts[stack.id] = countServicesWithParams(pool, {
-      ...params,
-      techStacks: nextTechStacks,
-    });
-  }
-
-  for (const region of SERVICE_LIST_REGION_FILTERS) {
-    const nextRegions = params.regions.includes(region.id)
-      ? params.regions
-      : [...params.regions, region.id];
-
-    regionCounts[region.id] = countServicesWithParams(pool, {
-      ...params,
-      regions: nextRegions,
-    });
+  for (const item of regionCountsList) {
+    regionCounts[item.id] = item.count;
   }
 
   return {
@@ -319,37 +346,58 @@ function calculateContextualSidebarCounts(
   };
 }
 
-export function getServiceListPageData(
+export async function getServiceListPageData(
   group: ServiceGroupName,
   params: GetServiceListPageDataParams,
 ): Promise<ServiceListPageData> {
-  const pool = getServicePool(group);
-  const filtered = sortServices(filterServices(pool, params), params.sort);
-  const totalCount = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / params.pageSize));
-  const currentPage = Math.min(Math.max(1, params.page), totalPages);
-  const startIndex = (currentPage - 1) * params.pageSize;
-  const items = filtered.slice(startIndex, startIndex + params.pageSize);
+  const listQuery = buildListQuery(group, {
+    page: params.page,
+    pageSize: params.pageSize,
+    sort: params.sort,
+    category: params.category,
+    keyword: params.keyword,
+    techStacks: params.techStacks,
+    regions: params.regions,
+    price: params.price,
+  });
 
-  const featured = sortServices(pool, 'RECOMMENDED').slice(
-    0,
-    SERVICE_LIST_FEATURED_COUNT,
+  const featuredQuery = buildListQuery(group, {
+    page: 1,
+    pageSize: SERVICE_LIST_FEATURED_COUNT,
+    sort: 'RECOMMENDED',
+    category: 'ALL',
+    keyword: '',
+    techStacks: [],
+    regions: [],
+    price: null,
+  });
+
+  const [listData, featuredData, categoryCounts, sidebarCounts] =
+    await Promise.all([
+      fetchServiceList(listQuery),
+      fetchServiceList(featuredQuery),
+      fetchCategoryFilterCounts(group),
+      fetchContextualSidebarCounts(group, params),
+    ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(listData.pagination.totalCount / params.pageSize),
   );
-  const totalAndCategoryCounts = calculateFilterCounts(pool);
-  const contextualSidebarCounts = calculateContextualSidebarCounts(pool, params);
+  const currentPage = Math.min(Math.max(1, params.page), totalPages);
 
-  return Promise.resolve({
-    featured,
+  return {
+    featured: featuredData.items.map((item) => mapServiceListItem(item)),
     filterCounts: {
-      ...totalAndCategoryCounts,
-      ...contextualSidebarCounts,
+      ...categoryCounts,
+      ...sidebarCounts,
     },
-    items,
+    items: listData.items.map((item) => mapServiceListItem(item)),
     pagination: {
       page: currentPage,
       pageSize: params.pageSize,
-      totalCount,
-      hasNext: startIndex + params.pageSize < totalCount,
+      totalCount: listData.pagination.totalCount,
+      hasNext: listData.pagination.hasNext,
     },
-  });
+  };
 }

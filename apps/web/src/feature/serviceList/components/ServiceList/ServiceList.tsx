@@ -5,8 +5,10 @@ import clsx from 'clsx';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
+
+
 import { SERVICE_LIST_SORT_OPTIONS } from '../../constants';
-import { getExpertTechStackLabels, toCardService } from '../../serviceCard';
+import { getServiceTechStackLabels, toCardService } from '../../serviceCard';
 import { buildServiceListHref } from '../../utils';
 import { FilterSidebar } from '../FilterSidebar';
 import { SearchBar } from '../SearchBar';
@@ -19,6 +21,8 @@ import type {
   ServiceListSearchParams,
   ServiceListServiceItem,
 } from '../../types';
+
+import { buildServiceDetailHref } from '@/feature/serviceDetail/utils';
 
 interface Props {
   config: ServiceListConfig;
@@ -99,11 +103,16 @@ export default function ServiceList({
           </div>
           <div className={styles.featuredCardList}>
             {featured.map((service) => (
-              <Card
+              <Link
                 key={service.id}
-                service={toCardService(service)}
-                expertTechStacks={getExpertTechStackLabels(service.expert.id)}
-              />
+                href={buildServiceDetailHref(service.id, config.serviceGroup)}
+                className={styles.cardLink}
+              >
+                <Card
+                  service={toCardService(service)}
+                  expertTechStacks={getServiceTechStackLabels(service.techStacks)}
+                />
+              </Link>
             ))}
           </div>
         </div>
@@ -142,11 +151,16 @@ export default function ServiceList({
 
           <div className={styles.cardGrid}>
             {items.map((service) => (
-              <Card
+              <Link
                 key={service.id}
-                service={toCardService(service)}
-                expertTechStacks={getExpertTechStackLabels(service.expert.id)}
-              />
+                href={buildServiceDetailHref(service.id, config.serviceGroup)}
+                className={styles.cardLink}
+              >
+                <Card
+                  service={toCardService(service)}
+                  expertTechStacks={getServiceTechStackLabels(service.techStacks)}
+                />
+              </Link>
             ))}
           </div>
 
