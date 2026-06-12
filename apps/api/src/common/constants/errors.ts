@@ -514,6 +514,15 @@ export const REPORT_ERRORS = {
     message: '신고 내역을 찾을 수 없습니다.',
     code: 'REPORT_NOT_FOUND',
   },
+  SELF_REPORT: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '자신을 신고할 수 없습니다.',
+    code: 'REPORT_SELF_REPORT',
+  },
+  FORBIDDEN_SAME_ROLE: {
+    status: HttpStatus.FORBIDDEN,
+    message: '같은 역할의 유저는 신고할 수 없습니다.',
+  },
 } as const;
 
 export const MAIN_SETTING_ERRORS = {
