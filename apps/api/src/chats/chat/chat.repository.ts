@@ -269,4 +269,89 @@ export class ChatRepository {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async findUnreadRooms(userId: string) {
+    const participants = await this.prisma.chatParticipant.findMany({
+      where: {
+        userId,
+        chatRoom: { lastMessage: { isNot: null } },
+      },
+      orderBy: { chatRoom: { lastMessage: { createdAt: 'desc' } } },
+      include: {
+        chatRoom: {
+          include: {
+            lastMessage: {
+              select: { id: true, content: true, createdAt: true },
+            },
+            clientUser: {
+              select: {
+                id: true,
+                name: true,
+                profileImageUrl: true,
+                clientProfile: { select: { nickname: true } },
+              },
+            },
+            expertUser: {
+              select: {
+                id: true,
+                profileImageUrl: true,
+                expertProfile: { select: { businessName: true } },
+              },
+            },
+          },
+        },
+        lastReadMessage: { select: { createdAt: true } },
+        lastDismissedMessage: { select: { createdAt: true } },
+      },
+    });
+
+    return participants.filter((p) => {
+      const lastMessage = p.chatRoom.lastMessage;
+      if (!lastMessage) return false;
+      const readAt = p.lastReadMessage?.createdAt ?? new Date(0);
+      const dismissedAt = p.lastDismissedMessage?.createdAt ?? new Date(0);
+      return (
+        lastMessage.createdAt > readAt && lastMessage.createdAt > dismissedAt
+      );
+    });
+  }
+
+  async findRoomParticipantIds(roomId: string) {
+    return this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      select: { clientUserId: true, expertUserId: true },
+    });
+  }
+
+  async updateDismissedMessage(roomId: string, userId: string) {
+    const room = await this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      select: { lastMessageId: true },
+    });
+    if (!room?.lastMessageId) return;
+    return this.prisma.chatParticipant.update({
+      where: { chatRoomId_userId: { chatRoomId: roomId, userId } },
+      data: { lastDismissedMessageId: room.lastMessageId },
+    });
+  }
+
+  async updateAllDismissedMessages(userId: string) {
+    const participants = await this.prisma.chatParticipant.findMany({
+      where: { userId },
+      select: {
+        chatRoomId: true,
+        chatRoom: { select: { lastMessageId: true } },
+      },
+    });
+    await this.prisma.$transaction(
+      participants
+        .filter((p) => p.chatRoom.lastMessageId)
+        .map((p) =>
+          this.prisma.chatParticipant.update({
+            where: { chatRoomId_userId: { chatRoomId: p.chatRoomId, userId } },
+            data: { lastDismissedMessageId: p.chatRoom.lastMessageId },
+          }),
+        ),
+    );
+  }
 }
