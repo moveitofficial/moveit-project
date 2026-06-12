@@ -228,7 +228,11 @@ class ServiceExpertSummaryResponseDto {
   @ApiProperty({ example: '코드잇 에이전시' })
   declare companyName: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'https://example.img.com/image.jpg',
+  })
   declare profileImageUrl: string | null;
 
   @ApiProperty({ enum: Region, nullable: true, example: Region.SEOUL })
@@ -328,6 +332,7 @@ class ReviewerResponseDto {
   declare name: string;
 
   @ApiProperty({
+    type: String,
     nullable: true,
     example: 'https://example.img.com/image.jpg',
   })
@@ -342,6 +347,7 @@ class MyReviewExpertResponseDto {
   declare name: string;
 
   @ApiProperty({
+    type: String,
     nullable: true,
     example: 'https://example.img.com/image.jpg',
   })
