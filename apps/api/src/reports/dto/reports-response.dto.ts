@@ -12,7 +12,10 @@ export class ReportsResponseDto {
   })
   declare reason: ReportReason;
 
-  @ApiProperty({ description: '신고 상세 내용' })
+  @ApiProperty({
+    description: '신고 상세 내용',
+    example: '욕설과 비방을 일삼고 있습니다.',
+  })
   declare detail: string;
 
   @ApiProperty({

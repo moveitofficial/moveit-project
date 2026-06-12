@@ -369,6 +369,14 @@ export const UPLOAD_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '프로필 이미지의 가로와 세로는 각각 500px 이하여야 합니다.',
   },
+  REPORT_IMAGE_TOO_LARGE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '신고하기 증거 이미지의 크기는 최대 5MB까지 허용됩니다.',
+  },
+  REPORT_IMAGES_TOO_MANY: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '파일은 최대 3개까지 업로드할 수 있습니다.',
+  },
   INVALID_CHAT_FILE_TYPE: {
     status: HttpStatus.BAD_REQUEST,
     message:
