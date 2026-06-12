@@ -177,6 +177,11 @@ export const cardGrid = style({
   gap: '24px',
 });
 
+export const cardLink = style({
+  textDecoration: 'none',
+  color: 'inherit',
+});
+
 export const pagination = style({
   alignSelf: 'center',
 });

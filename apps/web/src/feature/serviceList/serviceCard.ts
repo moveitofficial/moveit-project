@@ -2,7 +2,6 @@ import type { ServiceListServiceItem } from './types';
 import type { TechStackName } from '@/mocks/types';
 import type { CardService } from '@repo/ui/Card';
 
-import { mockExpertList } from '@/mocks/experts';
 import { getTechStackLabel } from '@/mocks/metadata';
 
 export function toCardService(service: ServiceListServiceItem): CardService {
@@ -28,9 +27,10 @@ export function toCardService(service: ServiceListServiceItem): CardService {
   };
 }
 
-export function getExpertTechStackLabels(expertId: string): string[] {
-  const expert = mockExpertList.find((item) => item.id === expertId);
-  const stacks = expert?.techStacks ?? [];
-
-  return stacks.slice(0, 3).map((name: TechStackName) => getTechStackLabel(name));
+export function getServiceTechStackLabels(
+  techStacks: TechStackName[],
+): string[] {
+  return techStacks
+    .slice(0, 3)
+    .map((name) => getTechStackLabel(name));
 }

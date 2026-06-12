@@ -269,10 +269,13 @@ export const mockServiceDetail: ServiceDetail = {
   revisionCount: 3,
   serviceScope: '기획, 디자인, 개발',
   servicePrice: 380_000,
-  description: `React Native 기반으로 iOS / Android 앱을 동시에 개발해드립니다.
+  description: `- 앱 출시를 앞두고 개발 파트너가 필요한 스타트업
+- 기획은 있지만 실제 구현이 막막한 분
+- React Native로 iOS·Android를 동시에 만들고 싶은 분
 
-  기획 단계부터 함께 논의하며, 디자인과 개발을 모두 진행합니다.
-  유지보수 가능한 클린 아키텍처로 작성합니다.`,
+React Native 기반으로 iOS / Android 앱을 동시에 개발해드립니다.
+기획 단계부터 함께 논의하며, 디자인과 개발을 모두 진행합니다.
+유지보수 가능한 클린 아키텍처로 작성합니다.`,
   preparationNotes:
     '의뢰 시 원하는 기능 명세서(또는 레퍼런스 앱 링크)를 함께 보내주시면 견적이 정확해집니다.',
   refundPolicy: '작업 시작 전: 100% 환불 / 작업 진행 중: 진행률 차감 후 환불',
@@ -304,8 +307,8 @@ export const mockServiceDetail: ServiceDetail = {
   ],
   reviews: {
     items: mockReviews,
-    totalCount: 328,
-    averageRating: 4.9,
+    totalCount: 35,
+    averageRating: 4.2,
   },
   recommendedServices: mockServiceList.slice(1, 4),
 };
