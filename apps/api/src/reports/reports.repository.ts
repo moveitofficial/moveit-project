@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Report } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -9,7 +8,7 @@ import { ReportsRequestDto } from './dto/reports-request.dto';
 export class ReportsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(reporterId: string, dto: ReportsRequestDto): Promise<Report> {
+  create(reporterId: string, dto: ReportsRequestDto) {
     return this.prisma.report.create({
       data: {
         reporterId,
@@ -20,6 +19,7 @@ export class ReportsRepository {
           create: dto.imageUrls?.map((imageUrl) => ({ imageUrl })) ?? [],
         },
       },
+      include: { images: true },
     });
   }
 }

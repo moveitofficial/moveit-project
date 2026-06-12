@@ -43,7 +43,7 @@ export class ReportsRequestDto {
   })
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(5)
+  @ArrayMaxSize(3)
   @IsUrl({}, { each: true })
   declare imageUrls?: string[];
 }

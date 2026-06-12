@@ -8,6 +8,8 @@ import { ReportsRequestDto } from './dto/reports-request.dto';
 import { ReportsResponseDto } from './dto/reports-response.dto';
 import { ReportsRepository } from './reports.repository';
 
+import type { Role } from '@prisma/client';
+
 @Injectable()
 export class ReportsService {
   constructor(
@@ -17,6 +19,7 @@ export class ReportsService {
 
   async createReport(
     reporterId: string,
+    reporterRole: Role,
     dto: ReportsRequestDto,
   ): Promise<ReportsResponseDto> {
     if (reporterId === dto.reportedUserId) {
@@ -31,6 +34,10 @@ export class ReportsService {
       throw new AppException(USER_ERRORS.NOT_FOUND);
     }
 
+    if (reportedUser.role === reporterRole) {
+      throw new AppException(REPORT_ERRORS.FORBIDDEN_SAME_ROLE);
+    }
+
     if (reportedUser.isDeleted) {
       throw new AppException(USER_ERRORS.DELETED);
     }
@@ -39,7 +46,11 @@ export class ReportsService {
 
     return {
       id: report.id,
+      reason: report.reason,
+      detail: report.detail,
+      imageUrls: report.images.map((image) => image.imageUrl),
       status: report.status,
+      createdAt: report.createdAt,
     };
   }
 }

@@ -25,14 +25,13 @@ export class ReportsController {
   @ApiOperation({ summary: '신고 생성' })
   @JwtAuth()
   @ApiSuccessResponse(HttpStatus.CREATED, ReportsResponseDto)
-  @ApiErrorResponse(REPORT_ERRORS.SELF_REPORT)
+  @ApiErrorResponse(REPORT_ERRORS.SELF_REPORT, COMMON_ERRORS.VALIDATION_ERROR)
   @ApiErrorResponse(USER_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(USER_ERRORS.DELETED)
+  @ApiErrorResponse(USER_ERRORS.DELETED, REPORT_ERRORS.FORBIDDEN_SAME_ROLE)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
   @Post()
   createReport(@Req() req: Request, @Body() dto: ReportsRequestDto) {
     const user = req.user as JwtAccessUser;
-    return this.reportsService.createReport(user.userId, dto);
+    return this.reportsService.createReport(user.userId, user.role, dto);
   }
 }

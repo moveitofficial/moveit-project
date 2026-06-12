@@ -499,6 +499,10 @@ export const REPORT_ERRORS = {
     message: '자신을 신고할 수 없습니다.',
     code: 'REPORT_SELF_REPORT',
   },
+  FORBIDDEN_SAME_ROLE: {
+    status: HttpStatus.FORBIDDEN,
+    message: '같은 역할의 유저는 신고할 수 없습니다.',
+  },
 } as const;
 
 export const MAIN_SETTING_ERRORS = {
