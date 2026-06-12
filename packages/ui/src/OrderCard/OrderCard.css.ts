@@ -9,6 +9,22 @@ export const card = style({
   backgroundColor: vars.color.white,
 });
 
+export const cardLeft = style({
+  display: 'flex',
+  alignItems: 'stretch',
+  flex: 1,
+  minWidth: 0,
+  gap: '12px',
+  border: 'none',
+  background: 'none',
+  padding: 0,
+  textAlign: 'left',
+});
+
+export const cardLeftClickable = style({
+  cursor: 'pointer',
+});
+
 export const thumbnailWrapper = style({
   flexShrink: 0,
   width: '100px',
