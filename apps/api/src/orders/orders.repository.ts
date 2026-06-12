@@ -1,7 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentStatus,
+  Prisma,
+  RefundStatus,
+  RefundType,
+} from '@prisma/client';
 
-import { ORDER_ERRORS, PAYMENT_ERRORS } from '../common/constants/errors';
+import {
+  ORDER_ERRORS,
+  PAYMENT_ERRORS,
+  REFUND_ERRORS,
+} from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -11,11 +21,15 @@ import {
   ServiceReviewStats,
 } from '../services/services.types';
 
+import { LISTABLE_PAYMENT_STATUSES } from './orders.constants';
 import {
+  orderCancelApprovePolicySelect,
+  orderCancelRequestPolicySelect,
   orderListSelect,
   orderPolicySelect,
   orderReviewSelect,
   orderSchedulePolicySelect,
+  orderStatusResponseSelect,
 } from './orders.types';
 
 import type { OrderListSort } from './orders.constants';
@@ -44,9 +58,12 @@ export class OrdersRepository {
     const statusWhere: Prisma.OrderWhereInput = statuses?.length
       ? { status: { in: statuses } }
       : {};
+    const paymentWhere: Prisma.OrderWhereInput = {
+      payment: { is: { status: { in: LISTABLE_PAYMENT_STATUSES } } },
+    };
 
     return this.prisma.order.findMany({
-      where: { ...userWhere, ...statusWhere },
+      where: { ...userWhere, ...statusWhere, ...paymentWhere },
       select: orderListSelect,
       orderBy: sort === 'deadline' ? { endDate: 'asc' } : { createdAt: 'desc' },
       skip,
@@ -67,8 +84,13 @@ export class OrdersRepository {
     const statusWhere: Prisma.OrderWhereInput = statuses?.length
       ? { status: { in: statuses } }
       : {};
+    const paymentWhere: Prisma.OrderWhereInput = {
+      payment: { is: { status: { in: LISTABLE_PAYMENT_STATUSES } } },
+    };
 
-    return this.prisma.order.count({ where: { ...userWhere, ...statusWhere } });
+    return this.prisma.order.count({
+      where: { ...userWhere, ...statusWhere, ...paymentWhere },
+    });
   }
 
   findServiceById(serviceId: string) {
@@ -329,7 +351,289 @@ export class OrdersRepository {
     });
   }
 
-  // 기한만료 대상 조회
+  findOrderCancelRequestPolicy(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: orderCancelRequestPolicySelect,
+    });
+  }
+
+  findOrderCancelApprovePolicy(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: orderCancelApprovePolicySelect,
+    });
+  }
+
+  async requestCancel(params: {
+    orderId: string;
+    clientUserId: string;
+    expertUserId: string;
+    paidAmount: number;
+    paymentKey: string;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: params.orderId, status: OrderStatus.NEGOTIATING },
+        data: { status: OrderStatus.CANCEL_REQUESTED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      return tx.order.update({
+        where: { id: params.orderId },
+        data: {
+          payment: {
+            update: {
+              refund: {
+                upsert: {
+                  create: {
+                    clientUserId: params.clientUserId,
+                    expertUserId: params.expertUserId,
+                    type: RefundType.CANCEL,
+                    status: RefundStatus.REQUESTED,
+                    refundAmount: params.paidAmount,
+                    paymentKey: params.paymentKey,
+                    requestedAt: new Date(),
+                  },
+                  update: {
+                    type: RefundType.CANCEL,
+                    status: RefundStatus.REQUESTED,
+                    refundAmount: params.paidAmount,
+                    paymentKey: params.paymentKey,
+                    requestedAt: new Date(),
+                    approvedAt: null,
+                    refundedAt: null,
+                    adminReason: null,
+                    approvedAdminId: null,
+                    rawData: Prisma.JsonNull,
+                  },
+                },
+              },
+            },
+          },
+        },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
+  async approveCancel(params: {
+    orderId: string;
+    refundAmount: number;
+    canceledAt: Date;
+    rawData: Prisma.InputJsonValue;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: params.orderId, status: OrderStatus.CANCEL_REQUESTED },
+        data: { status: OrderStatus.PAYMENT_CANCELLED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: paymentCount } = await tx.payment.updateMany({
+        where: { orderId: params.orderId, status: PaymentStatus.PAID },
+        data: {
+          status: PaymentStatus.CANCELLED,
+          rawData: params.rawData,
+        },
+      });
+      if (paymentCount === 0) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId: params.orderId },
+          type: RefundType.CANCEL,
+          status: RefundStatus.REQUESTED,
+        },
+        data: {
+          status: RefundStatus.COMPLETED,
+          refundAmount: params.refundAmount,
+          approvedAt: params.canceledAt,
+          refundedAt: params.canceledAt,
+          rawData: params.rawData,
+        },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: params.orderId },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
+  async rejectCancel(orderId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: orderId, status: OrderStatus.CANCEL_REQUESTED },
+        data: { status: OrderStatus.NEGOTIATING },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId },
+          type: RefundType.CANCEL,
+          status: RefundStatus.REQUESTED,
+        },
+        data: { status: RefundStatus.REJECTED },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
+  async approveRefund(params: {
+    orderId: string;
+    refundAmount: number;
+    canceledAt: Date;
+    rawData: Prisma.InputJsonValue;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: params.orderId, status: OrderStatus.REFUND_REQUESTED },
+        data: { status: OrderStatus.REFUND_COMPLETED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: paymentCount } = await tx.payment.updateMany({
+        where: { orderId: params.orderId, status: PaymentStatus.PAID },
+        data: {
+          status: PaymentStatus.REFUNDED,
+          rawData: params.rawData,
+        },
+      });
+      if (paymentCount === 0) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId: params.orderId },
+          type: RefundType.REFUND,
+          status: RefundStatus.REQUESTED,
+        },
+        data: {
+          status: RefundStatus.COMPLETED,
+          refundAmount: params.refundAmount,
+          approvedAt: params.canceledAt,
+          refundedAt: params.canceledAt,
+          rawData: params.rawData,
+        },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: params.orderId },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
+  async rejectRefund(orderId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: orderId, status: OrderStatus.REFUND_REQUESTED },
+        data: { status: OrderStatus.EXPIRED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId },
+          type: RefundType.REFUND,
+          status: RefundStatus.REQUESTED,
+        },
+        data: { status: RefundStatus.REJECTED },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
+  async cancelRefundRequest(orderId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: orderId, status: OrderStatus.REFUND_REQUESTED },
+        data: { status: OrderStatus.EXPIRED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId },
+          type: RefundType.REFUND,
+          status: RefundStatus.REQUESTED,
+        },
+        data: { status: RefundStatus.REJECTED },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
+  async requestRefund(params: {
+    orderId: string;
+    clientUserId: string;
+    expertUserId: string;
+    paidAmount: number;
+    paymentKey: string;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: params.orderId, status: OrderStatus.EXPIRED },
+        data: { status: OrderStatus.REFUND_REQUESTED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      return tx.order.update({
+        where: { id: params.orderId },
+        data: {
+          payment: {
+            update: {
+              refund: {
+                upsert: {
+                  create: {
+                    clientUserId: params.clientUserId,
+                    expertUserId: params.expertUserId,
+                    type: RefundType.REFUND,
+                    status: RefundStatus.REQUESTED,
+                    refundAmount: params.paidAmount,
+                    paymentKey: params.paymentKey,
+                    requestedAt: new Date(),
+                  },
+                  update: {
+                    type: RefundType.REFUND,
+                    status: RefundStatus.REQUESTED,
+                    refundAmount: params.paidAmount,
+                    paymentKey: params.paymentKey,
+                    requestedAt: new Date(),
+                    approvedAt: null,
+                    refundedAt: null,
+                    adminReason: null,
+                    approvedAdminId: null,
+                    rawData: Prisma.JsonNull,
+                  },
+                },
+              },
+            },
+          },
+        },
+        select: orderStatusResponseSelect,
+      });
+    });
+  }
+
   async findOrdersToExpire(now: Date) {
     return this.prisma.order.findMany({
       where: {
@@ -346,7 +650,7 @@ export class OrdersRepository {
       },
     });
   }
-  // 상태 일괄변경
+
   async updateOrdersStatus(orderIds: string[], status: OrderStatus) {
     if (orderIds.length === 0) return;
     await this.prisma.order.updateMany({

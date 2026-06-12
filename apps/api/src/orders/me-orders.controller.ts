@@ -4,6 +4,8 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseUUIDPipe,
   Post,
   Query,
   Req,
@@ -16,6 +18,7 @@ import {
   COMMON_ERRORS,
   ORDER_ERRORS,
   PAYMENT_ERRORS,
+  REFUND_ERRORS,
   SERVICE_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
@@ -29,6 +32,7 @@ import { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import { CreateOrderResponseDto } from './dto/create-order-response.dto';
 import { GetOrdersQueryDto } from './dto/get-orders-query.dto';
 import { OrderListItemDto } from './dto/order-response.dto';
+import { UpdateOrderStatusResponseDto } from './dto/update-order-status-response.dto';
 import { OrdersService } from './orders.service';
 
 import type { Request } from 'express';
@@ -70,5 +74,69 @@ export class MeOrdersController {
   createOrder(@Req() req: Request, @Body() dto: CreateOrderRequestDto) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.createOrder(user.userId, dto);
+  }
+
+  @ApiOperation({ summary: '취소 요청' })
+  @RoleAuth(Role.CLIENT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    ORDER_ERRORS.INVALID_STATUS,
+    ORDER_ERRORS.ALREADY_PROCESSED,
+    REFUND_ERRORS.CANCEL_NOT_ALLOWED,
+    REFUND_ERRORS.ALREADY_REQUESTED,
+    PAYMENT_ERRORS.NOT_FOUND,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':orderId/cancel')
+  requestCancel(
+    @Req() req: Request,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.requestCancelOrder(user.userId, orderId);
+  }
+
+  @ApiOperation({ summary: '환불 요청' })
+  @RoleAuth(Role.CLIENT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    ORDER_ERRORS.INVALID_STATUS,
+    ORDER_ERRORS.ALREADY_PROCESSED,
+    REFUND_ERRORS.REFUND_NOT_ALLOWED,
+    REFUND_ERRORS.ALREADY_REQUESTED,
+    PAYMENT_ERRORS.NOT_FOUND,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':orderId/refund')
+  requestRefund(
+    @Req() req: Request,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.requestRefundOrder(user.userId, orderId);
+  }
+
+  @ApiOperation({ summary: '환불 요청 취소' })
+  @RoleAuth(Role.CLIENT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK, UpdateOrderStatusResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    ORDER_ERRORS.INVALID_STATUS,
+    REFUND_ERRORS.REQUEST_NOT_CANCELABLE,
+    REFUND_ERRORS.NOT_FOUND,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':orderId/refund/cancel')
+  cancelRefundRequest(
+    @Req() req: Request,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.cancelRefundRequestOrder(user.userId, orderId);
   }
 }

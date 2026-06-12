@@ -43,10 +43,21 @@ export const orderPolicySelect = {
   clientUserId: true,
   expertUserId: true,
   status: true,
+  payment: { select: { status: true } },
 } satisfies Prisma.OrderSelect;
 
 export type OrderPolicyOrder = Prisma.OrderGetPayload<{
   select: typeof orderPolicySelect;
+}>;
+
+export const orderStatusResponseSelect = {
+  id: true,
+  status: true,
+  confirmedAt: true,
+} satisfies Prisma.OrderSelect;
+
+export type OrderStatusResponseRow = Prisma.OrderGetPayload<{
+  select: typeof orderStatusResponseSelect;
 }>;
 
 export const orderSchedulePolicySelect = {
@@ -55,10 +66,55 @@ export const orderSchedulePolicySelect = {
   expertUserId: true,
   status: true,
   endDate: true,
+  payment: { select: { status: true } },
 } satisfies Prisma.OrderSelect;
 
 export type OrderSchedulePolicyOrder = Prisma.OrderGetPayload<{
   select: typeof orderSchedulePolicySelect;
+}>;
+
+export const orderCancelRequestPolicySelect = {
+  id: true,
+  clientUserId: true,
+  expertUserId: true,
+  status: true,
+  payment: {
+    select: {
+      id: true,
+      status: true,
+      paidAmount: true,
+      paymentKey: true,
+      refund: { select: { id: true, status: true } },
+    },
+  },
+  service: { select: { title: true } },
+  clientUser: { select: { name: true } },
+} satisfies Prisma.OrderSelect;
+
+export type OrderCancelRequestPolicyOrder = Prisma.OrderGetPayload<{
+  select: typeof orderCancelRequestPolicySelect;
+}>;
+
+export const orderCancelApprovePolicySelect = {
+  id: true,
+  clientUserId: true,
+  expertUserId: true,
+  status: true,
+  payment: {
+    select: {
+      id: true,
+      status: true,
+      paymentKey: true,
+      paidAmount: true,
+      refund: { select: { id: true, type: true, status: true } },
+    },
+  },
+  service: { select: { title: true } },
+  clientUser: { select: { name: true } },
+} satisfies Prisma.OrderSelect;
+
+export type OrderCancelApprovePolicyOrder = Prisma.OrderGetPayload<{
+  select: typeof orderCancelApprovePolicySelect;
 }>;
 
 export const orderReviewSelect = {

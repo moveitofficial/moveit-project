@@ -12,6 +12,7 @@ import { PaymentsRepository } from './payments.repository';
 import type { Prisma } from '@prisma/client';
 
 const TOSS_CONFIRM_URL = 'https://api.tosspayments.com/v1/payments/confirm';
+const TOSS_CANCEL_URL = 'https://api.tosspayments.com/v1/payments';
 const TOSS_CONFIRM_TIMEOUT_MS = 30_000;
 const TOSS_IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
 const TOSS_IDEMPOTENT_REQUEST_PROCESSING_CODE = 'IDEMPOTENT_REQUEST_PROCESSING';
@@ -168,5 +169,98 @@ export class PaymentsService {
       installmentMonths,
       rawData: tossData as Prisma.InputJsonValue,
     };
+  }
+
+  async cancelTossPayment(
+    paymentKey: string,
+    cancelReason: string,
+    cancelAmount: number,
+  ): Promise<{ canceledAt: Date; rawData: Prisma.InputJsonValue }> {
+    let response: Response;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, TOSS_CONFIRM_TIMEOUT_MS);
+
+    try {
+      response = await fetch(`${TOSS_CANCEL_URL}/${paymentKey}/cancel`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${this.tossBasicToken}`,
+          'Content-Type': 'application/json',
+          [TOSS_IDEMPOTENCY_KEY_HEADER]: `cancel_${paymentKey}`,
+        },
+        body: JSON.stringify({ cancelReason, cancelAmount }),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Toss 결제 취소 요청 실패 (네트워크/타임아웃). paymentKey=${paymentKey}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new AppException(PAYMENT_ERRORS.CANCEL_FAILED);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    let data: unknown;
+    try {
+      data = await response.json();
+    } catch (error) {
+      this.logger.error(
+        `Toss 취소 응답 JSON 파싱 실패. paymentKey=${paymentKey}, status=${response.status}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new AppException(PAYMENT_ERRORS.CANCEL_FAILED);
+    }
+
+    const tossData = isRecord(data)
+      ? data
+      : { code: 'UNKNOWN', message: 'UNKNOWN' };
+
+    if (!response.ok) {
+      if (
+        response.status === 409 &&
+        'code' in tossData &&
+        tossData.code === TOSS_IDEMPOTENT_REQUEST_PROCESSING_CODE
+      ) {
+        throw new AppException(ORDER_ERRORS.ALREADY_PROCESSED);
+      }
+      this.logger.warn(
+        `Toss 결제 취소 거절. paymentKey=${paymentKey}, status=${response.status}, response=${JSON.stringify(tossData)}`,
+      );
+      throw new AppException(PAYMENT_ERRORS.CANCEL_FAILED);
+    }
+
+    const rawCancels =
+      'cancels' in tossData && Array.isArray(tossData.cancels)
+        ? tossData.cancels
+        : undefined;
+    const firstCancel =
+      rawCancels !== undefined && isRecord(rawCancels[0])
+        ? rawCancels[0]
+        : undefined;
+    const canceledAtRaw =
+      isRecord(firstCancel) && typeof firstCancel.canceledAt === 'string'
+        ? firstCancel.canceledAt
+        : undefined;
+
+    if (!canceledAtRaw) {
+      this.logger.error(
+        `Toss 취소 응답에 canceledAt 누락. paymentKey=${paymentKey}, response=${JSON.stringify(tossData)}`,
+      );
+      throw new AppException(PAYMENT_ERRORS.CANCEL_FAILED);
+    }
+
+    const canceledAt = new Date(canceledAtRaw);
+    if (Number.isNaN(canceledAt.getTime())) {
+      this.logger.error(
+        `Toss 취소 응답 canceledAt 파싱 실패. paymentKey=${paymentKey}, value=${canceledAtRaw}`,
+      );
+      throw new AppException(PAYMENT_ERRORS.CANCEL_FAILED);
+    }
+
+    return { canceledAt, rawData: tossData as Prisma.InputJsonValue };
   }
 }

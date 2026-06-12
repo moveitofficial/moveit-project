@@ -13,12 +13,10 @@ import {
   MainTargetType,
   MessageType,
   NotificationCategory,
-  NotificationType,
   OrderStatus,
   PaymentStatus,
   type Portfolio,
   PrismaClient,
-  ReferenceType,
   RefundStatus,
   RefundType,
   Region,
@@ -36,10 +34,15 @@ import {
 import bcrypt from 'bcrypt';
 import { config as loadEnv } from 'dotenv';
 
+import {
+  NOTIFICATION_CATALOG,
+  type NotificationContentVars,
+} from '../src/notifications/notification.catalog';
+
 loadEnv({ path: `.env.${process.env.NODE_ENV ?? 'development'}` });
 
 // ─── 상수 ───────────────────────────────────────────────────────────────
-const SEED_PASSWORD = 'test1234';
+const SEED_PASSWORD = 'Test1234!';
 
 const SAMPLE_IMAGES = [
   'https://picsum.photos/seed/moveit-1/800/1200',
@@ -103,6 +106,29 @@ const shuffle = <T>(arr: readonly T[]): T[] =>
 const pickImage = (): string => pick(SAMPLE_IMAGES);
 const pickProfileImage = (): string => pick(PROFILE_IMAGES);
 const range = (n: number): number[] => Array.from({ length: n }, (_, i) => i);
+
+// ─── Order Scenario ─────────────────────────────────────────────────────
+type RefundApprover = 'expert' | 'admin';
+
+interface ScenarioPlan {
+  status: OrderStatus;
+  refund?: {
+    type: RefundType;
+    status: RefundStatus;
+    approvedBy?: RefundApprover;
+  };
+}
+
+interface SeededOrderInfo {
+  orderId: string;
+  clientUserId: string;
+  expertUserId: string;
+  serviceTitle: string;
+  status: OrderStatus;
+  refundType?: RefundType;
+  refundStatus?: RefundStatus;
+  approvedBy?: RefundApprover;
+}
 
 // ─── Seeder ─────────────────────────────────────────────────────────────
 class Seeder {
@@ -176,7 +202,17 @@ class Seeder {
       `✅ 서비스 ${services.length.toString()}개 (이미지/스텝/FAQ 포함)`,
     );
 
-    await this.#seedOrdersAndPayments(clients, services, superAdmin);
+    const seededOrders = await this.#seedOrdersAndPayments(
+      clients,
+      services,
+      superAdmin,
+    );
+    const testOrders = await this.#seedRefundTestPair(
+      passwordHash,
+      serviceGroups,
+      serviceCategories,
+      superAdmin,
+    );
     console.warn(`✅ 주문/결제/리뷰/환불`);
 
     await this.#updateExpertRatings(experts);
@@ -200,7 +236,10 @@ class Seeder {
     await this.#seedCsChatRooms(clients, superAdmin);
     console.warn(`✅ CS 채팅 25방 (OPEN 12 / ASSIGNED 8 / CLOSED 5)`);
 
-    await this.#seedNotifications(clients, experts);
+    await this.#seedNotifications(clients, experts, [
+      ...seededOrders,
+      ...testOrders,
+    ]);
     console.warn(`✅ 알림 10개`);
 
     await this.#seedBanners();
@@ -375,7 +414,7 @@ class Seeder {
       i === 0 ? AuthProvider.LOCAL : pick(providers);
 
     const clients = await Promise.all(
-      range(20).map((i) => {
+      range(50).map((i) => {
         const provider = resolveProvider(i);
         const isLocal = provider === AuthProvider.LOCAL;
         return this.#prisma.user.create({
@@ -395,7 +434,7 @@ class Seeder {
     );
 
     const experts = await Promise.all(
-      range(20).map((i) => {
+      range(50).map((i) => {
         const provider = resolveProvider(i);
         const isLocal = provider === AuthProvider.LOCAL;
         return this.#prisma.user.create({
@@ -738,40 +777,104 @@ class Seeder {
   }
 
   // ─── 9. Order + Payment + Review + Refund ─────────────────────────────
+  // 14가지 시나리오로 약 172개 주문 생성 — 각 환불/취소 흐름 풀 커버
   async #seedOrdersAndPayments(
     clients: User[],
     services: Service[],
     admin: Admin,
-  ): Promise<void> {
-    // 상태별 분포 — 대시보드 카드 카운트 검증용
-    // 서비스 진행중(NEG+IP+DL+WC) = 8+12+6+6 = 32, 정산 요청 = 12
-    // 취소·환불은 Refund 모델로 별도 트래킹 (Order.status는 진행/종결 상태만)
-    const orderStatusPlan: OrderStatus[] = [
-      ...Array.from({ length: 8 }, () => OrderStatus.NEGOTIATING),
-      ...Array.from({ length: 12 }, () => OrderStatus.IN_PROGRESS),
-      ...Array.from({ length: 6 }, () => OrderStatus.DEADLINE_IMMINENT),
-      ...Array.from({ length: 6 }, () => OrderStatus.WORK_COMPLETED),
-      ...Array.from({ length: 5 }, () => OrderStatus.PURCHASE_CONFIRMED),
-      ...Array.from({ length: 12 }, () => OrderStatus.SETTLEMENT_REQUESTED),
-      ...Array.from({ length: 6 }, () => OrderStatus.SETTLEMENT_COMPLETED),
-      // 환불요청 진행 중 (Refund: REFUND/REQUESTED 동반)
-      ...Array.from({ length: 2 }, () => OrderStatus.EXPIRED),
-      // 취소완료 (Refund: CANCEL/COMPLETED 동반) — 관리자/판매자 승인 50:50 랜덤
-      ...Array.from({ length: 4 }, () => OrderStatus.PAYMENT_CANCELLED),
-      // 환불완료 (Refund: REFUND/COMPLETED 동반) — 관리자/판매자 승인 50:50 랜덤
-      ...Array.from({ length: 4 }, () => OrderStatus.REFUND_COMPLETED),
+  ): Promise<SeededOrderInfo[]> {
+    const orderPlan: ScenarioPlan[] = [
+      // 1. NEGOTIATING — 결제 직후, 협의 중
+      ...range(15).map(() => ({ status: OrderStatus.NEGOTIATING })),
+      // 2. NEGOTIATING + REJECTED(CANCEL) — 취소 거절 후 복귀 (재요청 가능)
+      ...range(5).map(() => ({
+        status: OrderStatus.NEGOTIATING,
+        refund: { type: RefundType.CANCEL, status: RefundStatus.REJECTED },
+      })),
+      // 3. CANCEL_REQUESTED — 전문가 승인/거절 대기 중
+      ...range(15).map(() => ({
+        status: OrderStatus.CANCEL_REQUESTED,
+        refund: { type: RefundType.CANCEL, status: RefundStatus.REQUESTED },
+      })),
+      // 4. PAYMENT_CANCELLED — 취소 완료 (전문가 5 + 어드민 5)
+      ...range(5).map(() => ({
+        status: OrderStatus.PAYMENT_CANCELLED,
+        refund: {
+          type: RefundType.CANCEL,
+          status: RefundStatus.COMPLETED,
+          approvedBy: 'expert' as const,
+        },
+      })),
+      ...range(5).map(() => ({
+        status: OrderStatus.PAYMENT_CANCELLED,
+        refund: {
+          type: RefundType.CANCEL,
+          status: RefundStatus.COMPLETED,
+          approvedBy: 'admin' as const,
+        },
+      })),
+      // 5. IN_PROGRESS — 작업 진행 중
+      ...range(25).map(() => ({ status: OrderStatus.IN_PROGRESS })),
+      // 6. DEADLINE_IMMINENT — 마감 임박
+      ...range(15).map(() => ({ status: OrderStatus.DEADLINE_IMMINENT })),
+      // 7. EXPIRED — 기한 만료, 환불 요청 전
+      ...range(10).map(() => ({ status: OrderStatus.EXPIRED })),
+      // 8. EXPIRED + REJECTED(REFUND) — 환불 거절 후 복귀 (재요청 가능)
+      ...range(5).map(() => ({
+        status: OrderStatus.EXPIRED,
+        refund: { type: RefundType.REFUND, status: RefundStatus.REJECTED },
+      })),
+      // 9. REFUND_REQUESTED — 환불 요청 진행 중 (PR-B 취소 가능)
+      ...range(15).map(() => ({
+        status: OrderStatus.REFUND_REQUESTED,
+        refund: { type: RefundType.REFUND, status: RefundStatus.REQUESTED },
+      })),
+      // 10. REFUND_COMPLETED — 환불 완료 (전문가 5 + 어드민 5)
+      ...range(5).map(() => ({
+        status: OrderStatus.REFUND_COMPLETED,
+        refund: {
+          type: RefundType.REFUND,
+          status: RefundStatus.COMPLETED,
+          approvedBy: 'expert' as const,
+        },
+      })),
+      ...range(5).map(() => ({
+        status: OrderStatus.REFUND_COMPLETED,
+        refund: {
+          type: RefundType.REFUND,
+          status: RefundStatus.COMPLETED,
+          approvedBy: 'admin' as const,
+        },
+      })),
+      // 11. WORK_COMPLETED — 작업 완료, 구매확정 대기
+      ...range(12).map(() => ({ status: OrderStatus.WORK_COMPLETED })),
+      // 12. PURCHASE_CONFIRMED — 구매확정
+      ...range(10).map(() => ({ status: OrderStatus.PURCHASE_CONFIRMED })),
+      // 13. SETTLEMENT_REQUESTED — 정산 요청
+      ...range(15).map(() => ({ status: OrderStatus.SETTLEMENT_REQUESTED })),
+      // 14. SETTLEMENT_COMPLETED — 정산 완료
+      ...range(10).map(() => ({ status: OrderStatus.SETTLEMENT_COMPLETED })),
     ];
 
-    for (const status of orderStatusPlan) {
+    const seededOrders: SeededOrderInfo[] = [];
+    const adminReasons = [
+      '업체 일정 만료로 인해 전액환불',
+      '결제 잘못하여 취소하였다고 함',
+      '서비스 진행 어려움',
+      '연락 두절',
+    ];
+
+    for (const plan of orderPlan) {
+      const { status } = plan;
       const client = pick(clients);
       const service = pick(services);
       const isConfirmed =
         status === OrderStatus.PURCHASE_CONFIRMED ||
         status === OrderStatus.SETTLEMENT_REQUESTED ||
         status === OrderStatus.SETTLEMENT_COMPLETED;
-
       const isSettled = status === OrderStatus.SETTLEMENT_COMPLETED;
       const platformFee = Math.floor(service.servicePrice * 0.1);
+
       const order = await this.#prisma.order.create({
         data: {
           clientUserId: client.id,
@@ -782,7 +885,6 @@ class Seeder {
           totalAmount: service.servicePrice + platformFee,
           status,
           startDate: faker.date.recent({ days: 30 }),
-          // 협의 중 단계는 작업 종료일이 아직 안 정해진 상태로 둠
           endDate:
             status === OrderStatus.NEGOTIATING
               ? null
@@ -798,7 +900,12 @@ class Seeder {
           orderId: order.id,
           clientUserId: client.id,
           paidAmount: order.totalAmount,
-          status: PaymentStatus.PAID,
+          status:
+            status === OrderStatus.PAYMENT_CANCELLED
+              ? PaymentStatus.CANCELLED
+              : status === OrderStatus.REFUND_COMPLETED
+                ? PaymentStatus.REFUNDED
+                : PaymentStatus.PAID,
           method: pick([
             '신용카드 롯데',
             '신용카드 신한',
@@ -815,11 +922,7 @@ class Seeder {
       });
 
       // 구매확정 이후 단계는 리뷰 작성 가능
-      if (
-        status === OrderStatus.PURCHASE_CONFIRMED ||
-        status === OrderStatus.SETTLEMENT_REQUESTED ||
-        status === OrderStatus.SETTLEMENT_COMPLETED
-      ) {
+      if (isConfirmed) {
         await this.#prisma.review.create({
           data: {
             orderId: order.id,
@@ -830,37 +933,20 @@ class Seeder {
         });
       }
 
-      // 시안 흐름: Order.status별로 Refund row 동반
-      // - EXPIRED            → REFUND/REQUESTED (환불요청 진행 중)
-      // - PAYMENT_CANCELLED  → CANCEL/COMPLETED (취소완료)
-      // - REFUND_COMPLETED   → REFUND/COMPLETED (환불완료)
-      const refundPlan =
-        status === OrderStatus.EXPIRED
-          ? { type: RefundType.REFUND, status: RefundStatus.REQUESTED }
-          : status === OrderStatus.PAYMENT_CANCELLED
-            ? { type: RefundType.CANCEL, status: RefundStatus.COMPLETED }
-            : status === OrderStatus.REFUND_COMPLETED
-              ? { type: RefundType.REFUND, status: RefundStatus.COMPLETED }
-              : null;
+      if (plan.refund) {
+        const { type, status: refundStatus, approvedBy } = plan.refund;
+        const isCompleted = refundStatus === RefundStatus.COMPLETED;
+        const isAdminApproved = approvedBy === 'admin';
 
-      if (refundPlan) {
-        const isCompleted = refundPlan.status === RefundStatus.COMPLETED;
-        const isAdminApproved = pick([true, false]);
-        const adminReason = pick([
-          '업체 일정 만료로 인해 전액환불',
-          '결제 잘못하여 취소하였다고 함',
-          '서비스 진행 어려움',
-          '연락 두절',
-        ]);
         await this.#prisma.refund.create({
           data: {
             paymentId: payment.id,
             clientUserId: client.id,
             expertUserId: service.expertUserId,
             refundAmount: order.totalAmount,
-            type: refundPlan.type,
-            status: refundPlan.status,
-            adminReason: isAdminApproved ? adminReason : null,
+            type,
+            status: refundStatus,
+            adminReason: isAdminApproved ? pick(adminReasons) : null,
             approvedAdminId: isAdminApproved ? admin.id : null,
             requestedAt: new Date(),
             approvedAt: isCompleted ? new Date() : null,
@@ -870,7 +956,183 @@ class Seeder {
           },
         });
       }
+
+      seededOrders.push({
+        orderId: order.id,
+        clientUserId: client.id,
+        expertUserId: service.expertUserId,
+        serviceTitle: service.title,
+        status,
+        refundType: plan.refund?.type,
+        refundStatus: plan.refund?.status,
+        approvedBy: plan.refund?.approvedBy,
+      });
     }
+
+    return seededOrders;
+  }
+
+  // ─── 9-b. 환불/취소 테스트 전용 페어 (LOCAL, 비번 SEED_PASSWORD) ──────
+  // client_test@moveit.com + expert_test@moveit.com 이 같은 서비스로 묶임
+  async #seedRefundTestPair(
+    passwordHash: string,
+    serviceGroups: { id: string; name: ServiceGroupName }[],
+    serviceCategories: { id: string; name: ServiceCategoryName }[],
+    admin: Admin,
+  ): Promise<SeededOrderInfo[]> {
+    const clientTest = await this.#prisma.user.create({
+      data: {
+        email: 'client_test@moveit.com',
+        name: '테스트 클라이언트',
+        password: passwordHash,
+        provider: AuthProvider.LOCAL,
+        role: Role.CLIENT,
+        profileImageUrl: pickProfileImage(),
+        region: Region.SEOUL,
+        phoneNumber: faker.phone.number(),
+      },
+    });
+    await this.#prisma.clientProfile.create({
+      data: { userId: clientTest.id, nickname: 'test-client' },
+    });
+
+    const expertTest = await this.#prisma.user.create({
+      data: {
+        email: 'expert_test@moveit.com',
+        name: '테스트 전문가',
+        password: passwordHash,
+        provider: AuthProvider.LOCAL,
+        role: Role.EXPERT,
+        profileImageUrl: pickProfileImage(),
+        region: Region.SEOUL,
+        phoneNumber: faker.phone.number(),
+        bankName: '국민',
+        bankAccount: faker.finance.accountNumber(),
+      },
+    });
+    await this.#prisma.expertProfile.create({
+      data: {
+        userId: expertTest.id,
+        isApplied: true,
+        appliedAt: new Date(),
+        isApproved: true,
+        approvedAt: new Date(),
+        approvedByAdminId: admin.id,
+        businessName: '환불취소 테스트 사업체',
+        businessNumber: faker.string.numeric(10),
+        ceoName: '테스트 대표',
+        contactTimeStart: '10:00',
+        contactTimeEnd: '19:00',
+        foundedYear: 202_001,
+        employeeMin: 1,
+        employeeMax: 5,
+        description: '환불/취소 테스트 전용 전문가입니다.',
+      },
+    });
+
+    const service = await this.#prisma.service.create({
+      data: {
+        expertUserId: expertTest.id,
+        title: '환불·취소 테스트 서비스',
+        workDuration: 30,
+        revisionCount: 3,
+        serviceScope: '환불/취소 흐름 검증용',
+        servicePrice: 1_000_000,
+        description: '환불·취소 API 테스트 전용 서비스입니다.',
+        preparationNotes: '테스트 시나리오 진행 전 기획서를 준비해주세요.',
+        refundPolicy:
+          '작업 시작 전 100% 환불, 작업 중 50% 환불, 작업 완료 후 환불 불가',
+        status: ServiceStatus.ACTIVE,
+        serviceGroupId: serviceGroups[0]!.id,
+        serviceCategoryId: serviceCategories[0]!.id,
+      },
+    });
+    await this.#prisma.serviceImage.create({
+      data: { serviceId: service.id, imgUrl: pickImage(), isMain: true },
+    });
+
+    // 각 시나리오 충분히 — 테스트 귀신 모드 (한 시나리오에 3건씩)
+    const testPlan: ScenarioPlan[] = [
+      // 취소 요청 테스트용 (NEGOTIATING ×3)
+      ...range(3).map(() => ({ status: OrderStatus.NEGOTIATING })),
+      // 전문가 취소 승인/거절 테스트용 (CANCEL_REQUESTED ×3)
+      ...range(3).map(() => ({
+        status: OrderStatus.CANCEL_REQUESTED,
+        refund: { type: RefundType.CANCEL, status: RefundStatus.REQUESTED },
+      })),
+      // 환불 요청 테스트용 (EXPIRED ×3)
+      ...range(3).map(() => ({ status: OrderStatus.EXPIRED })),
+      // 전문가 환불 승인/거절 + 클라이언트 환불 요청 취소 테스트용 (REFUND_REQUESTED ×3)
+      ...range(3).map(() => ({
+        status: OrderStatus.REFUND_REQUESTED,
+        refund: { type: RefundType.REFUND, status: RefundStatus.REQUESTED },
+      })),
+    ];
+
+    const seeded: SeededOrderInfo[] = [];
+    const platformFee = Math.floor(service.servicePrice * 0.1);
+
+    for (const plan of testPlan) {
+      const { status } = plan;
+      const order = await this.#prisma.order.create({
+        data: {
+          clientUserId: clientTest.id,
+          expertUserId: expertTest.id,
+          serviceId: service.id,
+          agreedServicePrice: service.servicePrice,
+          platformFee,
+          totalAmount: service.servicePrice + platformFee,
+          status,
+          startDate: faker.date.recent({ days: 30 }),
+          endDate:
+            status === OrderStatus.NEGOTIATING
+              ? null
+              : faker.date.soon({ days: 30 }),
+        },
+      });
+
+      const payment = await this.#prisma.payment.create({
+        data: {
+          orderId: order.id,
+          clientUserId: clientTest.id,
+          paidAmount: order.totalAmount,
+          status: PaymentStatus.PAID,
+          method: '신용카드 신한',
+          installmentMonths: 1,
+          paymentKey: faker.string.uuid(),
+          rawData: { provider: 'toss', mock: true },
+          approvedAt: new Date(),
+        },
+      });
+
+      if (plan.refund) {
+        await this.#prisma.refund.create({
+          data: {
+            paymentId: payment.id,
+            clientUserId: clientTest.id,
+            expertUserId: expertTest.id,
+            refundAmount: order.totalAmount,
+            type: plan.refund.type,
+            status: plan.refund.status,
+            requestedAt: new Date(),
+            paymentKey: payment.paymentKey,
+            rawData: { provider: 'toss', mock: true },
+          },
+        });
+      }
+
+      seeded.push({
+        orderId: order.id,
+        clientUserId: clientTest.id,
+        expertUserId: expertTest.id,
+        serviceTitle: service.title,
+        status,
+        refundType: plan.refund?.type,
+        refundStatus: plan.refund?.status,
+      });
+    }
+
+    return seeded;
   }
 
   // ─── 9-2. Expert 평점/리뷰수 집계 ─────────────────────────────────────
@@ -1162,22 +1424,148 @@ class Seeder {
   }
 
   // ─── 15. Notifications ────────────────────────────────────────────────
-  async #seedNotifications(clients: User[], experts: User[]): Promise<void> {
+  // 시나리오별 정합성 알림 — 각 주문 흐름에 맞는 알림을 박아 알림함 테스트 보장
+  async #seedNotifications(
+    clients: User[],
+    experts: User[],
+    orders: SeededOrderInfo[],
+  ): Promise<void> {
     const allUsers = [...clients, ...experts];
-    const types = Object.values(NotificationType);
-    const categories = Object.values(NotificationCategory);
-    const referenceTypes = Object.values(ReferenceType);
+    const clientById = new Map(clients.map((c) => [c.id, c]));
+
+    interface NotificationSeed {
+      userId: string;
+      category: NotificationCategory;
+      vars: NotificationContentVars;
+      referenceId: string;
+    }
+
+    const seeds: NotificationSeed[] = [];
+
+    for (const order of orders) {
+      const client = clientById.get(order.clientUserId);
+      const vars: NotificationContentVars = {
+        serviceTitle: order.serviceTitle,
+        clientName: client?.name ?? '회원',
+      };
+      const cli = order.clientUserId;
+      const exp = order.expertUserId;
+      const push = (userId: string, category: NotificationCategory): void => {
+        seeds.push({ userId, category, vars, referenceId: order.orderId });
+      };
+
+      // 모든 주문 공통: 결제 성공 + 새 주문
+      push(cli, NotificationCategory.PAYMENT_SUCCESS);
+      push(exp, NotificationCategory.ORDER_CREATED);
+
+      // 시나리오별 알림
+      switch (order.status) {
+        case OrderStatus.NEGOTIATING: {
+          if (order.refundStatus === RefundStatus.REJECTED) {
+            push(cli, NotificationCategory.ORDER_CANCEL_REJECTED_BY_EXPERT);
+          }
+          break;
+        }
+        case OrderStatus.CANCEL_REQUESTED: {
+          push(exp, NotificationCategory.ORDER_CANCEL_REQUESTED);
+          push(cli, NotificationCategory.ORDER_CANCEL_REQUESTED_TO_CLIENT);
+          break;
+        }
+        case OrderStatus.PAYMENT_CANCELLED: {
+          if (order.approvedBy === 'admin') {
+            push(cli, NotificationCategory.ORDER_CANCEL_APPROVED_BY_ADMIN);
+            push(exp, NotificationCategory.ORDER_CANCEL_APPROVED_BY_ADMIN);
+          } else {
+            push(cli, NotificationCategory.ORDER_CANCEL_APPROVED_BY_EXPERT);
+          }
+          break;
+        }
+        case OrderStatus.IN_PROGRESS: {
+          push(cli, NotificationCategory.SCHEDULE_REGISTERED);
+          push(exp, NotificationCategory.SCHEDULE_REGISTERED);
+          break;
+        }
+        case OrderStatus.DEADLINE_IMMINENT: {
+          push(cli, NotificationCategory.DEADLINE_REMINDER);
+          push(exp, NotificationCategory.DEADLINE_REMINDER);
+          break;
+        }
+        case OrderStatus.EXPIRED: {
+          push(cli, NotificationCategory.DEADLINE_EXPIRED);
+          push(exp, NotificationCategory.DEADLINE_EXPIRED);
+          if (order.refundStatus === RefundStatus.REJECTED) {
+            push(cli, NotificationCategory.REFUND_REJECTED_BY_EXPERT);
+          }
+          break;
+        }
+        case OrderStatus.REFUND_REQUESTED: {
+          push(exp, NotificationCategory.REFUND_REQUESTED);
+          push(cli, NotificationCategory.REFUND_REQUESTED_TO_CLIENT);
+          break;
+        }
+        case OrderStatus.REFUND_COMPLETED: {
+          if (order.approvedBy === 'admin') {
+            push(cli, NotificationCategory.REFUND_APPROVED_BY_ADMIN);
+            push(exp, NotificationCategory.REFUND_APPROVED_BY_ADMIN);
+          } else {
+            push(cli, NotificationCategory.REFUND_APPROVED_BY_EXPERT);
+          }
+          break;
+        }
+        case OrderStatus.WORK_COMPLETED: {
+          push(cli, NotificationCategory.WORK_COMPLETED);
+          push(exp, NotificationCategory.PURCHASE_CONFIRM_PENDING);
+          break;
+        }
+        case OrderStatus.PURCHASE_CONFIRMED: {
+          push(exp, NotificationCategory.PURCHASE_CONFIRMED);
+          break;
+        }
+        case OrderStatus.SETTLEMENT_REQUESTED: {
+          push(exp, NotificationCategory.SETTLEMENT_REQUEST_REMINDER);
+          break;
+        }
+        case OrderStatus.SETTLEMENT_COMPLETED: {
+          push(exp, NotificationCategory.SETTLEMENT_DONE);
+          break;
+        }
+      }
+    }
+
+    // 일반 알림 — 커뮤니티/계정/스케줄 양념 (30건)
+    const generalCategories: NotificationCategory[] = [
+      NotificationCategory.POST_COMMENT,
+      NotificationCategory.POST_REPLY,
+      NotificationCategory.POST_LIKE,
+      NotificationCategory.EXPERT_APPROVED,
+      NotificationCategory.SCHEDULE_REMINDER,
+    ];
+    for (const _i of range(30)) {
+      const category = pick(generalCategories);
+      seeds.push({
+        userId: pick(allUsers).id,
+        category,
+        vars: {
+          postTitle: faker.lorem.sentence(),
+          rejectReason: '신원 확인 자료가 부족합니다',
+        },
+        referenceId: faker.string.uuid(),
+      });
+    }
 
     await this.#prisma.notification.createMany({
-      data: range(10).map(() => ({
-        userId: pick(allUsers).id,
-        type: pick(types),
-        category: pick(categories),
-        content: faker.lorem.sentence(),
-        referenceType: pick(referenceTypes),
-        referenceId: faker.string.uuid(),
-        isRead: Math.random() < 0.3,
-      })),
+      data: seeds.map((s) => {
+        const meta = NOTIFICATION_CATALOG[s.category];
+        return {
+          userId: s.userId,
+          type: meta.type,
+          category: s.category,
+          content: meta.buildContent(s.vars),
+          referenceType: meta.referenceType,
+          referenceId: s.referenceId,
+          isRead: Math.random() < 0.3,
+        };
+      }),
     });
   }
 

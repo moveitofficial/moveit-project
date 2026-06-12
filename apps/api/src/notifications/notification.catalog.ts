@@ -148,6 +148,12 @@ export const NOTIFICATION_CATALOG: Record<
     buildContent: (vars) =>
       `'${vars?.serviceTitle ?? ''}' 환불 요청이 거절되었습니다`,
   },
+  [NotificationCategory.REFUND_REQUEST_CANCELLED]: {
+    type: NotificationType.TRANSACTION,
+    referenceType: ReferenceType.REFUND,
+    buildContent: (vars) =>
+      `'${vars?.clientName ?? ''}'님이 '${vars?.serviceTitle ?? ''}' 환불 요청을 취소했어요`,
+  },
 
   // ───── 거래 - 작업/구매확정/정산 ─────
   [NotificationCategory.WORK_COMPLETED]: {
