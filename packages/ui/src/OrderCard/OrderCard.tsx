@@ -97,7 +97,9 @@ export default function OrderCard(props: OrderCardProps) {
 
   return (
     <div className={styles.card}>
-      {onCardClick !== undefined ? (
+      {onCardClick === undefined ? (
+        <div className={styles.cardLeft}>{leftContent}</div>
+      ) : (
         <button
           type="button"
           className={clsx(styles.cardLeft, styles.cardLeftClickable)}
@@ -105,8 +107,6 @@ export default function OrderCard(props: OrderCardProps) {
         >
           {leftContent}
         </button>
-      ) : (
-        <div className={styles.cardLeft}>{leftContent}</div>
       )}
 
       <div className={styles.right}>
