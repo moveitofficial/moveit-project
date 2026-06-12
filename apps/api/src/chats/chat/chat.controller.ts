@@ -65,13 +65,15 @@ export class ChatController {
   @Post('rooms')
   async createRoom(@Req() req: Request, @Body() body: CreateChatRoomDto) {
     const user = req.user as JwtAccessUser;
-    return this.chatService.createRoom(user.userId, {
+    const room = await this.chatService.createRoom(user.userId, {
       expertUserId: body.expertUserId,
       serviceId: body.serviceId,
       content: body.content,
       roomId: body.roomId,
       files: body.files,
     });
+    this.chatGateway.broadcastNotification(body.expertUserId, room.lastMessage);
+    return room;
   }
 
   @ApiOperation({
@@ -191,6 +193,7 @@ export class ChatController {
   ) {
     const user = req.user as JwtAccessUser;
     await this.chatService.dismissNotification(user.userId, roomId);
+    return {};
   }
 
   @ApiOperation({ summary: '채팅 알림 전체 삭제' })
@@ -201,5 +204,6 @@ export class ChatController {
   async dismissAllNotifications(@Req() req: Request) {
     const user = req.user as JwtAccessUser;
     await this.chatService.dismissAllNotifications(user.userId);
+    return {};
   }
 }

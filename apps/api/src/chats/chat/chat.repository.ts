@@ -276,6 +276,7 @@ export class ChatRepository {
         userId,
         chatRoom: { lastMessage: { isNot: null } },
       },
+      orderBy: { chatRoom: { lastMessage: { createdAt: 'desc' } } },
       include: {
         chatRoom: {
           include: {
