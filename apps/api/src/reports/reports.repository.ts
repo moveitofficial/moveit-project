@@ -11,6 +11,7 @@ export class ReportsRepository {
   create(reporterId: string, dto: ReportsRequestDto) {
     return this.prisma.report.create({
       data: {
+        ...(dto.reportId && { id: dto.reportId }),
         reporterId,
         reportedId: dto.reportedUserId,
         reason: dto.reason,
