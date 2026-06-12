@@ -983,12 +983,14 @@ model ChatParticipant {
   id                String   @id @default(uuid()) @db.Uuid
   chatRoomId        String   @map("chat_room_id") @db.Uuid
   userId            String   @map("user_id") @db.Uuid
-  lastReadMessageId String?  @map("last_read_message_id") @db.Uuid
-  createdAt         DateTime @default(now()) @map("created_at")
+  lastReadMessageId        String?  @map("last_read_message_id") @db.Uuid
+  lastDismissedMessageId   String?  @map("last_dismissed_message_id") @db.Uuid
+  createdAt                DateTime @default(now()) @map("created_at")
 
-  chatRoom        ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [userId], references: [id])
-  lastReadMessage Message? @relation("ParticipantLastRead", fields: [lastReadMessageId], references: [id])
+  chatRoom               ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user                   User     @relation(fields: [userId], references: [id])
+  lastReadMessage        Message? @relation("ParticipantLastRead", fields: [lastReadMessageId], references: [id])
+  lastDismissedMessage   Message? @relation("ParticipantLastDismissed", fields: [lastDismissedMessageId], references: [id])
 
   @@unique([chatRoomId, userId])
   @@map("chat_participants")
@@ -1008,7 +1010,8 @@ model Message {
   chatRoom               ChatRoom            @relation("ChatRoomMessages", fields: [chatRoomId], references: [id])
   chatRoomAsLast         ChatRoom[]          @relation("ChatRoomLastMessage")
   sender                 User                @relation(fields: [senderId], references: [id])
-  participantsAsLastRead ChatParticipant[]   @relation("ParticipantLastRead")
+  participantsAsLastRead      ChatParticipant[] @relation("ParticipantLastRead")
+  participantsAsLastDismissed ChatParticipant[] @relation("ParticipantLastDismissed")
   attachments            MessageAttachment[]
 
   @@map("messages")

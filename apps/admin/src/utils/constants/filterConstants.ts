@@ -101,9 +101,9 @@ export const SETTLEMENT_STATUS_OPTIONS = (
 ).map(([value, label]) => ({ value, label }));
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
-  NEGOTIATING: '협의중',
+  NEGOTIATING: '논의중',
   CANCEL_REQUESTED: '취소신청',
-  PAYMENT_CANCELLED: '결제취소',
+  PAYMENT_CANCELLED: '취소완료',
   IN_PROGRESS: '진행중',
   DEADLINE_IMMINENT: '마감임박',
   EXPIRED: '기간만료',
@@ -116,11 +116,11 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
 };
 
 export const REFUND_KIND_LABEL: Record<string, string> = {
-  CANCEL_REQUESTED: '취소신청',
+  CANCEL_REQUESTED: '취소요청',
   CANCEL_APPROVED: '취소승인',
   CANCEL_REJECTED: '취소거절',
   CANCEL_COMPLETED: '취소완료',
-  REFUND_REQUESTED: '환불신청',
+  REFUND_REQUESTED: '환불요청',
   REFUND_APPROVED: '환불승인',
   REFUND_REJECTED: '환불거절',
   REFUND_COMPLETED: '환불완료',

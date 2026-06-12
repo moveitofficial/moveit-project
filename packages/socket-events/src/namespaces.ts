@@ -1,5 +1,5 @@
 export const SOCKET_NAMESPACES = {
-  CONSULTATION: 'consultation',
+  CHAT: 'chat',
   CS: 'cs',
   NOTIFICATIONS: 'notifications',
 } as const;

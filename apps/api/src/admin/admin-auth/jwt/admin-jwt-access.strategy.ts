@@ -17,6 +17,7 @@ export interface AdminJwtAccessUser {
   adminId: string;
   email: string;
   isSuper: boolean;
+  mustChangePassword: boolean;
 }
 
 @Injectable()
@@ -45,6 +46,7 @@ export class AdminJwtAccessStrategy extends PassportStrategy(
       adminId: payload.sub,
       email: payload.email,
       isSuper: payload.isSuper,
+      mustChangePassword: payload.mustChangePassword,
     };
   }
 }

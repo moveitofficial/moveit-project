@@ -1,4 +1,4 @@
-// CLIENT ↔ EXPERT 상담 채팅 이벤트
+// CLIENT ↔ EXPERT 채팅 이벤트
 export const CHAT_EVENTS = {
   // client → server
   JOIN_ROOM: 'joinRoom',
@@ -8,4 +8,5 @@ export const CHAT_EVENTS = {
   // server → client
   JOINED_ROOM: 'joinedRoom',
   RECEIVE_MESSAGE: 'receiveMessage',
+  CHAT_NOTIFICATION: 'chatNotification',
 } as const;

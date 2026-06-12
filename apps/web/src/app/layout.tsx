@@ -4,6 +4,7 @@ import { themeClass } from '@repo/styles/tokens';
 import '@repo/styles/reset';
 import '@repo/styles/globals';
 import clsx from 'clsx';
+import { Suspense } from 'react';
 
 import type { Metadata } from 'next';
 
@@ -24,7 +25,9 @@ export default function RootLayout({
   return (
     <html lang="ko" className={clsx(nanumSquare.variable, themeClass)}>
       <body>
-        <Header />
+        <Suspense fallback={null}>
+          <Header />
+        </Suspense>
         <QueryProvider>
           <Container>{children}</Container>
         </QueryProvider>
