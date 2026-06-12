@@ -30,19 +30,6 @@ export async function rejectExpert(
   revalidate(userId);
 }
 
-export async function completeOrderSettlement(orderId: string): Promise<void> {
-  await api.patch(`/admin/orders/${orderId}/settlement`, {});
-}
-
-// TODO: 취소/환불 승인 — API 주소 확인 후 구현
-// export async function approveCancelRequest(orderId: string, reason: string): Promise<void> {
-//   await api.post(`/admin/orders/${orderId}/???`, { reason });
-// }
-//
-// export async function approveRefundRequest(orderId: string, reason: string): Promise<void> {
-//   await api.post(`/admin/orders/${orderId}/???`, { reason });
-// }
-
 export async function deleteCommunityPost(
   userId: string,
   postId: string,

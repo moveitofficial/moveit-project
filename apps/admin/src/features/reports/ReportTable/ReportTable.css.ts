@@ -24,7 +24,16 @@ export const colUser = style({
 export const colUserText = style({
   ...cellBase,
   width: '200px',
-  color: vars.color.blue300,
+});
+
+export const userLink = style({
+  display: 'block',
+  color: 'inherit',
+  textDecoration: 'none',
+  cursor: 'pointer',
+  ':hover': {
+    textDecoration: 'underline',
+  },
 });
 
 export const colDetailHeader = style({
@@ -42,14 +51,17 @@ export const colDetail = style({
   padding: '0 16px',
 });
 
-export const detailText = style({
+export const detailButton = style({
   display: 'block',
+  width: '100%',
+  border: 'none',
+  background: 'none',
+  padding: 0,
+  textAlign: 'left',
+  cursor: 'pointer',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
-  width: '100%',
-  textAlign: 'left',
-  color: vars.color.blue300,
 });
 
 export const colReason = style({

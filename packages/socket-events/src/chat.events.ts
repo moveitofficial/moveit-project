@@ -8,4 +8,5 @@ export const CHAT_EVENTS = {
   // server → client
   JOINED_ROOM: 'joinedRoom',
   RECEIVE_MESSAGE: 'receiveMessage',
+  CHAT_NOTIFICATION: 'chatNotification',
 } as const;

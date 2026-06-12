@@ -74,6 +74,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       userId: payload.sub,
       role: payload.role,
     };
+    void socket.join(`user-${payload.sub}`);
     this.logger.log(`연결: ${socket.id} (userId: ${payload.sub})`);
   }
 
@@ -99,6 +100,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(roomId).emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
   }
 
+  broadcastNotification(receiverId: string, message: unknown) {
+    this.server
+      .to(`user-${receiverId}`)
+      .emit(CHAT_EVENTS.CHAT_NOTIFICATION, message);
+  }
+
   @SubscribeMessage(CHAT_EVENTS.JOIN_ROOM)
   async handleJoinRoom(
     @ConnectedSocket() socket: ConsultationSocket,
@@ -114,12 +121,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() socket: ConsultationSocket,
     @MessageBody() dto: SendMessageDto,
   ) {
-    const message = await this.chatService.sendMessage(
+    const { message, receiverId } = await this.chatService.sendMessage(
       dto.roomId,
       socket.data.userId,
       dto,
     );
     this.server.to(dto.roomId).emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+    this.server
+      .to(`user-${receiverId}`)
+      .emit(CHAT_EVENTS.CHAT_NOTIFICATION, message);
   }
 
   @SubscribeMessage(CHAT_EVENTS.MARK_READ)

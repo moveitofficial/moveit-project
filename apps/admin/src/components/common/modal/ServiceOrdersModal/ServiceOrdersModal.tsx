@@ -6,6 +6,7 @@ import { OrderCard } from '@repo/ui/OrderCard';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
+import { getServiceOrderCounts, getServiceOrders } from './api';
 import {
   SERVICE_ORDER_SORT_OPTIONS,
   SERVICE_ORDER_TABS,
@@ -17,15 +18,15 @@ import type {
   ServiceOrderItem,
   ServiceOrderSort,
   ServiceOrderTab,
-} from '@/features/users/types';
+} from './types';
 import type { InfiniteScrollPage } from '@/types/api';
 import type { OrderStatus } from '@/types/enums';
-import type { RefundStatus } from '@/utils/constants';
 
+import { OrderActionModal } from '@/components/common/modal/OrderActionModal';
 import { SearchBar } from '@/components/common/SearchBar';
-import { getServiceOrderCounts, getServiceOrders } from '@/features/users/api';
-import { OrderActionModal } from '@/features/users/OrderActionModal';
 import {
+  type NestedOrderModal,
+  getNestedModalFromLabel,
   ORDER_STATUS_ACTIONS_CONFIG,
   ORDER_STATUS_BADGE_CONFIG,
 } from '@/utils/constants';
@@ -37,11 +38,6 @@ interface Props {
   onClose: () => void;
 }
 
-type NestedModal =
-  | { type: 'transaction'; orderId: string }
-  | { type: 'settlement'; orderId: string }
-  | { type: 'settlementApprove'; orderId: string }
-  | { type: 'refund'; orderId: string; refundStatus: RefundStatus };
 
 interface ListProps {
   serviceId: string;
@@ -57,24 +53,8 @@ function formatCategory(groupName: string, categoryName: string) {
   return `${groupName} > ${categoryName}`;
 }
 
-function getRefundStatus(actionLabel: string): RefundStatus | null {
-  if (actionLabel === '취소승인') {
-    return 'CANCEL_REQUESTED';
-  }
-  if (actionLabel === '환불승인') {
-    return 'REFUND_REQUESTED';
-  }
-  if (actionLabel === '취소상세') {
-    return 'CANCEL_COMPLETED';
-  }
-  if (actionLabel === '환불상세') {
-    return 'REFUND_COMPLETED';
-  }
-  return null;
-}
-
 function renderNestedOrderModal(
-  nested: NestedModal,
+  nested: NestedOrderModal,
   onClose: () => void,
   onSettlementCompleted: () => void,
 ) {
@@ -193,10 +173,10 @@ export default function ServiceOrdersModal({
     items: ServiceOrderItem[];
     hasNext: boolean;
   } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [nestedModal, setNestedModal] = useState<NestedModal | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [nestedModal, setNestedOrderModal] = useState<NestedOrderModal | null>(null);
   const [listVersion, setListVersion] = useState(0);
-  const nestedModalRef = useRef<NestedModal | null>(null);
+  const nestedModalRef = useRef<NestedOrderModal | null>(null);
   const countsCancelledRef = useRef(false);
   const listCancelledRef = useRef(false);
 
@@ -209,7 +189,7 @@ export default function ServiceOrdersModal({
       setSearch('');
       setCounts(null);
       setListState(null);
-      setNestedModal(null);
+      setNestedOrderModal(null);
       return;
     }
 
@@ -291,21 +271,9 @@ export default function ServiceOrdersModal({
   }
 
   function handleActionClick(actionLabel: string, orderId: string) {
-    if (actionLabel === '거래상세') {
-      setNestedModal({ type: 'transaction', orderId });
-      return;
-    }
-    if (actionLabel === '정산상세') {
-      setNestedModal({ type: 'settlement', orderId });
-      return;
-    }
-    if (actionLabel === '정산승인') {
-      setNestedModal({ type: 'settlementApprove', orderId });
-      return;
-    }
-    const refundStatus = getRefundStatus(actionLabel);
-    if (refundStatus !== null) {
-      setNestedModal({ type: 'refund', orderId, refundStatus });
+    const modal = getNestedModalFromLabel(actionLabel, orderId);
+    if (modal !== null) {
+      setNestedOrderModal(modal);
     }
   }
 
@@ -315,7 +283,7 @@ export default function ServiceOrdersModal({
         isOpen={isOpen}
         onClose={() => {
           if (nestedModalRef.current !== null) {
-            setNestedModal(null);
+            setNestedOrderModal(null);
             return;
           }
           onClose();
@@ -406,7 +374,7 @@ export default function ServiceOrdersModal({
         renderNestedOrderModal(
           nestedModal,
           () => {
-            setNestedModal(null);
+            setNestedOrderModal(null);
           },
           () => {
             void refreshOrders();

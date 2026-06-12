@@ -117,52 +117,7 @@ export interface UserServiceItem {
   createdAt: string;
 }
 
-// 서비스별 주문 모달 (ServiceOrdersModal)
-export interface ServiceOrderItem {
-  id: string;
-  status: string;
-  totalAmount: number;
-  startDate: string;
-  endDate: string | null;
-  client: { id: string; name: string | null };
-  service: {
-    id: string;
-    title: string;
-    serviceGroupName: string;
-    serviceCategoryName: string;
-    thumbnailUrl: string | null;
-  };
-}
-
-export type ServiceOrderTab =
-  | 'all'
-  | 'working'
-  | 'workCompleted'
-  | 'purchaseConfirmed'
-  | 'settlement'
-  | 'expired'
-  | 'cancelRefund';
-
-export type ServiceOrderSort = 'latest' | 'endDate';
-
-export type ServiceOrderCounts = Record<ServiceOrderTab, number>;
-
-export interface ServiceOrdersResult {
-  items: ServiceOrderItem[];
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  hasNext: boolean;
-}
-
-// 신고 내역 테이블 · 신고 상세 모달 (ReportDetailModal)
-export interface UserReportDetail {
-  id: string;
-  reason: ReportReason;
-  detail: string;
-  images: string[];
-}
-
+// 신고 내역 테이블 (UserSectionTable)
 export interface UserReportReceivedItem {
   id: string;
   reporter: { id: string; name: string | null };
@@ -179,7 +134,7 @@ export interface UserReportSentItem {
   createdAt: string;
 }
 
-// 커뮤니티 테이블 · 삭제 모달 (UserSectionTable · CommunityDeletionModal)
+// 커뮤니티 테이블 (UserSectionTable)
 export interface CommunityDeletionInfo {
   deletedAt: string;
   deletedByAdminName: string;
@@ -206,47 +161,4 @@ export interface UserCommentItem {
   deletedAt: string | null;
   deletedByAdminName: string | null;
   createdAt: string;
-}
-
-// 거래/정산/환불 모달 (OrderActionModal)
-export interface OrderTransaction {
-  paidAt: string;
-  method: string;
-  installmentMonths: number;
-  servicePrice: number;
-  platformFee: number;
-  totalAmount: number;
-}
-
-export interface OrderRefundDetail {
-  paidAt: string;
-  method: string;
-  installmentMonths: number;
-  servicePrice: number;
-  refundAmount: number;
-  type: 'REFUND' | 'CANCEL';
-  approvedAt: string;
-  approvedBy: {
-    type: 'ADMIN' | 'EXPERT';
-    name: string | null;
-    reason: string | null;
-  };
-}
-
-export interface OrderSettlement {
-  paidAt: string;
-  method: string;
-  installmentMonths: number;
-  servicePrice: number;
-  platformFee: number;
-  settlementAmount: number;
-  settledAt: string;
-  settledByAdminName: string | null;
-}
-
-export interface OrderSettlementPreview {
-  businessName: string | null;
-  bankName: string | null;
-  bankAccount: string | null;
-  settlementAmount: number;
 }

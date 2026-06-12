@@ -40,6 +40,16 @@ export const titleText = style({
   textAlign: 'left',
 });
 
+export const titleButton = style({
+  display: 'block',
+  width: '100%',
+  border: 'none',
+  background: 'none',
+  padding: 0,
+  textAlign: 'left',
+  cursor: 'pointer',
+});
+
 export const colCategory = style({
   ...cellBase,
   width: '140px',

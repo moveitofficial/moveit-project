@@ -21,5 +21,4 @@ export const tableSections = style({
   flexDirection: 'column',
   gap: '50px',
   marginLeft: `calc(${PROFILE_COLUMN_WIDTH} + ${PROFILE_FIELD_GAP})`,
-  maxWidth: '1400px',
 });

@@ -2,20 +2,11 @@ import { api } from '@repo/fetcher';
 
 import type {
   CommunityDeletionInfo,
-  OrderRefundDetail,
-  OrderSettlement,
-  OrderSettlementPreview,
-  OrderTransaction,
-  ServiceOrderCounts,
-  ServiceOrderSort,
-  ServiceOrderTab,
-  ServiceOrdersResult,
   UserCommentItem,
   UserDetailData,
   UserItem,
   UserOrderItem,
   UserPostItem,
-  UserReportDetail,
   UserReportReceivedItem,
   UserReportSentItem,
   UserServiceItem,
@@ -119,12 +110,6 @@ export function getUserReportsSent(
   );
 }
 
-export function getUserReportDetail(
-  reportId: string,
-): Promise<ApiSuccess<UserReportDetail>> {
-  return api.get<ApiSuccess<UserReportDetail>>(`/admin/reports/${reportId}`);
-}
-
 export function getUserPosts(
   id: string,
   page: number,
@@ -156,73 +141,5 @@ export function getCommentDeletion(
 ): Promise<ApiSuccess<CommunityDeletionInfo>> {
   return api.get<ApiSuccess<CommunityDeletionInfo>>(
     `/admin/community/comments/${commentId}/deletion`,
-  );
-}
-
-export function getOrderTransaction(
-  orderId: string,
-): Promise<ApiSuccess<OrderTransaction>> {
-  return api.get<ApiSuccess<OrderTransaction>>(
-    `/admin/orders/${orderId}/transaction`,
-  );
-}
-
-export function getOrderRefund(
-  orderId: string,
-): Promise<ApiSuccess<OrderRefundDetail>> {
-  return api.get<ApiSuccess<OrderRefundDetail>>(
-    `/admin/orders/${orderId}/refund`,
-  );
-}
-
-export interface GetServiceOrdersParams {
-  tab?: ServiceOrderTab;
-  sort?: ServiceOrderSort;
-  search?: string;
-  page: number;
-}
-
-export function getServiceOrders(
-  serviceId: string,
-  params: GetServiceOrdersParams,
-): Promise<ApiSuccess<ServiceOrdersResult>> {
-  const query = new URLSearchParams({ page: String(params.page) });
-
-  if (params.tab !== undefined && params.tab !== 'all') {
-    query.set('tab', params.tab);
-  }
-  if (params.sort !== undefined && params.sort !== 'latest') {
-    query.set('sort', params.sort);
-  }
-  if (params.search !== undefined && params.search !== '') {
-    query.set('search', params.search);
-  }
-
-  return api.get<ApiSuccess<ServiceOrdersResult>>(
-    `/admin/services/${serviceId}/orders?${query.toString()}`,
-  );
-}
-
-export function getServiceOrderCounts(
-  serviceId: string,
-): Promise<ApiSuccess<ServiceOrderCounts>> {
-  return api.get<ApiSuccess<ServiceOrderCounts>>(
-    `/admin/services/${serviceId}/orders/counts`,
-  );
-}
-
-export function getOrderSettlement(
-  orderId: string,
-): Promise<ApiSuccess<OrderSettlement>> {
-  return api.get<ApiSuccess<OrderSettlement>>(
-    `/admin/orders/${orderId}/settlement`,
-  );
-}
-
-export function getOrderSettlementPreview(
-  orderId: string,
-): Promise<ApiSuccess<OrderSettlementPreview>> {
-  return api.get<ApiSuccess<OrderSettlementPreview>>(
-    `/admin/orders/${orderId}/settlement/preview`,
   );
 }

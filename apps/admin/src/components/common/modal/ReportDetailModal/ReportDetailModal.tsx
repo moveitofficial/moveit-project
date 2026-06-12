@@ -7,12 +7,15 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
-import { REPORT_DETAIL_MODAL_TITLE, type UserReportTableVariant } from './reportDetailConstants';
+import { getUserReportDetail } from './api';
+import {
+  REPORT_DETAIL_MODAL_TITLE,
+  type UserReportTableVariant,
+} from './reportDetailConstants';
 import * as styles from './ReportDetailModal.css';
 
-import type { UserReportDetail } from '@/features/users/types';
+import type { UserReportDetail } from './types';
 
-import { getUserReportDetail } from '@/features/users/api';
 import { REPORT_REASON_LABEL } from '@/utils/constants';
 
 interface Props {
@@ -30,7 +33,7 @@ export default function ReportDetailModal({
 }: Props) {
   const [detail, setDetail] = useState<UserReportDetail | null>(null);
   const [imageIndex, setImageIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const cancelledRef = useRef(false);
 
   useEffect(() => {
@@ -86,9 +89,7 @@ export default function ReportDetailModal({
 
           {detail !== null && hasImages && (
             <div className={styles.evidenceSection}>
-              <p className={typography.f16EB}>
-                증거파일
-              </p>
+              <p className={typography.f16EB}>증거파일</p>
               <div className={styles.carousel}>
                 <button
                   type="button"
@@ -133,9 +134,7 @@ export default function ReportDetailModal({
           {detail !== null && (
             <div className={styles.detailSection}>
               <div className={styles.detailHeader}>
-                <p className={typography.f16EB}>
-                  상세내용
-                </p>
+                <p className={typography.f16EB}>상세내용</p>
                 <span className={`${typography.f14R} ${styles.reasonLabel}`}>
                   {REPORT_REASON_LABEL[detail.reason]}
                 </span>
@@ -147,16 +146,17 @@ export default function ReportDetailModal({
           )}
         </div>
 
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.confirmButton}
-            disabled={isLoading || detail === null}
-            onClick={onClose}
-          >
-            확인
-          </button>
-        </div>
+        {!isLoading && (
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.confirmButton}
+              onClick={onClose}
+            >
+              확인
+            </button>
+          </div>
+        )}
       </div>
     </Modal>
   );

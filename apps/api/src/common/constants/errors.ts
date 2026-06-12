@@ -592,3 +592,16 @@ export const CATEGORY_FEATURED_ERRORS = {
     code: 'CATEGORY_FEATURED_GROUP_MISMATCH_ON_DELETE',
   },
 } as const;
+
+export const FAVORITES_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '찜 내역을 찾을 수 없습니다.',
+    code: 'FAVORITES_NOT_FOUND',
+  },
+  ALREADY_FAVORITED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 찜한 항목입니다.',
+    code: 'FAVORITES_ALREADY_FAVORITED',
+  },
+} as const;

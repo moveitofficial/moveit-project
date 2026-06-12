@@ -21,7 +21,7 @@ export const SETTLEMENT_STATUS_ACTIONS_CONFIG: Record<
 > = {
   SETTLEMENT_REQUESTED: [
     { label: '거래상세', variant: 'white' },
-    { label: '정산완료', variant: 'blue' },
+    { label: '정산승인', variant: 'blue' },
   ],
   SETTLEMENT_COMPLETED: [
     { label: '거래상세', variant: 'white' },
