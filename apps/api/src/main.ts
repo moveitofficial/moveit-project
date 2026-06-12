@@ -63,6 +63,8 @@ async function bootstrap() {
     .addTag('notifications')
     .addTag('chat')
     .addTag('cs')
+    .addTag('favorites')
+    .addTag('reports')
     .addTag('faqs')
     .addTag('main')
     .addTag('admin-auth')
