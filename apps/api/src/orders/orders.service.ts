@@ -263,6 +263,7 @@ export class OrdersService {
     const review = await this.ordersRepository.createReview({
       orderId,
       userId,
+      expertUserId: order.expertUserId,
       rating: dto.rating,
       content: dto.content,
     });

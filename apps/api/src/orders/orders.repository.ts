@@ -120,20 +120,41 @@ export class OrdersRepository {
     });
   }
 
-  createReview(data: {
+  async createReview(data: {
     orderId: string;
     userId: string;
+    expertUserId: string;
     rating: number;
     content: string;
   }): Promise<ReviewWithUser> {
-    return this.prisma.review.create({
-      data: {
-        orderId: data.orderId,
-        userId: data.userId,
-        rating: data.rating,
-        content: data.content,
-      },
-      select: reviewWithUserSelect,
+    return this.prisma.$transaction(async (tx) => {
+      const review = await tx.review.create({
+        data: {
+          orderId: data.orderId,
+          userId: data.userId,
+          rating: data.rating,
+          content: data.content,
+        },
+        select: reviewWithUserSelect,
+      });
+
+      const allReviews = await tx.review.findMany({
+        where: { order: { expertUserId: data.expertUserId } },
+        select: { rating: true },
+      });
+      const avgRating =
+        Math.round(
+          (allReviews.reduce((sum, r) => sum + r.rating, 0) /
+            allReviews.length) *
+            10,
+        ) / 10;
+
+      await tx.expertProfile.update({
+        where: { userId: data.expertUserId },
+        data: { avgRating, reviewCount: allReviews.length },
+      });
+
+      return review;
     });
   }
 
