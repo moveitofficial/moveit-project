@@ -126,7 +126,6 @@ export const reportDetailButton = style([
     padding: 0,
     textAlign: 'left',
     cursor: 'pointer',
-    color: vars.color.blue300,
   },
 ]);
 
