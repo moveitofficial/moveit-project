@@ -224,6 +224,37 @@ export class ServicesService {
     });
   }
 
+  async getMyServices(
+    expertUserId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<ExpertServiceListItemResponse>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const [services, totalCount] = await Promise.all([
+      this.servicesRepository.findMany({
+        where: { expertUserId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+      this.servicesRepository.count({ expertUserId }),
+    ]);
+
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      services.map((s) => s.id),
+    );
+
+    return toPaginatedResponse(
+      services.map((service) => {
+        const stats = statsMap.get(service.id) ?? { reviewCount: 0, rating: 0 };
+        return mapExpertServiceListItem(service, stats);
+      }),
+      { page, pageSize, totalCount },
+    );
+  }
+
   async getAllServicesByExpertId(
     expertUserId: string,
     query: PaginationQueryDto,
