@@ -94,6 +94,228 @@ const COMMENT_TEMPLATES = [
   '저도 추천드립니다.',
   '관련 자료가 있다면 공유해주세요.',
   '실제로 적용해봤는데 효과가 좋았어요.',
+  '오 저도 이거 고민하던 차였는데 큰 도움이 되네요',
+  '혹시 이쪽 분야 입문서 추천 가능할까요?',
+  '저도 비슷하게 진행 중인데 결과 공유 부탁드려요',
+  '글 잘 읽었습니다. 다음 글도 기대할게요!',
+];
+
+const SERVICE_TITLES_PROJECT = [
+  '반응형 웹사이트 제작 (Next.js + TypeScript)',
+  '랜딩페이지 제작 (마케팅·런칭용)',
+  '쇼핑몰 풀스택 개발 (React + Node.js)',
+  '관리자 대시보드 개발',
+  '백엔드 API 설계 및 구현 (NestJS)',
+  'iOS/Android 크로스 플랫폼 앱 개발',
+  '데이터 분석 대시보드 구축',
+  'AI 챗봇 개발 (GPT API 연동)',
+  '실시간 채팅 기능 개발 (WebSocket)',
+  'SaaS MVP 1개월 완성',
+  '결제 시스템 연동 (토스/포트원)',
+  'AWS 인프라 구축 및 CI/CD 세팅',
+  '브랜드 홈페이지 리뉴얼',
+  '게임 클라이언트 개발 (Unity)',
+];
+
+const SERVICE_TITLES_COACHING = [
+  '주니어 개발자 코드리뷰 1:1 코칭',
+  'React 입문부터 실전까지 4주 과정',
+  '백엔드 면접 대비 시스템 디자인 코칭',
+  '신입 프론트 부트캠프 멘토링',
+  '취업 포트폴리오 리뷰 및 컨설팅',
+  '개발자 이직 컨설팅 (이력서·면접)',
+  'TypeScript 마이그레이션 1:1 코칭',
+  'AWS 자격증 합격 코칭',
+  '클린 아키텍처 실전 적용 코칭',
+  '데이터 분석 SQL 기초 코칭',
+  '코딩테스트 합격 알고리즘 코칭',
+  '스타트업 CTO 직군 멘토링',
+];
+
+const PREPARATION_NOTES = [
+  '작업 시작 전 기획서와 참고 자료를 준비해 주세요.',
+  '필요한 서비스의 구체적인 요구사항과 예시 자료를 미리 준비해 주시면 더 효율적입니다.',
+  '디자인 가이드, 브랜드 컬러, 로고 등의 자료가 있다면 함께 공유해 주세요.',
+  '참고하실 만한 유사 서비스/사이트 URL을 알려주시면 도움이 됩니다.',
+  '계획된 일정과 예상 마감일을 미리 알려주세요.',
+  '브랜드 톤앤매너, 타겟 사용자 페르소나가 정리되어 있으면 더 좋습니다.',
+  '결제 / 회원 / 알림 등 필수 기능 목록을 정리해 주세요.',
+];
+
+const REFUND_POLICIES = [
+  '작업 시작 전 100% 환불, 작업 중 50% 환불, 작업 완료 후 환불 불가',
+  '작업 시작 전 100% 환불 가능. 작업 진행 후엔 진행률에 따라 환불 산정.',
+  '구매 확정 전까지 협의를 통해 환불 가능. 작업 완료 후 환불 불가.',
+  '시안 1차 전달 전까지 100% 환불, 시안 전달 후 50% 환불, 최종 납품 후 환불 불가.',
+  '계약 후 7일 이내 80% 환불, 이후 30% 환불. 작업물 인도 후엔 환불 불가.',
+];
+
+const SERVICE_SCOPES = [
+  '디자인 시안 2회 제공 + 반응형 코딩 + 수정 3회 포함',
+  '메인 페이지 디자인 + 서브 페이지 5개 + 모바일 반응형 + SEO 최적화',
+  '로고 디자인 + 컬러 가이드 + 폰트 가이드 + AI/SVG 원본 제공',
+  'API 30개 설계 및 구현 + 데이터베이스 모델링 + 배포까지',
+  '4주 1:1 멘토링 (주 2회 90분) + 코드리뷰 + 커리큘럼 제공',
+  '이력서 1회 + 모의면접 2회 + 포트폴리오 피드백 1회',
+  '기능 명세 정리 + 와이어프레임 + 화면 디자인 + 프론트엔드 구현',
+];
+
+const SERVICE_DESCRIPTIONS_PROJECT = [
+  '안녕하세요. 5년 차 풀스택 개발자입니다. 스타트업/중소기업 자사몰 및 SaaS 개발을 다수 진행했고, Next.js와 NestJS를 주력으로 합니다. 의뢰 주신 분의 비즈니스 목적과 사용자 흐름을 충분히 파악한 후 견적과 일정을 협의 드립니다.',
+  '7년 차 백엔드 엔지니어이며 결제·정산·실시간 채팅 등 미션 크리티컬한 도메인 다수 경험이 있습니다. 운영 가능한 안정적인 코드와 명확한 문서를 함께 제공해 드립니다.',
+  '디자인 + 프론트엔드 풀세트로 진행 가능한 디자이너 겸 개발자입니다. 단순한 외주가 아니라 비즈니스의 페인포인트부터 같이 고민하는 파트너십을 지향합니다.',
+  '대형 커머스 플랫폼 출신 시니어로, 트래픽이 많은 서비스 구조 설계가 강점입니다. 단순 구현뿐 아니라 운영 단계까지 고려한 아키텍처를 제공합니다.',
+];
+
+const SERVICE_DESCRIPTIONS_COACHING = [
+  '신입~3년 차 개발자를 대상으로 합니다. 실무에서 마주치는 문제 위주로 코드리뷰와 리팩토링을 같이 진행하며, 단순 정답이 아니라 의사결정 과정을 가르치는 데 중점을 둡니다.',
+  '5년 동안 100명 이상의 멘티를 지도했습니다. 각자의 학습 속도와 목표에 맞춘 커리큘럼으로, 단순 강의가 아닌 실무 프로젝트 기반 코칭을 진행합니다.',
+  '대기업 / 유니콘 스타트업 면접 경험을 바탕으로 시스템 디자인, 알고리즘, 이력서 첨삭까지 한 번에 도와드립니다.',
+  '주니어 → 시니어 성장 과정을 압축해서 전달하는 데 자신 있습니다. 첫 1회 무료 상담으로 방향성을 잡아드립니다.',
+];
+
+const SERVICE_STEPS = [
+  ['요구사항 분석', '디자인/기획', '개발 및 검수'],
+  ['상담 및 요구사항 정리', '시안 작업', '수정 및 최종 납품'],
+  ['프로젝트 킥오프', '주차별 작업 및 리뷰', '최종 인수인계'],
+  ['목표 설정', '실습 기반 진행', '최종 평가 및 피드백'],
+];
+
+const FAQ_TEMPLATES_PROJECT: { question: string; answer: string }[] = [
+  {
+    question: '제작 기간은 얼마나 걸리나요?',
+    answer:
+      '의뢰 내용과 범위에 따라 다르며, 평균적으로 4~8주 정도 소요됩니다. 첫 상담에서 정확한 일정을 안내드립니다.',
+  },
+  {
+    question: '수정 횟수는 어떻게 되나요?',
+    answer:
+      '서비스 안내에 명시된 횟수 내에서 무료 수정 가능합니다. 초과 시 별도 견적이 발생합니다.',
+  },
+  {
+    question: '원본 파일도 제공해 주시나요?',
+    answer:
+      '디자인 원본(피그마/AI), 소스 코드(깃 저장소) 모두 제공해 드립니다.',
+  },
+  {
+    question: '결제는 어떻게 하나요?',
+    answer:
+      '무빗 안전 결제 시스템을 통해 진행됩니다. 구매 확정 전까지 무빗이 결제 금액을 안전하게 보관합니다.',
+  },
+];
+
+const FAQ_TEMPLATES_COACHING: { question: string; answer: string }[] = [
+  {
+    question: '비전공자도 들을 수 있나요?',
+    answer:
+      '네, 기초부터 차근차근 진행하기 때문에 비전공자분들도 충분히 따라오실 수 있습니다.',
+  },
+  {
+    question: '진행 방식은 어떻게 되나요?',
+    answer:
+      '온라인 화상 코칭이 기본이며, 별도 협의 시 오프라인 진행도 가능합니다.',
+  },
+  {
+    question: '수업 자료는 제공되나요?',
+    answer: '코칭에 필요한 학습 자료, 예제 코드, 과제는 모두 제공해 드립니다.',
+  },
+  {
+    question: '결제 후 환불은 어떻게 되나요?',
+    answer:
+      '코칭 시작 전 100% 환불 가능합니다. 시작 후엔 회차별로 환불 산정됩니다.',
+  },
+];
+
+const pickServiceStatus = (): ServiceStatus => {
+  const n = Math.random();
+  if (n < 0.8) return ServiceStatus.ACTIVE;
+  if (n < 0.95) return ServiceStatus.PAUSED;
+  return ServiceStatus.CLOSED;
+};
+
+const PORTFOLIO_TITLES = [
+  'B2B SaaS 어드민 대시보드 리뉴얼',
+  '커머스 자사몰 풀스택 개발',
+  '병원 예약 시스템 구축',
+  '교육 플랫폼 LMS 개발',
+  '핀테크 결제 시스템 연동',
+  '음식 배달 앱 백엔드 마이그레이션',
+  '부동산 매물 플랫폼 신규 런칭',
+  '커뮤니티 SNS 앱 개발',
+  '브랜드 공식 홈페이지 리뉴얼',
+  '대기업 그룹웨어 모듈 개발',
+  '실시간 채팅 기반 고객센터 시스템',
+  '구독 결제 SaaS MVP 개발',
+  'AI 챗봇 도입 프로젝트',
+  '재고관리 ERP 신규 개발',
+  '광고 캠페인 관리 콘솔 구축',
+];
+
+const PORTFOLIO_DESCRIPTIONS = [
+  '프로젝트 진행 기간 3개월, 팀 규모 4명으로 진행한 프로젝트입니다. 주요 기술 스택은 Next.js, NestJS, PostgreSQL이며, 트래픽 3배 증가와 페이지 로드 속도 60% 개선이라는 성과를 만들어냈습니다. 클라이언트와의 긴밀한 커뮤니케이션을 통해 요구사항을 정확히 반영했고, 운영 안정성도 크게 향상시켰습니다.',
+  '구체적 요구사항 분석부터 디자인, 개발, 배포까지 전 과정을 함께 진행했습니다. 클라이언트 만족도 평가에서 평균 4.8점을 받았으며, 출시 후 6개월간 안정적인 운영을 이어가고 있습니다. 디자인 시안 작업부터 코드 리뷰까지 한 사이클 안에서 처리했습니다.',
+  '레거시 코드 리팩토링 + 신규 기능 추가가 핵심이었던 프로젝트입니다. 단위 테스트 커버리지를 80%까지 끌어올렸고, 배포 자동화 파이프라인을 구축해 배포 주기를 주 1회 → 일 1회로 단축시켰습니다.',
+  '크로스 플랫폼 모바일 앱 개발 프로젝트로 iOS와 Android 동시에 런칭했습니다. 출시 후 6개월 만에 사용자 10만 명을 돌파했으며, 앱스토어 평점 4.7을 유지하고 있습니다. 푸시 알림, 결제, 소셜 로그인 등 핵심 기능 다수를 구현했습니다.',
+  '대용량 트래픽을 처리하기 위한 백엔드 아키텍처 설계 프로젝트입니다. Redis 캐싱과 큐 시스템을 도입해 동시 접속 1만 명을 안정적으로 처리할 수 있는 구조를 만들었습니다. 운영 비용도 40% 절감했습니다.',
+];
+
+const PORTFOLIO_CLIENTS = [
+  '(주)테크앤테크',
+  '(주)스타트업컴퍼니',
+  '(주)이커머스코리아',
+  '(주)헬스케어솔루션',
+  '(주)에듀테크그룹',
+  '(주)핀테크원',
+  '(주)리테일플랫폼',
+  '(주)디자인스튜디오',
+  '(주)클라우드워크스',
+  '(주)데이터인사이트',
+  '비공개',
+];
+
+const REPLY_TEMPLATES = [
+  '저도 같은 생각입니다 👍',
+  '좋은 의견 감사합니다!',
+  '저는 조금 다르게 생각하는데, 이런 케이스는 어떨까요?',
+  '답변 감사합니다. 큰 도움이 됐습니다.',
+  '추가로 궁금한 점이 있는데 DM 드려도 될까요?',
+  '저는 이렇게 해결했어요!',
+  '좋은 인사이트 얻고 갑니다',
+  '관련해서 참고할 만한 자료 더 있을까요?',
+];
+
+const COMMUNITY_POST_TITLES = [
+  '[질문] React useEffect 의존성 배열 어떻게 관리하시나요?',
+  '[질문] NestJS DI 컨테이너 활용 패턴 추천 부탁드려요',
+  '[질문] PostgreSQL 인덱스 안 들어가는 케이스 정리해 주실 분',
+  '[질문] 사이드 프로젝트 클라우드 비용 어떻게 줄이세요?',
+  '[질문] 코드리뷰 받을 때 어떤 부분을 가장 중점적으로 보시나요?',
+  '[팁] TypeScript strict 모드 점진적 도입 노하우 공유',
+  '[팁] 모노레포에서 의존성 관리 깔끔하게 하는 법',
+  '[팁] React Query 캐시 정책 실전 가이드',
+  '[팁] AWS Lambda 콜드 스타트 최적화 체크리스트',
+  '[팁] 코딩테스트 자주 나오는 그래프 알고리즘 정리',
+  '[후기] 6개월 차 신입 개발자 솔직 회고',
+  '[후기] 부트캠프 수료 후 첫 취업까지 4개월 기록',
+  '[후기] 시니어로 이직하고 느낀 3가지',
+  '[후기] 사이드 프로젝트로 월 매출 100만원 도전 한 달 회고',
+  '[스터디] 6월 알고리즘 스터디 모집합니다 (주 1회, 온라인)',
+  '[스터디] 백엔드 시스템 디자인 스터디원 모집 (3명)',
+  '[스터디] React Native 실전 프로젝트 같이 하실 분',
+  '[스터디] AWS 자격증 SAA 스터디원 구합니다',
+  '[자유] 여러분의 개발자 책상 사진 공유 부탁드려요',
+  '[자유] 사이드 프로젝트 동료 구합니다 (백엔드)',
+  '[자유] 신입 시절 가장 후회되는 선택은?',
+  '[자유] 좋아하는 기술 블로그 추천 해주세요',
+];
+
+const COMMUNITY_POST_CONTENTS = [
+  '실무에서 자주 부딪히는 케이스인데 여러분은 어떻게 처리하시는지 궁금해서 글 남깁니다. 제 경우에는 useCallback이랑 같이 써서 의존성을 최소화하려고 하는데, 가끔은 그게 오히려 더 복잡해지는 것 같더라구요. 다른 분들의 노하우 듣고 싶습니다.',
+  '최근에 비슷한 문제를 겪었는데 결국 인덱스 힌트 + 쿼리 재작성으로 해결했습니다. EXPLAIN ANALYZE 결과를 같이 보면서 디버깅하는 게 가장 효율적이더라구요. 도움이 되었으면 합니다.',
+  '회사에서 6개월 동안 진행한 프로젝트 회고입니다. 기술적 도전과제뿐만 아니라 팀 협업이나 일정 관리 측면에서 배운 점이 많았어요. 같은 길을 걷고 계신 분들께 도움이 되었으면 좋겠습니다.',
+  '주니어부터 시니어까지 누구나 환영합니다. 매주 일요일 오후 8시 온라인 미팅으로 진행할 예정입니다. 관심 있으신 분 댓글이나 DM 부탁드려요.',
+  '비전공자 출신으로 첫 회사를 다니면서 느낀 점을 솔직하게 적어봤습니다. 정답은 아니지만 비슷한 고민 하시는 분들께 공감되었으면 좋겠어요.',
+  '오랜만에 블로그 글을 정리하다가 다른 분들이 추천하는 블로그도 궁금해졌습니다. 한국어 / 영어 모두 환영입니다. 댓글에 공유 부탁드려요!',
 ];
 
 // ─── helpers ────────────────────────────────────────────────────────────
@@ -225,13 +447,23 @@ class Seeder {
     console.warn(`✅ 최근 본 서비스 (CLIENT 전용)`);
 
     await this.#seedReports(clients, experts);
-    console.warn(`✅ 신고 30건 (PENDING 15 / COMPLETED 15)`);
+    const reportCount = await this.#prisma.report.count();
+    console.warn(`✅ 신고 ${reportCount.toString()}건 (사유 6종 균등)`);
 
     await this.#seedCommunity(clients, experts, superAdmin);
-    console.warn(`✅ 게시판 10개 (댓글/좋아요 포함)`);
+    const postCount = await this.#prisma.communityPost.count();
+    const commentCount = await this.#prisma.comment.count();
+    const likeCount = await this.#prisma.like.count();
+    console.warn(
+      `✅ 게시판 ${postCount.toString()}건 (댓글 ${commentCount.toString()} / 좋아요 ${likeCount.toString()})`,
+    );
 
     await this.#seedChatRooms(clients, experts, services);
-    console.warn(`✅ 1:1 채팅 5방`);
+    const chatRoomCount = await this.#prisma.chatRoom.count();
+    const messageCount = await this.#prisma.message.count();
+    console.warn(
+      `✅ 1:1 채팅 ${chatRoomCount.toString()}방 (메시지 ${messageCount.toString()})`,
+    );
 
     await this.#seedCsChatRooms(clients, superAdmin);
     console.warn(`✅ CS 채팅 25방 (OPEN 12 / ASSIGNED 8 / CLOSED 5)`);
@@ -240,7 +472,8 @@ class Seeder {
       ...seededOrders,
       ...testOrders,
     ]);
-    console.warn(`✅ 알림 10개`);
+    const notificationCount = await this.#prisma.notification.count();
+    console.warn(`✅ 알림 ${notificationCount.toString()}건`);
 
     await this.#seedBanners();
     await this.#seedMainSettings(experts, services);
@@ -261,9 +494,9 @@ class Seeder {
     console.warn('\n────────────────────────────');
     console.warn(`🔑 테스트 계정 (공통 비밀번호: ${SEED_PASSWORD})`);
     console.warn(`   admin@moveit.com         (ADMIN)`);
-    console.warn(`   client1~20@moveit.com    (CLIENT)`);
+    console.warn(`   client1~200@moveit.com    (CLIENT)`);
     console.warn(
-      `   expert1~20@moveit.com    (EXPERT, expert1~4 신청 대기 / expert5~8 거절 / expert9~20 승인)`,
+      `   expert1~100@moveit.com   (EXPERT, expert1~8 신청 대기 / expert9~16 거절 / expert17~100 승인)`,
     );
     console.warn('');
     console.warn(`🧪 Orders API 테스트 (비밀번호: Test1234!)`);
@@ -414,13 +647,13 @@ class Seeder {
       i === 0 ? AuthProvider.LOCAL : pick(providers);
 
     const clients = await Promise.all(
-      range(50).map((i) => {
+      range(200).map((i) => {
         const provider = resolveProvider(i);
         const isLocal = provider === AuthProvider.LOCAL;
         return this.#prisma.user.create({
           data: {
             email: `client${(i + 1).toString()}@moveit.com`,
-            name: `클라이언트${(i + 1).toString()}`,
+            name: `${faker.person.lastName()}${faker.person.firstName()}`,
             password: isLocal ? passwordHash : null,
             provider,
             providerId: isLocal ? null : faker.string.numeric(15),
@@ -428,19 +661,20 @@ class Seeder {
             profileImageUrl: pickProfileImage(),
             region: pick(regions),
             phoneNumber: faker.phone.number(),
+            createdAt: faker.date.past({ years: 2 }),
           },
         });
       }),
     );
 
     const experts = await Promise.all(
-      range(50).map((i) => {
+      range(100).map((i) => {
         const provider = resolveProvider(i);
         const isLocal = provider === AuthProvider.LOCAL;
         return this.#prisma.user.create({
           data: {
             email: `expert${(i + 1).toString()}@moveit.com`,
-            name: `전문가${(i + 1).toString()}`,
+            name: `${faker.person.lastName()}${faker.person.firstName()}`,
             password: isLocal ? passwordHash : null,
             provider,
             providerId: isLocal ? null : faker.string.numeric(15),
@@ -448,8 +682,19 @@ class Seeder {
             profileImageUrl: pickProfileImage(),
             region: pick(regions),
             phoneNumber: faker.phone.number(),
-            bankName: pick(['국민', '신한', '우리', '하나', '카카오뱅크']),
+            bankName: pick([
+              '국민',
+              '신한',
+              '우리',
+              '하나',
+              '카카오뱅크',
+              '농협',
+              'IBK기업',
+              'SC제일',
+              '토스뱅크',
+            ]),
             bankAccount: faker.finance.accountNumber(),
+            createdAt: faker.date.past({ years: 2 }),
           },
         });
       }),
@@ -526,16 +771,20 @@ class Seeder {
     const profiles: ExpertProfile[] = [];
 
     // 전문가 상태 분포 (UI 검증용 — 모든 상태 보장)
-    // index 0~3 (expert1~4): 신청 대기 (isApplied=true, isApproved=false, rejectedAt=null)
-    // index 4~7 (expert5~8): 승인 거절 (isApplied=true, isApproved=false, rejectedAt+rejectReason)
-    // index 8~19 (expert9~20): 승인 완료 (isApproved=true)
-    const PENDING_COUNT = 4;
-    const REJECTED_COUNT = 4;
+    // index 0~7 (expert1~8): 신청 대기 (isApplied=true, isApproved=false, rejectedAt=null)
+    // index 8~15 (expert9~16): 승인 거절 (isApplied=true, isApproved=false, rejectedAt+rejectReason)
+    // index 16~99 (expert17~100): 승인 완료 (isApproved=true)
+    const PENDING_COUNT = 8;
+    const REJECTED_COUNT = 8;
     const REJECT_REASONS = [
       '사업자등록증 정보가 부족합니다.',
       '제출하신 포트폴리오가 가이드라인에 부합하지 않습니다.',
       '본인 확인이 어려워 거절되었습니다.',
       '회사 정보 검증에 실패했습니다.',
+      '포트폴리오 이미지에 저작권 문제가 의심됩니다.',
+      '제공해 주신 사업자 번호가 유효하지 않습니다.',
+      '활동 기간이 기준에 미달합니다.',
+      '제출 서류의 진위 확인이 어려워 거절되었습니다.',
     ];
 
     for (const [index, expert] of experts.entries()) {
@@ -627,23 +876,29 @@ class Seeder {
     const portfolios: Portfolio[] = [];
     const businessSectors = Object.values(BusinessSector);
     const stackTypes = Object.values(StackType);
+    const techStackNames = Object.values(TechStackName);
 
     for (const profile of expertProfiles) {
-      const count = rand(1, 2);
+      // 승인 전문가: 5~10개 / 신청 대기: 1~3개 (제출은 했지만 검토 중) / 거절: 0~2개
+      const count = profile.isApproved
+        ? rand(5, 10)
+        : profile.rejectedAt
+          ? rand(0, 2)
+          : rand(1, 3);
       for (let i = 0; i < count; i++) {
         const portfolio = await this.#prisma.portfolio.create({
           data: {
             expertProfileId: profile.id,
-            title: faker.commerce.productName(),
-            description: faker.lorem.paragraphs(3),
-            clientName: faker.company.name(),
+            title: pick(PORTFOLIO_TITLES),
+            description: pick(PORTFOLIO_DESCRIPTIONS),
+            clientName: pick(PORTFOLIO_CLIENTS),
             businessSector: pick(businessSectors),
           },
         });
         portfolios.push(portfolio);
 
-        // 이미지 1~10장 (썸네일 1 + 상세 0~9)
-        const imageCount = rand(2, 10);
+        // 이미지 4~12장 (썸네일 1 + 상세 3~11)
+        const imageCount = rand(4, 12);
         await this.#prisma.portfolioImage.createMany({
           data: range(imageCount).map((idx) => ({
             portfolioId: portfolio.id,
@@ -652,12 +907,12 @@ class Seeder {
           })),
         });
 
-        // 스킬 2~4개
-        const skillCount = rand(2, 4);
+        // 스킬 3~6개 — 중복 방지를 위해 shuffle + slice
+        const pickedNames = shuffle(techStackNames).slice(0, rand(3, 6));
         await this.#prisma.portfolioSkill.createMany({
-          data: range(skillCount).map(() => ({
+          data: pickedNames.map((stackName) => ({
             portfolioId: portfolio.id,
-            stackName: pick(Object.values(TechStackName)),
+            stackName,
             stackType: pick(stackTypes),
           })),
         });
@@ -676,10 +931,8 @@ class Seeder {
     serviceCategories: { id: string; name: ServiceCategoryName }[],
   ): Promise<Service[]> {
     const services: Service[] = [];
-    const statuses = Object.values(ServiceStatus);
 
     // UI 테스트용 보장 케이스 — 첫 4명 승인 전문가에 고정 분배
-    // (그룹·개수·상태 고정, 세부 카테고리는 랜덤). 5명부터는 기존대로 random.
     const projectGroupId = serviceGroups.find(
       (g) => g.name === ServiceGroupName.PROJECT_REQUEST,
     )?.id;
@@ -702,36 +955,46 @@ class Seeder {
     for (const expert of experts) {
       const profile = expertProfiles.find((p) => p.userId === expert.id);
       if (!profile) continue;
-      // 미승인(신청 대기) 전문가는 서비스 생성 안 함 — 승인 후에야 서비스 등록 가능
       if (!profile.isApproved) continue;
 
       const guaranteed = guaranteedPlan[guaranteedIndex];
       if (guaranteed) guaranteedIndex++;
-      const count = guaranteed?.count ?? rand(10, 30);
+      const count = guaranteed?.count ?? rand(8, 22);
 
       for (let i = 0; i < count; i++) {
+        const serviceGroupId = guaranteed?.groupId ?? pick(serviceGroups).id;
+        const isCoaching = serviceGroupId === coachingGroupId;
+        const titlePool = isCoaching
+          ? SERVICE_TITLES_COACHING
+          : SERVICE_TITLES_PROJECT;
+        const descriptionPool = isCoaching
+          ? SERVICE_DESCRIPTIONS_COACHING
+          : SERVICE_DESCRIPTIONS_PROJECT;
+        const faqPool = isCoaching
+          ? FAQ_TEMPLATES_COACHING
+          : FAQ_TEMPLATES_PROJECT;
+
         const service = await this.#prisma.service.create({
           data: {
             expertUserId: expert.id,
-            title: faker.commerce.productName(),
-            workDuration: rand(7, 60),
-            revisionCount: rand(1, 5),
-            serviceScope: faker.lorem.sentence(),
-            servicePrice: rand(500_000, 5_000_000),
-            description: faker.lorem.paragraphs(3),
-            preparationNotes:
-              '작업 시작 전 기획서와 참고 자료를 준비해 주세요.',
-            refundPolicy:
-              '작업 시작 전 100% 환불, 작업 중 50% 환불, 작업 완료 후 환불 불가',
-            status: guaranteed?.status ?? pick(statuses),
-            serviceGroupId: guaranteed?.groupId ?? pick(serviceGroups).id,
+            title: pick(titlePool),
+            workDuration: rand(7, 90),
+            revisionCount: rand(0, 10),
+            serviceScope: pick(SERVICE_SCOPES),
+            servicePrice: rand(5, 100) * 100_000,
+            description: pick(descriptionPool),
+            preparationNotes: pick(PREPARATION_NOTES),
+            refundPolicy: pick(REFUND_POLICIES),
+            status: guaranteed?.status ?? pickServiceStatus(),
+            serviceGroupId,
             serviceCategoryId: pick(serviceCategories).id,
+            createdAt: faker.date.past({ years: 1 }),
           },
         });
         services.push(service);
 
-        // 기술 스택 (서비스마다 2~4개)
-        const pickedTechs = shuffle(techStacks).slice(0, rand(2, 4));
+        // 기술 스택 (서비스마다 2~5개)
+        const pickedTechs = shuffle(techStacks).slice(0, rand(2, 5));
         await this.#prisma.serviceTechStack.createMany({
           data: pickedTechs.map((tech) => ({
             serviceId: service.id,
@@ -739,8 +1002,8 @@ class Seeder {
           })),
         });
 
-        // 이미지 (썸네일 1 + 상세 2~5)
-        const imageCount = rand(3, 6);
+        // 이미지 (썸네일 1 + 상세 3~7)
+        const imageCount = rand(4, 8);
         await this.#prisma.serviceImage.createMany({
           data: range(imageCount).map((idx) => ({
             serviceId: service.id,
@@ -750,8 +1013,8 @@ class Seeder {
         });
 
         // 스텝 3개
-        const steps = ['요구사항 분석', '디자인/기획', '개발 및 검수'];
-        for (const [s, step] of steps.entries()) {
+        const pickedSteps = pick(SERVICE_STEPS);
+        for (const [s, step] of pickedSteps.entries()) {
           await this.#prisma.serviceStep.create({
             data: {
               serviceId: service.id,
@@ -762,12 +1025,13 @@ class Seeder {
           });
         }
 
-        // FAQ 3개
+        // FAQ 3~4개
+        const shuffledFaq = shuffle(faqPool).slice(0, rand(3, 4));
         await this.#prisma.serviceFaq.createMany({
-          data: range(3).map(() => ({
+          data: shuffledFaq.map((faq) => ({
             serviceId: service.id,
-            question: `${faker.lorem.sentence()}?`,
-            answer: faker.lorem.paragraph(),
+            question: faq.question,
+            answer: faq.answer,
           })),
         });
       }
@@ -777,7 +1041,7 @@ class Seeder {
   }
 
   // ─── 9. Order + Payment + Review + Refund ─────────────────────────────
-  // 14가지 시나리오로 약 172개 주문 생성 — 각 환불/취소 흐름 풀 커버
+  // 14가지 시나리오로 약 600개 주문 생성 — 각 환불/취소 흐름 풀 커버 + 운영급 분포
   async #seedOrdersAndPayments(
     clients: User[],
     services: Service[],
@@ -785,19 +1049,19 @@ class Seeder {
   ): Promise<SeededOrderInfo[]> {
     const orderPlan: ScenarioPlan[] = [
       // 1. NEGOTIATING — 결제 직후, 협의 중
-      ...range(15).map(() => ({ status: OrderStatus.NEGOTIATING })),
+      ...range(50).map(() => ({ status: OrderStatus.NEGOTIATING })),
       // 2. NEGOTIATING + REJECTED(CANCEL) — 취소 거절 후 복귀 (재요청 가능)
-      ...range(5).map(() => ({
+      ...range(15).map(() => ({
         status: OrderStatus.NEGOTIATING,
         refund: { type: RefundType.CANCEL, status: RefundStatus.REJECTED },
       })),
       // 3. CANCEL_REQUESTED — 전문가 승인/거절 대기 중
-      ...range(15).map(() => ({
+      ...range(50).map(() => ({
         status: OrderStatus.CANCEL_REQUESTED,
         refund: { type: RefundType.CANCEL, status: RefundStatus.REQUESTED },
       })),
-      // 4. PAYMENT_CANCELLED — 취소 완료 (전문가 5 + 어드민 5)
-      ...range(5).map(() => ({
+      // 4. PAYMENT_CANCELLED — 취소 완료 (전문가 18 + 어드민 18)
+      ...range(18).map(() => ({
         status: OrderStatus.PAYMENT_CANCELLED,
         refund: {
           type: RefundType.CANCEL,
@@ -805,7 +1069,7 @@ class Seeder {
           approvedBy: 'expert' as const,
         },
       })),
-      ...range(5).map(() => ({
+      ...range(18).map(() => ({
         status: OrderStatus.PAYMENT_CANCELLED,
         refund: {
           type: RefundType.CANCEL,
@@ -814,23 +1078,23 @@ class Seeder {
         },
       })),
       // 5. IN_PROGRESS — 작업 진행 중
-      ...range(25).map(() => ({ status: OrderStatus.IN_PROGRESS })),
+      ...range(80).map(() => ({ status: OrderStatus.IN_PROGRESS })),
       // 6. DEADLINE_IMMINENT — 마감 임박
-      ...range(15).map(() => ({ status: OrderStatus.DEADLINE_IMMINENT })),
+      ...range(50).map(() => ({ status: OrderStatus.DEADLINE_IMMINENT })),
       // 7. EXPIRED — 기한 만료, 환불 요청 전
-      ...range(10).map(() => ({ status: OrderStatus.EXPIRED })),
+      ...range(35).map(() => ({ status: OrderStatus.EXPIRED })),
       // 8. EXPIRED + REJECTED(REFUND) — 환불 거절 후 복귀 (재요청 가능)
-      ...range(5).map(() => ({
+      ...range(18).map(() => ({
         status: OrderStatus.EXPIRED,
         refund: { type: RefundType.REFUND, status: RefundStatus.REJECTED },
       })),
       // 9. REFUND_REQUESTED — 환불 요청 진행 중 (PR-B 취소 가능)
-      ...range(15).map(() => ({
+      ...range(50).map(() => ({
         status: OrderStatus.REFUND_REQUESTED,
         refund: { type: RefundType.REFUND, status: RefundStatus.REQUESTED },
       })),
-      // 10. REFUND_COMPLETED — 환불 완료 (전문가 5 + 어드민 5)
-      ...range(5).map(() => ({
+      // 10. REFUND_COMPLETED — 환불 완료 (전문가 18 + 어드민 18)
+      ...range(18).map(() => ({
         status: OrderStatus.REFUND_COMPLETED,
         refund: {
           type: RefundType.REFUND,
@@ -838,7 +1102,7 @@ class Seeder {
           approvedBy: 'expert' as const,
         },
       })),
-      ...range(5).map(() => ({
+      ...range(18).map(() => ({
         status: OrderStatus.REFUND_COMPLETED,
         refund: {
           type: RefundType.REFUND,
@@ -847,13 +1111,13 @@ class Seeder {
         },
       })),
       // 11. WORK_COMPLETED — 작업 완료, 구매확정 대기
-      ...range(12).map(() => ({ status: OrderStatus.WORK_COMPLETED })),
+      ...range(40).map(() => ({ status: OrderStatus.WORK_COMPLETED })),
       // 12. PURCHASE_CONFIRMED — 구매확정
-      ...range(10).map(() => ({ status: OrderStatus.PURCHASE_CONFIRMED })),
+      ...range(35).map(() => ({ status: OrderStatus.PURCHASE_CONFIRMED })),
       // 13. SETTLEMENT_REQUESTED — 정산 요청
-      ...range(15).map(() => ({ status: OrderStatus.SETTLEMENT_REQUESTED })),
+      ...range(50).map(() => ({ status: OrderStatus.SETTLEMENT_REQUESTED })),
       // 14. SETTLEMENT_COMPLETED — 정산 완료
-      ...range(10).map(() => ({ status: OrderStatus.SETTLEMENT_COMPLETED })),
+      ...range(35).map(() => ({ status: OrderStatus.SETTLEMENT_COMPLETED })),
     ];
 
     const seededOrders: SeededOrderInfo[] = [];
@@ -1164,26 +1428,34 @@ class Seeder {
     services: Service[],
   ): Promise<void> {
     const pairs = new Set<string>();
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 1500; i++) {
       const client = pick(clients);
       const service = pick(services);
       const key = `${client.id}-${service.id}`;
       if (pairs.has(key)) continue;
       pairs.add(key);
       await this.#prisma.favoriteService.create({
-        data: { clientUserId: client.id, serviceId: service.id },
+        data: {
+          clientUserId: client.id,
+          serviceId: service.id,
+          createdAt: faker.date.recent({ days: 90 }),
+        },
       });
     }
 
     const expertPairs = new Set<string>();
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 500; i++) {
       const client = pick(clients);
       const expert = pick(experts);
       const key = `${client.id}-${expert.id}`;
       if (expertPairs.has(key)) continue;
       expertPairs.add(key);
       await this.#prisma.favoriteExpert.create({
-        data: { clientUserId: client.id, expertUserId: expert.id },
+        data: {
+          clientUserId: client.id,
+          expertUserId: expert.id,
+          createdAt: faker.date.recent({ days: 90 }),
+        },
       });
     }
   }
@@ -1194,7 +1466,7 @@ class Seeder {
     services: Service[],
   ): Promise<void> {
     const pairs = new Set<string>();
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 3000; i++) {
       const client = pick(clients);
       const service = pick(services);
       const key = `${client.id}-${service.id}`;
@@ -1204,7 +1476,7 @@ class Seeder {
         data: {
           clientUserId: client.id,
           serviceId: service.id,
-          viewedAt: faker.date.recent({ days: 14 }),
+          viewedAt: faker.date.recent({ days: 30 }),
         },
       });
     }
@@ -1212,18 +1484,21 @@ class Seeder {
 
   // ─── 11. Reports + 증거 이미지 ───────────────────────────────────────
   async #seedReports(clients: User[], experts: User[]): Promise<void> {
-    // 30건 — 15 PENDING(처리 대기) + 15 COMPLETED(처리 완료)
-    const total = 30;
-    const pendingCount = 15;
+    // 150건 — 60 PENDING(처리 대기) + 90 COMPLETED(처리 완료)
+    // 사유 6종 균등 분배 (각 25건)
+    const total = 150;
+    const pendingCount = 60;
     for (let i = 0; i < total; i++) {
       const isPending = i < pendingCount;
+      const reason = REPORT_REASONS[i % REPORT_REASONS.length]!;
       const report = await this.#prisma.report.create({
         data: {
           reporterId: pick(clients).id,
           reportedId: pick(experts).id,
-          reason: pick(REPORT_REASONS),
+          reason,
           status: isPending ? ReportStatus.PENDING : ReportStatus.COMPLETED,
           detail: faker.lorem.paragraph(),
+          createdAt: faker.date.recent({ days: 90 }),
         },
       });
 
@@ -1257,27 +1532,34 @@ class Seeder {
       '운영 정책 위반',
     ];
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 80; i++) {
       const author = pick(allUsers);
-      const isDeleted = i === 0; // 1개는 삭제된 상태
+      // 카테고리 균등 분배
+      const category = categories[i % categories.length]!;
+      // 처음 10건은 인기 게시글 (높은 좋아요/댓글), 그 외는 일반
+      const isPopular = i < 10;
+      // 2건은 삭제됨 (인기 게시글 외에서)
+      const isDeleted = i === 30 || i === 55;
       const post = await this.#prisma.communityPost.create({
         data: {
           userId: author.id,
-          category: pick(categories),
-          title: faker.lorem.sentence({ min: 3, max: 8 }),
-          content: faker.lorem.paragraphs(rand(2, 5)),
+          category,
+          title: pick(COMMUNITY_POST_TITLES),
+          content: pick(COMMUNITY_POST_CONTENTS),
           deletedAt: isDeleted ? new Date() : null,
           deleteReason: isDeleted ? '운영 정책 위반' : null,
           deletedByAdminId: isDeleted ? admin.id : null,
+          createdAt: faker.date.recent({ days: 60 }),
         },
       });
 
-      // 댓글 0~5개
-      const commentCount = rand(0, 5);
+      // 댓글: 인기 게시글은 20~40개, 일반은 0~10개
+      const commentCount = isPopular ? rand(20, 40) : rand(0, 10);
+      const createdComments: { id: string }[] = [];
       for (let c = 0; c < commentCount; c++) {
-        // 약 1/4 확률로 관리자 삭제 (다양한 사유로 분산)
-        const isAdminDeleted = (i + c) % 4 === 0;
-        await this.#prisma.comment.create({
+        // 약 1/6 확률로 관리자 삭제
+        const isAdminDeleted = (i + c) % 6 === 0;
+        const comment = await this.#prisma.comment.create({
           data: {
             postId: post.id,
             userId: pick(allUsers).id,
@@ -1289,10 +1571,31 @@ class Seeder {
             deletedByAdminId: isAdminDeleted ? admin.id : null,
           },
         });
+        createdComments.push({ id: comment.id });
       }
 
-      // 좋아요 0~8명
-      const likers = shuffle(allUsers).slice(0, rand(0, 8));
+      // 대댓글 — 댓글의 30%에 1~3개씩
+      for (const parent of createdComments) {
+        if (Math.random() < 0.3) {
+          const replyCount = rand(1, 3);
+          for (let r = 0; r < replyCount; r++) {
+            await this.#prisma.comment.create({
+              data: {
+                postId: post.id,
+                userId: pick(allUsers).id,
+                parentCommentId: parent.id,
+                content: pick(REPLY_TEMPLATES),
+              },
+            });
+          }
+        }
+      }
+
+      // 좋아요: 인기 게시글 50~120명, 일반 0~15명
+      const likers = shuffle(allUsers).slice(
+        0,
+        isPopular ? rand(50, 120) : rand(0, 15),
+      );
       if (likers.length > 0) {
         await this.#prisma.like.createMany({
           data: likers.map((u) => ({ postId: post.id, userId: u.id })),
@@ -1312,7 +1615,7 @@ class Seeder {
     let created = 0;
     let safety = 0;
 
-    while (created < 5 && safety < 100) {
+    while (created < 80 && safety < 500) {
       safety++;
       const client = pick(clients);
       const expert = pick(experts);
@@ -1329,6 +1632,7 @@ class Seeder {
           clientUserId: client.id,
           expertUserId: expert.id,
           currentServiceId: service.id,
+          createdAt: faker.date.recent({ days: 60 }),
         },
       });
 
@@ -1339,12 +1643,13 @@ class Seeder {
         ],
       });
 
-      // 메시지 5~10개
-      const messageCount = rand(5, 10);
+      // 메시지 15~50개 — 운영급 채팅 데이터
+      const messageCount = rand(15, 50);
       let lastMessageId: string | null = null;
       for (let m = 0; m < messageCount; m++) {
         const sender = m % 2 === 0 ? client : expert;
-        const useFile = m === messageCount - 1; // 마지막 한 개는 첨부파일
+        // 마지막 1개 첨부파일, 그 외 5%는 첨부파일, 나머지는 텍스트
+        const useFile = m === messageCount - 1 ? true : Math.random() < 0.05;
         const message = await this.#prisma.message.create({
           data: {
             chatRoomId: room.id,
