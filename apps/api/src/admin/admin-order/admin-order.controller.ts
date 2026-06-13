@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -11,7 +12,12 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { COMMON_ERRORS, ORDER_ERRORS } from '../../common/constants/errors';
+import {
+  COMMON_ERRORS,
+  ORDER_ERRORS,
+  PAYMENT_ERRORS,
+  REFUND_ERRORS,
+} from '../../common/constants/errors';
 import { ApiErrorResponse } from '../../common/decorators/api-error-response.decorator';
 import {
   ApiPaginatedResponse,
@@ -27,6 +33,7 @@ import { GetOrdersQueryDto } from './dto/list/orders-query.dto';
 import { OrderItemDto } from './dto/list/orders-response.dto';
 import { GetSettlementsQueryDto } from './dto/list/settlements-query.dto';
 import { SettlementItemDto } from './dto/list/settlements-response.dto';
+import { OrderRefundApproveRequestDto } from './dto/order-refund-approve-request.dto';
 import { OrderRefundResponseDto } from './dto/order-refund-response.dto';
 import { OrderSettlementPreviewResponseDto } from './dto/order-settlement-preview-response.dto';
 import { OrderSettlementResponseDto } from './dto/order-settlement-response.dto';
@@ -66,7 +73,7 @@ export class AdminOrderController {
   @ApiOperation({
     summary: '[어드민] 주문 취소·환불 상세 조회',
     description:
-      '주문 1건의 취소(CANCEL) 또는 환불(REFUND) 상세 — 결제 정보 + 취소·환불 금액 + 승인자(관리자 vs 판매자) 정보. type 으로 취소·환불 구분, approvedBy.type 으로 승인자 분기.',
+      '주문 1건의 취소(CANCEL) 또는 환불(REFUND) 상세 — 결제 정보 + 취소·환불 금액 + 승인자(관리자 vs 판매자) 정보. 승인 전(REQUESTED) 상태도 조회 가능하며 이때 approvedAt·approvedBy는 null (모달용). type 으로 취소·환불 구분, approvedBy.type 으로 승인자 분기.',
   })
   @ApiSuccessResponse(HttpStatus.OK, OrderRefundResponseDto)
   @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
@@ -84,6 +91,68 @@ export class AdminOrderController {
     orderId: string,
   ): Promise<OrderRefundResponseDto> {
     return this.adminOrderService.getOrderRefund(orderId);
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 취소 요청 승인',
+    description:
+      '취소요청(CANCEL_REQUESTED) 상태 주문 1건을 결제취소(PAYMENT_CANCELLED)로 전환. Toss 결제 취소 호출 + Payment/Refund 갱신 + 활동로그 + 구매자·판매자에게 알림 발송. 취소요청 상태가 아니거나 주문이 없으면 404/400.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(PAYMENT_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(PAYMENT_ERRORS.CANCEL_FAILED)
+  @ApiErrorResponse(REFUND_ERRORS.NOT_APPROVABLE)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @AdminJwtAuth()
+  @HttpCode(HttpStatus.OK)
+  @Patch(':orderId/cancel/approve')
+  approveCancel(
+    @Param(
+      'orderId',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(ORDER_ERRORS.NOT_FOUND),
+      }),
+    )
+    orderId: string,
+    @Body() body: OrderRefundApproveRequestDto,
+    @Req() req: Request,
+  ): Promise<void> {
+    const { adminId } = req.user as AdminJwtAccessUser;
+    return this.adminOrderService.approveCancel(orderId, adminId, body.reason);
+  }
+
+  @ApiOperation({
+    summary: '[어드민] 환불 요청 승인',
+    description:
+      '환불요청(REFUND_REQUESTED) 상태 주문 1건을 환불완료(REFUND_COMPLETED)로 전환. Toss 결제 취소 호출 + Payment/Refund 갱신 + 활동로그 + 구매자·판매자에게 알림 발송. 환불요청 상태가 아니거나 주문이 없으면 404/400.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(COMMON_ERRORS.UNAUTHORIZED)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(PAYMENT_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(PAYMENT_ERRORS.CANCEL_FAILED)
+  @ApiErrorResponse(REFUND_ERRORS.NOT_APPROVABLE)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @AdminJwtAuth()
+  @HttpCode(HttpStatus.OK)
+  @Patch(':orderId/refund/approve')
+  approveRefund(
+    @Param(
+      'orderId',
+      new ParseUUIDPipe({
+        exceptionFactory: () => new AppException(ORDER_ERRORS.NOT_FOUND),
+      }),
+    )
+    orderId: string,
+    @Body() body: OrderRefundApproveRequestDto,
+    @Req() req: Request,
+  ): Promise<void> {
+    const { adminId } = req.user as AdminJwtAccessUser;
+    return this.adminOrderService.approveRefund(orderId, adminId, body.reason);
   }
 
   @ApiOperation({

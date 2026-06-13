@@ -1,6 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { AdminActionType, OrderStatus, Prisma } from '@prisma/client';
+import {
+  AdminActionType,
+  OrderStatus,
+  PaymentStatus,
+  Prisma,
+  RefundStatus,
+  RefundType,
+} from '@prisma/client';
 
+import {
+  ORDER_ERRORS,
+  PAYMENT_ERRORS,
+  REFUND_ERRORS,
+} from '../../common/constants/errors';
+import { AppException } from '../../common/exceptions/app.exception';
 import { PrismaService } from '../../prisma/prisma.service';
 
 import { ORDER_TAB_STATUSES, type OrderTab } from './dto/list/orders-tab.enum';
@@ -35,6 +48,7 @@ export class AdminOrderRepository {
       where: { id: orderId },
       select: {
         agreedServicePrice: true,
+        platformFee: true,
         payment: {
           select: {
             approvedAt: true,
@@ -102,6 +116,135 @@ export class AdminOrderRepository {
         },
       }),
     ]);
+  }
+
+  findOrderForAdminApprove(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        status: true,
+        clientUserId: true,
+        expertUserId: true,
+        service: { select: { title: true } },
+        payment: {
+          select: {
+            paymentKey: true,
+            paidAmount: true,
+            status: true,
+            refund: {
+              select: {
+                type: true,
+                status: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  approveCancelByAdmin(params: {
+    orderId: string;
+    refundAmount: number;
+    canceledAt: Date;
+    rawData: Prisma.InputJsonValue;
+    adminId: string;
+    adminReason: string;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: params.orderId, status: OrderStatus.CANCEL_REQUESTED },
+        data: { status: OrderStatus.PAYMENT_CANCELLED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: paymentCount } = await tx.payment.updateMany({
+        where: { orderId: params.orderId, status: PaymentStatus.PAID },
+        data: {
+          status: PaymentStatus.CANCELLED,
+          rawData: params.rawData,
+        },
+      });
+      if (paymentCount === 0) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId: params.orderId },
+          type: RefundType.CANCEL,
+          status: RefundStatus.REQUESTED,
+        },
+        data: {
+          status: RefundStatus.COMPLETED,
+          refundAmount: params.refundAmount,
+          approvedAt: params.canceledAt,
+          refundedAt: params.canceledAt,
+          approvedAdminId: params.adminId,
+          adminReason: params.adminReason,
+          rawData: params.rawData,
+        },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      await tx.adminActivityLog.create({
+        data: {
+          adminId: params.adminId,
+          actionType: AdminActionType.CANCEL_APPROVED,
+          referenceId: params.orderId,
+        },
+      });
+    });
+  }
+
+  approveRefundByAdmin(params: {
+    orderId: string;
+    refundAmount: number;
+    canceledAt: Date;
+    rawData: Prisma.InputJsonValue;
+    adminId: string;
+    adminReason: string;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.order.updateMany({
+        where: { id: params.orderId, status: OrderStatus.REFUND_REQUESTED },
+        data: { status: OrderStatus.REFUND_COMPLETED },
+      });
+      if (count === 0) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      const { count: paymentCount } = await tx.payment.updateMany({
+        where: { orderId: params.orderId, status: PaymentStatus.PAID },
+        data: {
+          status: PaymentStatus.REFUNDED,
+          rawData: params.rawData,
+        },
+      });
+      if (paymentCount === 0) throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
+
+      const { count: refundCount } = await tx.refund.updateMany({
+        where: {
+          payment: { orderId: params.orderId },
+          type: RefundType.REFUND,
+          status: RefundStatus.REQUESTED,
+        },
+        data: {
+          status: RefundStatus.COMPLETED,
+          refundAmount: params.refundAmount,
+          approvedAt: params.canceledAt,
+          refundedAt: params.canceledAt,
+          approvedAdminId: params.adminId,
+          adminReason: params.adminReason,
+          rawData: params.rawData,
+        },
+      });
+      if (refundCount === 0) throw new AppException(REFUND_ERRORS.NOT_FOUND);
+
+      await tx.adminActivityLog.create({
+        data: {
+          adminId: params.adminId,
+          actionType: AdminActionType.REFUND_APPROVED,
+          referenceId: params.orderId,
+        },
+      });
+    });
   }
 
   findOrderSettlementById(orderId: string) {
