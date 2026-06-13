@@ -40,7 +40,10 @@ export class OrderRefundResponseDto {
   @ApiProperty({ example: 7_700_000, description: '서비스 금액' })
   declare servicePrice: number;
 
-  @ApiProperty({ example: 7_700_000, description: '취소·환불 금액' })
+  @ApiProperty({ example: 770_000, description: '무빗 수수료' })
+  declare platformFee: number;
+
+  @ApiProperty({ example: 8_470_000, description: '취소·환불 금액' })
   declare refundAmount: number;
 
   // 취소·환불 메타
@@ -50,12 +53,17 @@ export class OrderRefundResponseDto {
   @ApiProperty({
     type: String,
     format: 'date-time',
+    nullable: true,
     example: '2025-04-30T00:00:00.000Z',
-    description: '취소·환불 완료일',
+    description: '취소·환불 완료일. 승인 전(REQUESTED)이면 null.',
   })
-  declare approvedAt: Date;
+  declare approvedAt: Date | null;
 
   // 승인자
-  @ApiProperty({ type: OrderRefundApproverDto })
-  declare approvedBy: OrderRefundApproverDto;
+  @ApiProperty({
+    type: OrderRefundApproverDto,
+    nullable: true,
+    description: '승인 완료된 경우에만 값. 승인 전(REQUESTED)이면 null.',
+  })
+  declare approvedBy: OrderRefundApproverDto | null;
 }
