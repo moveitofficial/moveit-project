@@ -121,10 +121,6 @@ export class UsersService {
     return this.servicesService.getAllServicesByExpertId(userId, query);
   }
 
-  getAllUser() {
-    return 'all user';
-  }
-
   async getUserById(id: string) {
     const user = await this.usersRepository.findByIdWithProfiles(id);
     if (!user) {
