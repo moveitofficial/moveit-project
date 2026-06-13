@@ -58,8 +58,9 @@ export class OrdersRepository {
     sort: OrderListSort;
     skip: number;
     take: number;
+    search?: string;
   }) {
-    const { userId, field, statuses, sort, skip, take } = params;
+    const { userId, field, statuses, sort, skip, take, search } = params;
     const userWhere: Prisma.OrderWhereInput =
       field === 'clientUserId'
         ? { clientUserId: userId }
@@ -70,9 +71,20 @@ export class OrdersRepository {
     const paymentWhere: Prisma.OrderWhereInput = {
       payment: { is: { status: { in: LISTABLE_PAYMENT_STATUSES } } },
     };
+    const searchWhere: Prisma.OrderWhereInput = search
+      ? field === 'clientUserId'
+        ? {
+            expertUser: {
+              expertProfile: {
+                businessName: { contains: search, mode: 'insensitive' },
+              },
+            },
+          }
+        : { clientUser: { name: { contains: search, mode: 'insensitive' } } }
+      : {};
 
     return this.prisma.order.findMany({
-      where: { ...userWhere, ...statusWhere, ...paymentWhere },
+      where: { ...userWhere, ...statusWhere, ...paymentWhere, ...searchWhere },
       select: orderListSelect,
       orderBy: sort === 'deadline' ? { endDate: 'asc' } : { createdAt: 'desc' },
       skip,
@@ -84,8 +96,9 @@ export class OrdersRepository {
     userId: string;
     field: 'clientUserId' | 'expertUserId';
     statuses?: OrderStatus[];
+    search?: string;
   }) {
-    const { userId, field, statuses } = params;
+    const { userId, field, statuses, search } = params;
     const userWhere: Prisma.OrderWhereInput =
       field === 'clientUserId'
         ? { clientUserId: userId }
@@ -96,9 +109,20 @@ export class OrdersRepository {
     const paymentWhere: Prisma.OrderWhereInput = {
       payment: { is: { status: { in: LISTABLE_PAYMENT_STATUSES } } },
     };
+    const searchWhere: Prisma.OrderWhereInput = search
+      ? field === 'clientUserId'
+        ? {
+            expertUser: {
+              expertProfile: {
+                businessName: { contains: search, mode: 'insensitive' },
+              },
+            },
+          }
+        : { clientUser: { name: { contains: search, mode: 'insensitive' } } }
+      : {};
 
     return this.prisma.order.count({
-      where: { ...userWhere, ...statusWhere, ...paymentWhere },
+      where: { ...userWhere, ...statusWhere, ...paymentWhere, ...searchWhere },
     });
   }
 

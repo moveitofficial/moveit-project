@@ -82,11 +82,13 @@ export class OrdersService {
         sort,
         skip,
         take: pageSize,
+        search: query.search,
       }),
       this.ordersRepository.countOrdersByUser({
         userId,
         field,
         statuses: query.status,
+        search: query.search,
       }),
     ]);
 

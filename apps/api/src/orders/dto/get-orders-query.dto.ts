@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrderStatus } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsIn, IsOptional } from 'class-validator';
+import { IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { ORDER_LIST_AS, ORDER_LIST_SORT } from '../orders.constants';
@@ -38,4 +38,12 @@ export class GetOrdersQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsIn(ORDER_LIST_SORT)
   declare sort?: OrderListSort;
+
+  @ApiPropertyOptional({
+    description:
+      'as=client: 전문가 업체명(businessName) 검색, as=expert: 의뢰인 이름(name) 검색',
+  })
+  @IsOptional()
+  @IsString()
+  declare search?: string;
 }
