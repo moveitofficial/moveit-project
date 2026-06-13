@@ -318,10 +318,11 @@ export class OrdersService {
       throw new AppException(REVIEW_ERRORS.ORDER_REVIEW_MISMATCH);
     }
 
-    const updated = await this.ordersRepository.updateReview(reviewId, {
-      rating: dto.rating,
-      content: dto.content,
-    });
+    const updated = await this.ordersRepository.updateReview(
+      reviewId,
+      review.order.expertUserId,
+      { rating: dto.rating, content: dto.content },
+    );
 
     return mapReview(updated);
   }
@@ -343,7 +344,10 @@ export class OrdersService {
       throw new AppException(REVIEW_ERRORS.ORDER_REVIEW_MISMATCH);
     }
 
-    await this.ordersRepository.deleteReview(reviewId);
+    await this.ordersRepository.deleteReview(
+      reviewId,
+      review.order.expertUserId,
+    );
   }
 
   async requestCancelOrder(clientUserId: string, orderId: string) {

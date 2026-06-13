@@ -38,6 +38,15 @@ import type {
   MyReviewSort,
 } from '../services/services.types';
 
+function calcAvgRating(reviews: { rating: number }[]): number | null {
+  if (reviews.length === 0) return null;
+  return (
+    Math.round(
+      (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10,
+    ) / 10
+  );
+}
+
 @Injectable()
 export class OrdersRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -142,16 +151,12 @@ export class OrdersRepository {
         where: { order: { expertUserId: data.expertUserId } },
         select: { rating: true },
       });
-      const avgRating =
-        Math.round(
-          (allReviews.reduce((sum, r) => sum + r.rating, 0) /
-            allReviews.length) *
-            10,
-        ) / 10;
-
       await tx.expertProfile.update({
         where: { userId: data.expertUserId },
-        data: { avgRating, reviewCount: allReviews.length },
+        data: {
+          avgRating: calcAvgRating(allReviews),
+          reviewCount: allReviews.length,
+        },
       });
 
       return review;
@@ -208,23 +213,51 @@ export class OrdersRepository {
     return result;
   }
 
-  updateReview(
+  async updateReview(
     reviewId: string,
+    expertUserId: string,
     data: {
       rating?: number;
       content?: string;
     },
   ): Promise<ReviewWithUser> {
-    return this.prisma.review.update({
-      where: { id: reviewId },
-      data,
-      select: reviewWithUserSelect,
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.review.update({
+        where: { id: reviewId },
+        data,
+        select: reviewWithUserSelect,
+      });
+
+      if (data.rating !== undefined) {
+        const allReviews = await tx.review.findMany({
+          where: { order: { expertUserId } },
+          select: { rating: true },
+        });
+        await tx.expertProfile.update({
+          where: { userId: expertUserId },
+          data: { avgRating: calcAvgRating(allReviews) },
+        });
+      }
+
+      return updated;
     });
   }
 
-  async deleteReview(reviewId: string): Promise<void> {
-    await this.prisma.review.delete({
-      where: { id: reviewId },
+  async deleteReview(reviewId: string, expertUserId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.review.delete({ where: { id: reviewId } });
+
+      const allReviews = await tx.review.findMany({
+        where: { order: { expertUserId } },
+        select: { rating: true },
+      });
+      await tx.expertProfile.update({
+        where: { userId: expertUserId },
+        data: {
+          avgRating: calcAvgRating(allReviews),
+          reviewCount: allReviews.length,
+        },
+      });
     });
   }
 
