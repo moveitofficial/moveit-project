@@ -38,12 +38,6 @@ import type { Request } from 'express';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @ApiOperation({ summary: '모든 유저 조회하기' })
-  @Get('')
-  getAllUser() {
-    return this.usersService.getAllUser();
-  }
-
   @ApiOperation({ summary: '전문가 상세 조회' })
   @OptionalJwtAuth()
   @ApiSuccessResponse(HttpStatus.OK, ExpertDetailResponseDto)
