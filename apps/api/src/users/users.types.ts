@@ -62,3 +62,43 @@ export const myCommentListSelect = {
 export type MyCommentListItem = Prisma.CommentGetPayload<{
   select: typeof myCommentListSelect;
 }>;
+
+export const expertDetailSelect = {
+  id: true,
+  profileImageUrl: true,
+  region: true,
+  expertProfile: {
+    select: {
+      businessName: true,
+      ceoName: true,
+      description: true,
+      foundedYear: true,
+      employeeMin: true,
+      employeeMax: true,
+      contactTimeStart: true,
+      contactTimeEnd: true,
+      avgRating: true,
+      reviewCount: true,
+      techStacks: {
+        select: { techStack: { select: { name: true } } },
+      },
+      portfolios: {
+        select: { clientName: true },
+      },
+    },
+  },
+  services: {
+    where: { status: 'ACTIVE' as const },
+    select: {
+      _count: { select: { orders: true, chatRooms: true } },
+    },
+  },
+  ordersAsExpert: {
+    select: { status: true },
+  },
+  favoriteExperts: { select: { clientUserId: true } },
+} satisfies Prisma.UserSelect;
+
+export type ExpertDetail = Prisma.UserGetPayload<{
+  select: typeof expertDetailSelect;
+}>;

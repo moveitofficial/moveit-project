@@ -133,6 +133,78 @@ export class UsersService {
     return mapUser(user);
   }
 
+  async getExpertDetail(
+    expertUserId: string,
+    viewer?: { userId: string; role: Role },
+  ) {
+    const viewerId = viewer?.role === Role.CLIENT ? viewer.userId : undefined;
+
+    const user = await this.usersRepository.findExpertDetail(
+      expertUserId,
+      viewerId,
+    );
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (!user.expertProfile)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
+
+    const {
+      expertProfile,
+      services,
+      ordersAsExpert,
+      favoriteExperts,
+      ...rest
+    } = user;
+
+    const totalOrderCount = ordersAsExpert.length;
+    const nonExpiredCount = ordersAsExpert.filter(
+      (o) => o.status !== 'EXPIRED',
+    ).length;
+    const completionRate =
+      totalOrderCount > 0
+        ? Math.min(Math.round((nonExpiredCount / totalOrderCount) * 100), 100)
+        : null;
+
+    const purchaseRates = services
+      .filter((s) => s._count.orders > 0)
+      .map((s) =>
+        s._count.chatRooms === 0
+          ? 100
+          : Math.min(
+              Math.round((s._count.orders / s._count.chatRooms) * 100),
+              100,
+            ),
+      );
+    const topPurchaseRate =
+      purchaseRates.length > 0 ? Math.max(...purchaseRates) : null;
+
+    const isFavorite =
+      viewerId !== undefined &&
+      favoriteExperts.some((f) => f.clientUserId === viewerId);
+
+    return {
+      id: rest.id,
+      profileImageUrl: rest.profileImageUrl,
+      region: rest.region,
+      businessName: expertProfile.businessName,
+      ceoName: expertProfile.ceoName,
+      description: expertProfile.description,
+      foundedYear: expertProfile.foundedYear,
+      employeeMin: expertProfile.employeeMin,
+      employeeMax: expertProfile.employeeMax,
+      contactTimeStart: expertProfile.contactTimeStart,
+      contactTimeEnd: expertProfile.contactTimeEnd,
+      avgRating: expertProfile.avgRating,
+      reviewCount: expertProfile.reviewCount,
+      techStacks: expertProfile.techStacks.map((ts) => ts.techStack.name),
+      clientNames: expertProfile.portfolios.map((p) => p.clientName),
+      totalOrderCount,
+      serviceCount: services.length,
+      topPurchaseRate,
+      completionRate,
+      isFavorite,
+    };
+  }
+
   findUserById(id: string): Promise<User | null> {
     return this.usersRepository.findById(id);
   }

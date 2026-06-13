@@ -5,12 +5,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MyCommentSort } from './dto/my-comments-query.dto';
 import { MyPostSort } from './dto/my-posts-query.dto';
 import {
+  expertDetailSelect,
   myCommentListSelect,
   myPostListSelect,
   userWithProfilesInclude,
 } from './users.types';
 
 import type {
+  ExpertDetail,
   MyCommentListItem,
   MyPostListItem,
   UserWithProfiles,
@@ -167,6 +169,28 @@ export class UsersRepository {
         post: {
           deletedAt: null,
         },
+      },
+    });
+  }
+
+  findExpertDetail(
+    userId: string,
+    viewerId?: string,
+  ): Promise<ExpertDetail | null> {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        ...expertDetailSelect,
+        favoriteExperts: viewerId
+          ? {
+              where: { clientUserId: viewerId },
+              select: { clientUserId: true },
+            }
+          : {
+              where: { clientUserId: userId },
+              take: 0,
+              select: { clientUserId: true },
+            },
       },
     });
   }
