@@ -5,6 +5,7 @@ import { ExpertProfilesModule } from '../expert-profiles/expert-profiles.module'
 import { OrdersModule } from '../orders/orders.module';
 import { MePortfoliosController } from '../portfolios/me-portfolios.controller';
 import { PortfoliosModule } from '../portfolios/portfolios.module';
+import { MeServicesController } from '../services/me-services.controller';
 import { ServicesModule } from '../services/services.module';
 import { UploadModule } from '../upload/upload.module';
 
@@ -23,7 +24,12 @@ import { UsersService } from './users.service';
     ServicesModule,
   ],
   providers: [UsersRepository, UsersService],
-  controllers: [MeController, MePortfoliosController, UsersController],
+  controllers: [
+    MeController,
+    MePortfoliosController,
+    MeServicesController,
+    UsersController,
+  ],
   exports: [UsersService, UsersRepository],
 })
 export class UsersModule {}

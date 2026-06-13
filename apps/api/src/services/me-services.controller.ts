@@ -1,19 +1,27 @@
-import { Controller, Get, HttpStatus, Req } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, Req } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
 import { COMMON_ERRORS } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
-import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
-import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
+import {
+  ApiPaginatedResponse,
+  ApiSuccessResponse,
+} from '../common/decorators/api-success-response.decorator';
+import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
-import { ServiceListItemResponseDto } from './dto/service-response.dto';
+import {
+  ExpertServiceListItemResponseDto,
+  ServiceListItemResponseDto,
+} from './dto/service-response.dto';
 import { ServicesService } from './services.service';
 
 import type { Request } from 'express';
 
-@ApiTags('me-services')
-@Controller('me')
+@ApiTags('users/me')
+@Controller('users/me')
 export class MeServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
@@ -29,5 +37,15 @@ export class MeServicesController {
   getMyRecentlyViewedServices(@Req() req: Request) {
     const user = req.user as JwtAccessUser;
     return this.servicesService.getMyRecentlyViewedServices(user.userId);
+  }
+
+  @ApiOperation({ summary: '내 서비스 목록 조회 (전문가용)' })
+  @ApiPaginatedResponse(HttpStatus.OK, ExpertServiceListItemResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @RoleAuth(Role.EXPERT)
+  @Get('services')
+  getMyServices(@Req() req: Request, @Query() query: PaginationQueryDto) {
+    const user = req.user as JwtAccessUser;
+    return this.servicesService.getMyServices(user.userId, query);
   }
 }

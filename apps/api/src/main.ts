@@ -54,7 +54,6 @@ async function bootstrap() {
     .addTag('users/me')
     .addTag('users/me/portfolios')
     .addTag('users/me/orders')
-    .addTag('me-services')
     .addTag('users')
     .addTag('portfolios')
     .addTag('services')
