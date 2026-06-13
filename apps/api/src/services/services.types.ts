@@ -129,6 +129,9 @@ export const reviewWithUserSelect = {
   user: {
     select: { id: true, name: true, profileImageUrl: true },
   },
+  order: {
+    select: { expertUserId: true },
+  },
 } satisfies Prisma.ReviewSelect;
 
 export type ReviewWithUser = Prisma.ReviewGetPayload<{
