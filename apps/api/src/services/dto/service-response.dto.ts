@@ -228,7 +228,11 @@ class ServiceExpertSummaryResponseDto {
   @ApiProperty({ example: '코드잇 에이전시' })
   declare companyName: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'https://example.img.com/image.jpg',
+  })
   declare profileImageUrl: string | null;
 
   @ApiProperty({ enum: Region, nullable: true, example: Region.SEOUL })
@@ -328,6 +332,7 @@ class ReviewerResponseDto {
   declare name: string;
 
   @ApiProperty({
+    type: String,
     nullable: true,
     example: 'https://example.img.com/image.jpg',
   })
@@ -342,6 +347,7 @@ class MyReviewExpertResponseDto {
   declare name: string;
 
   @ApiProperty({
+    type: String,
     nullable: true,
     example: 'https://example.img.com/image.jpg',
   })
@@ -504,6 +510,14 @@ export class ServiceDetailResponseDto {
 
   @ApiProperty({ example: 45 })
   declare favoriteCount: number;
+
+  @ApiPropertyOptional({
+    example: 80,
+    description:
+      '구매율 (주문수/문의수 × 100, 반올림, 최대 100). 주문이 없으면 null',
+    nullable: true,
+  })
+  declare purchaseRate: number | null;
 }
 
 export class ExpertServiceListItemResponseDto {
