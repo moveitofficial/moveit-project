@@ -510,6 +510,14 @@ export class ServiceDetailResponseDto {
 
   @ApiProperty({ example: 45 })
   declare favoriteCount: number;
+
+  @ApiPropertyOptional({
+    example: 80,
+    description:
+      '구매율 (주문수/문의수 × 100, 반올림, 최대 100). 주문이 없으면 null',
+    nullable: true,
+  })
+  declare purchaseRate: number | null;
 }
 
 export class ExpertServiceListItemResponseDto {

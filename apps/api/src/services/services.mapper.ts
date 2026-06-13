@@ -137,6 +137,17 @@ export function mapServiceDetail(service: ServiceDetail, isFavorite: boolean) {
     faqs,
     orderCount: service._count.orders,
     favoriteCount: service._count.favoriteServices,
+    purchaseRate:
+      service._count.orders === 0
+        ? null
+        : service._count.chatRooms === 0
+          ? 100
+          : Math.min(
+              Math.round(
+                (service._count.orders / service._count.chatRooms) * 100,
+              ),
+              100,
+            ),
   };
 }
 

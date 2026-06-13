@@ -111,6 +111,7 @@ export const serviceDetailInclude = {
     select: {
       orders: true,
       favoriteServices: true,
+      chatRooms: true,
     },
   },
 } satisfies Prisma.ServiceInclude;
