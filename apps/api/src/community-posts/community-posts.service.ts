@@ -24,6 +24,7 @@ import { CommunityPostsRepository } from './community-posts.repository';
 import {
   COMMENT_MAX_LENGTH,
   COMMENT_MIN_LENGTH,
+  containsBannedWord,
   getPostContentPlainTextLength,
   POST_MIN_LENGTH,
   sanitizePostContent,
@@ -56,6 +57,10 @@ export class CommunityPostsService {
 
     if (plainTextLength < POST_MIN_LENGTH) {
       throw new AppException(COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT);
+    }
+
+    if (containsBannedWord(dto.title) || containsBannedWord(sanitizedContent)) {
+      throw new AppException(COMMUNITY_POSTS_ERRORS.CONTAINS_BANNED_WORD);
     }
 
     const created = await this.communityPostsRepository.createPost(userId, {
@@ -168,6 +173,9 @@ export class CommunityPostsService {
     }
 
     if (dto.title !== undefined) {
+      if (containsBannedWord(dto.title)) {
+        throw new AppException(COMMUNITY_POSTS_ERRORS.CONTAINS_BANNED_WORD);
+      }
       updateData.title = dto.title.trim();
     }
 
@@ -177,6 +185,10 @@ export class CommunityPostsService {
 
       if (plainTextLength < POST_MIN_LENGTH) {
         throw new AppException(COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT);
+      }
+
+      if (containsBannedWord(sanitizedContent)) {
+        throw new AppException(COMMUNITY_POSTS_ERRORS.CONTAINS_BANNED_WORD);
       }
 
       updateData.content = sanitizedContent;
