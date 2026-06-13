@@ -63,6 +63,7 @@ export class CommunityPostsController {
   @ApiErrorResponse(
     COMMON_ERRORS.VALIDATION_ERROR,
     COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMUNITY_POSTS_ERRORS.CONTAINS_BANNED_WORD,
   )
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Post()
@@ -103,18 +104,6 @@ export class CommunityPostsController {
     return this.communityPostsService.getPost(postId, user?.userId);
   }
 
-  @ApiOperation({ summary: '게시글 삭제' })
-  @JwtAuth(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
-  @ApiSuccessResponse(HttpStatus.OK, PostDeletionResponseDto)
-  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
-  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
-  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
-  @Delete(':id')
-  deletePost(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
-    const user = req.user as JwtAccessUser;
-    return this.communityPostsService.deletePost(postId, user.userId);
-  }
-
   @ApiOperation({ summary: '게시글 수정' })
   @JwtAuth(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
   @ApiSuccessResponse(HttpStatus.OK, PostResponseDto)
@@ -123,6 +112,7 @@ export class CommunityPostsController {
     COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT,
     COMMUNITY_POSTS_ERRORS.NOTHING_TO_UPDATE,
     COMMON_ERRORS.VALIDATION_ERROR,
+    COMMUNITY_POSTS_ERRORS.CONTAINS_BANNED_WORD,
   )
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
@@ -134,6 +124,18 @@ export class CommunityPostsController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.communityPostsService.updatePost(user.userId, id, dto);
+  }
+
+  @ApiOperation({ summary: '게시글 삭제' })
+  @JwtAuth(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
+  @ApiSuccessResponse(HttpStatus.OK, PostDeletionResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Delete(':id')
+  deletePost(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.deletePost(postId, user.userId);
   }
 
   @ApiOperation({ summary: '게시글 좋아요 토글' })

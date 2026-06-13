@@ -418,6 +418,11 @@ export const COMMUNITY_POSTS_ERRORS = {
     message: '수정할 항목이 없습니다.',
     code: 'COMMUNITY_POSTS_NOTHING_TO_UPDATE',
   },
+  CONTAINS_BANNED_WORD: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '글 내용에 부적절한 단어가 포함되어 있습니다.',
+    code: 'COMMUNITY_POSTS_CONTAINS_BANNED_WORD',
+  },
 } as const;
 
 export const CHAT_ERRORS = {
