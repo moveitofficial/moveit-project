@@ -336,7 +336,6 @@ export class OrdersRepository {
           platformFee: data.platformFee,
           totalAmount: data.totalAmount,
           status: OrderStatus.NEGOTIATING,
-          startDate: new Date(),
           endDate: null,
           payment: {
             create: {
