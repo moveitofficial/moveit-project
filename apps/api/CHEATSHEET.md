@@ -96,6 +96,15 @@ pnpm --filter api run prisma:studio
 pnpm --filter api run prisma:validate
 ```
 
+### 패키지 빌드
+
+```bash
+# socket-events 빌드 (채팅 관련 타입/이벤트 수정 후 반드시 실행)
+pnpm --filter @repo/socket-events build
+```
+
+> `@repo/socket-events`를 수정했는데 채팅 관련 빌드/타입 에러가 나면 이 명령어 먼저 실행하세요.
+
 ---
 
 ## 4. Import 꼬임 → 린트 오류 한번에 수정

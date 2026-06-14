@@ -247,16 +247,13 @@ enum MessageType {
 }
 
 enum SystemMessageType {
-  TRADE_REQUEST_SENT // 고객에게 거래를 요청했어요 (전문가 측)
-  TRADE_REQUEST_RECEIVED // 전문가가 거래를 요청했어요 (고객 측)
+  TRADE_REQUEST // 거래를 요청했어요
   TRADE_CANCELED // 거래 요청이 취소되었어요
-  PAYMENT_REQUEST // 결제 요청
-  PAYMENT_HELD // 무빗이 결제 금액을 안전하게 보관하고 있어요 (전문가 측)
-  PAYMENT_COMPLETED // 결제가 완료되었습니다 (고객 측)
+  PAYMENT_COMPLETED // 결제가 완료되었습니다
+  PAYMENT_HELD // 무빗이 결제 금액을 안전하게 보관하고 있어요
   SCHEDULE_REQUEST // 일정을 등록해주세요
   SCHEDULE_REGISTERED // 일정 등록이 완료되었습니다
   SCHEDULE_CHANGE_REQUEST // 일정 변경 요청
-  ORDER_COMPLETION_PENDING // 구매 확정 대기
 }
 
 enum SenderType {
@@ -669,7 +666,7 @@ model Order {
   platformFee        Int         @map("platform_fee")
   totalAmount        Int         @map("total_amount")
   status             OrderStatus
-  startDate          DateTime    @map("start_date")
+  startDate          DateTime    @default(now()) @map("start_date")
   endDate            DateTime?   @map("end_date")
   refundReason       String?     @map("refund_reason")
   createdAt          DateTime    @default(now()) @map("created_at")
@@ -983,17 +980,17 @@ model ChatRoom {
 }
 
 model ChatParticipant {
-  id                String   @id @default(uuid()) @db.Uuid
-  chatRoomId        String   @map("chat_room_id") @db.Uuid
-  userId            String   @map("user_id") @db.Uuid
-  lastReadMessageId        String?  @map("last_read_message_id") @db.Uuid
-  lastDismissedMessageId   String?  @map("last_dismissed_message_id") @db.Uuid
-  createdAt                DateTime @default(now()) @map("created_at")
+  id                     String   @id @default(uuid()) @db.Uuid
+  chatRoomId             String   @map("chat_room_id") @db.Uuid
+  userId                 String   @map("user_id") @db.Uuid
+  lastReadMessageId      String?  @map("last_read_message_id") @db.Uuid
+  lastDismissedMessageId String?  @map("last_dismissed_message_id") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at")
 
-  chatRoom               ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  user                   User     @relation(fields: [userId], references: [id])
-  lastReadMessage        Message? @relation("ParticipantLastRead", fields: [lastReadMessageId], references: [id])
-  lastDismissedMessage   Message? @relation("ParticipantLastDismissed", fields: [lastDismissedMessageId], references: [id])
+  chatRoom             ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user                 User     @relation(fields: [userId], references: [id])
+  lastReadMessage      Message? @relation("ParticipantLastRead", fields: [lastReadMessageId], references: [id])
+  lastDismissedMessage Message? @relation("ParticipantLastDismissed", fields: [lastDismissedMessageId], references: [id])
 
   @@unique([chatRoomId, userId])
   @@map("chat_participants")
@@ -1002,7 +999,7 @@ model ChatParticipant {
 model Message {
   id            String                @id @default(uuid()) @db.Uuid
   chatRoomId    String                @map("chat_room_id") @db.Uuid
-  senderId      String                @map("sender_id") @db.Uuid
+  senderId      String?               @map("sender_id") @db.Uuid
   type          MessageType
   systemType    SystemMessageType?    @map("system_type")
   referenceType MessageReferenceType? @map("reference_type")
@@ -1010,12 +1007,12 @@ model Message {
   content       String
   createdAt     DateTime              @default(now()) @map("created_at")
 
-  chatRoom               ChatRoom            @relation("ChatRoomMessages", fields: [chatRoomId], references: [id])
-  chatRoomAsLast         ChatRoom[]          @relation("ChatRoomLastMessage")
-  sender                 User                @relation(fields: [senderId], references: [id])
-  participantsAsLastRead      ChatParticipant[] @relation("ParticipantLastRead")
-  participantsAsLastDismissed ChatParticipant[] @relation("ParticipantLastDismissed")
-  attachments            MessageAttachment[]
+  chatRoom                    ChatRoom            @relation("ChatRoomMessages", fields: [chatRoomId], references: [id])
+  chatRoomAsLast              ChatRoom[]          @relation("ChatRoomLastMessage")
+  sender                      User?                @relation(fields: [senderId], references: [id])
+  participantsAsLastRead      ChatParticipant[]   @relation("ParticipantLastRead")
+  participantsAsLastDismissed ChatParticipant[]   @relation("ParticipantLastDismissed")
+  attachments                 MessageAttachment[]
 
   @@map("messages")
 }
