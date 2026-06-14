@@ -24,6 +24,7 @@ export const [themeClass, vars] = createTheme({
     gray300: '#ABABAB',
     gray400: '#999999',
     gray500: '#808080',
+    textGray: '#667388',
 
     blue50: '#F5FAFF',
     blue100: '#E9F4FF',
@@ -43,6 +44,7 @@ export const [themeClass, vars] = createTheme({
 
     line100: '#F2F2F2',
     line200: '#E6E6E6',
+    line300: '#192031',
 
     adminMenuBackground: '#101729',
     adminBackground: '#F7F8FC',
