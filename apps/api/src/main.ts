@@ -51,6 +51,7 @@ async function bootstrap() {
     )
     .addTag('health')
     .addTag('auth')
+    .addTag('expert-profiles')
     .addTag('users/me')
     .addTag('users/me/portfolios')
     .addTag('users/me/orders')

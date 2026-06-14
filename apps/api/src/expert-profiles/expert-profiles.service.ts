@@ -183,6 +183,14 @@ export class ExpertProfilesService {
     return mapUpdatedProfile(profile);
   }
 
+  async checkBusinessNumber(businessNumber: string) {
+    const available =
+      await this.expertProfilesRepository.isBusinessNumberAvailable(
+        businessNumber,
+      );
+    return { available };
+  }
+
   async applyForApproval(userId: string) {
     const profile =
       await this.expertProfilesRepository.findByUserIdWithRelations(userId);

@@ -408,7 +408,7 @@ model ExpertProfile {
   rejectedAt        DateTime? @map("rejected_at")
   rejectReason      String?   @map("reject_reason")
   businessName      String?   @map("business_name")
-  businessNumber    String?   @map("business_number")
+  businessNumber    String?   @unique @map("business_number")
   ceoName           String?   @map("ceo_name")
   contactTimeStart  String?   @map("contact_time_start")
   contactTimeEnd    String?   @map("contact_time_end")

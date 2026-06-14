@@ -143,3 +143,11 @@ export class ApplyForApprovalResponseDto {
   @ApiProperty({ example: false })
   declare isApproved: boolean;
 }
+
+export class BusinessNumberCheckResponseDto {
+  @ApiProperty({
+    example: true,
+    description: '사용 가능 여부 (중복이면 false)',
+  })
+  declare available: boolean;
+}
