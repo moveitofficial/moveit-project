@@ -20,7 +20,7 @@ export default function LoginComponents() {
 
       <p className={styles.SignUpHint}>
         아직 무빗 회원이 아니신가요?{' '}
-        <Link href="#" className={styles.SignUpLink}>
+        <Link href="/signup" className={styles.SignUpLink}>
           이메일로 회원가입하기
         </Link>
       </p>
