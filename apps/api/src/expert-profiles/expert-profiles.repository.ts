@@ -133,6 +133,13 @@ export class ExpertProfilesRepository {
     return this.prisma.expertProfile.update(args);
   }
 
+  async isBusinessNumberAvailable(businessNumber: string): Promise<boolean> {
+    const count = await this.prisma.expertProfile.count({
+      where: { businessNumber },
+    });
+    return count === 0;
+  }
+
   applyForApproval(userId: string): Promise<ExpertProfileWithRelations> {
     return this.prisma.expertProfile.update({
       where: { userId },
