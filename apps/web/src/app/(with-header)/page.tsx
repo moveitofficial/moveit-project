@@ -1,10 +1,6 @@
 import { Card, type CardService } from '@repo/ui/Card';
 import { type Route } from 'next';
 
-import { mockCommunityPosts } from '../mocks/community';
-import { mockExpertList } from '../mocks/experts';
-import { mockMainData } from '../mocks/main';
-import { getTechStackLabel } from '../mocks/metadata';
 
 import * as styles from './page.css';
 
@@ -17,6 +13,10 @@ import { Browse } from '@/feature/main/components/Browse';
 import { Hero } from '@/feature/main/components/Hero';
 import { Showcase } from '@/feature/main/components/Showcase';
 import { StripBanner } from '@/feature/main/components/StripBanner';
+import { mockCommunityPosts } from '@/mocks/community';
+import { mockExpertList } from '@/mocks/experts';
+import { mockMainData } from '@/mocks/main';
+import { getTechStackLabel } from '@/mocks/metadata';
 
 const toCardService = (s: ServiceListItem): CardService => ({
   id: s.id,
