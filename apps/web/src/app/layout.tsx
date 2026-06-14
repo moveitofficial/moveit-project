@@ -4,13 +4,8 @@ import { themeClass } from '@repo/styles/tokens';
 import '@repo/styles/reset';
 import '@repo/styles/globals';
 import clsx from 'clsx';
-import { Suspense } from 'react';
 
 import type { Metadata } from 'next';
-
-import { Container } from '@/components/layout/Container';
-import { Footer } from '@/components/layout/Footer';
-import { Header } from '@/components/layout/Header';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -25,13 +20,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className={clsx(nanumSquare.variable, themeClass)}>
       <body>
-        <Suspense fallback={null}>
-          <Header />
-        </Suspense>
-        <QueryProvider>
-          <Container>{children}</Container>
-        </QueryProvider>
-        <Footer />
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );

@@ -8,10 +8,9 @@ import Link from 'next/link';
 import * as styles from './Header.css';
 import HeaderNav from './HeaderNav';
 
-
 const userMenuItems: { label: string; href: Route }[] = [
   { label: '전문가 등록', href: '#' },
-  { label: '로그인', href: '#' },
+  { label: '로그인', href: '/login' },
 ];
 
 export default function Header() {
