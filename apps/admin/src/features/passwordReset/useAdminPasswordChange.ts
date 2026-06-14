@@ -10,6 +10,8 @@ import { updatePassword, type UpdatePasswordData } from './api';
 
 import type { ApiSuccess } from '@/types/api';
 
+import { useAdminStore } from '@/stores/admin-store';
+
 export function useAdminPasswordChange() {
   const router = useRouter();
 
@@ -17,6 +19,7 @@ export function useAdminPasswordChange() {
     mutationFn: updatePassword,
     onSuccess: async () => {
       await signOut();
+      useAdminStore.getState().setAdmin(null);
       router.replace('/login');
       router.refresh();
     },

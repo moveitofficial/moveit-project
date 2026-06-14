@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 
 import * as styles from './PageHeader.css';
 
+import { usePageHeaderStore } from '@/stores/page-header-store';
+
 const ROUTE_INFO: Record<string, { breadcrumb: string[]; title: string }> = {
   '/dashboard': { breadcrumb: ['대시보드'], title: '대시보드' },
   '/users': { breadcrumb: ['회원관리'], title: '유저 리스트' },
@@ -28,12 +30,14 @@ const ROUTE_INFO: Record<string, { breadcrumb: string[]; title: string }> = {
 
 export default function PageHeader() {
   const pathname = usePathname();
-  const info = ROUTE_INFO[pathname] ?? { breadcrumb: [], title: '' };
+  const override = usePageHeaderStore((s) => s.override);
+  const info = override ??
+    ROUTE_INFO[pathname] ?? { breadcrumb: [], title: '' };
 
   return (
     <header className={styles.header}>
       <p className={clsx(typography.f12R, styles.breadcrumb)}>
-        {info.breadcrumb.join(' · ')}
+        {info.breadcrumb.join(' > ')}
       </p>
       <h1 className={clsx(typography.f16EB, styles.title)}>{info.title}</h1>
     </header>

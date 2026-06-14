@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 
 import * as styles from './page.css';
 
+import PageHeaderOverride from '@/components/layout/PageHeader/PageHeaderOverride';
 import {
   getUserComments,
   getUserDetail,
@@ -99,6 +100,13 @@ export default async function UserDetailPage({ params }: Props) {
 
   return (
     <div className={styles.page}>
+      <PageHeaderOverride
+        breadcrumb={[
+          '유저 리스트',
+          user.role === 'CLIENT' ? '일반유저' : '전문가',
+        ]}
+        title={`${user.name} 유저 상세`}
+      />
       <UserDetail user={user} />
 
       <div className={styles.tableSections}>

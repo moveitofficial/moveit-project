@@ -7,6 +7,8 @@ import { usePathname } from 'next/navigation';
 
 import * as styles from './Sidebar.css';
 
+import { useAdminStore } from '@/stores/admin-store';
+
 const menuGroups = [
   {
     title: '회원관리',
@@ -45,13 +47,16 @@ const menuGroups = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const admin = useAdminStore((s) => s.admin);
 
   return (
     <aside className={styles.wrapper}>
       <div className={styles.brand}>
-        <h1 className={clsx(typography.f16EB, styles.logo)}>moveit</h1>
+        <Link href="/dashboard" className={clsx(typography.f16EB, styles.logo)}>
+          moveit
+        </Link>
         <p className={clsx(typography.f12R, styles.email)}>
-          최고관리자 · admin@moveit.kr
+          {admin && `${admin.name} · ${admin.email}`}
         </p>
       </div>
       <nav className={styles.menu}>

@@ -1,9 +1,6 @@
 import { vars } from '@repo/styles/tokens';
+import { typography } from '@repo/styles/typography';
 import { style } from '@vanilla-extract/css';
-
-const TEXT_COLOR = '#667388';
-const BORDER_COLOR = '#192031';
-const ACTIVE_BG = '#1B233A';
 
 export const wrapper = style({
   width: '256px',
@@ -17,7 +14,7 @@ export const wrapper = style({
 
 export const brand = style({
   padding: '24px 16px 16px',
-  borderBottom: `1px solid ${BORDER_COLOR}`,
+  borderBottom: `1px solid ${vars.color.line300}`,
   display: 'flex',
   flexDirection: 'column',
   gap: '4px',
@@ -28,7 +25,7 @@ export const logo = style({
 });
 
 export const email = style({
-  color: TEXT_COLOR,
+  color: vars.color.gray100,
 });
 
 export const menu = style({
@@ -45,7 +42,7 @@ export const group = style({
 });
 
 export const groupTitle = style({
-  color: TEXT_COLOR,
+  color: vars.color.textGray,
   padding: '8px 32px',
 });
 
@@ -58,15 +55,18 @@ export const item = style({
   display: 'block',
   margin: '0 16px',
   padding: '8px 16px',
-  color: TEXT_COLOR,
+  color: vars.color.textGray,
   borderRadius: '8px',
   ':hover': {
-    backgroundColor: ACTIVE_BG,
+    backgroundColor: vars.color.blue300,
     color: vars.color.white,
   },
 });
 
-export const itemActive = style({
-  backgroundColor: ACTIVE_BG,
-  color: vars.color.white,
-});
+export const itemActive = style([
+  typography.f16EB,
+  {
+    backgroundColor: vars.color.blue300,
+    color: vars.color.white,
+  },
+]);
