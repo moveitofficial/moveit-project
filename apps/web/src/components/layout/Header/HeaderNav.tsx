@@ -30,10 +30,35 @@ function getServiceGroupFromMock(pathname: string): ServiceGroupName | null {
   return service?.categoryRef.group ?? null;
 }
 
+function getServiceGroupFromPathname(
+  pathname: string,
+): ServiceGroupName | null {
+  if (
+    pathname.startsWith('/it-coaching/') &&
+    pathname.length > '/it-coaching/'.length
+  ) {
+    return 'IT_COACHING';
+  }
+
+  if (
+    pathname.startsWith('/project-request/') &&
+    pathname.length > '/project-request/'.length
+  ) {
+    return 'PROJECT_REQUEST';
+  }
+
+  return null;
+}
+
 function getServiceGroupFromLocation(
   pathname: string,
   groupParam: string | null,
 ): ServiceGroupName | null {
+  const fromPathname = getServiceGroupFromPathname(pathname);
+  if (fromPathname !== null) {
+    return fromPathname;
+  }
+
   const fromQuery = parseServiceGroupParam(groupParam);
   if (fromQuery !== null) {
     return fromQuery;

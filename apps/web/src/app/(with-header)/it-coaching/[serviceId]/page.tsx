@@ -10,11 +10,16 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { serviceId } = await params;
-  return generateServiceDetailMetadata(serviceId);
+  return generateServiceDetailMetadata(serviceId, 'IT_COACHING');
 }
 
-export default async function ServiceDetailPage({ params }: Props) {
+export default async function ItCoachingDetailPage({ params }: Props) {
   const { serviceId } = await params;
 
-  return <ServiceDetailPageContent serviceId={serviceId} />;
+  return (
+    <ServiceDetailPageContent
+      serviceId={serviceId}
+      expectedGroup="IT_COACHING"
+    />
+  );
 }
