@@ -1,5 +1,8 @@
 import { PaymentStatus } from '@prisma/client';
 
+export const DEADLINE_IMMINENT_DAYS = 3;
+export const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
 // 목록 노출 대상 — PENDING·FAILED(레거시) 제외
 export const LISTABLE_PAYMENT_STATUSES: PaymentStatus[] = [
   PaymentStatus.PAID,

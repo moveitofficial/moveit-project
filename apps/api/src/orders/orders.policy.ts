@@ -36,6 +36,8 @@ export function validateOrderPaidPayment(order: {
 }
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  [OrderStatus.PENDING]: [],
+  [OrderStatus.TRADE_REQUEST_EXPIRED]: [],
   [OrderStatus.NEGOTIATING]: [],
   [OrderStatus.CANCEL_REQUESTED]: [],
   [OrderStatus.PAYMENT_CANCELLED]: [],
@@ -138,7 +140,8 @@ export function validateScheduleAuthority(
 
   if (
     order.status === OrderStatus.IN_PROGRESS ||
-    order.status === OrderStatus.DEADLINE_IMMINENT
+    order.status === OrderStatus.DEADLINE_IMMINENT ||
+    order.status === OrderStatus.EXPIRED
   ) {
     if (order.clientUserId !== userId || userRole !== Role.CLIENT) {
       throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);

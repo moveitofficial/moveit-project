@@ -6,6 +6,7 @@ import {
   ServiceStatus,
 } from '@prisma/client';
 
+import { ChatService } from '../chats/chat/chat.service';
 import {
   COMMON_ERRORS,
   ORDER_ERRORS,
@@ -27,6 +28,8 @@ import { REVIEWABLE_ORDER_STATUSES } from '../services/services.types';
 
 import {
   calculatePlatformFee,
+  DEADLINE_IMMINENT_DAYS,
+  MS_PER_DAY,
   ORDER_LIST_DEFAULT_SORT,
   ORDER_LIST_USER_ID_FIELD,
   ORDERS_LIST_DEFAULT_PAGE,
@@ -54,6 +57,8 @@ import { OrdersRepository } from './orders.repository';
 
 import type { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
+import type { PayOrderRequestDto } from './dto/pay-order-request.dto';
+import type { ScheduleChangeRequestDto } from './dto/schedule-change-request.dto';
 import type { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
 import type { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
 
@@ -65,7 +70,85 @@ export class OrdersService {
     private readonly ordersRepository: OrdersRepository,
     private readonly paymentsService: PaymentsService,
     private readonly notificationsService: NotificationsService,
+    private readonly chatService: ChatService,
   ) {}
+
+  async payOrder(
+    clientUserId: string,
+    orderId: string,
+    dto: PayOrderRequestDto,
+  ) {
+    const order = await this.ordersRepository.findPendingOrderForPay(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+    if (order.clientUserId !== clientUserId)
+      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+    if (order.status !== OrderStatus.PENDING)
+      throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+    if (order.totalAmount !== dto.amount)
+      throw new AppException(PAYMENT_ERRORS.AMOUNT_MISMATCH);
+
+    const toss = await this.paymentsService.confirmTossPayment(
+      dto.paymentKey,
+      orderId,
+      order.totalAmount,
+    );
+
+    try {
+      const updated = await this.ordersRepository.payPendingOrder({
+        orderId,
+        clientUserId,
+        totalAmount: order.totalAmount,
+        paymentKey: dto.paymentKey,
+        approvedAt: toss.approvedAt,
+        method: toss.method,
+        installmentMonths: toss.installmentMonths,
+        rawData: toss.rawData,
+      });
+      if (!updated) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+      if (dto.roomId) {
+        const roomId = dto.roomId;
+        void (async () => {
+          try {
+            await this.chatService.sendSystemMessage(
+              roomId,
+              'PAYMENT_COMPLETED',
+              {
+                systemType: 'PAYMENT_COMPLETED',
+                serviceTitle: order.service.title,
+                servicePrice: order.agreedServicePrice,
+                platformFee: order.platformFee,
+                totalAmount: order.totalAmount,
+                expertSettlementAmount: order.agreedServicePrice,
+              },
+              orderId,
+            );
+            await this.chatService.sendSystemMessage(roomId, 'PAYMENT_HELD', {
+              systemType: 'PAYMENT_HELD',
+            });
+            await this.chatService.sendSystemMessage(
+              roomId,
+              'SCHEDULE_REQUEST',
+              { systemType: 'SCHEDULE_REQUEST' },
+            );
+          } catch (error: unknown) {
+            this.logger.error(
+              `결제 후 시스템 메시지 발송 실패. orderId=${orderId}`,
+              error instanceof Error ? error.stack : String(error),
+            );
+          }
+        })();
+      }
+
+      return mapCreateOrderResponse(updated);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Toss 승인 후 PENDING Order 결제 처리 실패. orderId=${orderId}, paymentKey=${dto.paymentKey}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw error;
+    }
+  }
 
   async getOrders(userId: string, query: GetOrdersQueryDto) {
     const page = query.page ?? ORDERS_LIST_DEFAULT_PAGE;
@@ -182,23 +265,97 @@ export class OrdersService {
     validateScheduleAuthority(order, userId, userRole);
 
     const endDate = new Date(dto.endDate);
+    const now = new Date();
 
-    const updated =
-      order.status === OrderStatus.NEGOTIATING && order.endDate === null
-        ? await this.ordersRepository.updateOrderSchedule({
-            orderId,
-            fromStatus: OrderStatus.NEGOTIATING,
-            endDate,
-            toStatus: OrderStatus.IN_PROGRESS,
-          })
-        : await this.ordersRepository.updateOrderSchedule({
-            orderId,
-            fromStatus: order.status,
-            endDate,
-          });
+    if (endDate <= now) throw new AppException(ORDER_ERRORS.INVALID_END_DATE);
+
+    const isDeadlineImminent =
+      endDate <= new Date(now.getTime() + DEADLINE_IMMINENT_DAYS * MS_PER_DAY);
+
+    let toStatus: OrderStatus | undefined;
+    if (order.status === OrderStatus.NEGOTIATING && order.endDate === null) {
+      toStatus = OrderStatus.IN_PROGRESS;
+    } else if (
+      order.status === OrderStatus.DEADLINE_IMMINENT ||
+      order.status === OrderStatus.EXPIRED
+    ) {
+      toStatus = isDeadlineImminent
+        ? OrderStatus.DEADLINE_IMMINENT
+        : OrderStatus.IN_PROGRESS;
+    }
+
+    const updated = await this.ordersRepository.updateOrderSchedule({
+      orderId,
+      fromStatus: order.status,
+      endDate,
+      toStatus,
+    });
 
     if (!updated) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+    if (
+      dto.roomId &&
+      order.status === OrderStatus.NEGOTIATING &&
+      order.endDate === null
+    ) {
+      void this.chatService
+        .sendSystemMessage(dto.roomId, 'SCHEDULE_REGISTERED', {
+          systemType: 'SCHEDULE_REGISTERED',
+          serviceTitle: order.service.title,
+          startDate: order.startDate?.toISOString() ?? '',
+          endDate: endDate.toISOString(),
+        })
+        .catch((error: unknown) => {
+          this.logger.error(
+            `일정등록 시스템 메시지 발송 실패. orderId=${orderId}`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        });
+    }
+
     return mapUpdateOrderScheduleResponse(updated);
+  }
+
+  async requestScheduleChange(
+    userId: string,
+    orderId: string,
+    dto: ScheduleChangeRequestDto,
+  ) {
+    const order =
+      await this.ordersRepository.findOrderForScheduleChangeRequest(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+    if (order.expertUserId !== userId)
+      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+    if (
+      order.status !== OrderStatus.NEGOTIATING &&
+      order.status !== OrderStatus.IN_PROGRESS &&
+      order.status !== OrderStatus.DEADLINE_IMMINENT &&
+      order.status !== OrderStatus.EXPIRED
+    ) {
+      throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+    }
+
+    if (dto.roomId) {
+      void this.chatService
+        .sendSystemMessage(dto.roomId, 'SCHEDULE_CHANGE_REQUEST', {
+          systemType: 'SCHEDULE_CHANGE_REQUEST',
+          serviceTitle: order.service.title,
+          clientName:
+            order.clientUser.clientProfile?.nickname ??
+            order.clientUser.name ??
+            '',
+          expertBusinessName:
+            order.expertUser.expertProfile?.businessName ?? '',
+        })
+        .catch((error: unknown) => {
+          this.logger.error(
+            `일정변경요청 시스템 메시지 발송 실패. orderId=${orderId}`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        });
+    }
+
+    return {};
   }
 
   async confirmOrder(userId: string, orderId: string) {
@@ -404,7 +561,11 @@ export class OrdersService {
     return mapUpdateOrderStatusResponse(updated);
   }
 
-  async approveCancelOrder(expertUserId: string, orderId: string) {
+  async approveCancelOrder(
+    expertUserId: string,
+    orderId: string,
+    roomId?: string,
+  ) {
     const order =
       await this.ordersRepository.findOrderCancelApprovePolicy(orderId);
     if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
@@ -442,6 +603,24 @@ export class OrdersService {
             error instanceof Error ? error.stack : String(error),
           );
         });
+
+      if (roomId) {
+        void this.chatService
+          .sendSystemMessage(roomId, 'TRADE_CANCELED', {
+            systemType: 'TRADE_CANCELED',
+            serviceTitle: order.service.title,
+            servicePrice: order.agreedServicePrice,
+            platformFee: order.platformFee,
+            totalAmount: order.totalAmount,
+            expertSettlementAmount: order.agreedServicePrice,
+          })
+          .catch((error: unknown) => {
+            this.logger.error(
+              `거래취소 시스템 메시지 발송 실패. orderId=${orderId}`,
+              error instanceof Error ? error.stack : String(error),
+            );
+          });
+      }
 
       return mapUpdateOrderStatusResponse(updated);
     } catch (error) {

@@ -28,8 +28,10 @@ import {
   orderListSelect,
   orderPolicySelect,
   orderReviewSelect,
+  orderScheduleChangePolicySelect,
   orderSchedulePolicySelect,
   orderStatusResponseSelect,
+  pendingOrderForPaySelect,
 } from './orders.types';
 
 import type { OrderListSort } from './orders.constants';
@@ -336,6 +338,7 @@ export class OrdersRepository {
           platformFee: data.platformFee,
           totalAmount: data.totalAmount,
           status: OrderStatus.NEGOTIATING,
+          startDate: new Date(),
           endDate: null,
           payment: {
             create: {
@@ -367,6 +370,73 @@ export class OrdersRepository {
         }
         if (targets.includes('id')) {
           throw new AppException(ORDER_ERRORS.DUPLICATE_ORDER_ID);
+        }
+      }
+      throw error;
+    }
+  }
+
+  async findPendingOrderForPay(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: pendingOrderForPaySelect,
+    });
+  }
+
+  async findOrderForScheduleChangeRequest(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: orderScheduleChangePolicySelect,
+    });
+  }
+
+  async payPendingOrder(data: {
+    orderId: string;
+    clientUserId: string;
+    totalAmount: number;
+    paymentKey: string;
+    approvedAt: Date;
+    method: string;
+    installmentMonths: number;
+    rawData: Prisma.InputJsonValue;
+  }) {
+    try {
+      const { count } = await this.prisma.order.updateMany({
+        where: { id: data.orderId, status: OrderStatus.PENDING },
+        data: { status: OrderStatus.NEGOTIATING, startDate: new Date() },
+      });
+      if (count === 0) return null;
+
+      await this.prisma.payment.create({
+        data: {
+          orderId: data.orderId,
+          clientUserId: data.clientUserId,
+          status: PaymentStatus.PAID,
+          paidAmount: data.totalAmount,
+          method: data.method,
+          installmentMonths: data.installmentMonths,
+          paymentKey: data.paymentKey,
+          rawData: data.rawData,
+          approvedAt: data.approvedAt,
+        },
+      });
+
+      const result = await this.prisma.order.findUnique({
+        where: { id: data.orderId },
+        include: { payment: true },
+      });
+      return result as typeof result & {
+        payment: NonNullable<NonNullable<typeof result>['payment']>;
+      };
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const target = error.meta?.target;
+        const targets = Array.isArray(target) ? target : [];
+        if (targets.includes('payment_key')) {
+          throw new AppException(PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY);
         }
       }
       throw error;

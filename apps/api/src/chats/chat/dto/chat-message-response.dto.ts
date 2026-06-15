@@ -2,10 +2,59 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   MessageReferenceType,
   MessageType,
+  OrderStatus,
   SystemMessageType,
 } from '@prisma/client';
 
+export class RoomCurrentServiceResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: '프로팀의 앱개발 센스있는 디자인+개발' })
+  declare title: string;
+
+  @ApiProperty({ example: 7_700_000 })
+  declare servicePrice: number;
+}
+
+export class RoomOrderResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ enum: OrderStatus, example: OrderStatus.NEGOTIATING })
+  declare status: OrderStatus;
+
+  @ApiProperty({ example: 80_000_000 })
+  declare agreedServicePrice: number;
+
+  @ApiProperty({ example: 8_000_000 })
+  declare platformFee: number;
+
+  @ApiProperty({ example: 88_000_000 })
+  declare totalAmount: number;
+
+  @ApiProperty()
+  declare startDate: Date;
+
+  @ApiPropertyOptional({ nullable: true, example: null })
+  declare endDate: Date | null;
+}
+
+export class RoomInfoResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ type: RoomCurrentServiceResponseDto })
+  declare currentService: RoomCurrentServiceResponseDto;
+
+  @ApiPropertyOptional({ type: RoomOrderResponseDto, nullable: true })
+  declare order: RoomOrderResponseDto | null;
+}
+
 export class ChatMessageListResponseDto {
+  @ApiProperty({ type: RoomInfoResponseDto })
+  declare room: RoomInfoResponseDto;
+
   @ApiProperty({ type: () => [ChatMessageResponseDto] })
   declare items: ChatMessageResponseDto[];
 
@@ -44,8 +93,8 @@ export class ChatMessageResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare chatRoomId: string;
 
-  @ApiProperty({ format: 'uuid' })
-  declare senderId: string;
+  @ApiPropertyOptional({ format: 'uuid', nullable: true })
+  declare senderId: string | null;
 
   @ApiProperty({ enum: MessageType, example: MessageType.FILE })
   declare type: MessageType;

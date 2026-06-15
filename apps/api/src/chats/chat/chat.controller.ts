@@ -5,8 +5,10 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
   Req,
@@ -16,6 +18,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../../auth/jwt/jwt-access.strategy';
 import {
@@ -29,7 +32,7 @@ import {
   ApiPaginatedResponse,
   ApiSuccessResponse,
 } from '../../common/decorators/api-success-response.decorator';
-import { JwtAuth } from '../../common/decorators/jwt-auth.decorator';
+import { JwtAuth, RoleAuth } from '../../common/decorators/jwt-auth.decorator';
 import { UploadChatFilesResponseDto } from '../../upload/dto/upload-chat-files-response.dto';
 import { UploadService } from '../../upload/upload.service';
 import { FindMessagesQueryDto } from '../common/dto/find-messages-query.dto';
@@ -205,5 +208,22 @@ export class ChatController {
     const user = req.user as JwtAccessUser;
     await this.chatService.dismissAllNotifications(user.userId);
     return {};
+  }
+
+  @ApiOperation({
+    summary: '거래 요청 (전문가 → PENDING 주문 생성 + 시스템 메시지)',
+  })
+  @RoleAuth(Role.EXPERT, CHAT_ERRORS.FORBIDDEN_EXPERT_MISMATCH)
+  @ApiSuccessResponse(HttpStatus.CREATED)
+  @ApiErrorResponse(CHAT_ERRORS.ROOM_NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.CREATED)
+  @Post('rooms/:id/trade-request')
+  async createTradeRequest(
+    @Param('id', ParseUUIDPipe) roomId: string,
+    @Req() req: Request,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.chatService.createTradeRequest(roomId, user.userId);
   }
 }

@@ -4,10 +4,8 @@ import { NotificationCategory, OrderStatus } from '@prisma/client';
 
 import { NotificationsService } from '../notifications/notifications.service';
 
+import { DEADLINE_IMMINENT_DAYS, MS_PER_DAY } from './orders.constants';
 import { OrdersRepository } from './orders.repository';
-
-const DEADLINE_IMMINENT_DAYS = 3;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class OrdersCron {

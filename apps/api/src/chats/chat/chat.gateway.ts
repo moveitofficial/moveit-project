@@ -26,6 +26,7 @@ import { SendMessageDto } from './dto/send-message.dto';
 import type { JwtAccessPayload } from '../../auth/auth.types';
 import type { WsErrorResponse } from '../../common/interfaces/ws-error-response.interface';
 import type { ChatSocket } from '../common/interfaces/authenticated-socket.interface';
+import type { SystemMessageRole } from '@repo/socket-events';
 
 @UsePipes(
   new ValidationPipe({
@@ -98,6 +99,29 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   broadcastMessage(roomId: string, message: unknown) {
     this.server.to(roomId).emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+  }
+
+  broadcastSystemMessage(
+    roomId: string,
+    clientUserId: string,
+    expertUserId: string,
+    message: unknown,
+    recipientRoles?: SystemMessageRole[],
+  ) {
+    if (!recipientRoles) {
+      this.server.to(roomId).emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+      return;
+    }
+    if (recipientRoles.includes('CLIENT')) {
+      this.server
+        .to(`user-${clientUserId}`)
+        .emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+    }
+    if (recipientRoles.includes('EXPERT')) {
+      this.server
+        .to(`user-${expertUserId}`)
+        .emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+    }
   }
 
   broadcastNotification(receiverId: string, message: unknown) {

@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsDateString, IsOptional, IsUUID } from 'class-validator';
 
 export class UpdateOrderScheduleRequestDto {
   @ApiProperty({
@@ -8,4 +8,12 @@ export class UpdateOrderScheduleRequestDto {
   })
   @IsDateString()
   declare endDate: string;
+
+  @ApiPropertyOptional({
+    description: '채팅방 UUID. 시스템 메시지 발송에 사용됩니다.',
+    format: 'uuid',
+  })
+  @IsUUID()
+  @IsOptional()
+  declare roomId?: string;
 }
