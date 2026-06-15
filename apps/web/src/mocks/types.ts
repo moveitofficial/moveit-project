@@ -183,6 +183,22 @@ export interface User {
   createdAt: string;
 }
 
+export interface InterestCategory {
+  group: ServiceGroupName;
+  category: ServiceCategoryName;
+}
+
+export interface ClientProfile {
+  nickname: string | null;
+  interestCategories: InterestCategory[];
+}
+
+export interface ClientMeUser extends User {
+  bankName: string | null;
+  bankAccount: string | null;
+  clientProfile: ClientProfile | null;
+}
+
 export interface ExpertSummary {
   id: string;
   name: string;
