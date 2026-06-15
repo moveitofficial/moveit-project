@@ -115,6 +115,16 @@ export function parseServiceListSearchParams(
   };
 }
 
+export const SERVICE_LIST_DEFAULT_PARAMS: ServiceListSearchParams = {
+  category: 'ALL',
+  page: 1,
+  sort: 'RECOMMENDED',
+  keyword: '',
+  techStacks: [],
+  regions: [],
+  price: null,
+};
+
 export function buildServiceListHref(
   config: ServiceListConfig,
   params: ServiceListSearchParams,

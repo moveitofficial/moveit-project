@@ -1,19 +1,9 @@
 import maintopImg from '@public/main/maintopImg.svg';
 import starFill from '@public/main/starFill.svg';
-import { RoundChip } from '@repo/ui/RoundChip';
 import Image from 'next/image';
 
 import * as styles from './Hero.css';
 import HeroSearchForm from './HeroSearchForm';
-
-const chipText = [
-  '웹 제작',
-  '앱 개발',
-  'AI개발',
-  '게임 개발',
-  '데이터 분석',
-  'AI스터디',
-];
 
 const heroStats = [
   { icon: starFill, value: '4.9', label: '평균 만족도' },
@@ -38,11 +28,6 @@ export default function Hero() {
           </div>
         </div>
         <HeroSearchForm />
-        <div className={styles.roundGroup}>
-          {chipText.map((data: string) => (
-            <RoundChip text={data} size="web" key={data} />
-          ))}
-        </div>
         <div className={styles.webDataGroup}>
           {heroStats.map(({ icon, value, label }) => (
             <div key={label}>

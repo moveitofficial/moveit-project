@@ -852,7 +852,7 @@ class Seeder {
       const profile = await this.#prisma.clientProfile.create({
         data: {
           userId: client.id,
-          nickname: faker.internet.username(),
+          nickname: `${faker.person.lastName()}${faker.person.firstName()}`,
         },
       });
 
@@ -1886,22 +1886,30 @@ class Seeder {
 
   // ─── 17. MainSettings ─────────────────────────────────────────────────
   async #seedMainSettings(experts: User[], services: Service[]): Promise<void> {
-    const sectionTypes = Object.values(MainSectionType);
+    const PER_SECTION = 4;
 
-    for (const sectionType of sectionTypes) {
-      const targetType = sectionType.includes('EXPERT')
+    for (const sectionType of Object.values(MainSectionType)) {
+      const isExpertSection =
+        sectionType === MainSectionType.MOVEIT_POPULAR_COACHING ||
+        sectionType === MainSectionType.MOVEIT_POPULAR_PROJECT_EXPERT;
+      const targetType = isExpertSection
         ? MainTargetType.USER
         : MainTargetType.SERVICE;
-      await this.#prisma.mainSetting.create({
-        data: {
-          sectionType,
-          targetType,
-          targetUserId:
-            targetType === MainTargetType.USER ? pick(experts).id : null,
-          targetServiceId:
-            targetType === MainTargetType.SERVICE ? pick(services).id : null,
-        },
-      });
+
+      const targets = isExpertSection
+        ? shuffle(experts).slice(0, PER_SECTION)
+        : shuffle(services).slice(0, PER_SECTION);
+
+      for (const target of targets) {
+        await this.#prisma.mainSetting.create({
+          data: {
+            sectionType,
+            targetType,
+            targetUserId: isExpertSection ? target.id : null,
+            targetServiceId: isExpertSection ? null : target.id,
+          },
+        });
+      }
     }
   }
 
@@ -2201,6 +2209,10 @@ class Seeder {
         serviceGroupId: serviceGroup.id,
         serviceCategoryId: serviceCategory.id,
       },
+    });
+
+    await this.#prisma.serviceImage.create({
+      data: { serviceId: expertService.id, imgUrl: pickImage(), isMain: true },
     });
 
     // 4) 상태별 주문 묶음 (client ↔ expert)
