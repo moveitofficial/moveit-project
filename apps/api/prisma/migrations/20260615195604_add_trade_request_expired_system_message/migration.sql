@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "SystemMessageType" ADD VALUE 'TRADE_REQUEST_EXPIRED';
