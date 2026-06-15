@@ -7,21 +7,24 @@ export const root = style({
   flexDirection: 'column',
   gap: '24px',
   width: '100%',
+  fontFamily: vars.font.family,
 });
 
-export const title = style([
-  typography.f24EB,
-  {
-    margin: 0,
-    color: vars.color.black500,
-  },
-]);
+export const title = style({
+  fontFamily: vars.font.family,
+  fontWeight: vars.font.weight.extraBold,
+  fontSize: '18px',
+  color: vars.color.black500,
+});
 
 export const card = style({
   display: 'flex',
-  flexDirection: 'column',
-  gap: '32px',
-  width: '100%',
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  gap: '40px',
+  width: 'fit-content',
+  maxWidth: '100%',
+  minWidth: 0,
   padding: '40px',
   border: `1px solid ${vars.color.line200}`,
   borderRadius: '16px',
@@ -29,18 +32,12 @@ export const card = style({
   boxSizing: 'border-box',
 });
 
-export const topSection = style({
-  display: 'flex',
-  gap: '40px',
-  alignItems: 'flex-start',
-  width: '100%',
-});
-
 export const fields = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: '24px',
-  flex: 1,
+  gap: '32px',
+  width: '636px',
+  flexShrink: 0,
   minWidth: 0,
 });
 

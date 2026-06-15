@@ -65,13 +65,9 @@ export default function MyInfoView() {
   const [nickname, setNickname] = useState(
     initialUser.clientProfile?.nickname ?? '',
   );
-  const [phoneNumber, setPhoneNumber] = useState(
-    initialUser.phoneNumber ?? '',
-  );
+  const [phoneNumber, setPhoneNumber] = useState(initialUser.phoneNumber ?? '');
   const [bankName, setBankName] = useState(initialUser.bankName ?? '');
-  const [bankAccount, setBankAccount] = useState(
-    initialUser.bankAccount ?? '',
-  );
+  const [bankAccount, setBankAccount] = useState(initialUser.bankAccount ?? '');
   const [region, setRegion] = useState<Region | ''>(initialUser.region ?? '');
   const [interestArea, setInterestArea] = useState<InterestAreaId | ''>(
     getInitialInterestArea(initialUser.clientProfile?.interestCategories ?? []),
@@ -141,85 +137,81 @@ export default function MyInfoView() {
       <h1 className={styles.title}>내 정보</h1>
 
       <div className={styles.card}>
-        <div className={styles.topSection}>
-          <MyInfoProfileSection
-            profileImageUrl={user.profileImageUrl}
-            onChange={(nextUrl) => {
-              setUser((prev) => ({ ...prev, profileImageUrl: nextUrl }));
-            }}
-          />
-
-          <div className={styles.fields}>
-            <MyInfoFieldRow label="이름" htmlFor="my-info-name" readOnly>
-              <input
-                id="my-info-name"
-                type="text"
-                value={user.name ?? ''}
-                disabled
-                className={myInfoFieldRowStyles.input}
-              />
-            </MyInfoFieldRow>
-
-            <MyInfoFieldRow
-              label="닉네임"
-              htmlFor="my-info-nickname"
-              onSave={saveNickname}
-              saveDisabled={nickname.trim().length < 2}
-            >
-              <input
-                id="my-info-nickname"
-                type="text"
-                placeholder="닉네임을 입력해주세요"
-                value={nickname}
-                onChange={(event) => {
-                  setNickname(event.target.value);
-                }}
-                className={myInfoFieldRowStyles.input}
-              />
-            </MyInfoFieldRow>
-
-            <MyInfoFieldRow label="연락처" onSave={savePhoneNumber}>
-              <PhoneField
-                value={phoneNumber}
-                onChange={setPhoneNumber}
-                className={myInfoFieldRowStyles.input}
-              />
-            </MyInfoFieldRow>
-
-            <MyInfoFieldRow label="이메일" htmlFor="my-info-email" readOnly>
-              <input
-                id="my-info-email"
-                type="email"
-                value={user.email}
-                disabled
-                className={myInfoFieldRowStyles.input}
-              />
-            </MyInfoFieldRow>
-
-            <MyInfoFieldRow label="연동된 계정" readOnly>
-              <div className={styles.providerList}>
-                {PROVIDERS.map((provider) => {
-                  const isActive = user.provider === provider.id;
-                  return (
-                    <span
-                      key={provider.id}
-                      className={
-                        isActive
-                          ? `${styles.providerBadge} ${styles.providerBadgeActive}`
-                          : styles.providerBadge
-                      }
-                      aria-label={provider.id}
-                    >
-                      {provider.label}
-                    </span>
-                  );
-                })}
-              </div>
-            </MyInfoFieldRow>
-          </div>
-        </div>
+        <MyInfoProfileSection
+          profileImageUrl={user.profileImageUrl}
+          onChange={(nextUrl) => {
+            setUser((prev) => ({ ...prev, profileImageUrl: nextUrl }));
+          }}
+        />
 
         <div className={styles.fields}>
+          <MyInfoFieldRow label="이름" htmlFor="my-info-name" readOnly>
+            <input
+              id="my-info-name"
+              type="text"
+              value={user.name ?? ''}
+              disabled
+              className={myInfoFieldRowStyles.input}
+            />
+          </MyInfoFieldRow>
+
+          <MyInfoFieldRow
+            label="닉네임"
+            htmlFor="my-info-nickname"
+            onSave={saveNickname}
+            saveDisabled={nickname.trim().length < 2}
+          >
+            <input
+              id="my-info-nickname"
+              type="text"
+              placeholder="닉네임을 입력해주세요"
+              value={nickname}
+              onChange={(event) => {
+                setNickname(event.target.value);
+              }}
+              className={myInfoFieldRowStyles.input}
+            />
+          </MyInfoFieldRow>
+
+          <MyInfoFieldRow label="연락처" onSave={savePhoneNumber}>
+            <PhoneField
+              value={phoneNumber}
+              onChange={setPhoneNumber}
+              className={myInfoFieldRowStyles.input}
+            />
+          </MyInfoFieldRow>
+
+          <MyInfoFieldRow label="이메일" htmlFor="my-info-email" readOnly>
+            <input
+              id="my-info-email"
+              type="email"
+              value={user.email}
+              disabled
+              className={myInfoFieldRowStyles.input}
+            />
+          </MyInfoFieldRow>
+
+          <MyInfoFieldRow label="연동된 계정" readOnly>
+            <div className={styles.providerList}>
+              {PROVIDERS.map((provider) => {
+                const isActive = user.provider === provider.id;
+                return (
+                  <span
+                    key={provider.id}
+                    className={
+                      isActive
+                        ? `${styles.providerBadge} ${styles.providerBadgeActive}`
+                        : styles.providerBadge
+                    }
+                    aria-label={provider.id}
+                  >
+                    {provider.label}
+                  </span>
+                );
+              })}
+            </div>
+          </MyInfoFieldRow>
+
           <MyInfoFieldRow
             label="환불받을 은행명"
             htmlFor="my-info-bank-name"
@@ -261,6 +253,9 @@ export default function MyInfoView() {
               onChange={handleInterestAreaChange}
               placeholder="관심분야를 선택해주세요"
             />
+          </MyInfoFieldRow>
+
+          <MyInfoFieldRow label="상세 분야" readOnly>
             {detailOptions !== null && (
               <CheckboxGroup
                 options={detailOptions}
