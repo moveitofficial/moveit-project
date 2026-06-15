@@ -1,8 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import {
   IsEmail,
   IsEnum,
+  IsOptional,
   IsString,
   Matches,
   MaxLength,
@@ -33,15 +34,16 @@ export class SignUpRequestDto {
   })
   declare password: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: '킹한준',
     description: 'name',
-    required: true,
+    required: false,
   })
   @IsString()
+  @IsOptional()
   @MinLength(1)
   @MaxLength(50)
-  declare name: string;
+  declare name: string | null;
 
   @ApiProperty({
     enum: Role,
