@@ -14,7 +14,7 @@ export default function MypageLayout({ children, user }: Props) {
   return (
     <div className={styles.page}>
       <MypageMenu user={user} />
-      <main className={styles.content}>{children}</main>
+      <div className={styles.content}>{children}</div>
     </div>
   );
 }
