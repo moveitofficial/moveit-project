@@ -5,9 +5,12 @@ import '@repo/styles/reset';
 import '@repo/styles/globals';
 import clsx from 'clsx';
 
+
 import FetcherInit from './FetcherInit';
 
 import type { Metadata } from 'next';
+
+import { CsChatWidget } from '@/feature/cs-chat';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -23,7 +26,10 @@ export default function RootLayout({
     <html lang="ko" className={clsx(nanumSquare.variable, themeClass)}>
       <body>
         <FetcherInit />
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          {children}
+          <CsChatWidget />
+        </QueryProvider>
       </body>
     </html>
   );
