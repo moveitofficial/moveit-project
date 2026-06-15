@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import {
+  MessageReferenceType,
   OrderStatus,
   PaymentStatus,
   Prisma,
   RefundStatus,
   RefundType,
+  SystemMessageType,
 } from '@prisma/client';
 
 import {
@@ -804,5 +806,42 @@ export class OrdersRepository {
       where: { id: { in: orderIds } },
       data: { status },
     });
+  }
+
+  async findOrdersToPendingExpiry(threshold: Date) {
+    return this.prisma.order.findMany({
+      where: { status: OrderStatus.PENDING, createdAt: { lte: threshold } },
+      select: {
+        id: true,
+        clientUserId: true,
+        expertUserId: true,
+        agreedServicePrice: true,
+        platformFee: true,
+        totalAmount: true,
+        service: { select: { title: true } },
+      },
+    });
+  }
+
+  async findRoomIdsByOrderIds(
+    orderIds: string[],
+  ): Promise<Map<string, string>> {
+    const messages = await this.prisma.message.findMany({
+      where: {
+        referenceType: MessageReferenceType.ORDER,
+        referenceId: { in: orderIds },
+        systemType: SystemMessageType.TRADE_REQUEST,
+      },
+      select: { chatRoomId: true, referenceId: true },
+      distinct: ['referenceId'],
+    });
+    return new Map(
+      messages
+        .filter(
+          (m): m is typeof m & { referenceId: string } =>
+            m.referenceId !== null,
+        )
+        .map((m) => [m.referenceId, m.chatRoomId]),
+    );
   }
 }

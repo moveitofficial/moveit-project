@@ -251,6 +251,7 @@ enum MessageType {
 enum SystemMessageType {
   TRADE_REQUEST // 거래를 요청했어요
   TRADE_CANCELED // 거래 요청이 취소되었어요
+  TRADE_REQUEST_EXPIRED // 거래 요청이 만료되었어요
   PAYMENT_COMPLETED // 결제가 완료되었습니다
   PAYMENT_HELD // 무빗이 결제 금액을 안전하게 보관하고 있어요
   SCHEDULE_REQUEST // 일정을 등록해주세요
