@@ -39,6 +39,7 @@ export interface MeExpertProfile {
 
 export interface MeResponse {
   role: Role;
+  name: string | null;
   // 포폴 등록 시 빈 프로필이 자동 생성될 수 있어, 존재 여부가 아닌 완성 여부로 판단
   expertProfile: MeExpertProfile | null;
 }
