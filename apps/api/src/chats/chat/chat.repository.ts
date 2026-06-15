@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import {
   MessageReferenceType,
   MessageType,
+  OrderStatus,
   SystemMessageType,
 } from '@prisma/client';
 
 import { CHAT_ERRORS } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
 import { PrismaService } from '../../prisma/prisma.service';
+
+import type { RoomWithOrder } from './chat.types';
 
 @Injectable()
 export class ChatRepository {
@@ -167,7 +170,7 @@ export class ChatRepository {
 
   async createMessage(data: {
     chatRoomId: string;
-    senderId: string;
+    senderId?: string;
     type: MessageType;
     content: string;
     systemType?: SystemMessageType;
@@ -353,5 +356,71 @@ export class ChatRepository {
           }),
         ),
     );
+  }
+
+  async findRoomForTradeRequest(roomId: string) {
+    return this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      select: {
+        clientUserId: true,
+        expertUserId: true,
+        currentService: {
+          select: { id: true, title: true, servicePrice: true },
+        },
+      },
+    });
+  }
+
+  async createPendingOrder(data: {
+    clientUserId: string;
+    expertUserId: string;
+    serviceId: string;
+    agreedServicePrice: number;
+    platformFee: number;
+    totalAmount: number;
+  }) {
+    return this.prisma.order.create({
+      data: { ...data, status: OrderStatus.PENDING },
+      select: { id: true },
+    });
+  }
+
+  async findRoomWithOrder(roomId: string): Promise<RoomWithOrder | null> {
+    const room = await this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      include: {
+        currentService: {
+          select: {
+            id: true,
+            title: true,
+            servicePrice: true,
+          },
+        },
+      },
+    });
+    if (!room) return null;
+
+    const latestOrderMessage = await this.prisma.message.findFirst({
+      where: { chatRoomId: roomId, referenceType: MessageReferenceType.ORDER },
+      orderBy: { createdAt: 'desc' },
+      select: { referenceId: true },
+    });
+
+    const order = latestOrderMessage?.referenceId
+      ? await this.prisma.order.findUnique({
+          where: { id: latestOrderMessage.referenceId },
+          select: {
+            id: true,
+            status: true,
+            agreedServicePrice: true,
+            platformFee: true,
+            totalAmount: true,
+            startDate: true,
+            endDate: true,
+          },
+        })
+      : null;
+
+    return { room, order };
   }
 }

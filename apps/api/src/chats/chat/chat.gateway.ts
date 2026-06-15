@@ -25,7 +25,8 @@ import { SendMessageDto } from './dto/send-message.dto';
 
 import type { JwtAccessPayload } from '../../auth/auth.types';
 import type { WsErrorResponse } from '../../common/interfaces/ws-error-response.interface';
-import type { ConsultationSocket } from '../common/interfaces/authenticated-socket.interface';
+import type { ChatSocket } from '../common/interfaces/authenticated-socket.interface';
+import type { SystemMessageRole } from '@repo/socket-events';
 
 @UsePipes(
   new ValidationPipe({
@@ -70,7 +71,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.disconnect();
       return;
     }
-    (socket as ConsultationSocket).data = {
+    (socket as ChatSocket).data = {
       userId: payload.sub,
       role: payload.role,
     };
@@ -100,6 +101,29 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(roomId).emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
   }
 
+  broadcastSystemMessage(
+    roomId: string,
+    clientUserId: string,
+    expertUserId: string,
+    message: unknown,
+    recipientRoles?: SystemMessageRole[],
+  ) {
+    if (!recipientRoles) {
+      this.server.to(roomId).emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+      return;
+    }
+    if (recipientRoles.includes('CLIENT')) {
+      this.server
+        .to(`user-${clientUserId}`)
+        .emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+    }
+    if (recipientRoles.includes('EXPERT')) {
+      this.server
+        .to(`user-${expertUserId}`)
+        .emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+    }
+  }
+
   broadcastNotification(receiverId: string, message: unknown) {
     this.server
       .to(`user-${receiverId}`)
@@ -108,7 +132,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(CHAT_EVENTS.JOIN_ROOM)
   async handleJoinRoom(
-    @ConnectedSocket() socket: ConsultationSocket,
+    @ConnectedSocket() socket: ChatSocket,
     @MessageBody() dto: JoinRoomDto,
   ) {
     await this.chatService.validateParticipant(dto.roomId, socket.data.userId);
@@ -118,7 +142,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(CHAT_EVENTS.SEND_MESSAGE)
   async handleSendMessage(
-    @ConnectedSocket() socket: ConsultationSocket,
+    @ConnectedSocket() socket: ChatSocket,
     @MessageBody() dto: SendMessageDto,
   ) {
     const { message, receiverId } = await this.chatService.sendMessage(
@@ -134,7 +158,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(CHAT_EVENTS.MARK_READ)
   async handleMarkRead(
-    @ConnectedSocket() socket: ConsultationSocket,
+    @ConnectedSocket() socket: ChatSocket,
     @MessageBody() dto: MarkReadDto,
   ) {
     await this.chatService.markRead(

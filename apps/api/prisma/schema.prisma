@@ -107,6 +107,8 @@ enum ServiceStatus {
 }
 
 enum OrderStatus {
+  PENDING // 결제 요청됨 (채팅 결제 요청 시 생성, 결제 완료 전)
+  TRADE_REQUEST_EXPIRED // 거래 요청 만료 (PENDING 상태에서 72시간 내 미결제 시 크론잡 자동 전환)
   NEGOTIATING // 논의중
   CANCEL_REQUESTED // 취소요청
   PAYMENT_CANCELLED // 결제취소
@@ -666,7 +668,7 @@ model Order {
   platformFee        Int         @map("platform_fee")
   totalAmount        Int         @map("total_amount")
   status             OrderStatus
-  startDate          DateTime    @default(now()) @map("start_date")
+  startDate          DateTime?   @map("start_date")
   endDate            DateTime?   @map("end_date")
   refundReason       String?     @map("refund_reason")
   createdAt          DateTime    @default(now()) @map("created_at")

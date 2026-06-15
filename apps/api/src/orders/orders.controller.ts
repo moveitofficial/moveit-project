@@ -29,6 +29,11 @@ import { CreateReviewRequestDto } from '../services/dto/create-review-request.dt
 import { ReviewResponseDto } from '../services/dto/service-response.dto';
 import { UpdateReviewRequestDto } from '../services/dto/update-review-request.dto';
 
+import { ApproveCancelRequestDto } from './dto/approve-cancel-request.dto';
+import { CreateOrderRequestDto } from './dto/create-order-request.dto';
+import { CreateOrderResponseDto } from './dto/create-order-response.dto';
+import { PayOrderRequestDto } from './dto/pay-order-request.dto';
+import { ScheduleChangeRequestDto } from './dto/schedule-change-request.dto';
 import { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
 import { UpdateOrderScheduleResponseDto } from './dto/update-order-schedule-response.dto';
 import { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
@@ -41,6 +46,55 @@ import type { Request } from 'express';
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  @ApiOperation({ summary: '주문 생성 (결제 완료)' })
+  @RoleAuth(Role.CLIENT)
+  @ApiSuccessResponse(HttpStatus.CREATED, CreateOrderResponseDto)
+  @ApiErrorResponse(SERVICE_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    SERVICE_ERRORS.NOT_AVAILABLE,
+    PAYMENT_ERRORS.AMOUNT_MISMATCH,
+    PAYMENT_ERRORS.FAILED,
+    COMMON_ERRORS.VALIDATION_ERROR,
+  )
+  @ApiErrorResponse(
+    ORDER_ERRORS.DUPLICATE_ORDER_ID,
+    PAYMENT_ERRORS.ALREADY_CONFIRMED,
+    PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.CREATED)
+  @Post()
+  createOrder(@Req() req: Request, @Body() dto: CreateOrderRequestDto) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.createOrder(user.userId, dto);
+  }
+
+  @ApiOperation({ summary: '거래 요청 결제 (PENDING → NEGOTIATING)' })
+  @RoleAuth(Role.CLIENT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK, CreateOrderResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    ORDER_ERRORS.INVALID_STATUS,
+    PAYMENT_ERRORS.AMOUNT_MISMATCH,
+    PAYMENT_ERRORS.FAILED,
+    COMMON_ERRORS.VALIDATION_ERROR,
+  )
+  @ApiErrorResponse(
+    PAYMENT_ERRORS.ALREADY_CONFIRMED,
+    PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/pay')
+  payOrder(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+    @Body() dto: PayOrderRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.payOrder(user.userId, orderId, dto);
+  }
 
   @ApiOperation({ summary: '주문 상태 전이' })
   @JwtAuth(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
@@ -85,6 +139,25 @@ export class OrdersController {
       orderId,
       dto,
     );
+  }
+
+  @ApiOperation({
+    summary: '일정 변경 요청 (전문가 → SCHEDULE_CHANGE_REQUEST 시스템 메시지)',
+  })
+  @RoleAuth(Role.EXPERT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(ORDER_ERRORS.INVALID_STATUS, COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/schedule-change-request')
+  requestScheduleChange(
+    @Param('id', ParseUUIDPipe) orderId: string,
+    @Req() req: Request,
+    @Body() dto: ScheduleChangeRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.requestScheduleChange(user.userId, orderId, dto);
   }
 
   @ApiOperation({ summary: '구매 확정' })
@@ -135,9 +208,14 @@ export class OrdersController {
   approveCancel(
     @Req() req: Request,
     @Param('id', ParseUUIDPipe) orderId: string,
+    @Body() dto: ApproveCancelRequestDto,
   ) {
     const user = req.user as JwtAccessUser;
-    return this.ordersService.approveCancelOrder(user.userId, orderId);
+    return this.ordersService.approveCancelOrder(
+      user.userId,
+      orderId,
+      dto.roomId,
+    );
   }
 
   @ApiOperation({ summary: '취소 거절' })

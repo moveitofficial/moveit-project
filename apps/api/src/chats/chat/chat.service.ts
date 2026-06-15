@@ -1,16 +1,35 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  MessageReferenceType,
+  MessageType,
+  SystemMessageType,
+} from '@prisma/client';
+import {
+  SYSTEM_MESSAGE_CONTENT,
+  SYSTEM_MESSAGE_TEMPLATES,
+  SystemMessageSocketPayload,
+} from '@repo/socket-events';
 
 import { CHAT_ERRORS } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
 import { toWsException } from '../../common/utils/ws-exception.util';
+import {
+  calculatePlatformFee,
+  calculateTotalAmount,
+} from '../../orders/orders.constants';
 
+import { ChatGateway } from './chat.gateway';
 import { ChatRepository } from './chat.repository';
 import { SendMessageDto } from './dto/send-message.dto';
 
 @Injectable()
 export class ChatService {
-  constructor(private readonly chatRepository: ChatRepository) {}
+  constructor(
+    private readonly chatRepository: ChatRepository,
+    @Inject(forwardRef(() => ChatGateway))
+    private readonly chatGateway: ChatGateway,
+  ) {}
 
   async createRoom(
     clientUserId: string,
@@ -111,6 +130,39 @@ export class ChatService {
     return { message, receiverId };
   }
 
+  async sendSystemMessage(
+    roomId: string,
+    systemType: SystemMessageType,
+    payload: SystemMessageSocketPayload,
+    orderId?: string,
+  ) {
+    const content = SYSTEM_MESSAGE_CONTENT[systemType];
+    const [message, room] = await Promise.all([
+      this.chatRepository.createMessage({
+        chatRoomId: roomId,
+        type: MessageType.SYSTEM,
+        content,
+        systemType,
+        ...(orderId && {
+          referenceType: MessageReferenceType.ORDER,
+          referenceId: orderId,
+        }),
+      }),
+      this.chatRepository.findRoomParticipantIds(roomId),
+    ]);
+    if (room) {
+      const { recipientRoles } = SYSTEM_MESSAGE_TEMPLATES[systemType];
+      this.chatGateway.broadcastSystemMessage(
+        roomId,
+        room.clientUserId,
+        room.expertUserId,
+        { message, payload },
+        recipientRoles,
+      );
+    }
+    return { message, payload, room };
+  }
+
   async markRead(roomId: string, userId: string, messageId: string) {
     await this.validateParticipant(roomId, userId);
     return this.chatRepository.updateLastRead(roomId, userId, messageId);
@@ -150,9 +202,13 @@ export class ChatService {
     cursor?: string,
     limit = 30,
   ) {
-    const participant = await this.chatRepository.findRoom(roomId, userId);
+    const [participant, roomWithOrder] = await Promise.all([
+      this.chatRepository.findRoom(roomId, userId),
+      this.chatRepository.findRoomWithOrder(roomId),
+    ]);
     if (!participant)
       throw new AppException(CHAT_ERRORS.FORBIDDEN_NOT_PARTICIPANT);
+    if (!roomWithOrder) throw new AppException(CHAT_ERRORS.ROOM_NOT_FOUND);
     const messages = await this.chatRepository.findMessages(
       roomId,
       cursor,
@@ -160,7 +216,17 @@ export class ChatService {
     );
     const nextCursor =
       messages.length === limit ? (messages.at(-1)?.id ?? null) : null;
+    const { room, order } = roomWithOrder;
     return {
+      room: {
+        id: room.id,
+        currentService: {
+          id: room.currentService.id,
+          title: room.currentService.title,
+          servicePrice: room.currentService.servicePrice,
+        },
+        order,
+      },
       items: messages.toReversed(),
       nextCursor,
     };
@@ -196,5 +262,41 @@ export class ChatService {
 
   async dismissAllNotifications(userId: string) {
     await this.chatRepository.updateAllDismissedMessages(userId);
+  }
+
+  async createTradeRequest(roomId: string, expertUserId: string) {
+    const room = await this.chatRepository.findRoomForTradeRequest(roomId);
+    if (!room) throw new AppException(CHAT_ERRORS.ROOM_NOT_FOUND);
+    if (room.expertUserId !== expertUserId)
+      throw new AppException(CHAT_ERRORS.FORBIDDEN_EXPERT_MISMATCH);
+
+    const { servicePrice, title, id: serviceId } = room.currentService;
+    const platformFee = calculatePlatformFee(servicePrice);
+    const totalAmount = calculateTotalAmount(servicePrice);
+
+    const order = await this.chatRepository.createPendingOrder({
+      clientUserId: room.clientUserId,
+      expertUserId,
+      serviceId,
+      agreedServicePrice: servicePrice,
+      platformFee,
+      totalAmount,
+    });
+
+    await this.sendSystemMessage(
+      roomId,
+      SystemMessageType.TRADE_REQUEST,
+      {
+        systemType: 'TRADE_REQUEST',
+        serviceTitle: title,
+        servicePrice,
+        platformFee,
+        totalAmount,
+        expertSettlementAmount: servicePrice,
+      },
+      order.id,
+    );
+
+    return { orderId: order.id };
   }
 }

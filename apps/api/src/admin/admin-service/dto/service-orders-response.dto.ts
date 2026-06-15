@@ -46,8 +46,8 @@ export class ServiceOrderItemDto {
   @ApiProperty({ example: 80_000_000 })
   declare totalAmount: number;
 
-  @ApiProperty({ type: String, format: 'date-time' })
-  declare startDate: Date;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  declare startDate: Date | null;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   declare endDate: Date | null;
