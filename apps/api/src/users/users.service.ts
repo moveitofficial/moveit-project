@@ -216,13 +216,13 @@ export class UsersService {
   createLocalUser(params: {
     email: string;
     passwordHash: string;
-    name: string;
+    name: string | null;
     role: Role;
   }): Promise<User> {
     return this.usersRepository.create({
       email: params.email,
       password: params.passwordHash,
-      name: params.name,
+      name: params.name ?? null,
       role: params.role,
       provider: AuthProvider.LOCAL,
     });

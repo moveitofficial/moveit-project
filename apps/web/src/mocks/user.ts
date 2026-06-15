@@ -1,17 +1,26 @@
-import type { ApiSuccess, Role, User } from './types';
+import type { ApiSuccess, ClientMeUser, Role, User } from './types';
 
-export const mockClientUser: User = {
+export const mockClientUser: ClientMeUser = {
   id: 'user-001',
   email: 'kim@example.com',
-  name: '김지훈',
+  name: '조한준',
   role: 'CLIENT',
   provider: 'LOCAL',
   profileImageUrl: 'https://i.pravatar.cc/150?img=12',
   region: 'SEOUL',
-  phoneNumber: '010-1234-5678',
+  phoneNumber: '01012345678',
+  bankName: '카카오뱅크',
+  bankAccount: '3333123456789',
   isBlocked: false,
   isDeleted: false,
   createdAt: '2026-01-15T09:00:00.000Z',
+  clientProfile: {
+    nickname: '한준님',
+    interestCategories: [
+      { group: 'IT_COACHING', category: 'WEB' },
+      { group: 'IT_COACHING', category: 'AI' },
+    ],
+  },
 };
 
 export const mockExpertUser: User = {
@@ -22,7 +31,7 @@ export const mockExpertUser: User = {
   provider: 'LOCAL',
   profileImageUrl: 'https://i.pravatar.cc/150?img=33',
   region: 'GYEONGGI_SOUTH',
-  phoneNumber: '010-9876-5432',
+  phoneNumber: '01098765432',
   isBlocked: false,
   isDeleted: false,
   createdAt: '2025-11-20T10:30:00.000Z',
