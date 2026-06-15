@@ -1,6 +1,10 @@
 'use client';
 
+import googleLogo from '@public/login/googleLogo.svg';
+import kakaoLogo from '@public/login/kaLogo.svg';
+import naverLogo from '@public/login/naver.svg';
 import { RoundChip } from '@repo/ui/RoundChip';
+import Image, { type StaticImageData } from 'next/image';
 import { type ChangeEvent, useState } from 'react';
 
 import { MyInfoFieldRow, myInfoFieldRowStyles } from '../MyInfoFieldRow';
@@ -28,10 +32,10 @@ import PhoneField from '@/feature/signup/components/common/PhoneField';
 import { REGIONS } from '@/feature/signup/components/common/regions';
 import { mockClientUser } from '@/mocks/user';
 
-const PROVIDERS: { id: AuthProvider; label: string }[] = [
-  { id: 'NAVER', label: 'N' },
-  { id: 'KAKAO', label: 'K' },
-  { id: 'GOOGLE', label: 'G' },
+const PROVIDERS: { id: AuthProvider; src: StaticImageData; alt: string }[] = [
+  { id: 'NAVER', src: naverLogo, alt: '네이버' },
+  { id: 'KAKAO', src: kakaoLogo, alt: '카카오' },
+  { id: 'GOOGLE', src: googleLogo, alt: '구글' },
 ];
 
 const getInitialInterestArea = (
@@ -238,6 +242,9 @@ export default function MyInfoView() {
             <div className={styles.providerList}>
               {PROVIDERS.map((provider) => {
                 const isActive = user.provider === provider.id;
+                const iconClassName = isActive
+                  ? styles.providerIcon
+                  : `${styles.providerIcon} ${styles.providerIconInactive}`;
                 return (
                   <span
                     key={provider.id}
@@ -246,9 +253,14 @@ export default function MyInfoView() {
                         ? `${styles.providerBadge} ${styles.providerBadgeActive}`
                         : styles.providerBadge
                     }
-                    aria-label={provider.id}
+                    aria-label={provider.alt}
                   >
-                    {provider.label}
+                    <Image
+                      src={provider.src}
+                      alt={provider.alt}
+                      fill
+                      className={iconClassName}
+                    />
                   </span>
                 );
               })}

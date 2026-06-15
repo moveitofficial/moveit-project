@@ -1,5 +1,4 @@
 import { vars } from '@repo/styles/tokens';
-import { typography } from '@repo/styles/typography';
 import { style } from '@vanilla-extract/css';
 
 export const root = style({
@@ -47,26 +46,28 @@ export const providerList = style({
   gap: '1.5rem',
 });
 
-export const providerBadge = style([
-  typography.f14B,
-  {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '2.5rem',
-    height: '2.5rem',
-    aspectRatio: 1 / 1,
-    borderRadius: '9999px',
-    border: `1px solid ${vars.color.line200}`,
-    color: vars.color.gray400,
-    backgroundColor: vars.color.white,
-  },
-]);
+export const providerBadge = style({
+  position: 'relative',
+  display: 'block',
+  flexShrink: 0,
+  width: '2.5rem',
+  height: '2.5rem',
+  borderRadius: '9999px',
+  backgroundColor: vars.color.white,
+  overflow: 'hidden',
+});
 
 export const providerBadgeActive = style({
   borderColor: vars.color.blue300,
-  color: vars.color.blue300,
   backgroundColor: vars.color.blue50,
+});
+
+export const providerIcon = style({
+  objectFit: 'cover',
+});
+
+export const providerIconInactive = style({
+  filter: 'grayscale(1)',
 });
 
 export const savedDetailChips = style({
