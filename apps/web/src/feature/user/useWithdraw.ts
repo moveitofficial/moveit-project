@@ -8,13 +8,18 @@ import { withdrawUser, type WithdrawData } from './api';
 
 import type { ApiSuccess } from '@/types/api';
 
+import { signOut } from '@/feature/login/api';
 import { useUserStore } from '@/stores/user-store';
 
 export function useWithdraw() {
   const router = useRouter();
 
   return useMutation<ApiSuccess<WithdrawData>, Error, string>({
-    mutationFn: withdrawUser,
+    mutationFn: async (deletionReason) => {
+      const response = await withdrawUser(deletionReason);
+      await signOut();
+      return response;
+    },
     onSuccess: () => {
       useUserStore.getState().setUser(null);
       router.replace('/login');
