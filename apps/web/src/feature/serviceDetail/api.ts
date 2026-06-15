@@ -98,6 +98,16 @@ function resolveThumbnailUrl(thumbnailUrl: string): string {
 }
 
 function mapServiceImages(images: ServiceImageApi[]): ServiceImage[] {
+  if (images.length === 0) {
+    return [
+      {
+        id: 'fallback-thumbnail',
+        url: SERVICE_FALLBACK_THUMBNAIL,
+        isMain: true,
+      },
+    ];
+  }
+
   return images.map((image) => ({
     id: image.id,
     url: resolveThumbnailUrl(image.imgUrl),

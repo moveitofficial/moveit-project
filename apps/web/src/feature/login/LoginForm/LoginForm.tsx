@@ -30,7 +30,11 @@ export default function LoginForm() {
   };
 
   return (
-    <form className={styles.FormContainer} onSubmit={handleSubmit}>
+    <form
+      className={styles.FormContainer}
+      onSubmit={handleSubmit}
+      autoComplete="off"
+    >
       <div className={styles.InputItemWrapper}>
         <label htmlFor="email" className={styles.InputLabel}>
           이메일
@@ -55,6 +59,7 @@ export default function LoginForm() {
           id="password"
           type="password"
           name="password"
+          autoComplete="new-password"
           placeholder="비밀번호를 입력해주세요"
           value={form.password}
           onChange={handleChange}

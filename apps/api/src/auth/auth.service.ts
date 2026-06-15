@@ -67,7 +67,7 @@ export class AuthService {
       const user = await this.usersService.createLocalUser({
         email: dto.email,
         passwordHash,
-        name: dto.name,
+        name: dto.name ?? null,
         role: dto.role,
       });
 

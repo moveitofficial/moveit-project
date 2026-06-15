@@ -17,9 +17,9 @@ export default function ImageThumb({ src, onRemove }: Props) {
       <Image
         src={src}
         alt=""
-        fill
+        width={176}
+        height={176}
         unoptimized
-        sizes="176px"
         className={styles.image}
       />
       <button type="button" onClick={onRemove} className={styles.removeBtn}>

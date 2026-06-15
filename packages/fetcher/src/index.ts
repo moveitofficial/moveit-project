@@ -1,1 +1,1 @@
-export { api, publicApi, ApiError } from './fetchClient';
+export { api, publicApi, ApiError, configureFetcher } from './fetchClient';

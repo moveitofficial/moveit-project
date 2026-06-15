@@ -118,3 +118,80 @@ export const skipBtn = style([
     padding: 0,
   },
 ]);
+
+export const sectionHeader = style({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  width: '100%',
+});
+
+export const addTopBtn = style([
+  typography.f14B,
+  {
+    padding: '8px 16px',
+    border: `1px solid ${vars.color.line200}`,
+    borderRadius: '8px',
+    backgroundColor: vars.color.white,
+    color: vars.color.black500,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  },
+]);
+
+export const list = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '24px',
+  width: '100%',
+});
+
+export const card = style({
+  display: 'flex',
+  flexDirection: 'column',
+  width: '276px',
+});
+
+export const cardThumb = style({
+  position: 'relative',
+  width: '100%',
+  aspectRatio: '1 / 1',
+  borderRadius: '8px',
+  overflow: 'hidden',
+  backgroundColor: vars.color.gray200,
+});
+
+export const cardTitle = style([
+  typography.f14B,
+  {
+    marginTop: '16px',
+    color: vars.color.black500,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+]);
+
+export const cardActions = style({
+  display: 'flex',
+  justifyContent: 'flex-end',
+  gap: '8px',
+  marginTop: '12px',
+});
+
+export const actionBtn = style([
+  typography.f14R,
+  {
+    padding: 0,
+    background: 'none',
+    border: 'none',
+    color: vars.color.gray400,
+    cursor: 'pointer',
+
+    selectors: {
+      '&:hover': {
+        color: vars.color.blue300,
+      },
+    },
+  },
+]);

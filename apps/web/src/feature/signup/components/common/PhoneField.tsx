@@ -14,9 +14,15 @@ interface Props {
   value: string;
   onChange: (digits: string) => void;
   className: string;
+  disabled?: boolean;
 }
 
-export default function PhoneField({ value, onChange, className }: Props) {
+export default function PhoneField({
+  value,
+  onChange,
+  className,
+  disabled = false,
+}: Props) {
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value
       .replaceAll(/\D/g, '')
@@ -32,6 +38,7 @@ export default function PhoneField({ value, onChange, className }: Props) {
       placeholder="연락 가능 번호를 입력해주세요(숫자만 입력해주세요)"
       value={formatPhone(value)}
       onChange={handleChange}
+      disabled={disabled}
       className={className}
     />
   );

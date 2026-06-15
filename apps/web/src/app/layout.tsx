@@ -5,6 +5,8 @@ import '@repo/styles/reset';
 import '@repo/styles/globals';
 import clsx from 'clsx';
 
+import FetcherInit from './FetcherInit';
+
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -20,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className={clsx(nanumSquare.variable, themeClass)}>
       <body>
+        <FetcherInit />
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

@@ -11,6 +11,10 @@ export function buildServiceDetailHref(
   serviceId: string,
   group: ServiceGroupName,
 ): Route {
+  if (group === 'IT_COACHING') {
+    return `/it-coaching/${serviceId}` as Route;
+  }
+
   const query = new URLSearchParams({ group });
   return `/services/${serviceId}?${query.toString()}` as Route;
 }
