@@ -1,18 +1,20 @@
 import headerLogo from '@public/header/headerLogo.svg';
-import { typography } from '@repo/styles/typography';
-import clsx from 'clsx';
-import { type Route } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import * as styles from './Header.css';
 import HeaderNav from './HeaderNav';
+import HeaderUserMenu from './HeaderUserMenu';
 
-const userMenuItems: { label: string; href: Route }[] = [
-  { label: '로그인', href: '/login' },
-];
+import type { Role } from '@/types/enums';
 
-export default function Header() {
+export default function Header({
+  role,
+  displayName,
+}: {
+  role: Role | null;
+  displayName: string | null;
+}) {
   return (
     <header className={styles.wrapper}>
       <div className={styles.inner}>
@@ -22,23 +24,7 @@ export default function Header() {
           </Link>
           <HeaderNav />
         </div>
-        <div className={styles.userMenuGroup}>
-          {userMenuItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={clsx(typography.f16R, styles.navLink)}
-            >
-              {item.label}
-            </Link>
-          ))}
-          <Link
-            href="/signup"
-            className={clsx(typography.f16B, styles.signUpButton)}
-          >
-            회원가입
-          </Link>
-        </div>
+        <HeaderUserMenu role={role} displayName={displayName} />
       </div>
     </header>
   );

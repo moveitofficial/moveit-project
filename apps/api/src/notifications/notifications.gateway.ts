@@ -6,7 +6,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { SOCKET_NAMESPACES } from '@repo/socket-events';
+import { NOTIFICATION_EVENTS, SOCKET_NAMESPACES } from '@repo/socket-events';
 import { Server, Socket } from 'socket.io';
 
 import { ACCESS_COOKIE_NAME, JWT_ACCESS_TYP } from '../auth/auth.constants';
@@ -69,7 +69,9 @@ export class NotificationsGateway
   }
 
   emitNewNotification(userId: string): void {
-    this.server.to(`user-${userId}`).emit('newNotification');
+    this.server
+      .to(`user-${userId}`)
+      .emit(NOTIFICATION_EVENTS.NEW_NOTIFICATION);
   }
 
   #resolvePrincipal(socket: Socket): JwtAccessPayload | null {
