@@ -5,7 +5,7 @@ import { style } from '@vanilla-extract/css';
 export const field = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: '12px',
+  gap: '0.5rem',
   width: '100%',
 });
 
@@ -23,7 +23,14 @@ export const label = style([
   },
 ]);
 
-export const saveButton = style([
+export const actionButtons = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.75rem',
+  flexShrink: 0,
+});
+
+export const actionButton = style([
   typography.f14R,
   {
     flexShrink: 0,
@@ -46,9 +53,9 @@ export const input = style([
   typography.f16R,
   {
     width: '100%',
-    padding: '14px 16px',
+    padding: '0.875rem 1rem',
     border: `1px solid ${vars.color.line200}`,
-    borderRadius: '12px',
+    borderRadius: '0.75rem',
     color: vars.color.black500,
     backgroundColor: vars.color.white,
     boxSizing: 'border-box',

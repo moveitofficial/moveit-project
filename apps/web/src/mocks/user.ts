@@ -5,7 +5,7 @@ export const mockClientUser: ClientMeUser = {
   email: 'kim@example.com',
   name: '조한준',
   role: 'CLIENT',
-  provider: 'LOCAL',
+  provider: 'GOOGLE',
   profileImageUrl: 'https://i.pravatar.cc/150?img=12',
   region: 'SEOUL',
   phoneNumber: '01012345678',

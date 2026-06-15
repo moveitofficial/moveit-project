@@ -1,5 +1,10 @@
 'use client';
 
+import googleLogo from '@public/login/googleLogo.svg';
+import kakaoLogo from '@public/login/kaLogo.svg';
+import naverLogo from '@public/login/naver.svg';
+import { RoundChip } from '@repo/ui/RoundChip';
+import Image, { type StaticImageData } from 'next/image';
 import { type ChangeEvent, useState } from 'react';
 
 import { MyInfoFieldRow, myInfoFieldRowStyles } from '../MyInfoFieldRow';
@@ -27,10 +32,10 @@ import PhoneField from '@/feature/signup/components/common/PhoneField';
 import { REGIONS } from '@/feature/signup/components/common/regions';
 import { mockClientUser } from '@/mocks/user';
 
-const PROVIDERS: { id: AuthProvider; label: string }[] = [
-  { id: 'NAVER', label: 'N' },
-  { id: 'KAKAO', label: 'K' },
-  { id: 'GOOGLE', label: 'G' },
+const PROVIDERS: { id: AuthProvider; src: StaticImageData; alt: string }[] = [
+  { id: 'NAVER', src: naverLogo, alt: '네이버' },
+  { id: 'KAKAO', src: kakaoLogo, alt: '카카오' },
+  { id: 'GOOGLE', src: googleLogo, alt: '구글' },
 ];
 
 const getInitialInterestArea = (
@@ -80,6 +85,19 @@ export default function MyInfoView() {
       ),
     ),
   );
+  const [isInterestEditing, setIsInterestEditing] = useState(false);
+
+  const savedInterestArea = getInitialInterestArea(
+    user.clientProfile?.interestCategories ?? [],
+  );
+  const savedDetailAreas = getInitialDetailAreas(
+    user.clientProfile?.interestCategories ?? [],
+    savedInterestArea,
+  );
+  const savedDetailOptions =
+    savedInterestArea === ''
+      ? null
+      : DETAIL_AREAS_BY_INTEREST[savedInterestArea];
 
   const detailOptions =
     interestArea === '' ? null : DETAIL_AREAS_BY_INTEREST[interestArea];
@@ -132,6 +150,20 @@ export default function MyInfoView() {
     }));
   };
 
+  const resetInterestDraft = () => {
+    const categories = user.clientProfile?.interestCategories ?? [];
+    const nextInterestArea = getInitialInterestArea(categories);
+    setInterestArea(nextInterestArea);
+    setDetailAreas(getInitialDetailAreas(categories, nextInterestArea));
+  };
+
+  const handleInterestEditingChange = (editing: boolean) => {
+    if (editing) {
+      resetInterestDraft();
+    }
+    setIsInterestEditing(editing);
+  };
+
   return (
     <section className={styles.root}>
       <h1 className={styles.title}>내 정보</h1>
@@ -159,26 +191,41 @@ export default function MyInfoView() {
             label="닉네임"
             htmlFor="my-info-nickname"
             onSave={saveNickname}
+            onCancel={() => {
+              setNickname(user.clientProfile?.nickname ?? '');
+            }}
             saveDisabled={nickname.trim().length < 2}
           >
-            <input
-              id="my-info-nickname"
-              type="text"
-              placeholder="닉네임을 입력해주세요"
-              value={nickname}
-              onChange={(event) => {
-                setNickname(event.target.value);
-              }}
-              className={myInfoFieldRowStyles.input}
-            />
+            {(isEditing) => (
+              <input
+                id="my-info-nickname"
+                type="text"
+                placeholder="닉네임을 입력해주세요"
+                value={nickname}
+                disabled={!isEditing}
+                onChange={(event) => {
+                  setNickname(event.target.value);
+                }}
+                className={myInfoFieldRowStyles.input}
+              />
+            )}
           </MyInfoFieldRow>
 
-          <MyInfoFieldRow label="연락처" onSave={savePhoneNumber}>
-            <PhoneField
-              value={phoneNumber}
-              onChange={setPhoneNumber}
-              className={myInfoFieldRowStyles.input}
-            />
+          <MyInfoFieldRow
+            label="연락처"
+            onSave={savePhoneNumber}
+            onCancel={() => {
+              setPhoneNumber(user.phoneNumber ?? '');
+            }}
+          >
+            {(isEditing) => (
+              <PhoneField
+                value={phoneNumber}
+                onChange={setPhoneNumber}
+                disabled={!isEditing}
+                className={myInfoFieldRowStyles.input}
+              />
+            )}
           </MyInfoFieldRow>
 
           <MyInfoFieldRow label="이메일" htmlFor="my-info-email" readOnly>
@@ -195,6 +242,9 @@ export default function MyInfoView() {
             <div className={styles.providerList}>
               {PROVIDERS.map((provider) => {
                 const isActive = user.provider === provider.id;
+                const iconClassName = isActive
+                  ? styles.providerIcon
+                  : `${styles.providerIcon} ${styles.providerIconInactive}`;
                 return (
                   <span
                     key={provider.id}
@@ -203,9 +253,14 @@ export default function MyInfoView() {
                         ? `${styles.providerBadge} ${styles.providerBadgeActive}`
                         : styles.providerBadge
                     }
-                    aria-label={provider.id}
+                    aria-label={provider.alt}
                   >
-                    {provider.label}
+                    <Image
+                      src={provider.src}
+                      alt={provider.alt}
+                      fill
+                      className={iconClassName}
+                    />
                   </span>
                 );
               })}
@@ -216,69 +271,117 @@ export default function MyInfoView() {
             label="환불받을 은행명"
             htmlFor="my-info-bank-name"
             onSave={saveBankName}
+            onCancel={() => {
+              setBankName(user.bankName ?? '');
+            }}
             saveDisabled={bankName.trim().length < 2}
           >
-            <input
-              id="my-info-bank-name"
-              type="text"
-              placeholder="은행명을 입력해주세요"
-              value={bankName}
-              onChange={(event) => {
-                setBankName(event.target.value);
-              }}
-              className={myInfoFieldRowStyles.input}
-            />
+            {(isEditing) => (
+              <input
+                id="my-info-bank-name"
+                type="text"
+                placeholder="은행명을 입력해주세요"
+                value={bankName}
+                disabled={!isEditing}
+                onChange={(event) => {
+                  setBankName(event.target.value);
+                }}
+                className={myInfoFieldRowStyles.input}
+              />
+            )}
           </MyInfoFieldRow>
 
           <MyInfoFieldRow
             label="환불받을 입금계좌"
             htmlFor="my-info-bank-account"
             onSave={saveBankAccount}
+            onCancel={() => {
+              setBankAccount(user.bankAccount ?? '');
+            }}
             saveDisabled={bankAccount.length < 10}
           >
-            <input
-              id="my-info-bank-account"
-              type="text"
-              placeholder="계좌번호를 입력해주세요"
-              value={bankAccount}
-              onChange={handleBankAccountChange}
-              className={myInfoFieldRowStyles.input}
-            />
+            {(isEditing) => (
+              <input
+                id="my-info-bank-account"
+                type="text"
+                placeholder="계좌번호를 입력해주세요"
+                value={bankAccount}
+                disabled={!isEditing}
+                onChange={handleBankAccountChange}
+                className={myInfoFieldRowStyles.input}
+              />
+            )}
           </MyInfoFieldRow>
 
-          <MyInfoFieldRow label="관심 분야" onSave={saveInterestCategories}>
-            <Dropdown
-              options={INTEREST_AREAS}
-              value={interestArea}
-              onChange={handleInterestAreaChange}
-              placeholder="관심분야를 선택해주세요"
-            />
+          <MyInfoFieldRow
+            label="관심 분야"
+            isEditing={isInterestEditing}
+            onEditingChange={handleInterestEditingChange}
+            onSave={saveInterestCategories}
+            onCancel={resetInterestDraft}
+            saveDisabled={interestArea === '' || detailAreas.length === 0}
+          >
+            {(isEditing) => (
+              <Dropdown
+                options={INTEREST_AREAS}
+                value={interestArea}
+                onChange={handleInterestAreaChange}
+                placeholder="관심분야를 선택해주세요"
+                disabled={!isEditing}
+              />
+            )}
           </MyInfoFieldRow>
 
           <MyInfoFieldRow label="상세 분야" readOnly>
-            {detailOptions !== null && (
+            {isInterestEditing && detailOptions !== null ? (
               <CheckboxGroup
                 options={detailOptions}
                 selected={detailAreas}
                 onChange={setDetailAreas}
                 max={MAX_DETAIL_AREAS}
+                showChips
+                chipsAlign="end"
               />
+            ) : (
+              savedDetailOptions !== null &&
+              savedDetailAreas.length > 0 && (
+                <div className={styles.savedDetailChips}>
+                  {savedDetailAreas.map((id) => {
+                    const option = savedDetailOptions.find((o) => o.id === id);
+                    if (option === undefined) return null;
+                    return (
+                      <RoundChip
+                        key={id}
+                        text={option.label}
+                        size="web"
+                        color="blue100"
+                      />
+                    );
+                  })}
+                </div>
+              )
             )}
           </MyInfoFieldRow>
 
           <MyInfoFieldRow
             label="지역"
             onSave={saveRegion}
+            onCancel={() => {
+              setRegion(user.region ?? '');
+            }}
             saveDisabled={region === ''}
           >
-            <Dropdown
-              options={REGIONS}
-              value={region}
-              onChange={(nextRegion) => {
-                setRegion(nextRegion as Region);
-              }}
-              placeholder="지역을 선택해주세요"
-            />
+            {(isEditing) => (
+              <Dropdown
+                options={REGIONS}
+                value={region}
+                onChange={(nextRegion) => {
+                  setRegion(nextRegion as Region);
+                }}
+                placeholder="지역을 선택해주세요"
+                disabled={!isEditing}
+              />
+            )}
           </MyInfoFieldRow>
         </div>
       </div>
