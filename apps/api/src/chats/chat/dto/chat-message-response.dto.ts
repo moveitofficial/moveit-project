@@ -23,8 +23,7 @@ export class MessageAttachmentResponseDto {
   declare id: string;
 
   @ApiProperty({
-    example:
-      'https://bucket.s3.region.amazonaws.com/consultation/uuid/file.pdf',
+    example: 'https://bucket.s3.region.amazonaws.com/chat/uuid/file.pdf',
   })
   declare fileUrl: string;
 

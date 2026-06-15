@@ -25,7 +25,7 @@ import { SendMessageDto } from './dto/send-message.dto';
 
 import type { JwtAccessPayload } from '../../auth/auth.types';
 import type { WsErrorResponse } from '../../common/interfaces/ws-error-response.interface';
-import type { ConsultationSocket } from '../common/interfaces/authenticated-socket.interface';
+import type { ChatSocket } from '../common/interfaces/authenticated-socket.interface';
 
 @UsePipes(
   new ValidationPipe({
@@ -70,7 +70,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.disconnect();
       return;
     }
-    (socket as ConsultationSocket).data = {
+    (socket as ChatSocket).data = {
       userId: payload.sub,
       role: payload.role,
     };
@@ -108,7 +108,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(CHAT_EVENTS.JOIN_ROOM)
   async handleJoinRoom(
-    @ConnectedSocket() socket: ConsultationSocket,
+    @ConnectedSocket() socket: ChatSocket,
     @MessageBody() dto: JoinRoomDto,
   ) {
     await this.chatService.validateParticipant(dto.roomId, socket.data.userId);
@@ -118,7 +118,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(CHAT_EVENTS.SEND_MESSAGE)
   async handleSendMessage(
-    @ConnectedSocket() socket: ConsultationSocket,
+    @ConnectedSocket() socket: ChatSocket,
     @MessageBody() dto: SendMessageDto,
   ) {
     const { message, receiverId } = await this.chatService.sendMessage(
@@ -134,7 +134,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(CHAT_EVENTS.MARK_READ)
   async handleMarkRead(
-    @ConnectedSocket() socket: ConsultationSocket,
+    @ConnectedSocket() socket: ChatSocket,
     @MessageBody() dto: MarkReadDto,
   ) {
     await this.chatService.markRead(
