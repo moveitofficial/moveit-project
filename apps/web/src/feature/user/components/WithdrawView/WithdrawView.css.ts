@@ -66,6 +66,20 @@ export const textarea = style([
     '::placeholder': {
       color: vars.color.gray400,
     },
+    selectors: {
+      '&:disabled': {
+        backgroundColor: vars.color.gray50,
+        cursor: 'not-allowed',
+      },
+    },
+  },
+]);
+
+export const errorMessage = style([
+  typography.f14R,
+  {
+    margin: 0,
+    color: vars.color.red200,
   },
 ]);
 
@@ -91,6 +105,12 @@ export const cancelButton = style([
     backgroundColor: vars.color.white,
     border: `1px solid ${vars.color.line200}`,
     color: vars.color.black500,
+    selectors: {
+      '&:disabled': {
+        cursor: 'not-allowed',
+        opacity: 0.6,
+      },
+    },
   },
 ]);
 
