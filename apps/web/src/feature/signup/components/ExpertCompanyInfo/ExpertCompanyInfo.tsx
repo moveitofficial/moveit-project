@@ -1,7 +1,14 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
 
+import { useExpertSignupStore } from '../../expertSignupStore';
+import { useBlockBack } from '../../useBlockBack';
+import {
+  useCreateExpertProfile,
+  toExpertProfileErrorMessage,
+} from '../../useCreateExpertProfile';
 import CheckboxGroup from '../common/CheckboxGroup';
 import Dropdown from '../common/Dropdown';
 import FormFooter from '../common/FormFooter';
@@ -17,6 +24,8 @@ import {
 } from './constants';
 import * as styles from './ExpertCompanyInfo.css';
 
+
+
 interface FormState {
   foundedYearMonth: string;
   employeeMin: string;
@@ -27,16 +36,21 @@ interface FormState {
   techStacks: string[];
 }
 
-const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-};
-
 const formatYearMonth = (digits: string): string => {
   if (digits.length <= 4) return digits;
   return `${digits.slice(0, 4)}.${digits.slice(4, 6)}`;
 };
 
+const toHourMinute = (id: string) =>
+  id === '' ? '' : `${id.padStart(2, '0')}:00`;
+
 export default function ExpertCompanyInfo() {
+  useBlockBack();
+  const router = useRouter();
+  const activity = useExpertSignupStore((s) => s.activity);
+  const { mutate, isPending, error } = useCreateExpertProfile();
+  const errorMessage = toExpertProfileErrorMessage(error);
+
   const [form, setForm] = useState<FormState>({
     foundedYearMonth: '',
     employeeMin: '',
@@ -92,6 +106,33 @@ export default function ExpertCompanyInfo() {
     form.specialtyGroup !== '' &&
     form.specialtyCategories.length > 0 &&
     form.techStacks.length > 0;
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!canSubmit || isPending) return;
+    mutate({
+      // activity-info (state)
+      businessName: activity?.businessName ?? '',
+      businessNumber: activity?.businessNumber ?? '',
+      ceoName: activity?.ceoName ?? '',
+      phoneNumber: activity?.phone ?? '',
+      bankName: activity?.bankName ?? '',
+      bankAccount: activity?.bankAccount ?? '',
+      region: activity?.region ?? '',
+      contactTimeStart: toHourMinute(activity?.contactTimeStart ?? ''),
+      contactTimeEnd: toHourMinute(activity?.contactTimeEnd ?? ''),
+      // company-info (현재 폼)
+      foundedYear: form.foundedYearMonth,
+      employeeMin: Number(form.employeeMin),
+      employeeMax: Number(form.employeeMax),
+      description: form.description,
+      specialtyCategories: form.specialtyCategories.map((category) => ({
+        group: form.specialtyGroup,
+        category,
+      })),
+      techStackNames: form.techStacks,
+    });
+  };
 
   return (
     <section className={styles.Container}>
@@ -205,9 +246,15 @@ export default function ExpertCompanyInfo() {
           />
         </div>
 
+        {errorMessage !== null && (
+          <p className={styles.formError}>{errorMessage}</p>
+        )}
         <FormFooter
           submitLabel="다음"
-          disabled={!canSubmit}
+          disabled={!canSubmit || isPending}
+          onSkip={() => {
+            router.push('/signup/expert/portfolio');
+          }}
           skipDesc={
             <>
               필수 정보를 입력해야 서비스 등록이 가능합니다.

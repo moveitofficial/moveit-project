@@ -9,7 +9,6 @@ import * as styles from './Header.css';
 import HeaderNav from './HeaderNav';
 
 const userMenuItems: { label: string; href: Route }[] = [
-  { label: '전문가 등록', href: '#' },
   { label: '로그인', href: '/login' },
 ];
 
@@ -33,7 +32,10 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
-          <Link href="#" className={clsx(typography.f16B, styles.signUpButton)}>
+          <Link
+            href="/signup"
+            className={clsx(typography.f16B, styles.signUpButton)}
+          >
             회원가입
           </Link>
         </div>

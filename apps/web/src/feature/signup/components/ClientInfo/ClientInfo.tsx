@@ -1,7 +1,13 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
 
+import { useBlockBack } from '../../useBlockBack';
+import {
+  useCreateClientProfile,
+  toClientProfileErrorMessage,
+} from '../../useCreateClientProfile';
 import CheckboxGroup from '../common/CheckboxGroup';
 import Dropdown from '../common/Dropdown';
 import FormFooter from '../common/FormFooter';
@@ -17,6 +23,7 @@ import {
   type InterestAreaId,
 } from './constants';
 
+
 interface FormState {
   nickname: string;
   interestArea: InterestAreaId | '';
@@ -27,11 +34,12 @@ interface FormState {
   phone: string;
 }
 
-const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-};
-
 export default function ClientInfo() {
+  useBlockBack();
+  const router = useRouter();
+  const { mutate, isPending, error } = useCreateClientProfile();
+  const errorMessage = toClientProfileErrorMessage(error);
+
   const [form, setForm] = useState<FormState>({
     nickname: '',
     interestArea: '',
@@ -41,6 +49,22 @@ export default function ClientInfo() {
     accountNumber: '',
     phone: '',
   });
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!canSubmit || isPending) return;
+    mutate({
+      nickname: form.nickname,
+      region: form.region,
+      phoneNumber: form.phone,
+      bankName: form.bankName,
+      bankAccount: form.accountNumber,
+      interestCategories: form.detailAreas.map((category) => ({
+        group: form.interestArea,
+        category,
+      })),
+    });
+  };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -189,9 +213,15 @@ export default function ClientInfo() {
           />
         </div>
 
+        {errorMessage !== null && (
+          <p className={styles.formError}>{errorMessage}</p>
+        )}
         <FormFooter
           submitLabel="다음"
-          disabled={!canSubmit}
+          disabled={!canSubmit || isPending}
+          onSkip={() => {
+            router.replace('/');
+          }}
           skipDesc={
             <>
               회원정보는
