@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import * as styles from './MyInfoFieldRow.css';
 
 import type { ReactNode } from 'react';
@@ -8,20 +10,55 @@ interface Props {
   label: string;
   htmlFor?: string;
   readOnly?: boolean;
+  hideActions?: boolean;
+  isEditing?: boolean;
+  onEditingChange?: (editing: boolean) => void;
   onSave?: () => void;
+  onCancel?: () => void;
   saveDisabled?: boolean;
-  children: ReactNode;
+  children: ReactNode | ((isEditing: boolean) => ReactNode);
 }
 
 export default function MyInfoFieldRow({
   label,
   htmlFor,
   readOnly = false,
+  hideActions = false,
+  isEditing: isEditingProp,
+  onEditingChange,
   onSave,
+  onCancel,
   saveDisabled = false,
   children,
 }: Props) {
-  const showSave = !readOnly && onSave !== undefined;
+  const [internalEditing, setInternalEditing] = useState(false);
+  const isControlled = isEditingProp !== undefined;
+  const isEditing = isControlled ? isEditingProp : internalEditing;
+
+  const setEditing = (next: boolean) => {
+    if (!isControlled) {
+      setInternalEditing(next);
+    }
+    onEditingChange?.(next);
+  };
+
+  const showActions = !readOnly && !hideActions && onSave !== undefined;
+  const content =
+    typeof children === 'function' ? children(isEditing) : children;
+
+  const handleEdit = () => {
+    setEditing(true);
+  };
+
+  const handleSave = () => {
+    onSave?.();
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    onCancel?.();
+    setEditing(false);
+  };
 
   return (
     <div className={styles.field}>
@@ -34,19 +71,37 @@ export default function MyInfoFieldRow({
           </label>
         )}
 
-        {showSave && (
-          <button
-            type="button"
-            className={styles.saveButton}
-            disabled={saveDisabled}
-            onClick={onSave}
-          >
-            저장
-          </button>
-        )}
+        {showActions &&
+          (isEditing ? (
+            <div className={styles.actionButtons}>
+              <button
+                type="button"
+                className={styles.actionButton}
+                disabled={saveDisabled}
+                onClick={handleSave}
+              >
+                저장
+              </button>
+              <button
+                type="button"
+                className={styles.actionButton}
+                onClick={handleCancel}
+              >
+                취소
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={styles.actionButton}
+              onClick={handleEdit}
+            >
+              수정
+            </button>
+          ))}
       </div>
 
-      {children}
+      {content}
     </div>
   );
 }

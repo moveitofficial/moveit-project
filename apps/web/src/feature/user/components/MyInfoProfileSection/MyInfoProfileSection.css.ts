@@ -32,20 +32,21 @@ export const avatarFallback = style({
 });
 
 export const changeButton = style({
-  width: '100px',
-  height: '42px',
-  gap: '10px',
-  opacity: '1',
-  border: `1px solid ${vars.color.line200}`,
-  borderWidth: '1px',
-  padding: '10px 16px',
-  borderRadius: '8px',
-  cursor: 'pointer',
+  display: 'flex',
+  padding: '0.625rem 1rem',
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: '0.625rem',
+
+  borderRadius: '0.5rem',
+  border: `1px solid var(--Line-Line-200, #E6E6E6)`,
+  background: vars.color.white,
 
   fontFamily: vars.font.family,
-  fontSize: '14px',
+  fontSize: '0.875rem',
   fontWeight: vars.font.weight.bold,
   color: vars.color.black500,
+  lineHeight: '1.375rem',
 });
 
 export const hiddenInput = style({

@@ -69,12 +69,26 @@ export const helperText = style([
   },
 ]);
 
-export const chips = style({
+const chipsBase = style({
   display: 'flex',
   flexWrap: 'wrap',
   gap: '8px',
   width: '100%',
 });
+
+export const chipsStart = style([
+  chipsBase,
+  {
+    justifyContent: 'flex-start',
+  },
+]);
+
+export const chipsEnd = style([
+  chipsBase,
+  {
+    justifyContent: 'flex-end',
+  },
+]);
 
 export const chipBtn = style({
   background: 'none',

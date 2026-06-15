@@ -16,6 +16,7 @@ interface Props {
   onChange: (next: string[]) => void;
   max: number;
   showChips?: boolean;
+  chipsAlign?: 'start' | 'end';
   maxHeight?: number;
 }
 
@@ -25,6 +26,7 @@ export default function CheckboxGroup({
   onChange,
   max,
   showChips,
+  chipsAlign = 'start',
   maxHeight,
 }: Props) {
   const toggle = (id: string) => {
@@ -69,7 +71,11 @@ export default function CheckboxGroup({
       </div>
       <p className={styles.helperText}>최대 {max}개 까지 선택 가능합니다.</p>
       {showChips === true && selected.length > 0 && (
-        <div className={styles.chips}>
+        <div
+          className={
+            chipsAlign === 'end' ? styles.chipsEnd : styles.chipsStart
+          }
+        >
           {selected.map((id) => {
             const option = options.find((o) => o.id === id);
             if (option === undefined) return null;
