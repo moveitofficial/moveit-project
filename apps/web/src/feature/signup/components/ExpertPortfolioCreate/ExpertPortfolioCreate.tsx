@@ -1,7 +1,18 @@
 'use client';
 
-import { type ChangeEvent, type FormEvent, useState } from 'react';
+import { skipToken, useQuery } from '@tanstack/react-query';
+import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 
+import { getPortfolio, type StackType } from '../../api';
+import { useBlockBack } from '../../useBlockBack';
+import {
+  useCreatePortfolio,
+  toCreatePortfolioErrorMessage,
+} from '../../useCreatePortfolio';
+import {
+  useUpdatePortfolio,
+  toUpdatePortfolioErrorMessage,
+} from '../../useUpdatePortfolio';
 import Dropdown from '../common/Dropdown';
 import FormHeader from '../common/FormHeader';
 
@@ -15,10 +26,12 @@ import * as styles from './ExpertPortfolioCreate.css';
 import MainImageUpload from './MainImageUpload';
 import UploadErrorModal from './UploadErrorModal';
 
+interface Props {
+  portfolioId?: string;
+}
+
 interface FormState {
   title: string;
-  mainImage: string | null;
-  detailImages: string[];
   designStack: string;
   frontendStack: string;
   backendStack: string;
@@ -27,15 +40,71 @@ interface FormState {
   description: string;
 }
 
-const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-};
+interface ImageItem {
+  file: File | null; // null이면 기존(이미 업로드된) 이미지
+  url: string;
+}
 
-export default function ExpertPortfolioCreate() {
+const parseStacks = (value: string, stackType: StackType) =>
+  value
+    .split(',')
+    .map((name) => name.trim())
+    .filter((name) => name !== '')
+    .map((stackName) => ({ stackName, stackType }));
+
+const joinStacks = (
+  skills: { stackName: string; stackType: StackType }[],
+  stackType: StackType,
+) =>
+  skills
+    .filter((s) => s.stackType === stackType)
+    .map((s) => s.stackName)
+    .join(', ');
+
+const MIN_IMAGE_WIDTH = 600;
+const MAX_IMAGE_HEIGHT = 3000;
+
+// 업로드 전 클라이언트 검증
+// 공통: 가로 ≥ 600px, 세로 ≤ 3000px (백엔드와 동일) / 메인: 추가로 1:1 비율
+const isValidImageSize = (
+  file: File,
+  requireSquare: boolean,
+): Promise<boolean> =>
+  new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.addEventListener('load', () => {
+      URL.revokeObjectURL(url);
+      const width = img.naturalWidth;
+      const height = img.naturalHeight;
+      const sizeOk = width >= MIN_IMAGE_WIDTH && height <= MAX_IMAGE_HEIGHT;
+      resolve(sizeOk && (!requireSquare || width === height));
+    });
+    img.addEventListener('error', () => {
+      URL.revokeObjectURL(url);
+      resolve(false);
+    });
+    img.src = url;
+  });
+
+export default function ExpertPortfolioCreate({ portfolioId }: Props) {
+  useBlockBack();
+  const isEdit = portfolioId !== undefined;
+
+  const { data: detail } = useQuery({
+    queryKey: ['portfolio', portfolioId],
+    queryFn: portfolioId ? () => getPortfolio(portfolioId) : skipToken,
+  });
+
+  const create = useCreatePortfolio();
+  const update = useUpdatePortfolio();
+  const isPending = create.isPending || update.isPending;
+  const errorMessage = isEdit
+    ? toUpdatePortfolioErrorMessage(update.error)
+    : toCreatePortfolioErrorMessage(create.error);
+
   const [form, setForm] = useState<FormState>({
     title: '',
-    mainImage: null,
-    detailImages: [],
     designStack: '',
     frontendStack: '',
     backendStack: '',
@@ -43,7 +112,30 @@ export default function ExpertPortfolioCreate() {
     businessSector: '',
     description: '',
   });
+  const [mainImage, setMainImage] = useState<ImageItem | null>(null);
+  const [detailImages, setDetailImages] = useState<ImageItem[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!detail) return;
+    const d = detail.data;
+    setForm({
+      title: d.title,
+      designStack: joinStacks(d.skills, 'DESIGN'),
+      frontendStack: joinStacks(d.skills, 'FRONTEND'),
+      backendStack: joinStacks(d.skills, 'BACKEND'),
+      clientName: d.clientName,
+      businessSector: d.businessSector as BusinessSectorId,
+      description: d.description,
+    });
+    const main = d.images.find((img) => img.isMain);
+    setMainImage(main ? { file: null, url: main.imgUrl } : null);
+    setDetailImages(
+      d.images
+        .filter((img) => !img.isMain)
+        .map((img) => ({ file: null, url: img.imgUrl })),
+    );
+  }, [detail]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -58,28 +150,36 @@ export default function ExpertPortfolioCreate() {
     setForm((prev) => ({ ...prev, businessSector: id as BusinessSectorId }));
   };
 
+  const selectImage = async (
+    file: File,
+    requireSquare: boolean,
+    apply: (item: ImageItem) => void,
+  ) => {
+    if (!(await isValidImageSize(file, requireSquare))) {
+      setModalOpen(true);
+      return;
+    }
+    apply({ file, url: URL.createObjectURL(file) });
+  };
+
   const handleMainSelect = (file: File) => {
-    const url = URL.createObjectURL(file);
-    setForm((prev) => ({ ...prev, mainImage: url }));
+    void selectImage(file, true, (item) => {
+      setMainImage(item);
+    });
   };
 
   const handleMainRemove = () => {
-    setForm((prev) => ({ ...prev, mainImage: null }));
+    setMainImage(null);
   };
 
   const handleDetailSelect = (file: File) => {
-    const url = URL.createObjectURL(file);
-    setForm((prev) => ({
-      ...prev,
-      detailImages: [...prev.detailImages, url],
-    }));
+    void selectImage(file, false, (item) => {
+      setDetailImages((prev) => [...prev, item]);
+    });
   };
 
   const handleDetailRemove = (index: number) => {
-    setForm((prev) => ({
-      ...prev,
-      detailImages: prev.detailImages.filter((_, i) => i !== index),
-    }));
+    setDetailImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleModalClose = () => {
@@ -88,8 +188,8 @@ export default function ExpertPortfolioCreate() {
 
   const canSubmit =
     form.title.trim() !== '' &&
-    form.mainImage !== null &&
-    form.detailImages.length > 0 &&
+    mainImage !== null &&
+    detailImages.length > 0 &&
     form.designStack.trim() !== '' &&
     form.frontendStack.trim() !== '' &&
     form.backendStack.trim() !== '' &&
@@ -97,16 +197,55 @@ export default function ExpertPortfolioCreate() {
     form.businessSector !== '' &&
     form.description.trim() !== '';
 
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!canSubmit || isPending) return;
+
+    const body = {
+      title: form.title,
+      description: form.description,
+      clientName: form.clientName,
+      businessSector: form.businessSector,
+      skills: [
+        ...parseStacks(form.designStack, 'DESIGN'),
+        ...parseStacks(form.frontendStack, 'FRONTEND'),
+        ...parseStacks(form.backendStack, 'BACKEND'),
+      ],
+    };
+
+    if (portfolioId !== undefined) {
+      update.mutate({ portfolioId, mainImage, detailImages, body });
+      return;
+    }
+
+    if (mainImage.file === null) return; // 생성은 새 이미지만
+    create.mutate({
+      mainImage: mainImage.file,
+      detailImages: detailImages
+        .map((d) => d.file)
+        .filter((file): file is File => file !== null),
+      body,
+    });
+  };
+
   return (
     <section className={styles.Container}>
       <FormHeader
         align="left"
         title={
-          <>
-            나만의 포트폴리오를
-            <br />
-            등록해주세요!
-          </>
+          isEdit ? (
+            <>
+              포트폴리오를
+              <br />
+              수정해주세요
+            </>
+          ) : (
+            <>
+              나만의 포트폴리오를
+              <br />
+              등록해주세요!
+            </>
+          )
         }
       />
 
@@ -129,7 +268,7 @@ export default function ExpertPortfolioCreate() {
         <div className={styles.field}>
           <span className={styles.label}>메인 이미지 등록</span>
           <MainImageUpload
-            value={form.mainImage}
+            value={mainImage?.url ?? null}
             onSelect={handleMainSelect}
             onRemove={handleMainRemove}
           />
@@ -138,12 +277,10 @@ export default function ExpertPortfolioCreate() {
         <div className={styles.field}>
           <span className={styles.label}>
             상세 이미지 등록(1개 필수){' '}
-            <span className={styles.labelCount}>
-              {form.detailImages.length}/10
-            </span>
+            <span className={styles.labelCount}>{detailImages.length}/10</span>
           </span>
           <DetailImageUpload
-            values={form.detailImages}
+            values={detailImages.map((d) => d.url)}
             onSelect={handleDetailSelect}
             onRemove={handleDetailRemove}
           />
@@ -239,13 +376,16 @@ export default function ExpertPortfolioCreate() {
           </div>
         </div>
 
+        {errorMessage !== null && (
+          <p className={styles.formError}>{errorMessage}</p>
+        )}
         <div className={styles.submitArea}>
           <button
             type="submit"
             className={styles.submitBtn}
-            disabled={!canSubmit}
+            disabled={!canSubmit || isPending}
           >
-            포트폴리오 등록
+            {isEdit ? '수정 완료' : '포트폴리오 등록'}
           </button>
         </div>
       </form>

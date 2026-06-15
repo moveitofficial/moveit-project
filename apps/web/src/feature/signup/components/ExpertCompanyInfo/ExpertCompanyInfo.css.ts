@@ -142,3 +142,10 @@ export const employeeSuffix = style([
   },
 ]);
 
+export const formError = style([
+  typography.f12B,
+  {
+    color: vars.color.red200,
+    width: '100%',
+  },
+]);

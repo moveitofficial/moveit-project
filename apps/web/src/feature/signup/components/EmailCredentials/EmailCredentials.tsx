@@ -5,6 +5,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
 
+import { useEmailSignUp, toSignUpErrorMessage } from '../../useEmailSignUp';
+
 import AgreeBox from './AgreeBox';
 import {
   EMAIL_REGEX,
@@ -25,11 +27,9 @@ interface FormState {
   passwordConfirm: string;
 }
 
-const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-};
-
 export default function EmailCredentials({ role }: Props) {
+  const { mutate, isPending, error } = useEmailSignUp();
+  const errorMessage = toSignUpErrorMessage(error);
   const isExpert = role === 'EXPERT';
 
   const [form, setForm] = useState<FormState>({
@@ -75,7 +75,7 @@ export default function EmailCredentials({ role }: Props) {
       : null;
   const passwordError =
     form.password.length > 0 && !PASSWORD_REGEX.test(form.password)
-      ? '영문, 숫자, 특수문자를 포함한 8자 이상으로 입력해 주세요'
+      ? '영문 대·소문자, 숫자, 특수문자를 포함한 8자 이상으로 입력해 주세요'
       : null;
   const passwordConfirmError =
     form.passwordConfirm.length > 0 && form.password !== form.passwordConfirm
@@ -93,6 +93,17 @@ export default function EmailCredentials({ role }: Props) {
     requiredAgreed;
 
   const passwordType = passwordVisible ? 'text' : 'password';
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!canSubmit || isPending) return;
+    mutate({
+      email: form.email,
+      password: form.password,
+      role,
+      ...(isExpert ? {} : { name: form.name }), // 전문가는 name 생략
+    });
+  };
 
   return (
     <section className={styles.Container}>
@@ -211,11 +222,13 @@ export default function EmailCredentials({ role }: Props) {
           onToggle={toggleAgreement}
           onToggleAll={toggleAll}
         />
-
+        {errorMessage !== null && (
+          <p className={styles.fieldError}>{errorMessage}</p>
+        )}
         <button
           type="submit"
           className={styles.submitBtn}
-          disabled={!canSubmit}
+          disabled={!canSubmit || isPending}
         >
           회원가입
         </button>

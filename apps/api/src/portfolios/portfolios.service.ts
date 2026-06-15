@@ -161,10 +161,15 @@ export class PortfoliosService {
       }
     }
 
-    const oldImageKeys =
+    const keptKeys = new Set(
+      (dto.images ?? []).map((img) => new URL(img.imgUrl).pathname.slice(1)),
+    );
+    const removedImageKeys =
       dto.images === undefined
         ? []
-        : portfolio.images.map((img) => new URL(img.imgUrl).pathname.slice(1));
+        : portfolio.images
+            .map((img) => new URL(img.imgUrl).pathname.slice(1))
+            .filter((key) => !keptKeys.has(key));
 
     const updated = await this.portfoliosRepository.update({
       id: portfolioId,
@@ -176,8 +181,8 @@ export class PortfoliosService {
       skills: dto.skills,
     });
 
-    if (oldImageKeys.length > 0) {
-      await this.uploadService.deleteImages(oldImageKeys);
+    if (removedImageKeys.length > 0) {
+      await this.uploadService.deleteImages(removedImageKeys);
     }
 
     return mapPortfolio(updated);

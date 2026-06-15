@@ -1,7 +1,10 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
 
+import { useExpertSignupStore } from '../../expertSignupStore';
+import { useBlockBack } from '../../useBlockBack';
 import Dropdown from '../common/Dropdown';
 import FormFooter from '../common/FormFooter';
 import FormHeader from '../common/FormHeader';
@@ -11,6 +14,8 @@ import { REGIONS } from '../common/regions';
 import BusinessNumberField from './BusinessNumberField';
 import { BUSINESS_NUMBER_LENGTH, TIME_OPTIONS } from './constants';
 import * as styles from './ExpertActivityInfo.css';
+
+
 
 interface FormState {
   businessName: string;
@@ -24,11 +29,11 @@ interface FormState {
   region: string;
 }
 
-const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-};
-
 export default function ExpertActivityInfo() {
+  useBlockBack();
+  const router = useRouter();
+  const setActivity = useExpertSignupStore((s) => s.setActivity);
+
   const [form, setForm] = useState<FormState>({
     businessName: '',
     businessNumber: '',
@@ -86,9 +91,7 @@ export default function ExpertActivityInfo() {
     (o) => o.id === form.contactTimeStart,
   );
   const endDisabledIds =
-    startIdx === -1
-      ? []
-      : TIME_OPTIONS.slice(0, startIdx + 1).map((o) => o.id);
+    startIdx === -1 ? [] : TIME_OPTIONS.slice(0, startIdx + 1).map((o) => o.id);
 
   const canSubmit =
     form.businessName.trim() !== '' &&
@@ -100,6 +103,13 @@ export default function ExpertActivityInfo() {
     form.contactTimeStart !== '' &&
     form.contactTimeEnd !== '' &&
     form.region !== '';
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setActivity(form); // 서버 저장 X, state에만 보관
+    router.push('/signup/expert/company-info');
+  };
 
   return (
     <section className={styles.Container}>
@@ -235,6 +245,9 @@ export default function ExpertActivityInfo() {
         <FormFooter
           submitLabel="다음"
           disabled={!canSubmit}
+          onSkip={() => {
+            router.push('/signup/expert/company-info');
+          }}
           skipDesc={
             <>
               필수 정보를 입력해야 서비스 등록이 가능합니다.
