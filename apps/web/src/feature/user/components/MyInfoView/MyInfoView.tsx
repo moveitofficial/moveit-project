@@ -31,7 +31,12 @@ import CheckboxGroup from '@/feature/signup/components/common/CheckboxGroup';
 import Dropdown from '@/feature/signup/components/common/Dropdown';
 import PhoneField from '@/feature/signup/components/common/PhoneField';
 import { REGIONS } from '@/feature/signup/components/common/regions';
-import { useMyUserQuery } from '@/feature/user/queries';
+import {
+  useMyUserQuery,
+  usePatchClientProfileMutation,
+  usePatchMyUserMutation,
+  usePatchProfileImageMutation,
+} from '@/feature/user/queries';
 
 const PROVIDERS: { id: AuthProvider; src: StaticImageData; alt: string }[] = [
   { id: 'NAVER', src: naverLogo, alt: '네이버' },
@@ -101,6 +106,12 @@ const syncDraftFromUser = (
 export default function MyInfoView() {
   const router = useRouter();
   const { data, isPending, isError, error } = useMyUserQuery();
+  const { mutateAsync: patchMyUser, isPending: isPatchingMyUser } =
+    usePatchMyUserMutation();
+  const { mutateAsync: patchClientProfile, isPending: isPatchingClientProfile } =
+    usePatchClientProfileMutation();
+  const { mutateAsync: patchProfileImage, isPending: isPatchingProfileImage } =
+    usePatchProfileImageMutation();
 
   const [user, setUser] = useState<MyUser | null>(null);
   const [nickname, setNickname] = useState('');
@@ -111,6 +122,10 @@ export default function MyInfoView() {
   const [interestArea, setInterestArea] = useState<InterestAreaId | ''>('');
   const [detailAreas, setDetailAreas] = useState<string[]>([]);
   const [isInterestEditing, setIsInterestEditing] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const isSaving =
+    isPatchingMyUser || isPatchingClientProfile || isPatchingProfileImage;
 
   useEffect(() => {
     if (!data) return;
@@ -157,51 +172,70 @@ export default function MyInfoView() {
     setDetailAreas([]);
   };
 
-  const saveNickname = () => {
-    if (user === null) return;
-    setUser({
-      ...user,
-      clientProfile: {
-        id: user.clientProfile?.id ?? '',
-        userId: user.clientProfile?.userId ?? user.id,
-        nickname: nickname.trim(),
-        interestCategories: user.clientProfile?.interestCategories ?? [],
-      },
-    });
+  const runSave = async (save: () => Promise<unknown>) => {
+    setSaveError(null);
+    try {
+      await save();
+    } catch (error_) {
+      const message =
+        error_ instanceof ApiError ? error_.message : '저장에 실패했습니다.';
+      setSaveError(message);
+      throw error_ instanceof Error ? error_ : new Error(message);
+    }
   };
 
-  const savePhoneNumber = () => {
-    if (user === null) return;
-    setUser({ ...user, phoneNumber });
+  const saveNickname = async () => {
+    await runSave(() =>
+      patchClientProfile({ nickname: nickname.trim() }),
+    );
   };
 
-  const saveBankName = () => {
-    if (user === null) return;
-    setUser({ ...user, bankName: bankName.trim() });
+  const savePhoneNumber = async () => {
+    await runSave(() => patchMyUser({ phoneNumber }));
   };
 
-  const saveBankAccount = () => {
-    if (user === null) return;
-    setUser({ ...user, bankAccount });
+  const saveBankName = async () => {
+    await runSave(() => patchMyUser({ bankName: bankName.trim() }));
   };
 
-  const saveRegion = () => {
-    if (user === null || region === '') return;
-    setUser({ ...user, region });
+  const saveBankAccount = async () => {
+    await runSave(() => patchMyUser({ bankAccount }));
   };
 
-  const saveInterestCategories = () => {
-    if (user === null) return;
-    const nextCategories = toInterestCategories(interestArea, detailAreas);
-    setUser({
-      ...user,
-      clientProfile: {
-        id: user.clientProfile?.id ?? '',
-        userId: user.clientProfile?.userId ?? user.id,
-        nickname: user.clientProfile?.nickname ?? null,
-        interestCategories: nextCategories,
-      },
-    });
+  const saveRegion = async () => {
+    if (region === '') return;
+    await runSave(() => patchMyUser({ region }));
+  };
+
+  const saveInterestCategories = async () => {
+    await runSave(() =>
+      patchClientProfile({
+        interestCategories: toInterestCategories(interestArea, detailAreas),
+      }),
+    );
+  };
+
+  const handleProfileFileSelect = async (file: File) => {
+    const previousImageUrl = user?.profileImageUrl ?? null;
+    const previewUrl = URL.createObjectURL(file);
+    setUser((prev) =>
+      prev === null ? prev : { ...prev, profileImageUrl: previewUrl },
+    );
+
+    setSaveError(null);
+    try {
+      await patchProfileImage(file);
+    } catch (error_) {
+      URL.revokeObjectURL(previewUrl);
+      setUser((prev) =>
+        prev === null ? prev : { ...prev, profileImageUrl: previousImageUrl },
+      );
+      const message =
+        error_ instanceof ApiError
+          ? error_.message
+          : '프로필 이미지 변경에 실패했습니다.';
+      setSaveError(message);
+    }
   };
 
   const resetInterestDraft = () => {
@@ -244,15 +278,17 @@ export default function MyInfoView() {
   return (
     <section className={styles.root}>
       <h1 className={styles.title}>내 정보</h1>
+      {saveError !== null && (
+        <p className={styles.errorMessage}>{saveError}</p>
+      )}
 
       <div className={styles.card}>
         <MyInfoProfileSection
           profileImageUrl={user.profileImageUrl}
-          onChange={(nextUrl) => {
-            setUser((prev) =>
-              prev === null ? prev : { ...prev, profileImageUrl: nextUrl },
-            );
+          onFileSelect={(file) => {
+            void handleProfileFileSelect(file);
           }}
+          disabled={isSaving}
         />
 
         <div className={styles.fields}>
@@ -273,7 +309,7 @@ export default function MyInfoView() {
             onCancel={() => {
               setNickname(user.clientProfile?.nickname ?? '');
             }}
-            saveDisabled={nickname.trim().length < 2}
+            saveDisabled={nickname.trim().length < 2 || isSaving}
           >
             {(isEditing) => (
               <input
@@ -296,6 +332,7 @@ export default function MyInfoView() {
             onCancel={() => {
               setPhoneNumber(user.phoneNumber ?? '');
             }}
+            saveDisabled={isSaving}
           >
             {(isEditing) => (
               <PhoneField
@@ -353,7 +390,7 @@ export default function MyInfoView() {
             onCancel={() => {
               setBankName(user.bankName ?? '');
             }}
-            saveDisabled={bankName.trim().length < 2}
+            saveDisabled={bankName.trim().length < 2 || isSaving}
           >
             {(isEditing) => (
               <input
@@ -377,7 +414,7 @@ export default function MyInfoView() {
             onCancel={() => {
               setBankAccount(user.bankAccount ?? '');
             }}
-            saveDisabled={bankAccount.length < 10}
+            saveDisabled={bankAccount.length < 10 || isSaving}
           >
             {(isEditing) => (
               <input
@@ -398,7 +435,9 @@ export default function MyInfoView() {
             onEditingChange={handleInterestEditingChange}
             onSave={saveInterestCategories}
             onCancel={resetInterestDraft}
-            saveDisabled={interestArea === '' || detailAreas.length === 0}
+            saveDisabled={
+              interestArea === '' || detailAreas.length === 0 || isSaving
+            }
           >
             {(isEditing) => (
               <Dropdown
@@ -448,7 +487,7 @@ export default function MyInfoView() {
             onCancel={() => {
               setRegion((user.region as Region | null) ?? '');
             }}
-            saveDisabled={region === ''}
+            saveDisabled={region === '' || isSaving}
           >
             {(isEditing) => (
               <Dropdown
