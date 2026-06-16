@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getMyUser, patchMyUser } from './api';
+import {
+  getMyUser,
+  patchClientProfile,
+  patchMyUser,
+  patchProfileImage,
+  type PatchClientProfileBody,
+  type PatchMyUserBody,
+} from './api';
 
 export const myUserQueryKey = ['users', 'me'] as const;
 
@@ -17,11 +24,29 @@ export function useMyUserQuery() {
 export function usePatchMyUserMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: patchMyUser,
+    mutationFn: (body: PatchMyUserBody) => patchMyUser(body),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: myUserQueryKey,
-      });
+      void queryClient.invalidateQueries({ queryKey: myUserQueryKey });
+    },
+  });
+}
+
+export function usePatchClientProfileMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: PatchClientProfileBody) => patchClientProfile(body),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: myUserQueryKey });
+    },
+  });
+}
+
+export function usePatchProfileImageMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => patchProfileImage(file),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: myUserQueryKey });
     },
   });
 }
