@@ -3,9 +3,11 @@
 import googleLogo from '@public/login/googleLogo.svg';
 import kakaoLogo from '@public/login/kaLogo.svg';
 import naverLogo from '@public/login/naver.svg';
+import { ApiError } from '@repo/fetcher';
 import { RoundChip } from '@repo/ui/RoundChip';
 import Image, { type StaticImageData } from 'next/image';
-import { type ChangeEvent, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { type ChangeEvent, useEffect, useState } from 'react';
 
 import { MyInfoFieldRow, myInfoFieldRowStyles } from '../MyInfoFieldRow';
 import { MyInfoProfileSection } from '../MyInfoProfileSection';
@@ -14,11 +16,10 @@ import * as styles from './MyInfoView.css';
 
 import type {
   AuthProvider,
-  ClientMeUser,
   InterestCategory,
-  Region,
-  ServiceCategoryName,
-} from '@/mocks/types';
+  MyUser,
+} from '@/feature/user/api';
+import type { Region, ServiceCategoryName } from '@/mocks/types';
 
 import {
   DETAIL_AREAS_BY_INTEREST,
@@ -30,7 +31,7 @@ import CheckboxGroup from '@/feature/signup/components/common/CheckboxGroup';
 import Dropdown from '@/feature/signup/components/common/Dropdown';
 import PhoneField from '@/feature/signup/components/common/PhoneField';
 import { REGIONS } from '@/feature/signup/components/common/regions';
-import { mockClientUser } from '@/mocks/user';
+import { useMyUserQuery } from '@/feature/user/queries';
 
 const PROVIDERS: { id: AuthProvider; src: StaticImageData; alt: string }[] = [
   { id: 'NAVER', src: naverLogo, alt: '네이버' },
@@ -40,7 +41,13 @@ const PROVIDERS: { id: AuthProvider; src: StaticImageData; alt: string }[] = [
 
 const getInitialInterestArea = (
   categories: InterestCategory[],
-): InterestAreaId | '' => categories[0]?.group ?? '';
+): InterestAreaId | '' => {
+  const group = categories[0]?.group;
+  if (group === 'IT_COACHING' || group === 'PROJECT_REQUEST') {
+    return group;
+  }
+  return '';
+};
 
 const getInitialDetailAreas = (
   categories: InterestCategory[],
@@ -49,7 +56,7 @@ const getInitialDetailAreas = (
   if (group === '') return [];
   return categories
     .filter((item) => item.group === group)
-    .map((item) => item.category);
+    .map((item) => item.category as ServiceCategoryName);
 };
 
 const toInterestCategories = (
@@ -59,39 +66,77 @@ const toInterestCategories = (
   if (group === '') return [];
   return categories.map((category) => ({
     group,
-    category: category as ServiceCategoryName,
+    category,
   }));
 };
 
-export default function MyInfoView() {
-  const initialUser = mockClientUser;
+const syncDraftFromUser = (
+  user: MyUser,
+  setters: {
+    setUser: (user: MyUser) => void;
+    setNickname: (value: string) => void;
+    setPhoneNumber: (value: string) => void;
+    setBankName: (value: string) => void;
+    setBankAccount: (value: string) => void;
+    setRegion: (value: Region | '') => void;
+    setInterestArea: (value: InterestAreaId | '') => void;
+    setDetailAreas: (value: string[]) => void;
+  },
+) => {
+  const interestCategories = user.clientProfile?.interestCategories ?? [];
+  const nextInterestArea = getInitialInterestArea(interestCategories);
 
-  const [user, setUser] = useState<ClientMeUser>(initialUser);
-  const [nickname, setNickname] = useState(
-    initialUser.clientProfile?.nickname ?? '',
+  setters.setUser(user);
+  setters.setNickname(user.clientProfile?.nickname ?? '');
+  setters.setPhoneNumber(user.phoneNumber ?? '');
+  setters.setBankName(user.bankName ?? '');
+  setters.setBankAccount(user.bankAccount ?? '');
+  setters.setRegion((user.region as Region | null) ?? '');
+  setters.setInterestArea(nextInterestArea);
+  setters.setDetailAreas(
+    getInitialDetailAreas(interestCategories, nextInterestArea),
   );
-  const [phoneNumber, setPhoneNumber] = useState(initialUser.phoneNumber ?? '');
-  const [bankName, setBankName] = useState(initialUser.bankName ?? '');
-  const [bankAccount, setBankAccount] = useState(initialUser.bankAccount ?? '');
-  const [region, setRegion] = useState<Region | ''>(initialUser.region ?? '');
-  const [interestArea, setInterestArea] = useState<InterestAreaId | ''>(
-    getInitialInterestArea(initialUser.clientProfile?.interestCategories ?? []),
-  );
-  const [detailAreas, setDetailAreas] = useState<string[]>(
-    getInitialDetailAreas(
-      initialUser.clientProfile?.interestCategories ?? [],
-      getInitialInterestArea(
-        initialUser.clientProfile?.interestCategories ?? [],
-      ),
-    ),
-  );
+};
+
+export default function MyInfoView() {
+  const router = useRouter();
+  const { data, isPending, isError, error } = useMyUserQuery();
+
+  const [user, setUser] = useState<MyUser | null>(null);
+  const [nickname, setNickname] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [bankAccount, setBankAccount] = useState('');
+  const [region, setRegion] = useState<Region | ''>('');
+  const [interestArea, setInterestArea] = useState<InterestAreaId | ''>('');
+  const [detailAreas, setDetailAreas] = useState<string[]>([]);
   const [isInterestEditing, setIsInterestEditing] = useState(false);
 
+  useEffect(() => {
+    if (!data) return;
+    syncDraftFromUser(data, {
+      setUser,
+      setNickname,
+      setPhoneNumber,
+      setBankName,
+      setBankAccount,
+      setRegion,
+      setInterestArea,
+      setDetailAreas,
+    });
+  }, [data]);
+
+  useEffect(() => {
+    if (error instanceof ApiError && error.status === 401) {
+      router.push('/login');
+    }
+  }, [error, router]);
+
   const savedInterestArea = getInitialInterestArea(
-    user.clientProfile?.interestCategories ?? [],
+    user?.clientProfile?.interestCategories ?? [],
   );
   const savedDetailAreas = getInitialDetailAreas(
-    user.clientProfile?.interestCategories ?? [],
+    user?.clientProfile?.interestCategories ?? [],
     savedInterestArea,
   );
   const savedDetailOptions =
@@ -113,44 +158,54 @@ export default function MyInfoView() {
   };
 
   const saveNickname = () => {
-    setUser((prev) => ({
-      ...prev,
+    if (user === null) return;
+    setUser({
+      ...user,
       clientProfile: {
+        id: user.clientProfile?.id ?? '',
+        userId: user.clientProfile?.userId ?? user.id,
         nickname: nickname.trim(),
-        interestCategories: prev.clientProfile?.interestCategories ?? [],
+        interestCategories: user.clientProfile?.interestCategories ?? [],
       },
-    }));
+    });
   };
 
   const savePhoneNumber = () => {
-    setUser((prev) => ({ ...prev, phoneNumber }));
+    if (user === null) return;
+    setUser({ ...user, phoneNumber });
   };
 
   const saveBankName = () => {
-    setUser((prev) => ({ ...prev, bankName: bankName.trim() }));
+    if (user === null) return;
+    setUser({ ...user, bankName: bankName.trim() });
   };
 
   const saveBankAccount = () => {
-    setUser((prev) => ({ ...prev, bankAccount }));
+    if (user === null) return;
+    setUser({ ...user, bankAccount });
   };
 
   const saveRegion = () => {
-    if (region === '') return;
-    setUser((prev) => ({ ...prev, region }));
+    if (user === null || region === '') return;
+    setUser({ ...user, region });
   };
 
   const saveInterestCategories = () => {
+    if (user === null) return;
     const nextCategories = toInterestCategories(interestArea, detailAreas);
-    setUser((prev) => ({
-      ...prev,
+    setUser({
+      ...user,
       clientProfile: {
-        nickname: prev.clientProfile?.nickname ?? null,
+        id: user.clientProfile?.id ?? '',
+        userId: user.clientProfile?.userId ?? user.id,
+        nickname: user.clientProfile?.nickname ?? null,
         interestCategories: nextCategories,
       },
-    }));
+    });
   };
 
   const resetInterestDraft = () => {
+    if (user === null) return;
     const categories = user.clientProfile?.interestCategories ?? [];
     const nextInterestArea = getInitialInterestArea(categories);
     setInterestArea(nextInterestArea);
@@ -164,6 +219,28 @@ export default function MyInfoView() {
     setIsInterestEditing(editing);
   };
 
+  if (isPending) {
+    return (
+      <section className={styles.root}>
+        <h1 className={styles.title}>내 정보</h1>
+        <p className={styles.statusMessage}>내 정보를 불러오는 중입니다.</p>
+      </section>
+    );
+  }
+
+  if (isError || user === null) {
+    const message =
+      error instanceof ApiError
+        ? error.message
+        : '내 정보를 불러오지 못했습니다.';
+    return (
+      <section className={styles.root}>
+        <h1 className={styles.title}>내 정보</h1>
+        <p className={styles.errorMessage}>{message}</p>
+      </section>
+    );
+  }
+
   return (
     <section className={styles.root}>
       <h1 className={styles.title}>내 정보</h1>
@@ -172,7 +249,9 @@ export default function MyInfoView() {
         <MyInfoProfileSection
           profileImageUrl={user.profileImageUrl}
           onChange={(nextUrl) => {
-            setUser((prev) => ({ ...prev, profileImageUrl: nextUrl }));
+            setUser((prev) =>
+              prev === null ? prev : { ...prev, profileImageUrl: nextUrl },
+            );
           }}
         />
 
@@ -367,7 +446,7 @@ export default function MyInfoView() {
             label="지역"
             onSave={saveRegion}
             onCancel={() => {
-              setRegion(user.region ?? '');
+              setRegion((user.region as Region | null) ?? '');
             }}
             saveDisabled={region === ''}
           >
