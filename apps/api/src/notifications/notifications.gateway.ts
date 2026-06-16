@@ -69,9 +69,7 @@ export class NotificationsGateway
   }
 
   emitNewNotification(userId: string): void {
-    this.server
-      .to(`user-${userId}`)
-      .emit(NOTIFICATION_EVENTS.NEW_NOTIFICATION);
+    this.server.to(`user-${userId}`).emit(NOTIFICATION_EVENTS.NEW_NOTIFICATION);
   }
 
   #resolvePrincipal(socket: Socket): JwtAccessPayload | null {
