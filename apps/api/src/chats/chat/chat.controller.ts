@@ -47,6 +47,8 @@ import {
 import { ChatNotificationResponseDto } from './dto/chat-notification-response.dto';
 import { ChatRoomResponseDto } from './dto/chat-room-response.dto';
 import { CreateChatRoomDto } from './dto/create-chat-room.dto';
+import { CreateTradeRequestResponseDto } from './dto/create-trade-request-response.dto';
+import { CreateTradeRequestDto } from './dto/create-trade-request.dto';
 
 import type { Request } from 'express';
 
@@ -214,7 +216,7 @@ export class ChatController {
     summary: '거래 요청 (전문가 → PENDING 주문 생성 + 시스템 메시지)',
   })
   @RoleAuth(Role.EXPERT, CHAT_ERRORS.FORBIDDEN_EXPERT_MISMATCH)
-  @ApiSuccessResponse(HttpStatus.CREATED)
+  @ApiSuccessResponse(HttpStatus.CREATED, CreateTradeRequestResponseDto)
   @ApiErrorResponse(CHAT_ERRORS.ROOM_NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @HttpCode(HttpStatus.CREATED)
@@ -222,8 +224,13 @@ export class ChatController {
   async createTradeRequest(
     @Param('id', ParseUUIDPipe) roomId: string,
     @Req() req: Request,
+    @Body() body: CreateTradeRequestDto,
   ) {
     const user = req.user as JwtAccessUser;
-    return this.chatService.createTradeRequest(roomId, user.userId);
+    return this.chatService.createTradeRequest(
+      roomId,
+      user.userId,
+      body.agreedServicePrice,
+    );
   }
 }
