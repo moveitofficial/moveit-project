@@ -677,10 +677,13 @@ model Order {
   settledAt          DateTime?   @map("settled_at")
   settledByAdminId   String?     @map("settled_by_admin_id") @db.Uuid
 
-  clientUser     User     @relation("ClientOrders", fields: [clientUserId], references: [id])
-  expertUser     User     @relation("ExpertOrders", fields: [expertUserId], references: [id])
-  service        Service  @relation(fields: [serviceId], references: [id])
-  settledByAdmin Admin?   @relation(fields: [settledByAdminId], references: [id])
+  chatRoomId         String?     @map("chat_room_id") @db.Uuid
+
+  clientUser     User      @relation("ClientOrders", fields: [clientUserId], references: [id])
+  expertUser     User      @relation("ExpertOrders", fields: [expertUserId], references: [id])
+  service        Service   @relation(fields: [serviceId], references: [id])
+  settledByAdmin Admin?    @relation(fields: [settledByAdminId], references: [id])
+  chatRoom       ChatRoom? @relation(fields: [chatRoomId], references: [id])
   payment        Payment?
   review         Review?
 
@@ -975,6 +978,7 @@ model ChatRoom {
   currentService Service           @relation(fields: [currentServiceId], references: [id])
   participants   ChatParticipant[]
 
+  orders      Order[]
   messages    Message[] @relation("ChatRoomMessages")
   lastMessage Message?  @relation("ChatRoomLastMessage", fields: [lastMessageId], references: [id])
 

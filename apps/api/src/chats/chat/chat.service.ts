@@ -285,6 +285,7 @@ export class ChatService {
       agreedServicePrice,
       platformFee,
       totalAmount,
+      chatRoomId: roomId,
     });
 
     await this.sendSystemMessage(
