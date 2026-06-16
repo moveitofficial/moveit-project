@@ -13,7 +13,7 @@ interface Props {
   hideActions?: boolean;
   isEditing?: boolean;
   onEditingChange?: (editing: boolean) => void;
-  onSave?: () => void;
+  onSave?: () => void | Promise<void>;
   onCancel?: () => void;
   saveDisabled?: boolean;
   children: ReactNode | ((isEditing: boolean) => ReactNode);
@@ -51,8 +51,16 @@ export default function MyInfoFieldRow({
   };
 
   const handleSave = () => {
-    onSave?.();
-    setEditing(false);
+    if (onSave === undefined) return;
+
+    void (async () => {
+      try {
+        await onSave();
+        setEditing(false);
+      } catch {
+        // API 실패 시 편집 모드 유지
+      }
+    })();
   };
 
   const handleCancel = () => {

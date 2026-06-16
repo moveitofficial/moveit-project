@@ -1,4 +1,5 @@
 import { vars } from '@repo/styles/tokens';
+import { typography } from '@repo/styles/typography';
 import { style } from '@vanilla-extract/css';
 
 export const root = style({
@@ -76,3 +77,17 @@ export const savedDetailChips = style({
   gap: '8px',
   justifyContent: 'flex-start',
 });
+
+export const statusMessage = style([
+  typography.f16R,
+  {
+    color: vars.color.gray400,
+  },
+]);
+
+export const errorMessage = style([
+  typography.f16R,
+  {
+    color: vars.color.red200,
+  },
+]);

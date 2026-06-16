@@ -3,9 +3,11 @@
 import googleLogo from '@public/login/googleLogo.svg';
 import kakaoLogo from '@public/login/kaLogo.svg';
 import naverLogo from '@public/login/naver.svg';
+import { ApiError } from '@repo/fetcher';
 import { RoundChip } from '@repo/ui/RoundChip';
 import Image, { type StaticImageData } from 'next/image';
-import { type ChangeEvent, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { type ChangeEvent, useEffect, useState } from 'react';
 
 import { MyInfoFieldRow, myInfoFieldRowStyles } from '../MyInfoFieldRow';
 import { MyInfoProfileSection } from '../MyInfoProfileSection';
@@ -14,11 +16,10 @@ import * as styles from './MyInfoView.css';
 
 import type {
   AuthProvider,
-  ClientMeUser,
   InterestCategory,
-  Region,
-  ServiceCategoryName,
-} from '@/mocks/types';
+  MyUser,
+} from '@/feature/user/api';
+import type { Region, ServiceCategoryName } from '@/mocks/types';
 
 import {
   DETAIL_AREAS_BY_INTEREST,
@@ -30,7 +31,12 @@ import CheckboxGroup from '@/feature/signup/components/common/CheckboxGroup';
 import Dropdown from '@/feature/signup/components/common/Dropdown';
 import PhoneField from '@/feature/signup/components/common/PhoneField';
 import { REGIONS } from '@/feature/signup/components/common/regions';
-import { mockClientUser } from '@/mocks/user';
+import {
+  useMyUserQuery,
+  usePatchClientProfileMutation,
+  usePatchMyUserMutation,
+  usePatchProfileImageMutation,
+} from '@/feature/user/queries';
 
 const PROVIDERS: { id: AuthProvider; src: StaticImageData; alt: string }[] = [
   { id: 'NAVER', src: naverLogo, alt: '네이버' },
@@ -40,7 +46,13 @@ const PROVIDERS: { id: AuthProvider; src: StaticImageData; alt: string }[] = [
 
 const getInitialInterestArea = (
   categories: InterestCategory[],
-): InterestAreaId | '' => categories[0]?.group ?? '';
+): InterestAreaId | '' => {
+  const group = categories[0]?.group;
+  if (group === 'IT_COACHING' || group === 'PROJECT_REQUEST') {
+    return group;
+  }
+  return '';
+};
 
 const getInitialDetailAreas = (
   categories: InterestCategory[],
@@ -49,7 +61,7 @@ const getInitialDetailAreas = (
   if (group === '') return [];
   return categories
     .filter((item) => item.group === group)
-    .map((item) => item.category);
+    .map((item) => item.category as ServiceCategoryName);
 };
 
 const toInterestCategories = (
@@ -59,39 +71,87 @@ const toInterestCategories = (
   if (group === '') return [];
   return categories.map((category) => ({
     group,
-    category: category as ServiceCategoryName,
+    category,
   }));
 };
 
-export default function MyInfoView() {
-  const initialUser = mockClientUser;
+const syncDraftFromUser = (
+  user: MyUser,
+  setters: {
+    setUser: (user: MyUser) => void;
+    setNickname: (value: string) => void;
+    setPhoneNumber: (value: string) => void;
+    setBankName: (value: string) => void;
+    setBankAccount: (value: string) => void;
+    setRegion: (value: Region | '') => void;
+    setInterestArea: (value: InterestAreaId | '') => void;
+    setDetailAreas: (value: string[]) => void;
+  },
+) => {
+  const interestCategories = user.clientProfile?.interestCategories ?? [];
+  const nextInterestArea = getInitialInterestArea(interestCategories);
 
-  const [user, setUser] = useState<ClientMeUser>(initialUser);
-  const [nickname, setNickname] = useState(
-    initialUser.clientProfile?.nickname ?? '',
+  setters.setUser(user);
+  setters.setNickname(user.clientProfile?.nickname ?? '');
+  setters.setPhoneNumber(user.phoneNumber ?? '');
+  setters.setBankName(user.bankName ?? '');
+  setters.setBankAccount(user.bankAccount ?? '');
+  setters.setRegion((user.region as Region | null) ?? '');
+  setters.setInterestArea(nextInterestArea);
+  setters.setDetailAreas(
+    getInitialDetailAreas(interestCategories, nextInterestArea),
   );
-  const [phoneNumber, setPhoneNumber] = useState(initialUser.phoneNumber ?? '');
-  const [bankName, setBankName] = useState(initialUser.bankName ?? '');
-  const [bankAccount, setBankAccount] = useState(initialUser.bankAccount ?? '');
-  const [region, setRegion] = useState<Region | ''>(initialUser.region ?? '');
-  const [interestArea, setInterestArea] = useState<InterestAreaId | ''>(
-    getInitialInterestArea(initialUser.clientProfile?.interestCategories ?? []),
-  );
-  const [detailAreas, setDetailAreas] = useState<string[]>(
-    getInitialDetailAreas(
-      initialUser.clientProfile?.interestCategories ?? [],
-      getInitialInterestArea(
-        initialUser.clientProfile?.interestCategories ?? [],
-      ),
-    ),
-  );
+};
+
+export default function MyInfoView() {
+  const router = useRouter();
+  const { data, isPending, isError, error } = useMyUserQuery();
+  const { mutateAsync: patchMyUser, isPending: isPatchingMyUser } =
+    usePatchMyUserMutation();
+  const { mutateAsync: patchClientProfile, isPending: isPatchingClientProfile } =
+    usePatchClientProfileMutation();
+  const { mutateAsync: patchProfileImage, isPending: isPatchingProfileImage } =
+    usePatchProfileImageMutation();
+
+  const [user, setUser] = useState<MyUser | null>(null);
+  const [nickname, setNickname] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [bankAccount, setBankAccount] = useState('');
+  const [region, setRegion] = useState<Region | ''>('');
+  const [interestArea, setInterestArea] = useState<InterestAreaId | ''>('');
+  const [detailAreas, setDetailAreas] = useState<string[]>([]);
   const [isInterestEditing, setIsInterestEditing] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const isSaving =
+    isPatchingMyUser || isPatchingClientProfile || isPatchingProfileImage;
+
+  useEffect(() => {
+    if (!data) return;
+    syncDraftFromUser(data, {
+      setUser,
+      setNickname,
+      setPhoneNumber,
+      setBankName,
+      setBankAccount,
+      setRegion,
+      setInterestArea,
+      setDetailAreas,
+    });
+  }, [data]);
+
+  useEffect(() => {
+    if (error instanceof ApiError && error.status === 401) {
+      router.push('/login');
+    }
+  }, [error, router]);
 
   const savedInterestArea = getInitialInterestArea(
-    user.clientProfile?.interestCategories ?? [],
+    user?.clientProfile?.interestCategories ?? [],
   );
   const savedDetailAreas = getInitialDetailAreas(
-    user.clientProfile?.interestCategories ?? [],
+    user?.clientProfile?.interestCategories ?? [],
     savedInterestArea,
   );
   const savedDetailOptions =
@@ -112,45 +172,74 @@ export default function MyInfoView() {
     setDetailAreas([]);
   };
 
-  const saveNickname = () => {
-    setUser((prev) => ({
-      ...prev,
-      clientProfile: {
-        nickname: nickname.trim(),
-        interestCategories: prev.clientProfile?.interestCategories ?? [],
-      },
-    }));
+  const runSave = async (save: () => Promise<unknown>) => {
+    setSaveError(null);
+    try {
+      await save();
+    } catch (error_) {
+      const message =
+        error_ instanceof ApiError ? error_.message : '저장에 실패했습니다.';
+      setSaveError(message);
+      throw error_ instanceof Error ? error_ : new Error(message);
+    }
   };
 
-  const savePhoneNumber = () => {
-    setUser((prev) => ({ ...prev, phoneNumber }));
+  const saveNickname = async () => {
+    await runSave(() =>
+      patchClientProfile({ nickname: nickname.trim() }),
+    );
   };
 
-  const saveBankName = () => {
-    setUser((prev) => ({ ...prev, bankName: bankName.trim() }));
+  const savePhoneNumber = async () => {
+    await runSave(() => patchMyUser({ phoneNumber }));
   };
 
-  const saveBankAccount = () => {
-    setUser((prev) => ({ ...prev, bankAccount }));
+  const saveBankName = async () => {
+    await runSave(() => patchMyUser({ bankName: bankName.trim() }));
   };
 
-  const saveRegion = () => {
+  const saveBankAccount = async () => {
+    await runSave(() => patchMyUser({ bankAccount }));
+  };
+
+  const saveRegion = async () => {
     if (region === '') return;
-    setUser((prev) => ({ ...prev, region }));
+    await runSave(() => patchMyUser({ region }));
   };
 
-  const saveInterestCategories = () => {
-    const nextCategories = toInterestCategories(interestArea, detailAreas);
-    setUser((prev) => ({
-      ...prev,
-      clientProfile: {
-        nickname: prev.clientProfile?.nickname ?? null,
-        interestCategories: nextCategories,
-      },
-    }));
+  const saveInterestCategories = async () => {
+    await runSave(() =>
+      patchClientProfile({
+        interestCategories: toInterestCategories(interestArea, detailAreas),
+      }),
+    );
+  };
+
+  const handleProfileFileSelect = async (file: File) => {
+    const previousImageUrl = user?.profileImageUrl ?? null;
+    const previewUrl = URL.createObjectURL(file);
+    setUser((prev) =>
+      prev === null ? prev : { ...prev, profileImageUrl: previewUrl },
+    );
+
+    setSaveError(null);
+    try {
+      await patchProfileImage(file);
+    } catch (error_) {
+      URL.revokeObjectURL(previewUrl);
+      setUser((prev) =>
+        prev === null ? prev : { ...prev, profileImageUrl: previousImageUrl },
+      );
+      const message =
+        error_ instanceof ApiError
+          ? error_.message
+          : '프로필 이미지 변경에 실패했습니다.';
+      setSaveError(message);
+    }
   };
 
   const resetInterestDraft = () => {
+    if (user === null) return;
     const categories = user.clientProfile?.interestCategories ?? [];
     const nextInterestArea = getInitialInterestArea(categories);
     setInterestArea(nextInterestArea);
@@ -164,16 +253,42 @@ export default function MyInfoView() {
     setIsInterestEditing(editing);
   };
 
+  if (isPending) {
+    return (
+      <section className={styles.root}>
+        <h1 className={styles.title}>내 정보</h1>
+        <p className={styles.statusMessage}>내 정보를 불러오는 중입니다.</p>
+      </section>
+    );
+  }
+
+  if (isError || user === null) {
+    const message =
+      error instanceof ApiError
+        ? error.message
+        : '내 정보를 불러오지 못했습니다.';
+    return (
+      <section className={styles.root}>
+        <h1 className={styles.title}>내 정보</h1>
+        <p className={styles.errorMessage}>{message}</p>
+      </section>
+    );
+  }
+
   return (
     <section className={styles.root}>
       <h1 className={styles.title}>내 정보</h1>
+      {saveError !== null && (
+        <p className={styles.errorMessage}>{saveError}</p>
+      )}
 
       <div className={styles.card}>
         <MyInfoProfileSection
           profileImageUrl={user.profileImageUrl}
-          onChange={(nextUrl) => {
-            setUser((prev) => ({ ...prev, profileImageUrl: nextUrl }));
+          onFileSelect={(file) => {
+            void handleProfileFileSelect(file);
           }}
+          disabled={isSaving}
         />
 
         <div className={styles.fields}>
@@ -194,7 +309,7 @@ export default function MyInfoView() {
             onCancel={() => {
               setNickname(user.clientProfile?.nickname ?? '');
             }}
-            saveDisabled={nickname.trim().length < 2}
+            saveDisabled={nickname.trim().length < 2 || isSaving}
           >
             {(isEditing) => (
               <input
@@ -217,6 +332,7 @@ export default function MyInfoView() {
             onCancel={() => {
               setPhoneNumber(user.phoneNumber ?? '');
             }}
+            saveDisabled={isSaving}
           >
             {(isEditing) => (
               <PhoneField
@@ -274,7 +390,7 @@ export default function MyInfoView() {
             onCancel={() => {
               setBankName(user.bankName ?? '');
             }}
-            saveDisabled={bankName.trim().length < 2}
+            saveDisabled={bankName.trim().length < 2 || isSaving}
           >
             {(isEditing) => (
               <input
@@ -298,7 +414,7 @@ export default function MyInfoView() {
             onCancel={() => {
               setBankAccount(user.bankAccount ?? '');
             }}
-            saveDisabled={bankAccount.length < 10}
+            saveDisabled={bankAccount.length < 10 || isSaving}
           >
             {(isEditing) => (
               <input
@@ -319,7 +435,9 @@ export default function MyInfoView() {
             onEditingChange={handleInterestEditingChange}
             onSave={saveInterestCategories}
             onCancel={resetInterestDraft}
-            saveDisabled={interestArea === '' || detailAreas.length === 0}
+            saveDisabled={
+              interestArea === '' || detailAreas.length === 0 || isSaving
+            }
           >
             {(isEditing) => (
               <Dropdown
@@ -367,9 +485,9 @@ export default function MyInfoView() {
             label="지역"
             onSave={saveRegion}
             onCancel={() => {
-              setRegion(user.region ?? '');
+              setRegion((user.region as Region | null) ?? '');
             }}
-            saveDisabled={region === ''}
+            saveDisabled={region === '' || isSaving}
           >
             {(isEditing) => (
               <Dropdown
