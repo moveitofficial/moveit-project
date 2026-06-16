@@ -1,5 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PaymentStatus, RefundStatus, RefundType } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentStatus,
+  RefundStatus,
+  RefundType,
+} from '@prisma/client';
 
 class PaymentCardDto {
   @ApiProperty({
@@ -44,29 +49,29 @@ class OrderRefundDto {
   declare refundedAt: Date | null;
 }
 
-export class OrderPaymentDto {
+class OrderPaymentBaseDto {
+  @ApiProperty({ enum: OrderStatus, description: '주문 상태' })
+  declare orderStatus: OrderStatus;
+
   @ApiProperty({ format: 'uuid' })
-  declare id: string;
+  declare paymentId: string;
 
   @ApiProperty({ enum: PaymentStatus })
-  declare status: PaymentStatus;
+  declare paymentStatus: PaymentStatus;
 
-  @ApiProperty({ example: 'CARD' })
+  @ApiProperty({ example: 'CARD', description: '결제 수단' })
   declare method: string;
 
-  @ApiProperty({ example: 418_000 })
-  declare paidAmount: number;
-
-  @ApiProperty({ example: 1, description: '1 = 일시불, 2 이상 = 할부 개월 수' })
+  @ApiProperty({
+    example: 1,
+    description: '결제 방식. 1 = 일시불, 2 이상 = 할부 개월 수',
+  })
   declare installmentMonths: number;
 
   @ApiPropertyOptional({ nullable: true, example: 'tgen_20260527_example' })
   declare paymentKey: string | null;
 
-  @ApiProperty()
-  declare createdAt: Date;
-
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ nullable: true, description: '결제 일시' })
   declare approvedAt: Date | null;
 
   @ApiPropertyOptional({
@@ -79,10 +84,54 @@ export class OrderPaymentDto {
   @ApiPropertyOptional({
     nullable: true,
     example: 'https://dashboard.tosspayments.com/receipt/...',
-    description: '영수증 URL',
   })
   declare receiptUrl: string | null;
 
   @ApiPropertyOptional({ type: OrderRefundDto, nullable: true })
   declare refund: OrderRefundDto | null;
+}
+
+export class ClientOrderPaymentDto extends OrderPaymentBaseDto {
+  @ApiProperty({ example: 7_700_000, description: '합의된 서비스 금액' })
+  declare agreedServicePrice: number;
+
+  @ApiProperty({ example: 770_000, description: '무빗 플랫폼 수수료' })
+  declare platformFee: number;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 8_470_000,
+    description: '최종 결제금액. 취소·환불 완료 시 null',
+  })
+  declare totalAmount: number | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 8_470_000,
+    description: '취소·환불 완료 시 환불금액. 그 외 null',
+  })
+  declare refundAmount: number | null;
+}
+
+export class ExpertOrderPaymentDto extends OrderPaymentBaseDto {
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 7_700_000,
+    description: '합의된 서비스 금액. 취소·환불 완료 시 null',
+  })
+  declare agreedServicePrice: number | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 7_700_000,
+    description: '정산 예정/완료 금액. 취소·환불 완료 시 null',
+  })
+  declare settlementAmount: number | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 7_700_000,
+    description: '취소·환불 완료 시 환불금액 (수수료 제외). 그 외 null',
+  })
+  declare refundAmount: number | null;
 }

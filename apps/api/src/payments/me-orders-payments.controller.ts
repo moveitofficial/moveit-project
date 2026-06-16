@@ -15,10 +15,13 @@ import {
   PAYMENT_ERRORS,
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
-import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
+import { ApiOneOfSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { JwtAuth } from '../common/decorators/jwt-auth.decorator';
 
-import { OrderPaymentDto } from './dto/order-payment-response.dto';
+import {
+  ClientOrderPaymentDto,
+  ExpertOrderPaymentDto,
+} from './dto/order-payment-response.dto';
 import { PaymentsService } from './payments.service';
 
 import type { Request } from 'express';
@@ -30,7 +33,11 @@ export class MeOrdersPaymentsController {
 
   @ApiOperation({ summary: '내 주문 결제·환불 상세' })
   @JwtAuth(ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
-  @ApiSuccessResponse(HttpStatus.OK, OrderPaymentDto)
+  @ApiOneOfSuccessResponse(
+    HttpStatus.OK,
+    ClientOrderPaymentDto,
+    ExpertOrderPaymentDto,
+  )
   @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, PAYMENT_ERRORS.NOT_FOUND)
   @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
   @Get()
