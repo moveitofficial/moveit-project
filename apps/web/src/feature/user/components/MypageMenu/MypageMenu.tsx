@@ -8,10 +8,10 @@ import { getMypageMenuItems } from '../../constants';
 
 import * as styles from './MypageMenu.css';
 
-import type { User } from '@/mocks/types';
+import type { Role } from '@/types/enums';
 
 interface Props {
-  user: User;
+  role: Role;
 }
 
 function isMenuItemActive(pathname: string, href: string): boolean {
@@ -22,9 +22,9 @@ function isMenuItemActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export default function MypageMenu({ user }: Props) {
+export default function MypageMenu({ role }: Props) {
   const pathname = usePathname();
-  const menuItems = getMypageMenuItems(user.role);
+  const menuItems = getMypageMenuItems(role);
 
   return (
     <aside className={styles.sidebar}>

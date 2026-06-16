@@ -1,3 +1,5 @@
+import { vars } from '@repo/styles/tokens';
+import { typography } from '@repo/styles/typography';
 import { style } from '@vanilla-extract/css';
 
 const SIDEBAR_WIDTH = '276px';
@@ -16,3 +18,17 @@ export const page = style({
 export const content = style({
   minWidth: 0,
 });
+
+export const statusMessage = style([
+  typography.f16R,
+  {
+    color: vars.color.gray400,
+  },
+]);
+
+export const errorMessage = style([
+  typography.f16R,
+  {
+    color: vars.color.red200,
+  },
+]);
