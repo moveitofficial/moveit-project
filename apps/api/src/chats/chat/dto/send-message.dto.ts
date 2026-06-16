@@ -1,8 +1,4 @@
-import {
-  MessageReferenceType,
-  MessageType,
-  SystemMessageType,
-} from '@prisma/client';
+import { MessageType, SystemMessageType } from '@prisma/client';
 import {
   IsEnum,
   IsOptional,
@@ -23,12 +19,8 @@ export class SendMessageDto {
   declare systemType?: SystemMessageType;
 
   @IsOptional()
-  @IsEnum(MessageReferenceType)
-  declare referenceType?: MessageReferenceType;
-
-  @IsOptional()
   @IsUUID()
-  declare referenceId?: string;
+  declare orderId?: string;
 
   @IsString()
   @MinLength(1)

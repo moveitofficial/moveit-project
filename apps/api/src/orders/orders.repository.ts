@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  MessageReferenceType,
   OrderStatus,
   PaymentStatus,
   Prisma,
@@ -938,20 +937,16 @@ export class OrdersRepository {
   ): Promise<Map<string, string>> {
     const messages = await this.prisma.message.findMany({
       where: {
-        referenceType: MessageReferenceType.ORDER,
-        referenceId: { in: orderIds },
+        orderId: { in: orderIds },
         systemType: SystemMessageType.TRADE_REQUEST,
       },
-      select: { chatRoomId: true, referenceId: true },
-      distinct: ['referenceId'],
+      select: { chatRoomId: true, orderId: true },
+      distinct: ['orderId'],
     });
     return new Map(
       messages
-        .filter(
-          (m): m is typeof m & { referenceId: string } =>
-            m.referenceId !== null,
-        )
-        .map((m) => [m.referenceId, m.chatRoomId]),
+        .filter((m): m is typeof m & { orderId: string } => m.orderId !== null)
+        .map((m) => [m.orderId, m.chatRoomId]),
     );
   }
 }

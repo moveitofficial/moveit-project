@@ -1,9 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import {
-  MessageReferenceType,
-  MessageType,
-  SystemMessageType,
-} from '@prisma/client';
+import { MessageType, SystemMessageType } from '@prisma/client';
 import {
   SYSTEM_MESSAGE_CONTENT,
   SYSTEM_MESSAGE_TEMPLATES,
@@ -119,8 +115,7 @@ export class ChatService {
         type: dto.type,
         content: dto.content,
         systemType: dto.systemType,
-        referenceType: dto.referenceType,
-        referenceId: dto.referenceId,
+        orderId: dto.orderId,
       }),
       this.chatRepository.findRoomParticipantIds(roomId),
     ]);
@@ -143,10 +138,7 @@ export class ChatService {
         type: MessageType.SYSTEM,
         content,
         systemType,
-        ...(orderId && {
-          referenceType: MessageReferenceType.ORDER,
-          referenceId: orderId,
-        }),
+        ...(orderId && { orderId }),
       }),
       this.chatRepository.findRoomParticipantIds(roomId),
     ]);

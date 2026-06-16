@@ -1,10 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  MessageReferenceType,
-  MessageType,
-  OrderStatus,
-  SystemMessageType,
-} from '@prisma/client';
+import { MessageType, OrderStatus, SystemMessageType } from '@prisma/client';
 
 import { CHAT_ERRORS } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
@@ -174,8 +169,7 @@ export class ChatRepository {
     type: MessageType;
     content: string;
     systemType?: SystemMessageType;
-    referenceType?: MessageReferenceType;
-    referenceId?: string;
+    orderId?: string;
   }) {
     const message = await this.prisma.message.create({ data });
     await this.prisma.chatRoom.update({
@@ -412,14 +406,14 @@ export class ChatRepository {
     if (!room) return null;
 
     const latestOrderMessage = await this.prisma.message.findFirst({
-      where: { chatRoomId: roomId, referenceType: MessageReferenceType.ORDER },
+      where: { chatRoomId: roomId, orderId: { not: null } },
       orderBy: { createdAt: 'desc' },
-      select: { referenceId: true },
+      select: { orderId: true },
     });
 
-    const order = latestOrderMessage?.referenceId
+    const order = latestOrderMessage?.orderId
       ? await this.prisma.order.findUnique({
-          where: { id: latestOrderMessage.referenceId },
+          where: { id: latestOrderMessage.orderId },
           select: {
             id: true,
             status: true,

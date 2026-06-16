@@ -1,10 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  MessageReferenceType,
-  MessageType,
-  OrderStatus,
-  SystemMessageType,
-} from '@prisma/client';
+import { MessageType, OrderStatus, SystemMessageType } from '@prisma/client';
 
 export class RoomCurrentServiceResponseDto {
   @ApiProperty({ format: 'uuid' })
@@ -107,19 +102,13 @@ export class ChatMessageResponseDto {
   declare systemType: SystemMessageType | null;
 
   @ApiPropertyOptional({
-    enum: MessageReferenceType,
-    nullable: true,
-    example: null,
-  })
-  declare referenceType: MessageReferenceType | null;
-
-  @ApiPropertyOptional({
     type: String,
     format: 'uuid',
     nullable: true,
     example: null,
+    description: '연관 주문 ID',
   })
-  declare referenceId: string | null;
+  declare orderId: string | null;
 
   @ApiProperty({ example: '안녕하세요' })
   declare content: string;
