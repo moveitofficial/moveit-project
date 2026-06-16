@@ -823,6 +823,116 @@ export class OrdersRepository {
     });
   }
 
+  async upsertStatistics(params: {
+    sellerUserId: string;
+    serviceGroupId: string;
+    serviceCategoryId: string;
+    agreedServicePrice: number;
+    date: Date;
+  }) {
+    const {
+      sellerUserId,
+      serviceGroupId,
+      serviceCategoryId,
+      agreedServicePrice,
+      date,
+    } = params;
+    await Promise.all([
+      this.prisma.statisticsBySeller.upsert({
+        where: { sellerUserId_date: { sellerUserId, date } },
+        create: {
+          sellerUserId,
+          date,
+          totalTransactionAmount: agreedServicePrice,
+          totalTransactionCount: 1,
+          maxTransactionAmount: agreedServicePrice,
+        },
+        update: {
+          totalTransactionAmount: { increment: agreedServicePrice },
+          totalTransactionCount: { increment: 1 },
+        },
+      }),
+      this.prisma.statisticsByCategory.upsert({
+        where: {
+          serviceGroupId_serviceCategoryId_date: {
+            serviceGroupId,
+            serviceCategoryId,
+            date,
+          },
+        },
+        create: {
+          serviceGroupId,
+          serviceCategoryId,
+          date,
+          totalTransactionAmount: agreedServicePrice,
+          totalTransactionCount: 1,
+          maxTransactionAmount: agreedServicePrice,
+        },
+        update: {
+          totalTransactionAmount: { increment: agreedServicePrice },
+          totalTransactionCount: { increment: 1 },
+        },
+      }),
+    ]);
+    await Promise.all([
+      this.prisma.statisticsBySeller.updateMany({
+        where: {
+          sellerUserId,
+          date,
+          maxTransactionAmount: { lt: agreedServicePrice },
+        },
+        data: { maxTransactionAmount: agreedServicePrice },
+      }),
+      this.prisma.statisticsByCategory.updateMany({
+        where: {
+          serviceGroupId,
+          serviceCategoryId,
+          date,
+          maxTransactionAmount: { lt: agreedServicePrice },
+        },
+        data: { maxTransactionAmount: agreedServicePrice },
+      }),
+    ]);
+  }
+
+  async decrementStatistics(params: {
+    sellerUserId: string;
+    serviceGroupId: string;
+    serviceCategoryId: string;
+    agreedServicePrice: number;
+    date: Date;
+  }) {
+    const {
+      sellerUserId,
+      serviceGroupId,
+      serviceCategoryId,
+      agreedServicePrice,
+      date,
+    } = params;
+    await Promise.all([
+      this.prisma.statisticsBySeller.update({
+        where: { sellerUserId_date: { sellerUserId, date } },
+        data: {
+          totalTransactionAmount: { decrement: agreedServicePrice },
+          totalTransactionCount: { decrement: 1 },
+        },
+      }),
+      this.prisma.statisticsByCategory.update({
+        where: {
+          serviceGroupId_serviceCategoryId_date: {
+            serviceGroupId,
+            serviceCategoryId,
+            date,
+          },
+        },
+        data: {
+          totalTransactionAmount: { decrement: agreedServicePrice },
+          totalTransactionCount: { decrement: 1 },
+        },
+      }),
+    ]);
+  }
+
   async findRoomIdsByOrderIds(
     orderIds: string[],
   ): Promise<Map<string, string>> {

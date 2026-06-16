@@ -69,7 +69,9 @@ export const pendingOrderForPaySelect = {
   agreedServicePrice: true,
   platformFee: true,
   totalAmount: true,
-  service: { select: { title: true } },
+  service: {
+    select: { title: true, serviceGroupId: true, serviceCategoryId: true },
+  },
 } satisfies Prisma.OrderSelect;
 
 export type PendingOrderForPay = Prisma.OrderGetPayload<{
@@ -121,6 +123,7 @@ export const orderCancelApprovePolicySelect = {
   agreedServicePrice: true,
   platformFee: true,
   totalAmount: true,
+  createdAt: true,
   payment: {
     select: {
       id: true,
@@ -130,7 +133,9 @@ export const orderCancelApprovePolicySelect = {
       refund: { select: { id: true, type: true, status: true } },
     },
   },
-  service: { select: { title: true } },
+  service: {
+    select: { title: true, serviceGroupId: true, serviceCategoryId: true },
+  },
   clientUser: { select: { name: true } },
 } satisfies Prisma.OrderSelect;
 

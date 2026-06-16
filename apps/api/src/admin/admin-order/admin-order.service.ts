@@ -14,6 +14,7 @@ import {
 } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
 import { Paginated } from '../../common/types/paginated.type';
+import { toKstDate } from '../../common/utils/date.util';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { PaymentsService } from '../../payments/payments.service';
@@ -191,6 +192,22 @@ export class AdminOrderService {
       throw error;
     }
 
+    const kstDate = toKstDate(order.createdAt);
+    this.adminOrderRepository
+      .decrementStatistics({
+        sellerUserId: order.expertUserId,
+        serviceGroupId: order.service.serviceGroupId,
+        serviceCategoryId: order.service.serviceCategoryId,
+        agreedServicePrice: order.agreedServicePrice,
+        date: kstDate,
+      })
+      .catch((error: unknown) => {
+        this.logger.error(
+          `통계 decrement 실패. orderId=${orderId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      });
+
     await this.notifyApproved(
       order,
       orderId,
@@ -239,6 +256,22 @@ export class AdminOrderService {
       );
       throw error;
     }
+
+    const kstDate = toKstDate(order.createdAt);
+    this.adminOrderRepository
+      .decrementStatistics({
+        sellerUserId: order.expertUserId,
+        serviceGroupId: order.service.serviceGroupId,
+        serviceCategoryId: order.service.serviceCategoryId,
+        agreedServicePrice: order.agreedServicePrice,
+        date: kstDate,
+      })
+      .catch((error: unknown) => {
+        this.logger.error(
+          `통계 decrement 실패. orderId=${orderId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      });
 
     await this.notifyApproved(
       order,
