@@ -10,10 +10,15 @@ export const header = style({
   borderBottom: `1px solid ${vars.color.line200}`,
   padding: '0 32px',
   display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  gap: '4px',
+  alignItems: 'center',
+  justifyContent: 'space-between',
   zIndex: 10,
+});
+
+export const titleGroup = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '4px',
 });
 
 export const breadcrumb = style({

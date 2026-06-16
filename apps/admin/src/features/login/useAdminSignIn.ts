@@ -4,6 +4,7 @@ import { ApiError } from '@repo/fetcher';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
+import { setAdminProfileCookie } from './adminProfileCookie';
 import { signIn, type SignInData, type SignInResponse } from './api';
 
 import { useAdminStore } from '@/stores/admin-store';
@@ -15,6 +16,7 @@ export function useAdminSignIn() {
     mutationFn: signIn,
     onSuccess: ({ data }) => {
       useAdminStore.getState().setAdmin(data.admin);
+      setAdminProfileCookie({ name: data.admin.name, email: data.admin.email });
       router.replace(
         data.admin.mustChangePassword ? '/password/reset' : '/dashboard',
       );

@@ -8,16 +8,11 @@ import { CsChatPanel } from '../CsChatPanel';
 
 import * as styles from './CsChatWidget.css';
 
-import { useUserStore } from '@/stores/user-store';
-
+// 노출 여부(로그인)는 (with-header) 레이아웃에서 서버 getMe로 판단해 마운트한다.
 export default function CsChatWidget() {
-  const user = useUserStore((state) => state.user);
   const isOpen = useCsChatStore((state) => state.isOpen);
   const open = useCsChatStore((state) => state.open);
   const close = useCsChatStore((state) => state.close);
-
-  // 로그인 상태에서만 노출
-  if (!user) return null;
 
   return (
     <div className={styles.wrapper}>

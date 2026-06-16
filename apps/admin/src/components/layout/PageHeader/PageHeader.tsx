@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 
 import * as styles from './PageHeader.css';
 
+import { LogoutButton } from '@/features/login/LogoutButton';
 import { usePageHeaderStore } from '@/stores/page-header-store';
 
 const ROUTE_INFO: Record<string, { breadcrumb: string[]; title: string }> = {
@@ -36,10 +37,13 @@ export default function PageHeader() {
 
   return (
     <header className={styles.header}>
-      <p className={clsx(typography.f12R, styles.breadcrumb)}>
-        {info.breadcrumb.join(' > ')}
-      </p>
-      <h1 className={clsx(typography.f16EB, styles.title)}>{info.title}</h1>
+      <div className={styles.titleGroup}>
+        <p className={clsx(typography.f12R, styles.breadcrumb)}>
+          {info.breadcrumb.join(' > ')}
+        </p>
+        <h1 className={clsx(typography.f16EB, styles.title)}>{info.title}</h1>
+      </div>
+      <LogoutButton />
     </header>
   );
 }
