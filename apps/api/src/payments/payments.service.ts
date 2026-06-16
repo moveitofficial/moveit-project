@@ -6,7 +6,10 @@ import { AppException } from '../common/exceptions/app.exception';
 import { isRecord } from '../common/utils/is-record.util';
 import { DEFAULT_PAYMENT_METHOD } from '../orders/orders.constants';
 
-import { mapOrderPayment } from './payments.mapper';
+import {
+  mapOrderPaymentForClient,
+  mapOrderPaymentForExpert,
+} from './payments.mapper';
 import { PaymentsRepository } from './payments.repository';
 
 import type { Prisma } from '@prisma/client';
@@ -51,7 +54,10 @@ export class PaymentsService {
     const order = await this.paymentsRepository.findOrderPayment(orderId);
     if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
 
-    if (order.clientUserId !== userId && order.expertUserId !== userId) {
+    const isClient = order.clientUserId === userId;
+    const isExpert = order.expertUserId === userId;
+
+    if (!isClient && !isExpert) {
       throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
     }
 
@@ -59,7 +65,11 @@ export class PaymentsService {
       throw new AppException(PAYMENT_ERRORS.NOT_FOUND);
     }
 
-    return mapOrderPayment(order.payment);
+    const orderWithPayment = { ...order, payment: order.payment };
+
+    return isClient
+      ? mapOrderPaymentForClient(orderWithPayment)
+      : mapOrderPaymentForExpert(orderWithPayment);
   }
 
   async confirmTossPayment(

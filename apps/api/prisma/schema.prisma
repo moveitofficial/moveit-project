@@ -111,7 +111,7 @@ enum OrderStatus {
   TRADE_REQUEST_EXPIRED // 거래 요청 만료 (PENDING 상태에서 72시간 내 미결제 시 크론잡 자동 전환)
   NEGOTIATING // 논의중
   CANCEL_REQUESTED // 취소요청
-  PAYMENT_CANCELLED // 결제취소
+  PAYMENT_CANCELLED // 결제 취소 완료
 
   IN_PROGRESS // 작업중
   DEADLINE_IMMINENT // 마감임박
