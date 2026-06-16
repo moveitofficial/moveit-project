@@ -3,6 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
+import { useAttachmentStore } from './attachmentStore';
 import { ADMIN_CONNECTED_TEXT } from './constants';
 import { isCsSystem } from './types';
 import { CS_ROOMS_KEY, useCreateCsRoom } from './useCsChat';
@@ -22,6 +23,7 @@ export function useCsLiveChat(initialRoomId: string | null) {
   const [assigned, setAssigned] = useState(false);
   const createRoom = useCreateCsRoom();
   const queryClient = useQueryClient();
+  const cacheAttachments = useAttachmentStore((state) => state.cache);
 
   const { sendMessage } = useCsRoomSocket(roomId, {
     onMessage: (message) => {
@@ -30,6 +32,9 @@ export function useCsLiveChat(initialRoomId: string | null) {
           ? prev
           : [...prev, message],
       );
+      if (message.attachments?.length) {
+        cacheAttachments(message.id, message.attachments);
+      }
       // 새 메시지 → 대화 목록 미리보기 최신화
       void queryClient.invalidateQueries({ queryKey: CS_ROOMS_KEY });
     },

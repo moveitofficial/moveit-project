@@ -127,3 +127,6 @@ export const INPUT_PLACEHOLDER = '문의 내용을 작성해주세요';
 /** 라이브 채팅 시스템 안내 (화면 ⑥) */
 export const CONNECTING_TEXT = '상담원 연결중입니다. 잠시만 기다려주세요';
 export const ADMIN_CONNECTED_TEXT = '무브잇 상담원이 연결되었습니다.';
+
+/** 파일 첨부 칩에 표시할 라벨 */
+export const FILE_SENT_LABEL = '파일을 보냈습니다.';

@@ -5,6 +5,7 @@ import type { Role } from '@/types/enums';
 import { Container } from '@/components/layout/Container';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
+import { CsChatWidget } from '@/feature/cs-chat';
 import { getMe } from '@/feature/signup/api';
 
 
@@ -42,6 +43,7 @@ export default async function WithHeaderLayout({
       </Suspense>
       <Container>{children}</Container>
       <Footer />
+      {user ? <CsChatWidget /> : null}
     </>
   );
 }

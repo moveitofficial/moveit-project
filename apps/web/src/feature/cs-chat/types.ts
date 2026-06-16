@@ -76,7 +76,7 @@ export interface CsMessage {
   type: CsMessageType;
   content: string;
   createdAt: string;
-  attachments: CsMessageAttachment[];
+  attachments?: CsMessageAttachment[];
 }
 
 /** 라이브 채팅 시스템 안내 라인 */

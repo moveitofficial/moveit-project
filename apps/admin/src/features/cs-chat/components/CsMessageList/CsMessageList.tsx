@@ -1,22 +1,20 @@
 'use client';
 
+import csChat from '@public/cschat/csChat.svg';
+import movitNoti from '@public/cschat/movitNoti.svg';
 import clsx from 'clsx';
-import { BotMessageSquare, File as FileIcon, Image as ImageIcon } from 'lucide-react';
+import { File as FileIcon, Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
+
 
 import { useAttachmentStore } from '../../attachmentStore';
-import { CONNECTING_TEXT, FILE_SENT_LABEL } from '../../constants';
+import { FILE_SENT_LABEL } from '../../constants';
 import { formatStamp } from '../../csTime';
 import { isCsSystem } from '../../types';
 
 import * as styles from './CsMessageList.css';
 
 import type { CsLiveItem, CsMessage, CsMessageAttachment } from '../../types';
-
-interface CsMessageListProps {
-  items: CsLiveItem[];
-  /** "상담원 연결중입니다" 안내 노출 여부 */
-  showConnecting: boolean;
-}
 
 async function downloadFile(url: string, fileName: string) {
   try {
@@ -68,10 +66,17 @@ function Body({ item, className }: { item: CsMessage; className: string }) {
   );
 }
 
-export default function CsMessageList({
-  items,
-  showConnecting,
-}: CsMessageListProps) {
+function Stamp({ iso }: { iso: string }) {
+  const stamp = formatStamp(iso);
+  return (
+    <div className={styles.stamp}>
+      <span>{stamp.date}</span>
+      <span>{stamp.time}</span>
+    </div>
+  );
+}
+
+export default function CsMessageList({ items }: { items: CsLiveItem[] }) {
   return (
     <>
       {items.map((item) => {
@@ -82,31 +87,32 @@ export default function CsMessageList({
             </p>
           );
         }
-        const stamp = formatStamp(item.createdAt);
         return item.senderType === 'USER' ? (
           <div key={item.id} className={styles.userRow}>
-            <div className={styles.stamp}>
-              <span>{stamp.date}</span>
-              <span>{stamp.time}</span>
-            </div>
+            <Image
+              src={csChat}
+              alt=""
+              width={24}
+              height={24}
+              className={styles.avatar}
+            />
             <Body item={item} className={styles.userBubble} />
+            <Stamp iso={item.createdAt} />
           </div>
         ) : (
           <div key={item.id} className={styles.adminRow}>
-            <span className={styles.adminAvatar} aria-hidden>
-              <BotMessageSquare size={16} />
-            </span>
+            <Stamp iso={item.createdAt} />
             <Body item={item} className={styles.adminBubble} />
-            <div className={styles.stamp}>
-              <span>{stamp.date}</span>
-              <span>{stamp.time}</span>
-            </div>
+            <Image
+              src={movitNoti}
+              alt=""
+              width={24}
+              height={24}
+              className={styles.avatar}
+            />
           </div>
         );
       })}
-      {showConnecting ? (
-        <p className={styles.systemLine}>{CONNECTING_TEXT}</p>
-      ) : null}
     </>
   );
 }
