@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  MessageReferenceType,
   OrderStatus,
   PaymentStatus,
   Prisma,
@@ -823,25 +822,131 @@ export class OrdersRepository {
     });
   }
 
+  async upsertStatistics(params: {
+    sellerUserId: string;
+    serviceGroupId: string;
+    serviceCategoryId: string;
+    agreedServicePrice: number;
+    date: Date;
+  }) {
+    const {
+      sellerUserId,
+      serviceGroupId,
+      serviceCategoryId,
+      agreedServicePrice,
+      date,
+    } = params;
+    await Promise.all([
+      this.prisma.statisticsBySeller.upsert({
+        where: { sellerUserId_date: { sellerUserId, date } },
+        create: {
+          sellerUserId,
+          date,
+          totalTransactionAmount: agreedServicePrice,
+          totalTransactionCount: 1,
+          maxTransactionAmount: agreedServicePrice,
+        },
+        update: {
+          totalTransactionAmount: { increment: agreedServicePrice },
+          totalTransactionCount: { increment: 1 },
+        },
+      }),
+      this.prisma.statisticsByCategory.upsert({
+        where: {
+          serviceGroupId_serviceCategoryId_date: {
+            serviceGroupId,
+            serviceCategoryId,
+            date,
+          },
+        },
+        create: {
+          serviceGroupId,
+          serviceCategoryId,
+          date,
+          totalTransactionAmount: agreedServicePrice,
+          totalTransactionCount: 1,
+          maxTransactionAmount: agreedServicePrice,
+        },
+        update: {
+          totalTransactionAmount: { increment: agreedServicePrice },
+          totalTransactionCount: { increment: 1 },
+        },
+      }),
+    ]);
+    await Promise.all([
+      this.prisma.statisticsBySeller.updateMany({
+        where: {
+          sellerUserId,
+          date,
+          maxTransactionAmount: { lt: agreedServicePrice },
+        },
+        data: { maxTransactionAmount: agreedServicePrice },
+      }),
+      this.prisma.statisticsByCategory.updateMany({
+        where: {
+          serviceGroupId,
+          serviceCategoryId,
+          date,
+          maxTransactionAmount: { lt: agreedServicePrice },
+        },
+        data: { maxTransactionAmount: agreedServicePrice },
+      }),
+    ]);
+  }
+
+  async decrementStatistics(params: {
+    sellerUserId: string;
+    serviceGroupId: string;
+    serviceCategoryId: string;
+    agreedServicePrice: number;
+    date: Date;
+  }) {
+    const {
+      sellerUserId,
+      serviceGroupId,
+      serviceCategoryId,
+      agreedServicePrice,
+      date,
+    } = params;
+    await Promise.all([
+      this.prisma.statisticsBySeller.update({
+        where: { sellerUserId_date: { sellerUserId, date } },
+        data: {
+          totalTransactionAmount: { decrement: agreedServicePrice },
+          totalTransactionCount: { decrement: 1 },
+        },
+      }),
+      this.prisma.statisticsByCategory.update({
+        where: {
+          serviceGroupId_serviceCategoryId_date: {
+            serviceGroupId,
+            serviceCategoryId,
+            date,
+          },
+        },
+        data: {
+          totalTransactionAmount: { decrement: agreedServicePrice },
+          totalTransactionCount: { decrement: 1 },
+        },
+      }),
+    ]);
+  }
+
   async findRoomIdsByOrderIds(
     orderIds: string[],
   ): Promise<Map<string, string>> {
     const messages = await this.prisma.message.findMany({
       where: {
-        referenceType: MessageReferenceType.ORDER,
-        referenceId: { in: orderIds },
+        orderId: { in: orderIds },
         systemType: SystemMessageType.TRADE_REQUEST,
       },
-      select: { chatRoomId: true, referenceId: true },
-      distinct: ['referenceId'],
+      select: { chatRoomId: true, orderId: true },
+      distinct: ['orderId'],
     });
     return new Map(
       messages
-        .filter(
-          (m): m is typeof m & { referenceId: string } =>
-            m.referenceId !== null,
-        )
-        .map((m) => [m.referenceId, m.chatRoomId]),
+        .filter((m): m is typeof m & { orderId: string } => m.orderId !== null)
+        .map((m) => [m.orderId, m.chatRoomId]),
     );
   }
 }

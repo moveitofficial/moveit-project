@@ -16,6 +16,7 @@ import {
 } from '../common/constants/errors';
 import { AppException } from '../common/exceptions/app.exception';
 import { Paginated } from '../common/types/paginated.type';
+import { toKstDate } from '../common/utils/date.util';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentsService } from '../payments/payments.service';
@@ -144,6 +145,22 @@ export class OrdersService {
         })();
       }
 
+      const kstDate = toKstDate(new Date());
+      this.ordersRepository
+        .upsertStatistics({
+          sellerUserId: order.expertUserId,
+          serviceGroupId: order.service.serviceGroupId,
+          serviceCategoryId: order.service.serviceCategoryId,
+          agreedServicePrice: order.agreedServicePrice,
+          date: kstDate,
+        })
+        .catch((error: unknown) => {
+          this.logger.error(
+            `통계 upsert 실패. orderId=${orderId}`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        });
+
       return mapCreateOrderResponse(updated);
     } catch (error: unknown) {
       this.logger.error(
@@ -226,6 +243,23 @@ export class OrdersService {
         installmentMonths: toss.installmentMonths,
         rawData: toss.rawData,
       });
+
+      const kstDate = toKstDate(new Date());
+      this.ordersRepository
+        .upsertStatistics({
+          sellerUserId: service.expertUserId,
+          serviceGroupId: service.serviceGroupId,
+          serviceCategoryId: service.serviceCategoryId,
+          agreedServicePrice,
+          date: kstDate,
+        })
+        .catch((error: unknown) => {
+          this.logger.error(
+            `통계 upsert 실패. orderId=${dto.orderId}`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        });
+
       return mapCreateOrderResponse(order);
     } catch (error: unknown) {
       this.logger.error(
@@ -641,6 +675,22 @@ export class OrdersService {
           });
       }
 
+      const kstDate = toKstDate(order.createdAt);
+      this.ordersRepository
+        .decrementStatistics({
+          sellerUserId: order.expertUserId,
+          serviceGroupId: order.service.serviceGroupId,
+          serviceCategoryId: order.service.serviceCategoryId,
+          agreedServicePrice: order.agreedServicePrice,
+          date: kstDate,
+        })
+        .catch((error: unknown) => {
+          this.logger.error(
+            `통계 decrement 실패. orderId=${orderId}`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        });
+
       return mapUpdateOrderStatusResponse(updated);
     } catch (error) {
       this.logger.error(
@@ -764,6 +814,22 @@ export class OrdersService {
         .catch((error: unknown) => {
           this.logger.error(
             `환불 승인 알림 발송 실패. orderId=${orderId}`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        });
+
+      const kstDate = toKstDate(order.createdAt);
+      this.ordersRepository
+        .decrementStatistics({
+          sellerUserId: order.expertUserId,
+          serviceGroupId: order.service.serviceGroupId,
+          serviceCategoryId: order.service.serviceCategoryId,
+          agreedServicePrice: order.agreedServicePrice,
+          date: kstDate,
+        })
+        .catch((error: unknown) => {
+          this.logger.error(
+            `통계 decrement 실패. orderId=${orderId}`,
             error instanceof Error ? error.stack : String(error),
           );
         });

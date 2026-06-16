@@ -125,7 +125,15 @@ export class AdminOrderRepository {
         status: true,
         clientUserId: true,
         expertUserId: true,
-        service: { select: { title: true } },
+        agreedServicePrice: true,
+        createdAt: true,
+        service: {
+          select: {
+            title: true,
+            serviceGroupId: true,
+            serviceCategoryId: true,
+          },
+        },
         payment: {
           select: {
             paymentKey: true,
@@ -388,6 +396,44 @@ export class AdminOrderRepository {
         },
       },
     });
+  }
+
+  async decrementStatistics(params: {
+    sellerUserId: string;
+    serviceGroupId: string;
+    serviceCategoryId: string;
+    agreedServicePrice: number;
+    date: Date;
+  }) {
+    const {
+      sellerUserId,
+      serviceGroupId,
+      serviceCategoryId,
+      agreedServicePrice,
+      date,
+    } = params;
+    await Promise.all([
+      this.prisma.statisticsBySeller.update({
+        where: { sellerUserId_date: { sellerUserId, date } },
+        data: {
+          totalTransactionAmount: { decrement: agreedServicePrice },
+          totalTransactionCount: { decrement: 1 },
+        },
+      }),
+      this.prisma.statisticsByCategory.update({
+        where: {
+          serviceGroupId_serviceCategoryId_date: {
+            serviceGroupId,
+            serviceCategoryId,
+            date,
+          },
+        },
+        data: {
+          totalTransactionAmount: { decrement: agreedServicePrice },
+          totalTransactionCount: { decrement: 1 },
+        },
+      }),
+    ]);
   }
 
   #buildSettlementsWhere(
