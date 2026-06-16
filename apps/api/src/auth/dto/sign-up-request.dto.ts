@@ -1,13 +1,13 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import {
   IsEmail,
   IsEnum,
-  IsOptional,
   IsString,
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class SignUpRequestDto {
@@ -34,13 +34,14 @@ export class SignUpRequestDto {
   })
   declare password: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: '킹한준',
-    description: 'name',
+    description: 'name. CLIENT role 필수, EXPERT role 불필요',
     required: false,
+    nullable: true,
   })
+  @ValidateIf((o: SignUpRequestDto) => o.role === Role.CLIENT)
   @IsString()
-  @IsOptional()
   @MinLength(1)
   @MaxLength(50)
   declare name: string | null;
