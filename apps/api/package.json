@@ -38,6 +38,7 @@
     "@nestjs/swagger": "^11.4.2",
     "@nestjs/websockets": "^11.1.19",
     "@prisma/client": "^6.19.3",
+    "@repo/content-filter": "workspace:^",
     "@repo/socket-events": "workspace:^",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",

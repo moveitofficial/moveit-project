@@ -84,13 +84,13 @@ export interface SystemMessageField {
 // DB content 필드 및 알림/채팅목록 미리보기용 중립 텍스트
 export const SYSTEM_MESSAGE_CONTENT: Record<SystemMessageType, string> = {
   TRADE_REQUEST: '거래 요청이 왔어요',
-  TRADE_CANCELED: '거래 요청이 취소됐어요',
+  TRADE_CANCELED: '거래가 취소됐어요',
   TRADE_REQUEST_EXPIRED: '거래 요청이 만료됐어요',
   PAYMENT_HELD: '무빗이 결제 금액을 안전하게 보관하고 있어요',
   PAYMENT_COMPLETED: '결제가 완료됐어요',
-  SCHEDULE_REQUEST: '일정 등록 요청이 왔어요',
+  SCHEDULE_REQUEST: '일정 등록을 요청해 주세요',
   SCHEDULE_REGISTERED: '일정 등록이 완료됐어요',
-  SCHEDULE_CHANGE_REQUEST: '일정 변경 요청이 왔어요',
+  SCHEDULE_CHANGE_REQUEST: '일정 변경 요청',
 };
 
 // 메시지 상세 렌더링용 템플릿
@@ -121,7 +121,7 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<
     ],
   },
   TRADE_CANCELED: {
-    title: () => '거래 요청이 취소됐어요',
+    title: () => '거래가 취소됐어요',
     body: (role) =>
       role === 'EXPERT'
         ? '다시 거래를 원하신다면 고객과 협의 후 진행해 주세요.'
@@ -171,7 +171,7 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<
   },
   SCHEDULE_REQUEST: {
     recipientRoles: ['CLIENT'],
-    title: () => '일정을 등록해주세요',
+    title: () => '일정 등록을 요청해 주세요',
     body: () =>
       '판매자에게 일정 등록을 요청해 주세요.\n일정을 등록하지 않으면 구매 확정을 진행할 수 없습니다. 일정 내 작업 미완료 시 전액 무료환불이 가능합니다.',
     fields: [],

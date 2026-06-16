@@ -264,23 +264,28 @@ export class ChatService {
     await this.chatRepository.updateAllDismissedMessages(userId);
   }
 
-  async createTradeRequest(roomId: string, expertUserId: string) {
+  async createTradeRequest(
+    roomId: string,
+    expertUserId: string,
+    agreedServicePrice: number,
+  ) {
     const room = await this.chatRepository.findRoomForTradeRequest(roomId);
     if (!room) throw new AppException(CHAT_ERRORS.ROOM_NOT_FOUND);
     if (room.expertUserId !== expertUserId)
       throw new AppException(CHAT_ERRORS.FORBIDDEN_EXPERT_MISMATCH);
 
-    const { servicePrice, title, id: serviceId } = room.currentService;
-    const platformFee = calculatePlatformFee(servicePrice);
-    const totalAmount = calculateTotalAmount(servicePrice);
+    const { title, id: serviceId } = room.currentService;
+    const platformFee = calculatePlatformFee(agreedServicePrice);
+    const totalAmount = calculateTotalAmount(agreedServicePrice);
 
     const order = await this.chatRepository.createPendingOrder({
       clientUserId: room.clientUserId,
       expertUserId,
       serviceId,
-      agreedServicePrice: servicePrice,
+      agreedServicePrice,
       platformFee,
       totalAmount,
+      chatRoomId: roomId,
     });
 
     await this.sendSystemMessage(
@@ -289,14 +294,24 @@ export class ChatService {
       {
         systemType: 'TRADE_REQUEST',
         serviceTitle: title,
-        servicePrice,
+        servicePrice: agreedServicePrice,
         platformFee,
         totalAmount,
-        expertSettlementAmount: servicePrice,
+        expertSettlementAmount: agreedServicePrice,
       },
       order.id,
     );
 
-    return { orderId: order.id };
+    return {
+      orderId: order.id,
+      clientUserId: order.clientUserId,
+      expertUserId: order.expertUserId,
+      serviceId: order.serviceId,
+      agreedServicePrice: order.agreedServicePrice,
+      platformFee: order.platformFee,
+      totalAmount: order.totalAmount,
+      status: order.status,
+      createdAt: order.createdAt,
+    };
   }
 }

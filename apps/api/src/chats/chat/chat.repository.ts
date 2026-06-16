@@ -378,10 +378,21 @@ export class ChatRepository {
     agreedServicePrice: number;
     platformFee: number;
     totalAmount: number;
+    chatRoomId: string;
   }) {
     return this.prisma.order.create({
       data: { ...data, status: OrderStatus.PENDING },
-      select: { id: true },
+      select: {
+        id: true,
+        clientUserId: true,
+        expertUserId: true,
+        serviceId: true,
+        agreedServicePrice: true,
+        platformFee: true,
+        totalAmount: true,
+        status: true,
+        createdAt: true,
+      },
     });
   }
 

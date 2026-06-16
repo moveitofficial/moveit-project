@@ -1,5 +1,5 @@
 {
-  "name": "@repo/socket-events",
+  "name": "@repo/content-filter",
   "version": "0.0.0",
   "private": true,
   "main": "./dist/index.js",
@@ -19,7 +19,11 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/sanitize-html": "^2.13.0",
     "eslint": "^9.39.1",
     "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "sanitize-html": "^2.15.0"
   }
 }

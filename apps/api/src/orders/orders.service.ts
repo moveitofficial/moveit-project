@@ -180,7 +180,7 @@ export class OrdersService {
     ]);
 
     return toPaginatedResponse(
-      orders.map((order) => mapOrderListItem(order)),
+      orders.map((order) => mapOrderListItem(order, order.chatRoomId ?? null)),
       {
         page,
         pageSize,
