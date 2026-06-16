@@ -36,16 +36,16 @@ class OrderRefundDto {
   @ApiProperty({ example: 380_000 })
   declare refundAmount: number;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ type: 'string', nullable: true })
   declare adminReason: string | null;
 
-  @ApiProperty()
+  @ApiProperty({ type: 'string', format: 'date-time' })
   declare requestedAt: Date;
 
-  @ApiPropertyOptional({ nullable: true })
-  declare approvedAt: Date | null;
+  @ApiProperty({ type: 'string', format: 'date-time' })
+  declare approvedAt: Date;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ type: 'string', format: 'date-time', nullable: true })
   declare refundedAt: Date | null;
 }
 
@@ -71,8 +71,12 @@ class OrderPaymentBaseDto {
   @ApiPropertyOptional({ nullable: true, example: 'tgen_20260527_example' })
   declare paymentKey: string | null;
 
-  @ApiPropertyOptional({ nullable: true, description: '결제 일시' })
-  declare approvedAt: Date | null;
+  @ApiProperty({
+    type: 'string',
+    format: 'date-time',
+    description: '결제 일시',
+  })
+  declare approvedAt: Date;
 
   @ApiPropertyOptional({
     type: PaymentCardDto,
