@@ -123,13 +123,17 @@ export class OrdersService {
               },
               orderId,
             );
-            await this.chatService.sendSystemMessage(roomId, 'PAYMENT_HELD', {
-              systemType: 'PAYMENT_HELD',
-            });
+            await this.chatService.sendSystemMessage(
+              roomId,
+              'PAYMENT_HELD',
+              { systemType: 'PAYMENT_HELD' },
+              orderId,
+            );
             await this.chatService.sendSystemMessage(
               roomId,
               'SCHEDULE_REQUEST',
               { systemType: 'SCHEDULE_REQUEST' },
+              orderId,
             );
           } catch (error: unknown) {
             this.logger.error(
@@ -299,12 +303,17 @@ export class OrdersService {
       order.endDate === null
     ) {
       void this.chatService
-        .sendSystemMessage(dto.roomId, 'SCHEDULE_REGISTERED', {
-          systemType: 'SCHEDULE_REGISTERED',
-          serviceTitle: order.service.title,
-          startDate: order.startDate?.toISOString() ?? '',
-          endDate: endDate.toISOString(),
-        })
+        .sendSystemMessage(
+          dto.roomId,
+          'SCHEDULE_REGISTERED',
+          {
+            systemType: 'SCHEDULE_REGISTERED',
+            serviceTitle: order.service.title,
+            startDate: order.startDate?.toISOString() ?? '',
+            endDate: endDate.toISOString(),
+          },
+          orderId,
+        )
         .catch((error: unknown) => {
           this.logger.error(
             `일정등록 시스템 메시지 발송 실패. orderId=${orderId}`,
@@ -337,16 +346,21 @@ export class OrdersService {
 
     if (dto.roomId) {
       void this.chatService
-        .sendSystemMessage(dto.roomId, 'SCHEDULE_CHANGE_REQUEST', {
-          systemType: 'SCHEDULE_CHANGE_REQUEST',
-          serviceTitle: order.service.title,
-          clientName:
-            order.clientUser.clientProfile?.nickname ??
-            order.clientUser.name ??
-            '',
-          expertBusinessName:
-            order.expertUser.expertProfile?.businessName ?? '',
-        })
+        .sendSystemMessage(
+          dto.roomId,
+          'SCHEDULE_CHANGE_REQUEST',
+          {
+            systemType: 'SCHEDULE_CHANGE_REQUEST',
+            serviceTitle: order.service.title,
+            clientName:
+              order.clientUser.clientProfile?.nickname ??
+              order.clientUser.name ??
+              '',
+            expertBusinessName:
+              order.expertUser.expertProfile?.businessName ?? '',
+          },
+          orderId,
+        )
         .catch((error: unknown) => {
           this.logger.error(
             `일정변경요청 시스템 메시지 발송 실패. orderId=${orderId}`,
@@ -606,14 +620,19 @@ export class OrdersService {
 
       if (roomId) {
         void this.chatService
-          .sendSystemMessage(roomId, 'TRADE_CANCELED', {
-            systemType: 'TRADE_CANCELED',
-            serviceTitle: order.service.title,
-            servicePrice: order.agreedServicePrice,
-            platformFee: order.platformFee,
-            totalAmount: order.totalAmount,
-            expertSettlementAmount: order.agreedServicePrice,
-          })
+          .sendSystemMessage(
+            roomId,
+            'TRADE_CANCELED',
+            {
+              systemType: 'TRADE_CANCELED',
+              serviceTitle: order.service.title,
+              servicePrice: order.agreedServicePrice,
+              platformFee: order.platformFee,
+              totalAmount: order.totalAmount,
+              expertSettlementAmount: order.agreedServicePrice,
+            },
+            orderId,
+          )
           .catch((error: unknown) => {
             this.logger.error(
               `거래취소 시스템 메시지 발송 실패. orderId=${orderId}`,
