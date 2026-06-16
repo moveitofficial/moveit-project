@@ -11,6 +11,7 @@ export const orderListSelect = {
   startDate: true,
   endDate: true,
   createdAt: true,
+  chatRoomId: true,
   service: {
     select: {
       id: true,
