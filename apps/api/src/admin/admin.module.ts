@@ -10,6 +10,7 @@ import { AdminMainSettingModule } from './admin-main-setting/admin-main-setting.
 import { AdminOrderModule } from './admin-order/admin-order.module';
 import { AdminReportModule } from './admin-report/admin-report.module';
 import { AdminServiceModule } from './admin-service/admin-service.module';
+import { AdminStatisticsModule } from './admin-statistics/admin-statistics.module';
 import { AdminUserModule } from './admin-user/admin-user.module';
 
 @Module({
@@ -25,6 +26,7 @@ import { AdminUserModule } from './admin-user/admin-user.module';
     AdminMainSettingModule,
     AdminCategoryFeaturedModule,
     AdminFaqModule,
+    AdminStatisticsModule,
   ],
 })
 export class AdminModule {}

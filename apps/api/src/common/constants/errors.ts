@@ -651,3 +651,11 @@ export const FAVORITES_ERRORS = {
     code: 'FAVORITES_ALREADY_FAVORITED',
   },
 } as const;
+
+export const STATISTICS_ERRORS = {
+  INVALID_DATE_RANGE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '시작일은 종료일보다 이전이어야 합니다.',
+    code: 'STATISTICS_INVALID_DATE_RANGE',
+  },
+} as const;
