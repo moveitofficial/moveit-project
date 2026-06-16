@@ -50,6 +50,12 @@ export interface PatchClientProfileBody {
   interestCategories?: InterestCategory[];
 }
 
+export interface ChangePasswordBody {
+  currentPassword: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}
+
 async function multipartPatch<T>(path: string, formData: FormData): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     method: 'PATCH',
@@ -91,4 +97,13 @@ export function patchProfileImage(file: File): Promise<MyUser> {
   const formData = new FormData();
   formData.append('profileImage', file);
   return multipartPatch<MyUser>('/users/me/profile-image', formData);
+}
+
+export function patchPassword(
+  body: ChangePasswordBody,
+): Promise<ApiSuccess<Record<string, never>>> {
+  return api.patch<ApiSuccess<Record<string, never>>>(
+    '/users/me/password',
+    body,
+  );
 }

@@ -4,7 +4,9 @@ import {
   getMyUser,
   patchClientProfile,
   patchMyUser,
+  patchPassword,
   patchProfileImage,
+  type ChangePasswordBody,
   type PatchClientProfileBody,
   type PatchMyUserBody,
 } from './api';
@@ -48,5 +50,11 @@ export function usePatchProfileImageMutation() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: myUserQueryKey });
     },
+  });
+}
+
+export function useChangePasswordMutation() {
+  return useMutation({
+    mutationFn: (body: ChangePasswordBody) => patchPassword(body),
   });
 }
