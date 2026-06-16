@@ -38,8 +38,7 @@ function ChangePasswordForm() {
       ? '비밀번호가 일치하지 않습니다.'
       : null;
 
-  const apiErrorMessage =
-    error instanceof ApiError ? error.message : null;
+  const apiErrorMessage = error instanceof ApiError ? error.message : null;
   const currentPasswordError =
     apiErrorMessage === '현재 비밀번호가 일치하지 않습니다.'
       ? apiErrorMessage
@@ -89,91 +88,89 @@ function ChangePasswordForm() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.card}>
-          <div className={styles.currentPasswordField}>
-            <label htmlFor="current-password" className={styles.label}>
-              현재 비밀번호
+      <div className={styles.card}>
+        <div className={styles.currentPasswordField}>
+          <label htmlFor="current-password" className={styles.label}>
+            현재 비밀번호
+          </label>
+          <div className={styles.passwordWrapper}>
+            <input
+              id="current-password"
+              type="password"
+              name="currentPassword"
+              autoComplete="off"
+              placeholder="현재 비밀번호를 입력해주세요"
+              value={form.currentPassword}
+              onChange={handleChange}
+              className={styles.input}
+            />
+          </div>
+          {currentPasswordError !== null && (
+            <p className={styles.currentPasswordFieldError}>
+              {currentPasswordError}
+            </p>
+          )}
+        </div>
+
+        <div className={styles.fieldRow}>
+          <div className={styles.field}>
+            <label htmlFor="new-password" className={styles.label}>
+              변경할 비밀번호
             </label>
             <div className={styles.passwordWrapper}>
               <input
-                id="current-password"
+                id="new-password"
                 type="password"
-                name="currentPassword"
-                autoComplete="current-password"
-                placeholder="현재 비밀번호를 입력해주세요"
-                value={form.currentPassword}
+                name="newPassword"
+                autoComplete="new-password"
+                placeholder="변경할 비밀번호를 입력해주세요"
+                value={form.newPassword}
                 onChange={handleChange}
                 className={styles.input}
               />
             </div>
-            {currentPasswordError !== null && (
-              <p className={styles.currentPasswordFieldError}>
-                {currentPasswordError}
-              </p>
+            {newPasswordError !== null && (
+              <p className={styles.fieldError}>{newPasswordError}</p>
             )}
           </div>
 
-          <div className={styles.fieldRow}>
-            <div className={styles.field}>
-              <label htmlFor="new-password" className={styles.label}>
-                변경할 비밀번호
-              </label>
-              <div className={styles.passwordWrapper}>
-                <input
-                  id="new-password"
-                  type="password"
-                  name="newPassword"
-                  autoComplete="new-password"
-                  placeholder="변경할 비밀번호를 입력해주세요"
-                  value={form.newPassword}
-                  onChange={handleChange}
-                  className={styles.input}
-                />
-              </div>
-              {newPasswordError !== null && (
-                <p className={styles.fieldError}>{newPasswordError}</p>
-              )}
+          <div className={styles.field}>
+            <label htmlFor="new-password-confirm" className={styles.label}>
+              한번더 입력
+            </label>
+            <div className={styles.passwordWrapper}>
+              <input
+                id="new-password-confirm"
+                type="password"
+                name="newPasswordConfirm"
+                autoComplete="new-password"
+                placeholder="변경할 비밀번호를 한번더 입력해주세요"
+                value={form.newPasswordConfirm}
+                onChange={handleChange}
+                className={styles.input}
+              />
             </div>
-
-            <div className={styles.field}>
-              <label htmlFor="new-password-confirm" className={styles.label}>
-                한번더 입력
-              </label>
-              <div className={styles.passwordWrapper}>
-                <input
-                  id="new-password-confirm"
-                  type="password"
-                  name="newPasswordConfirm"
-                  autoComplete="new-password"
-                  placeholder="변경할 비밀번호를 한번더 입력해주세요"
-                  value={form.newPasswordConfirm}
-                  onChange={handleChange}
-                  className={styles.input}
-                />
-              </div>
-              {confirmError !== null && (
-                <p className={styles.fieldError}>{confirmError}</p>
-              )}
-            </div>
+            {confirmError !== null && (
+              <p className={styles.fieldError}>{confirmError}</p>
+            )}
           </div>
+        </div>
 
-          {formError !== null && (
-            <p className={styles.formError}>{formError}</p>
-          )}
+        {formError !== null && <p className={styles.formError}>{formError}</p>}
 
-          <div className={styles.buttonGroup}>
-            <button
-              type="submit"
-              className={
-                canSubmit && !isPending
-                  ? styles.submitButton
-                  : `${styles.submitButton} ${styles.submitButtonDisabled}`
-              }
-              disabled={!canSubmit || isPending}
-            >
-              변경하기
-            </button>
-          </div>
+        <div className={styles.buttonGroup}>
+          <button
+            type="submit"
+            className={
+              canSubmit && !isPending
+                ? styles.submitButton
+                : `${styles.submitButton} ${styles.submitButtonDisabled}`
+            }
+            disabled={!canSubmit || isPending}
+          >
+            변경하기
+          </button>
+        </div>
       </div>
     </form>
   );
