@@ -1,7 +1,6 @@
 'use client';
 
 import { ApiError } from '@repo/fetcher';
-import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 
@@ -28,9 +27,6 @@ function ChangePasswordForm() {
     newPassword: '',
     newPasswordConfirm: '',
   });
-  const [passwordVisible, setPasswordVisible] = useState(false);
-
-  const passwordType = passwordVisible ? 'text' : 'password';
 
   const newPasswordError =
     form.newPassword.length > 0 && !PASSWORD_REGEX.test(form.newPassword)
@@ -45,7 +41,7 @@ function ChangePasswordForm() {
   const apiErrorMessage =
     error instanceof ApiError ? error.message : null;
   const currentPasswordError =
-    apiErrorMessage === '현재 비밀번호가 올바르지 않습니다.'
+    apiErrorMessage === '현재 비밀번호가 일치하지 않습니다.'
       ? apiErrorMessage
       : null;
   const apiPasswordConfirmError =
@@ -101,7 +97,7 @@ function ChangePasswordForm() {
             <div className={styles.passwordWrapper}>
               <input
                 id="current-password"
-                type={passwordType}
+                type="password"
                 name="currentPassword"
                 autoComplete="current-password"
                 placeholder="현재 비밀번호를 입력해주세요"
@@ -109,16 +105,6 @@ function ChangePasswordForm() {
                 onChange={handleChange}
                 className={styles.input}
               />
-              <button
-                type="button"
-                className={styles.visibilityToggle}
-                aria-label="비밀번호 표시"
-                onClick={() => {
-                  setPasswordVisible((visible) => !visible);
-                }}
-              >
-                {passwordVisible ? <Eye size={24} /> : <EyeOff size={24} />}
-              </button>
             </div>
             {currentPasswordError !== null && (
               <p className={styles.currentPasswordFieldError}>
@@ -135,7 +121,7 @@ function ChangePasswordForm() {
               <div className={styles.passwordWrapper}>
                 <input
                   id="new-password"
-                  type={passwordType}
+                  type="password"
                   name="newPassword"
                   autoComplete="new-password"
                   placeholder="변경할 비밀번호를 입력해주세요"
@@ -143,16 +129,6 @@ function ChangePasswordForm() {
                   onChange={handleChange}
                   className={styles.input}
                 />
-                <button
-                  type="button"
-                  className={styles.visibilityToggle}
-                  aria-label="비밀번호 표시"
-                  onClick={() => {
-                    setPasswordVisible((visible) => !visible);
-                  }}
-                >
-                  {passwordVisible ? <Eye size={24} /> : <EyeOff size={24} />}
-                </button>
               </div>
               {newPasswordError !== null && (
                 <p className={styles.fieldError}>{newPasswordError}</p>
@@ -166,7 +142,7 @@ function ChangePasswordForm() {
               <div className={styles.passwordWrapper}>
                 <input
                   id="new-password-confirm"
-                  type={passwordType}
+                  type="password"
                   name="newPasswordConfirm"
                   autoComplete="new-password"
                   placeholder="변경할 비밀번호를 한번더 입력해주세요"
@@ -174,16 +150,6 @@ function ChangePasswordForm() {
                   onChange={handleChange}
                   className={styles.input}
                 />
-                <button
-                  type="button"
-                  className={styles.visibilityToggle}
-                  aria-label="비밀번호 표시"
-                  onClick={() => {
-                    setPasswordVisible((visible) => !visible);
-                  }}
-                >
-                  {passwordVisible ? <Eye size={24} /> : <EyeOff size={24} />}
-                </button>
               </div>
               {confirmError !== null && (
                 <p className={styles.fieldError}>{confirmError}</p>

@@ -71,9 +71,9 @@ export const input = style([
   typography.f16R,
   {
     width: '100%',
-    padding: '14px 48px 14px 16px',
+    padding: '0.875rem 1rem',
     border: `1px solid ${vars.color.line200}`,
-    borderRadius: '12px',
+    borderRadius: '0.75rem',
     color: vars.color.black500,
     backgroundColor: vars.color.white,
     boxSizing: 'border-box',
@@ -87,23 +87,7 @@ export const input = style([
 ]);
 
 export const passwordWrapper = style({
-  position: 'relative',
   width: '100%',
-});
-
-export const visibilityToggle = style({
-  position: 'absolute',
-  top: '50%',
-  right: '16px',
-  transform: 'translateY(-50%)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: 0,
-  border: 'none',
-  background: 'none',
-  color: vars.color.gray400,
-  cursor: 'pointer',
 });
 
 export const fieldError = style([
