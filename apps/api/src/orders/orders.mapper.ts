@@ -72,5 +72,6 @@ export function mapOrderListItem(
       businessName: order.expertUser.expertProfile?.businessName ?? null,
       profileImageUrl: order.expertUser.profileImageUrl,
     },
+    reviewId: order.review?.id ?? null,
   };
 }

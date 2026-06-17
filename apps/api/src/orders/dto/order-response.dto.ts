@@ -78,4 +78,13 @@ export class OrderListItemDto {
 
   @ApiProperty({ type: OrderExpertSummaryDto })
   declare expertUser: OrderExpertSummaryDto;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description:
+      '작성된 리뷰 ID (없으면 null). 리뷰 단건 조회·수정·삭제에 사용',
+  })
+  declare reviewId: string | null;
 }

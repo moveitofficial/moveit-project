@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -32,6 +33,7 @@ import { UpdateReviewRequestDto } from '../services/dto/update-review-request.dt
 import { ApproveCancelRequestDto } from './dto/approve-cancel-request.dto';
 import { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import { CreateOrderResponseDto } from './dto/create-order-response.dto';
+import { OrderReviewResponseDto } from './dto/order-review-response.dto';
 import { PayOrderRequestDto } from './dto/pay-order-request.dto';
 import { ScheduleChangeRequestDto } from './dto/schedule-change-request.dto';
 import { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
@@ -275,6 +277,20 @@ export class OrdersController {
   ) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.rejectRefundOrder(user.userId, orderId);
+  }
+
+  @ApiOperation({ summary: '리뷰 단건 조회 (모달용)' })
+  @RoleAuth(Role.CLIENT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK, OrderReviewResponseDto)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, REVIEW_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get(':id/reviews')
+  getOrderReview(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) orderId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.getOrderReview(user.userId, orderId);
   }
 
   @ApiOperation({ summary: '리뷰 작성' })

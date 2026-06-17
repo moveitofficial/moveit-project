@@ -60,6 +60,7 @@ import { OrdersRepository } from './orders.repository';
 
 import type { CreateOrderRequestDto } from './dto/create-order-request.dto';
 import type { GetOrdersQueryDto } from './dto/get-orders-query.dto';
+import type { OrderReviewResponseDto } from './dto/order-review-response.dto';
 import type {
   ClientOrderSummaryDto,
   ExpertOrderSummaryDto,
@@ -622,6 +623,19 @@ export class OrdersService {
     });
 
     return mapReview(review);
+  }
+
+  async getOrderReview(
+    userId: string,
+    orderId: string,
+  ): Promise<OrderReviewResponseDto> {
+    const order = await this.ordersRepository.findOrderForReview(orderId);
+    if (order === null) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+    if (order.clientUserId !== userId)
+      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+    if (order.review === null) throw new AppException(REVIEW_ERRORS.NOT_FOUND);
+
+    return order.review;
   }
 
   async getAllReviewsByUserId(
