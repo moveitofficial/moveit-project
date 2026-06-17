@@ -5,7 +5,7 @@ import { style } from '@vanilla-extract/css';
 export const container = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: '1.5rem',
+  gap: '1rem',
 });
 
 export const header = style({
