@@ -4,7 +4,7 @@ import { getPagedCommunityPosts } from '@/feature/community/api';
 import { CommunityBoard } from '@/feature/community/components/CommunityBoard';
 import { COMMUNITY_PAGE_SIZE } from '@/feature/community/constants';
 import { parseCommunityCategory, parsePage } from '@/feature/community/utils';
-import { getMockAuthUser } from '@/mocks/user';
+import { getMe } from '@/feature/signup/api';
 import { calcTotalPages } from '@/utils/paging';
 
 export const metadata: Metadata = {
@@ -41,7 +41,15 @@ export default async function CommunityPage({ searchParams }: Props) {
   }
 
   const { items } = pagedResult.data;
-  const canWritePost = getMockAuthUser() !== null;
+
+  // 실제 로그인 여부(쿠키 기반)로 글쓰기 노출을 결정한다.
+  let canWritePost = false;
+  try {
+    await getMe();
+    canWritePost = true;
+  } catch {
+    canWritePost = false;
+  }
 
   return (
     <CommunityBoard

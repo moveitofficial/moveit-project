@@ -49,10 +49,13 @@ export const description = style([
 export const writeButton = style([
   typography.f14B,
   {
+    display: 'inline-flex',
+    alignItems: 'center',
     height: '40px',
     padding: '0 20px',
     border: 'none',
     borderRadius: '8px',
+    textDecoration: 'none',
     backgroundColor: vars.color.blue300,
     color: vars.color.white,
     cursor: 'pointer',
