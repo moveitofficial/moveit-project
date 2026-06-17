@@ -8,3 +8,4 @@ export { WithdrawView } from './WithdrawView';
 export { MyInfoView } from './MyInfoView';
 export { ScheduleCard } from './ScheduleCard';
 export { ScheduleView } from './ScheduleView';
+export { PortfolioView } from './PortfolioView';    
