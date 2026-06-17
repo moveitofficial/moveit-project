@@ -9,12 +9,14 @@ interface Props {
   value: string;
   onChange: (digits: string) => void;
   inputClassName: string;
+  disabled?: boolean;
 }
 
 export default function BusinessNumberField({
   value,
   onChange,
   inputClassName,
+  disabled = false,
 }: Props) {
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value
@@ -37,9 +39,12 @@ export default function BusinessNumberField({
         placeholder="사업자 번호를 입력해주세요(숫자만 입력해주세요)"
         value={value}
         onChange={handleChange}
+        disabled={disabled}
         className={inputClassName}
       />
-      {formatError !== null && <p className={styles.error}>{formatError}</p>}
+      {!disabled && formatError !== null && (
+        <p className={styles.error}>{formatError}</p>
+      )}
     </div>
   );
 }

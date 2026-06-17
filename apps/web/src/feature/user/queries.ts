@@ -3,11 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getMyUser,
   patchClientProfile,
+  patchExpertProfile,
   patchMyUser,
   patchPassword,
   patchProfileImage,
   type ChangePasswordBody,
   type PatchClientProfileBody,
+  type PatchExpertProfileBody,
   type PatchMyUserBody,
 } from './api';
 
@@ -37,6 +39,16 @@ export function usePatchClientProfileMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: PatchClientProfileBody) => patchClientProfile(body),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: myUserQueryKey });
+    },
+  });
+}
+
+export function usePatchExpertProfileMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: PatchExpertProfileBody) => patchExpertProfile(body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: myUserQueryKey });
     },
