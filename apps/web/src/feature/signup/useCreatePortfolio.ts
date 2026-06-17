@@ -2,6 +2,7 @@
 
 import { ApiError } from '@repo/fetcher';
 import { useMutation } from '@tanstack/react-query';
+import { type Route } from 'next';
 import { useRouter } from 'next/navigation';
 
 import {
@@ -35,7 +36,7 @@ export function useCreatePortfolio(returnUrl = '/signup/expert/portfolio') {
       });
     },
     onSuccess: () => {
-      router.push(returnUrl);
+      router.push(returnUrl as Route);
     },
   });
 }
