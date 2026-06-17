@@ -1,6 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsNotEmpty, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export class CreateOrderRequestDto {
   @ApiProperty({
@@ -34,4 +41,13 @@ export class CreateOrderRequestDto {
   @IsInt()
   @Min(1)
   declare amount: number;
+
+  @ApiPropertyOptional({
+    description:
+      '채팅방 UUID. 채팅 컨텍스트에서 결제 시 시스템 메시지 발송에 사용됩니다.',
+    format: 'uuid',
+  })
+  @IsUUID()
+  @IsOptional()
+  declare roomId?: string;
 }
