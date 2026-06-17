@@ -186,6 +186,7 @@ export class CsChatRepository {
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       take: limit,
       orderBy: { createdAt: 'desc' },
+      include: { attachments: true },
     });
   }
 
