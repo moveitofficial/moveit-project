@@ -33,17 +33,17 @@ export const menuList = style({
   listStyle: 'none',
 });
 
-export const menuLink = style([
-  typography.f16R,
-  {
-    display: 'block',
-    padding: '14px 16px',
-    color: vars.color.black500,
-    textDecoration: 'none',
-    wordBreak: 'keep-all',
-  },
-]);
-
-export const menuLinkActive = style({
-  fontWeight: vars.font.weight.extraBold,
+export const menuLink = style({
+  display: 'flex',
+  alignItems: 'center',
+  height: '52px',
+  padding: '0 16px',
+  color: vars.color.black500,
+  textDecoration: 'none',
+  wordBreak: 'keep-all',
+  cursor: 'pointer',
 });
+
+export const menuLinkInactive = style([typography.f16R]);
+
+export const menuLinkActive = style([typography.f18EB]);

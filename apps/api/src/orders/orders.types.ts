@@ -11,6 +11,7 @@ export const orderListSelect = {
   startDate: true,
   endDate: true,
   createdAt: true,
+  chatRoomId: true,
   service: {
     select: {
       id: true,
@@ -60,13 +61,32 @@ export type OrderStatusResponseRow = Prisma.OrderGetPayload<{
   select: typeof orderStatusResponseSelect;
 }>;
 
+export const pendingOrderForPaySelect = {
+  id: true,
+  clientUserId: true,
+  expertUserId: true,
+  status: true,
+  agreedServicePrice: true,
+  platformFee: true,
+  totalAmount: true,
+  service: {
+    select: { title: true, serviceGroupId: true, serviceCategoryId: true },
+  },
+} satisfies Prisma.OrderSelect;
+
+export type PendingOrderForPay = Prisma.OrderGetPayload<{
+  select: typeof pendingOrderForPaySelect;
+}>;
+
 export const orderSchedulePolicySelect = {
   id: true,
   clientUserId: true,
   expertUserId: true,
   status: true,
+  startDate: true,
   endDate: true,
   payment: { select: { status: true } },
+  service: { select: { title: true } },
 } satisfies Prisma.OrderSelect;
 
 export type OrderSchedulePolicyOrder = Prisma.OrderGetPayload<{
@@ -100,6 +120,10 @@ export const orderCancelApprovePolicySelect = {
   clientUserId: true,
   expertUserId: true,
   status: true,
+  agreedServicePrice: true,
+  platformFee: true,
+  totalAmount: true,
+  createdAt: true,
   payment: {
     select: {
       id: true,
@@ -109,12 +133,32 @@ export const orderCancelApprovePolicySelect = {
       refund: { select: { id: true, type: true, status: true } },
     },
   },
-  service: { select: { title: true } },
+  service: {
+    select: { title: true, serviceGroupId: true, serviceCategoryId: true },
+  },
   clientUser: { select: { name: true } },
 } satisfies Prisma.OrderSelect;
 
 export type OrderCancelApprovePolicyOrder = Prisma.OrderGetPayload<{
   select: typeof orderCancelApprovePolicySelect;
+}>;
+
+export const orderScheduleChangePolicySelect = {
+  id: true,
+  clientUserId: true,
+  expertUserId: true,
+  status: true,
+  service: { select: { title: true } },
+  clientUser: {
+    select: { name: true, clientProfile: { select: { nickname: true } } },
+  },
+  expertUser: {
+    select: { expertProfile: { select: { businessName: true } } },
+  },
+} satisfies Prisma.OrderSelect;
+
+export type OrderScheduleChangePolicyOrder = Prisma.OrderGetPayload<{
+  select: typeof orderScheduleChangePolicySelect;
 }>;
 
 export const orderReviewSelect = {

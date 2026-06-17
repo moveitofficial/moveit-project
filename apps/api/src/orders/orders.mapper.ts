@@ -47,7 +47,10 @@ export function mapUpdateOrderScheduleResponse(order: Order) {
   };
 }
 
-export function mapOrderListItem(order: OrderListRow) {
+export function mapOrderListItem(
+  order: OrderListRow,
+  chatRoomId: string | null,
+) {
   return {
     id: order.id,
     status: order.status,
@@ -57,6 +60,7 @@ export function mapOrderListItem(order: OrderListRow) {
     startDate: order.startDate,
     endDate: order.endDate,
     createdAt: order.createdAt,
+    chatRoomId,
     service: {
       id: order.service.id,
       title: order.service.title,

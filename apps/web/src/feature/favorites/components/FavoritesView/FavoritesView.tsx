@@ -2,6 +2,7 @@
 
 import { Card, type CardService } from '@repo/ui/Card';
 import clsx from 'clsx';
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { FAVORITES_TABS, type FavoritesTabId } from '../../constants';
@@ -11,6 +12,7 @@ import * as styles from './FavoritesView.css';
 import type { ServiceListItem } from '@/mocks/types';
 
 import { ExpertCard } from '@/components/common/ExpertCard';
+import { buildServiceDetailHref } from '@/feature/serviceDetail/utils';
 import { mockFavoriteExperts, mockFavoriteServices } from '@/mocks/favorites';
 import { getTechStackLabel } from '@/mocks/metadata';
 
@@ -73,11 +75,19 @@ export default function FavoritesView() {
         <div className={styles.cardGrid}>
           {activeTab === 'service'
             ? mockFavoriteServices.map((service) => (
-                <Card
+                <Link
                   key={service.id}
-                  service={toCardService(service)}
-                  expertTechStacks={DEFAULT_TECH_STACK_LABELS}
-                />
+                  href={buildServiceDetailHref(
+                    service.id,
+                    service.categoryRef.group,
+                  )}
+                  className={styles.cardLink}
+                >
+                  <Card
+                    service={toCardService(service)}
+                    expertTechStacks={DEFAULT_TECH_STACK_LABELS}
+                  />
+                </Link>
               ))
             : mockFavoriteExperts.map((expert) => (
                 <ExpertCard

@@ -25,6 +25,8 @@ interface BadgeConfig {
 }
 
 export const ORDER_STATUS_BADGE_CONFIG: Record<OrderStatus, BadgeConfig> = {
+  PENDING: { text: '결제대기', color: 'yellow' },
+  TRADE_REQUEST_EXPIRED: { text: '요청만료', color: 'red' },
   NEGOTIATING: { text: '논의중', color: 'blue50' },
   IN_PROGRESS: { text: '작업중', color: 'blue50' },
   DEADLINE_IMMINENT: { text: '마감임박', color: 'yellow' },
@@ -76,6 +78,8 @@ export const ORDER_STATUS_ACTIONS_CONFIG: Record<
   OrderStatus,
   OrderCardAction[]
 > = {
+  PENDING: [DETAIL_ACTION],
+  TRADE_REQUEST_EXPIRED: [DETAIL_ACTION],
   NEGOTIATING: [DETAIL_ACTION],
   IN_PROGRESS: [DETAIL_ACTION],
   DEADLINE_IMMINENT: [DETAIL_ACTION],

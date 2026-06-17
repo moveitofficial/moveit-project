@@ -3,13 +3,15 @@
 import { Modal } from '@repo/ui/Modal';
 import clsx from 'clsx';
 import { Paperclip, X } from 'lucide-react';
-import { useId, useRef, useState, type ChangeEvent } from 'react';
+import Image from 'next/image';
+import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
 
 import {
   createConsultationRoom,
   uploadConsultationFiles,
 } from '../../api';
 import {
+  CONSULTATION_INQUIRY_ACCEPT,
   CONSULTATION_INQUIRY_MAX_FILES,
   CONSULTATION_INQUIRY_MAX_FILE_SIZE_BYTES,
   CONSULTATION_INQUIRY_MODAL_MAX_WIDTH,
@@ -34,6 +36,10 @@ function getExpertInitials(companyName: string): string {
   return companyName.replaceAll(' ', '').slice(0, 2);
 }
 
+function isImageFile(file: File): boolean {
+  return file.type === 'image/png' || file.type === 'image/jpeg';
+}
+
 export default function ConsultationInquiryModal({
   isOpen,
   onClose,
@@ -43,8 +49,20 @@ export default function ConsultationInquiryModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [content, setContent] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 선택한 파일의 미리보기 URL을 만들고, 변경/언마운트 시 해제한다.
+  useEffect(() => {
+    const urls = selectedFiles.map((file) => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+    return () => {
+      for (const url of urls) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [selectedFiles]);
 
   const trimmedContent = content.trim();
   const canSubmit = trimmedContent.length > 0 && !isSubmitting;
@@ -69,6 +87,10 @@ export default function ConsultationInquiryModal({
 
     const nextFiles: File[] = [];
     for (const file of files) {
+      if (!isImageFile(file)) {
+        setErrorMessage('JPG, PNG 이미지만 첨부할 수 있습니다.');
+        continue;
+      }
       if (file.size > CONSULTATION_INQUIRY_MAX_FILE_SIZE_BYTES) {
         setErrorMessage('파일 크기는 각 500MB 이하여야 합니다.');
         continue;
@@ -179,6 +201,7 @@ export default function ConsultationInquiryModal({
             <input
               ref={fileInputRef}
               type="file"
+              accept={CONSULTATION_INQUIRY_ACCEPT}
               className={styles.hiddenFileInput}
               multiple
               onChange={handleFileSelect}
@@ -187,21 +210,37 @@ export default function ConsultationInquiryModal({
 
           {selectedFiles.length > 0 ? (
             <ul className={styles.fileList}>
-              {selectedFiles.map((file, index) => (
-                <li key={`${file.name}-${String(index)}`} className={styles.fileItem}>
-                  <span>{file.name}</span>
-                  <button
-                    type="button"
-                    className={styles.fileRemoveButton}
-                    onClick={() => {
-                      handleRemoveFile(index);
-                    }}
-                    aria-label={`${file.name} 삭제`}
+              {selectedFiles.map((file, index) => {
+                const previewUrl = previewUrls[index];
+
+                return (
+                  <li
+                    key={`${file.name}-${String(index)}`}
+                    className={styles.thumbnail}
                   >
-                    <X size={16} />
-                  </button>
-                </li>
-              ))}
+                    {previewUrl === undefined ? null : (
+                      <Image
+                        src={previewUrl}
+                        alt={file.name}
+                        width={100}
+                        height={100}
+                        unoptimized
+                        className={styles.thumbnailImage}
+                      />
+                    )}
+                    <button
+                      type="button"
+                      className={styles.thumbnailRemove}
+                      onClick={() => {
+                        handleRemoveFile(index);
+                      }}
+                      aria-label={`${file.name} 삭제`}
+                    >
+                      <X size={14} />
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           ) : null}
 
@@ -210,22 +249,20 @@ export default function ConsultationInquiryModal({
           )}
 
           <div className={styles.footer}>
-            <div className={styles.buttonGroup}>
-              <button type="button" className={styles.cancelButton} onClick={handleClose}>
-                취소
-              </button>
-              <button
-                type="button"
-                className={clsx(
-                  styles.submitButton,
-                  canSubmit ? undefined : styles.submitButtonDisabled,
-                )}
-                onClick={handleSubmit}
-                disabled={!canSubmit}
-              >
-                문의하기
-              </button>
-            </div>
+            <button type="button" className={styles.cancelButton} onClick={handleClose}>
+              취소
+            </button>
+            <button
+              type="button"
+              className={clsx(
+                styles.submitButton,
+                canSubmit ? undefined : styles.submitButtonDisabled,
+              )}
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+            >
+              문의하기
+            </button>
           </div>
         </div>
       </div>

@@ -28,9 +28,11 @@ import {
   ServiceGroupName,
   ServiceStatus,
   StackType,
+  SystemMessageType,
   TechStackName,
   type User,
 } from '@prisma/client';
+import { SYSTEM_MESSAGE_CONTENT } from '@repo/socket-events';
 import bcrypt from 'bcrypt';
 import { config as loadEnv } from 'dotenv';
 
@@ -98,6 +100,128 @@ const COMMENT_TEMPLATES = [
   '혹시 이쪽 분야 입문서 추천 가능할까요?',
   '저도 비슷하게 진행 중인데 결과 공유 부탁드려요',
   '글 잘 읽었습니다. 다음 글도 기대할게요!',
+];
+
+// 1:1 채팅 대화 스크립트 — 단계별로 client/expert가 번갈아 주고받는 자연스러운 흐름
+interface ChatLine {
+  sender: 'client' | 'expert';
+  text: string;
+}
+
+// 거래 요청 후 결제 전 — 협의 단계
+const CHAT_INTRO_SCRIPTS: ChatLine[][] = [
+  [
+    { sender: 'client', text: '안녕하세요, 혹시 지금 작업 의뢰 가능할까요?' },
+    {
+      sender: 'expert',
+      text: '네 안녕하세요! 가능합니다. 어떤 작업 도와드릴까요?',
+    },
+    { sender: 'client', text: '회사 소개 랜딩 페이지 하나 제작하려고 해요.' },
+    {
+      sender: 'expert',
+      text: '반응형으로 깔끔하게 작업 가능합니다. 참고하실 만한 사이트나 자료가 있을까요?',
+    },
+    {
+      sender: 'client',
+      text: '네, 정리해서 보내드릴게요. 일정은 어느 정도 걸릴까요?',
+    },
+    {
+      sender: 'expert',
+      text: '분량 확인 후 정확히 안내드릴게요. 견적도 함께 정리해서 드리겠습니다.',
+    },
+    { sender: 'client', text: '확인했습니다. 그럼 결제 진행할게요!' },
+  ],
+  [
+    { sender: 'client', text: '코칭 신청하려고 하는데 초보도 괜찮을까요?' },
+    {
+      sender: 'expert',
+      text: '그럼요, 기초부터 차근차근 진행하니 걱정 안 하셔도 됩니다.',
+    },
+    { sender: 'client', text: '주로 어떤 방식으로 진행되나요?' },
+    {
+      sender: 'expert',
+      text: '실습 위주로 진행하고, 매 회차마다 과제 피드백 드려요.',
+    },
+    { sender: 'client', text: '좋네요. 시간대는 평일 저녁도 가능할까요?' },
+    {
+      sender: 'expert',
+      text: '네 조율 가능합니다. 결제해주시면 일정 잡을게요.',
+    },
+  ],
+  [
+    {
+      sender: 'client',
+      text: '견적 문의드려요. 앱 디자인 시안 작업 가능하신가요?',
+    },
+    {
+      sender: 'expert',
+      text: '안녕하세요, 가능합니다. 화면 수가 대략 몇 개 정도일까요?',
+    },
+    {
+      sender: 'client',
+      text: '메인이랑 상세까지 한 8개 정도 생각하고 있어요.',
+    },
+    {
+      sender: 'expert',
+      text: '확인했습니다. 레퍼런스 주시면 톤앤매너 맞춰서 작업하겠습니다.',
+    },
+    { sender: 'client', text: '네 바로 결제하고 자료 전달드릴게요.' },
+  ],
+];
+
+// 결제 후 — 작업 진행 단계
+const CHAT_BODY_SCRIPTS: ChatLine[][] = [
+  [
+    { sender: 'expert', text: '결제 확인했습니다. 바로 작업 시작할게요!' },
+    { sender: 'client', text: '넵 잘 부탁드립니다 :)' },
+    { sender: 'expert', text: '메인 컬러는 어떤 톤으로 잡을까요?' },
+    { sender: 'client', text: '블루 계열로 깔끔하게 부탁드려요.' },
+    { sender: 'expert', text: '알겠습니다. 초안 나오면 바로 공유드릴게요.' },
+    { sender: 'client', text: '천천히 하셔도 됩니다. 퀄리티가 우선이라서요.' },
+    { sender: 'expert', text: '감사합니다. 중간 결과물 곧 보여드리겠습니다.' },
+  ],
+  [
+    { sender: 'expert', text: '자료 잘 받았습니다. 오늘부터 진행하겠습니다.' },
+    {
+      sender: 'client',
+      text: '네 확인 감사합니다. 궁금한 점 있으면 말씀 주세요.',
+    },
+    { sender: 'expert', text: '혹시 로고 원본 파일도 받을 수 있을까요?' },
+    { sender: 'client', text: '아 네, 지금 바로 보내드릴게요.' },
+    { sender: 'expert', text: '감사합니다. 받는 대로 반영하겠습니다.' },
+    {
+      sender: 'client',
+      text: '진행 상황 중간중간 공유해주시면 좋을 것 같아요.',
+    },
+    { sender: 'expert', text: '넵 단계별로 공유드리겠습니다.' },
+  ],
+];
+
+// 산출물 전달 후 — 마무리 단계
+const CHAT_CLOSING_SCRIPTS: ChatLine[][] = [
+  [
+    { sender: 'expert', text: '최종 산출물 전달드립니다. 확인 부탁드려요.' },
+    {
+      sender: 'client',
+      text: '확인했습니다. 깔끔하게 잘 나왔네요, 감사합니다!',
+    },
+    {
+      sender: 'expert',
+      text: '감사합니다. 추가 수정 필요하시면 편하게 말씀 주세요.',
+    },
+    { sender: 'client', text: '네 우선 잘 사용해볼게요. 수고 많으셨습니다!' },
+  ],
+  [
+    { sender: 'expert', text: '요청하신 부분 모두 반영해서 전달드렸어요.' },
+    {
+      sender: 'client',
+      text: '빠르게 작업해주셔서 감사해요. 만족스럽습니다 :)',
+    },
+    {
+      sender: 'expert',
+      text: '좋게 봐주셔서 감사합니다. 다음에도 잘 부탁드려요!',
+    },
+  ],
 ];
 
 const SERVICE_TITLES_PROJECT = [
@@ -852,7 +976,7 @@ class Seeder {
       const profile = await this.#prisma.clientProfile.create({
         data: {
           userId: client.id,
-          nickname: faker.internet.username(),
+          nickname: `${faker.person.lastName()}${faker.person.firstName()}`,
         },
       });
 
@@ -993,8 +1117,8 @@ class Seeder {
         });
         services.push(service);
 
-        // 기술 스택 (서비스마다 2~5개)
-        const pickedTechs = shuffle(techStacks).slice(0, rand(2, 5));
+        // 기술 스택 (서비스마다 1~3개 — 최대 3개 제한)
+        const pickedTechs = shuffle(techStacks).slice(0, rand(1, 3));
         await this.#prisma.serviceTechStack.createMany({
           data: pickedTechs.map((tech) => ({
             serviceId: service.id,
@@ -1643,35 +1767,108 @@ class Seeder {
         ],
       });
 
-      // 메시지 15~50개 — 운영급 채팅 데이터
-      const messageCount = rand(15, 50);
+      // 시스템 메시지(거래 상세/결제 모달)가 참조할 주문 1건 — 방과 양방향 연결
+      const platformFee = Math.floor(service.servicePrice * 0.1);
+      const order = await this.#prisma.order.create({
+        data: {
+          clientUserId: client.id,
+          expertUserId: expert.id,
+          serviceId: service.id,
+          agreedServicePrice: service.servicePrice,
+          platformFee,
+          totalAmount: service.servicePrice + platformFee,
+          status: OrderStatus.IN_PROGRESS,
+          startDate: faker.date.recent({ days: 30 }),
+          endDate: faker.date.soon({ days: 30 }),
+          chatRoomId: room.id,
+        },
+      });
+      await this.#prisma.payment.create({
+        data: {
+          orderId: order.id,
+          clientUserId: client.id,
+          paidAmount: order.totalAmount,
+          status: PaymentStatus.PAID,
+          method: pick(['신용카드 신한', '신용카드 KB국민', '신용카드 삼성']),
+          installmentMonths: pick([1, 1, 1, 3, 6]),
+          paymentKey: faker.string.uuid(),
+          rawData: { provider: 'toss', mock: true },
+          approvedAt: new Date(),
+        },
+      });
+
       let lastMessageId: string | null = null;
-      for (let m = 0; m < messageCount; m++) {
-        const sender = m % 2 === 0 ? client : expert;
-        // 마지막 1개 첨부파일, 그 외 5%는 첨부파일, 나머지는 텍스트
-        const useFile = m === messageCount - 1 ? true : Math.random() < 0.05;
+
+      // 시스템 메시지 — orderId 참조 (senderId 없음)
+      const addSystem = async (
+        systemType: SystemMessageType,
+      ): Promise<void> => {
+        const message = await this.#prisma.message.create({
+          data: {
+            chatRoomId: room.id,
+            type: MessageType.SYSTEM,
+            systemType,
+            content: SYSTEM_MESSAGE_CONTENT[systemType],
+            orderId: order.id,
+          },
+        });
+        lastMessageId = message.id;
+      };
+
+      const addLines = async (lines: ChatLine[]): Promise<void> => {
+        for (const line of lines) {
+          const message = await this.#prisma.message.create({
+            data: {
+              chatRoomId: room.id,
+              senderId: line.sender === 'client' ? client.id : expert.id,
+              type: MessageType.TEXT,
+              content: line.text,
+            },
+          });
+          lastMessageId = message.id;
+        }
+      };
+
+      const addFile = async (sender: User): Promise<void> => {
         const message = await this.#prisma.message.create({
           data: {
             chatRoomId: room.id,
             senderId: sender.id,
-            type: useFile ? MessageType.FILE : MessageType.TEXT,
-            content: useFile ? '파일을 보냈습니다.' : faker.lorem.sentence(),
+            type: MessageType.FILE,
+            content: '파일을 보냈습니다.',
+          },
+        });
+        await this.#prisma.messageAttachment.create({
+          data: {
+            messageId: message.id,
+            fileUrl: pickImage(),
+            fileName: 'attachment.jpg',
+            fileType: 'image/jpeg',
+            fileSize: rand(100_000, 2_000_000),
           },
         });
         lastMessageId = message.id;
+      };
 
-        if (useFile) {
-          await this.#prisma.messageAttachment.create({
-            data: {
-              messageId: message.id,
-              fileUrl: pickImage(),
-              fileName: `attachment-${(m + 1).toString()}.jpg`,
-              fileType: 'image/jpeg',
-              fileSize: rand(100_000, 2_000_000),
-            },
-          });
-        }
+      // 결제완료 → 보관 → 일정요청 시스템 메시지 묶음
+      const addPaymentSystemFlow = async (): Promise<void> => {
+        await addSystem(SystemMessageType.PAYMENT_COMPLETED);
+        await addSystem(SystemMessageType.PAYMENT_HELD);
+        await addSystem(SystemMessageType.SCHEDULE_REQUEST);
+      };
+
+      // 절반은 '대화 후 결제'(거래요청 → 협의 → 결제), 절반은 '결제부터'
+      const isChatFirst = Math.random() < 0.5;
+      if (isChatFirst) {
+        await addSystem(SystemMessageType.TRADE_REQUEST);
+        await addLines(pick(CHAT_INTRO_SCRIPTS));
+        await addPaymentSystemFlow();
+      } else {
+        await addPaymentSystemFlow();
       }
+      await addLines(pick(CHAT_BODY_SCRIPTS));
+      await addFile(expert);
+      await addLines(pick(CHAT_CLOSING_SCRIPTS));
 
       await this.#prisma.chatRoom.update({
         where: { id: room.id },
@@ -1886,22 +2083,30 @@ class Seeder {
 
   // ─── 17. MainSettings ─────────────────────────────────────────────────
   async #seedMainSettings(experts: User[], services: Service[]): Promise<void> {
-    const sectionTypes = Object.values(MainSectionType);
+    const PER_SECTION = 4;
 
-    for (const sectionType of sectionTypes) {
-      const targetType = sectionType.includes('EXPERT')
+    for (const sectionType of Object.values(MainSectionType)) {
+      const isExpertSection =
+        sectionType === MainSectionType.MOVEIT_POPULAR_COACHING ||
+        sectionType === MainSectionType.MOVEIT_POPULAR_PROJECT_EXPERT;
+      const targetType = isExpertSection
         ? MainTargetType.USER
         : MainTargetType.SERVICE;
-      await this.#prisma.mainSetting.create({
-        data: {
-          sectionType,
-          targetType,
-          targetUserId:
-            targetType === MainTargetType.USER ? pick(experts).id : null,
-          targetServiceId:
-            targetType === MainTargetType.SERVICE ? pick(services).id : null,
-        },
-      });
+
+      const targets = isExpertSection
+        ? shuffle(experts).slice(0, PER_SECTION)
+        : shuffle(services).slice(0, PER_SECTION);
+
+      for (const target of targets) {
+        await this.#prisma.mainSetting.create({
+          data: {
+            sectionType,
+            targetType,
+            targetUserId: isExpertSection ? target.id : null,
+            targetServiceId: isExpertSection ? null : target.id,
+          },
+        });
+      }
     }
   }
 
@@ -2201,6 +2406,10 @@ class Seeder {
         serviceGroupId: serviceGroup.id,
         serviceCategoryId: serviceCategory.id,
       },
+    });
+
+    await this.#prisma.serviceImage.create({
+      data: { serviceId: expertService.id, imgUrl: pickImage(), isMain: true },
     });
 
     // 4) 상태별 주문 묶음 (client ↔ expert)
@@ -2528,7 +2737,15 @@ class Seeder {
 }
 
 // ─── Bootstrap ──────────────────────────────────────────────────────────
-const prisma = new PrismaClient();
+// 공유 RDS 커넥션 슬롯 고갈 방지 — 시드는 적은 풀로 충분
+const databaseUrl = process.env.DATABASE_URL;
+const prisma = new PrismaClient(
+  databaseUrl
+    ? {
+        datasourceUrl: `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}connection_limit=3`,
+      }
+    : undefined,
+);
 const seeder = new Seeder(prisma);
 
 seeder

@@ -107,9 +107,11 @@ enum ServiceStatus {
 }
 
 enum OrderStatus {
+  PENDING // 결제 요청됨 (채팅 결제 요청 시 생성, 결제 완료 전)
+  TRADE_REQUEST_EXPIRED // 거래 요청 만료 (PENDING 상태에서 72시간 내 미결제 시 크론잡 자동 전환)
   NEGOTIATING // 논의중
   CANCEL_REQUESTED // 취소요청
-  PAYMENT_CANCELLED // 결제취소
+  PAYMENT_CANCELLED // 결제 취소 완료
 
   IN_PROGRESS // 작업중
   DEADLINE_IMMINENT // 마감임박
@@ -249,6 +251,8 @@ enum MessageType {
 enum SystemMessageType {
   TRADE_REQUEST // 거래를 요청했어요
   TRADE_CANCELED // 거래 요청이 취소되었어요
+  TRADE_REQUEST_CANCELED // 전문가가 거래 요청을 취소했어요 (PENDING 주문 삭제)
+  TRADE_REQUEST_EXPIRED // 거래 요청이 만료되었어요
   PAYMENT_COMPLETED // 결제가 완료되었습니다
   PAYMENT_HELD // 무빗이 결제 금액을 안전하게 보관하고 있어요
   SCHEDULE_REQUEST // 일정을 등록해주세요
@@ -265,11 +269,6 @@ enum CsChatStatus {
   OPEN
   ASSIGNED
   CLOSED
-}
-
-enum MessageReferenceType {
-  ORDER
-  PAYMENT
 }
 
 enum AdminActionType {
@@ -666,7 +665,7 @@ model Order {
   platformFee        Int         @map("platform_fee")
   totalAmount        Int         @map("total_amount")
   status             OrderStatus
-  startDate          DateTime    @default(now()) @map("start_date")
+  startDate          DateTime?   @map("start_date")
   endDate            DateTime?   @map("end_date")
   refundReason       String?     @map("refund_reason")
   createdAt          DateTime    @default(now()) @map("created_at")
@@ -674,12 +673,16 @@ model Order {
   settledAt          DateTime?   @map("settled_at")
   settledByAdminId   String?     @map("settled_by_admin_id") @db.Uuid
 
-  clientUser     User     @relation("ClientOrders", fields: [clientUserId], references: [id])
-  expertUser     User     @relation("ExpertOrders", fields: [expertUserId], references: [id])
-  service        Service  @relation(fields: [serviceId], references: [id])
-  settledByAdmin Admin?   @relation(fields: [settledByAdminId], references: [id])
+  chatRoomId String? @map("chat_room_id") @db.Uuid
+
+  clientUser     User      @relation("ClientOrders", fields: [clientUserId], references: [id])
+  expertUser     User      @relation("ExpertOrders", fields: [expertUserId], references: [id])
+  service        Service   @relation(fields: [serviceId], references: [id])
+  settledByAdmin Admin?    @relation(fields: [settledByAdminId], references: [id])
+  chatRoom       ChatRoom? @relation(fields: [chatRoomId], references: [id])
   payment        Payment?
   review         Review?
+  messages       Message[]
 
   @@map("orders")
 }
@@ -972,6 +975,7 @@ model ChatRoom {
   currentService Service           @relation(fields: [currentServiceId], references: [id])
   participants   ChatParticipant[]
 
+  orders      Order[]
   messages    Message[] @relation("ChatRoomMessages")
   lastMessage Message?  @relation("ChatRoomLastMessage", fields: [lastMessageId], references: [id])
 
@@ -997,19 +1001,19 @@ model ChatParticipant {
 }
 
 model Message {
-  id            String                @id @default(uuid()) @db.Uuid
-  chatRoomId    String                @map("chat_room_id") @db.Uuid
-  senderId      String?               @map("sender_id") @db.Uuid
-  type          MessageType
-  systemType    SystemMessageType?    @map("system_type")
-  referenceType MessageReferenceType? @map("reference_type")
-  referenceId   String?               @map("reference_id") @db.Uuid
-  content       String
-  createdAt     DateTime              @default(now()) @map("created_at")
+  id         String             @id @default(uuid()) @db.Uuid
+  chatRoomId String             @map("chat_room_id") @db.Uuid
+  senderId   String?            @map("sender_id") @db.Uuid
+  type       MessageType
+  systemType SystemMessageType? @map("system_type")
+  orderId    String?            @map("order_id") @db.Uuid
+  content    String
+  createdAt  DateTime           @default(now()) @map("created_at")
 
   chatRoom                    ChatRoom            @relation("ChatRoomMessages", fields: [chatRoomId], references: [id])
   chatRoomAsLast              ChatRoom[]          @relation("ChatRoomLastMessage")
-  sender                      User?                @relation(fields: [senderId], references: [id])
+  sender                      User?               @relation(fields: [senderId], references: [id])
+  order                       Order?              @relation(fields: [orderId], references: [id])
   participantsAsLastRead      ChatParticipant[]   @relation("ParticipantLastRead")
   participantsAsLastDismissed ChatParticipant[]   @relation("ParticipantLastDismissed")
   attachments                 MessageAttachment[]

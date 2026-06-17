@@ -12,14 +12,15 @@ export interface OrderRefundDetail {
   method: string;
   installmentMonths: number;
   servicePrice: number;
+  platformFee: number;
   refundAmount: number;
   type: 'REFUND' | 'CANCEL';
-  approvedAt: string;
+  approvedAt: string | null;
   approvedBy: {
     type: 'ADMIN' | 'EXPERT';
     name: string | null;
     reason: string | null;
-  };
+  } | null;
 }
 
 export interface OrderSettlement {

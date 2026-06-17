@@ -3,7 +3,7 @@ import { typography } from '@repo/styles/typography';
 import { style } from '@vanilla-extract/css';
 
 const listToggleButtonBase = style([
-  typography.f14B,
+  typography.f14R,
   {
     display: 'flex',
     alignItems: 'center',
@@ -20,7 +20,7 @@ const listToggleButtonBase = style([
 ]);
 
 export const sidebar = style({
-  width: '276px',
+  width: '244px',
   flexShrink: 0,
   display: 'flex',
   flexDirection: 'column',
@@ -34,7 +34,7 @@ export const header = style({
 });
 
 export const headerTitle = style([
-  typography.f18B,
+  typography.f24EB,
   {
     color: vars.color.black500,
   },
@@ -55,8 +55,6 @@ export const activeTags = style({
   display: 'flex',
   flexWrap: 'wrap',
   gap: '8px',
-  paddingBottom: '16px',
-  borderBottom: `1px solid ${vars.color.line200}`,
 });
 
 export const activeTag = style([
@@ -154,14 +152,14 @@ export const checkbox = style({
 });
 
 export const optionLabel = style([
-  typography.f14R,
+  typography.f16R,
   {
     color: vars.color.black500,
   },
 ]);
 
 export const optionCount = style([
-  typography.f14R,
+  typography.f16R,
   {
     color: vars.color.gray400,
   },

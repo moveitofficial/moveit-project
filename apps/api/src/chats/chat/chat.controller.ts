@@ -5,8 +5,10 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
   Req,
@@ -16,11 +18,13 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 
 import { JwtAccessUser } from '../../auth/jwt/jwt-access.strategy';
 import {
   CHAT_ERRORS,
   COMMON_ERRORS,
+  ORDER_ERRORS,
   UPLOAD_ERRORS,
 } from '../../common/constants/errors';
 import { ApiErrorResponse } from '../../common/decorators/api-error-response.decorator';
@@ -29,7 +33,7 @@ import {
   ApiPaginatedResponse,
   ApiSuccessResponse,
 } from '../../common/decorators/api-success-response.decorator';
-import { JwtAuth } from '../../common/decorators/jwt-auth.decorator';
+import { JwtAuth, RoleAuth } from '../../common/decorators/jwt-auth.decorator';
 import { UploadChatFilesResponseDto } from '../../upload/dto/upload-chat-files-response.dto';
 import { UploadService } from '../../upload/upload.service';
 import { FindMessagesQueryDto } from '../common/dto/find-messages-query.dto';
@@ -44,6 +48,8 @@ import {
 import { ChatNotificationResponseDto } from './dto/chat-notification-response.dto';
 import { ChatRoomResponseDto } from './dto/chat-room-response.dto';
 import { CreateChatRoomDto } from './dto/create-chat-room.dto';
+import { CreateTradeRequestResponseDto } from './dto/create-trade-request-response.dto';
+import { CreateTradeRequestDto } from './dto/create-trade-request.dto';
 
 import type { Request } from 'express';
 
@@ -205,5 +211,43 @@ export class ChatController {
     const user = req.user as JwtAccessUser;
     await this.chatService.dismissAllNotifications(user.userId);
     return {};
+  }
+
+  @ApiOperation({
+    summary: '거래 요청 (전문가 → PENDING 주문 생성 + 시스템 메시지)',
+  })
+  @RoleAuth(Role.EXPERT, CHAT_ERRORS.FORBIDDEN_EXPERT_MISMATCH)
+  @ApiSuccessResponse(HttpStatus.CREATED, CreateTradeRequestResponseDto)
+  @ApiErrorResponse(CHAT_ERRORS.ROOM_NOT_FOUND)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @HttpCode(HttpStatus.CREATED)
+  @Post('rooms/:id/trade-request')
+  async createTradeRequest(
+    @Param('id', ParseUUIDPipe) roomId: string,
+    @Req() req: Request,
+    @Body() body: CreateTradeRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.chatService.createTradeRequest(
+      roomId,
+      user.userId,
+      body.agreedServicePrice,
+    );
+  }
+
+  @ApiOperation({
+    summary: '거래 요청 취소 (전문가 → PENDING 주문 삭제 + 시스템 메시지)',
+  })
+  @RoleAuth(Role.EXPERT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Delete('trade-request/:orderId')
+  async cancelTradeRequest(
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Req() req: Request,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.chatService.cancelTradeRequest(orderId, user.userId);
   }
 }

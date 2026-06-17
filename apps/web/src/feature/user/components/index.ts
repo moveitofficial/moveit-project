@@ -1,3 +1,7 @@
+export { ChangePasswordView } from './ChangePasswordView';
+export { ClientMyInfoView } from './ClientMyInfoView';
+export { ExpertProfileSection } from './ExpertProfileSection';
+export { ExpertProfileView } from './ExpertProfileView';
 export { MypageLayout } from './MypageLayout';
 export { MypageMenu } from './MypageMenu';
 export { WithdrawView } from './WithdrawView';

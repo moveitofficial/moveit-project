@@ -32,6 +32,7 @@ export const [themeClass, vars] = createTheme({
     blue300: '#1B92FF',
     blue400: '#242945',
 
+    yellow50: '#FFF1D5',
     yellow100: '#FFC149',
 
     red100: '#FFEEF0',

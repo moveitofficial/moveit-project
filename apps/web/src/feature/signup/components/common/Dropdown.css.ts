@@ -32,6 +32,15 @@ export const dropdownTriggerEmpty = style([
   },
 ]);
 
+export const dropdownTriggerDisabled = style([
+  dropdownTrigger,
+  {
+    color: vars.color.gray400,
+    backgroundColor: vars.color.gray100,
+    cursor: 'not-allowed',
+  },
+]);
+
 export const dropdownChevron = style({
   color: vars.color.black500,
   flexShrink: 0,

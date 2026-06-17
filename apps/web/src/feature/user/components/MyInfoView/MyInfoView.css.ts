@@ -5,7 +5,7 @@ import { style } from '@vanilla-extract/css';
 export const root = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: '24px',
+  gap: '0.87rem',
   width: '100%',
   fontFamily: vars.font.family,
 });
@@ -15,19 +15,19 @@ export const title = style({
   fontWeight: vars.font.weight.extraBold,
   fontSize: '18px',
   color: vars.color.black500,
+  padding: '0',
 });
 
 export const card = style({
   display: 'flex',
   flexDirection: 'row',
   alignItems: 'flex-start',
-  gap: '40px',
+  padding: '2.625rem 2.5rem 2.5rem 2.5rem',
   width: 'fit-content',
   maxWidth: '100%',
   minWidth: 0,
-  padding: '40px',
+  gap: '2.5rem',
   border: `1px solid ${vars.color.line200}`,
-  borderRadius: '16px',
   backgroundColor: vars.color.white,
   boxSizing: 'border-box',
 });
@@ -35,8 +35,8 @@ export const card = style({
 export const fields = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: '32px',
-  width: '636px',
+  gap: '2rem',
+  width: '39.75rem',
   flexShrink: 0,
   minWidth: 0,
 });
@@ -44,26 +44,50 @@ export const fields = style({
 export const providerList = style({
   display: 'flex',
   alignItems: 'center',
-  gap: '12px',
+  gap: '1.5rem',
 });
 
-export const providerBadge = style([
-  typography.f14B,
-  {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '40px',
-    height: '40px',
-    borderRadius: '9999px',
-    border: `1px solid ${vars.color.line200}`,
-    color: vars.color.gray400,
-    backgroundColor: vars.color.white,
-  },
-]);
+export const providerBadge = style({
+  position: 'relative',
+  display: 'block',
+  flexShrink: 0,
+  width: '2.5rem',
+  height: '2.5rem',
+  borderRadius: '9999px',
+  backgroundColor: vars.color.white,
+  overflow: 'hidden',
+});
 
 export const providerBadgeActive = style({
   borderColor: vars.color.blue300,
-  color: vars.color.blue300,
   backgroundColor: vars.color.blue50,
 });
+
+export const providerIcon = style({
+  objectFit: 'cover',
+});
+
+export const providerIconInactive = style({
+  filter: 'grayscale(1)',
+});
+
+export const savedDetailChips = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '8px',
+  justifyContent: 'flex-start',
+});
+
+export const statusMessage = style([
+  typography.f16R,
+  {
+    color: vars.color.gray400,
+  },
+]);
+
+export const errorMessage = style([
+  typography.f16R,
+  {
+    color: vars.color.red200,
+  },
+]);

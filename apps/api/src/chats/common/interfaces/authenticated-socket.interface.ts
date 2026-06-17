@@ -1,7 +1,7 @@
 import type { Role } from '@prisma/client';
 import type { Socket } from 'socket.io';
 
-export interface ConsultationSocketData {
+export interface ChatSocketData {
   userId: string;
   role: Role;
 }
@@ -18,8 +18,8 @@ export interface CsAdminSocketData {
 
 export type CsSocketData = CsUserSocketData | CsAdminSocketData;
 
-export type ConsultationSocket = Omit<Socket, 'data'> & {
-  data: ConsultationSocketData;
+export type ChatSocket = Omit<Socket, 'data'> & {
+  data: ChatSocketData;
 };
 export type CsSocket = Omit<Socket, 'data'> & {
   data: CsSocketData;

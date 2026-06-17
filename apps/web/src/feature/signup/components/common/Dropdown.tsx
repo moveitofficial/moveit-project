@@ -26,6 +26,7 @@ interface Props {
   onChange: (id: string) => void;
   placeholder: string;
   disabledIds?: readonly string[];
+  disabled?: boolean;
 }
 
 export default function Dropdown({
@@ -34,11 +35,18 @@ export default function Dropdown({
   onChange,
   placeholder,
   disabledIds,
+  disabled = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const selectedLabel = options.find((o) => o.id === value)?.label ?? null;
+
+  useEffect(() => {
+    if (disabled) {
+      setOpen(false);
+    }
+  }, [disabled]);
 
   useEffect(() => {
     if (!open) return;
@@ -61,19 +69,25 @@ export default function Dropdown({
     <div ref={wrapperRef} className={styles.dropdownWrapper}>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => {
+          if (disabled) return;
           setOpen((v) => !v);
         }}
         className={
-          selectedLabel === null
-            ? styles.dropdownTriggerEmpty
-            : styles.dropdownTrigger
+          disabled
+            ? styles.dropdownTriggerDisabled
+            : selectedLabel === null
+              ? styles.dropdownTriggerEmpty
+              : styles.dropdownTrigger
         }
       >
         <span>{selectedLabel ?? placeholder}</span>
-        <ChevronDown size={24} className={styles.dropdownChevron} />
+        {!disabled && (
+          <ChevronDown size={24} className={styles.dropdownChevron} />
+        )}
       </button>
-      {open && (
+      {open && !disabled && (
         <ul className={styles.dropdownMenu}>
           {options.map(({ id, label }) => {
             const disabled = disabledIds?.includes(id) ?? false;

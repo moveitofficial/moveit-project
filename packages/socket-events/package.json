@@ -12,6 +12,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "prepare": "tsc",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
   },

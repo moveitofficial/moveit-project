@@ -1,12 +1,15 @@
 import starFill from '@public/Card/starFill.svg';
-import { Heart, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import Image from 'next/image';
 
 import { buildServiceDetailBreadcrumb } from '../../utils';
 
+import ServiceDetailFavoriteButton from './ServiceDetailFavoriteButton';
 import * as styles from './ServiceDetailHero.css';
 
 import type { ServiceDetailPageData, ServiceDetailViewerRole } from '../../types';
+
+import { getTechStackLabel } from '@/mocks/metadata';
 
 interface Props {
   data: ServiceDetailPageData;
@@ -53,6 +56,8 @@ export default function ServiceDetailHero({ data, viewerRole }: Props) {
   const mainImage =
     service.images.find((image) => image.isMain) ?? service.images[0];
   const showFavorite = viewerRole !== 'owner';
+  const isNewService = orderCount === 0 && service.reviews.totalCount === 0;
+  const topTechStack = service.techStacks[0];
 
   return (
     <section className={styles.hero}>
@@ -61,43 +66,42 @@ export default function ServiceDetailHero({ data, viewerRole }: Props) {
           <div className={styles.topRow}>
             <p className={styles.breadcrumb}>
               {groupLabel} &gt; {categoryLabel}
+              {topTechStack === undefined
+                ? null
+                : ` > ${getTechStackLabel(topTechStack)}`}
             </p>
 
             {showFavorite ? (
-              <button
-                type="button"
-                className={styles.favoriteButton}
-                aria-label="찜하기"
-              >
-              <Heart
-                size={20}
-                strokeWidth={2.5}
-                fill={service.isFavorite ? 'currentColor' : 'none'}
+              <ServiceDetailFavoriteButton
+                initialFavorite={service.isFavorite}
+                favoriteCount={favoriteCount}
               />
-                <span className={styles.favoriteCount}>
-                  {favoriteCount.toLocaleString()}
-                </span>
-              </button>
             ) : null}
           </div>
 
           <h1 className={styles.title}>{service.title}</h1>
 
-          <div className={styles.statsRow}>
-            <div className={styles.ratingGroup}>
-              <RatingStars rating={service.reviews.averageRating} />
-              <p className={styles.ratingText}>
-                {service.reviews.averageRating.toFixed(1)}(
-                {service.reviews.totalCount.toLocaleString()})
+          {isNewService ? (
+            <p className={styles.newServiceNote}>
+              새롭게 등록된 서비스로, 더욱 빠르고 유연한 맞춤 진행이 가능합니다.
+            </p>
+          ) : (
+            <div className={styles.statsRow}>
+              <div className={styles.ratingGroup}>
+                <RatingStars rating={service.reviews.averageRating} />
+                <p className={styles.ratingText}>
+                  {service.reviews.averageRating.toFixed(1)}(
+                  {service.reviews.totalCount.toLocaleString()})
+                </p>
+              </div>
+              <p className={styles.statText}>
+                누적 판매 {orderCount.toLocaleString()}건
+              </p>
+              <p className={styles.purchaseRate}>
+                구매율 {expertStats.purchaseRate}%
               </p>
             </div>
-            <p className={styles.statText}>
-              누적 판매 {orderCount.toLocaleString()}건
-            </p>
-            <p className={styles.purchaseRate}>
-              구매율 {expertStats.purchaseRate}%
-            </p>
-          </div>
+          )}
         </div>
 
         <div className={styles.expertBanner}>

@@ -51,6 +51,8 @@ interface ServiceDetailApi {
   faqs: ServiceDetail['faqs'];
   orderCount: number;
   favoriteCount: number;
+  purchaseRate: number | null;
+  totalAmount: number;
 }
 
 interface ServiceListItemApi {
@@ -98,6 +100,16 @@ function resolveThumbnailUrl(thumbnailUrl: string): string {
 }
 
 function mapServiceImages(images: ServiceImageApi[]): ServiceImage[] {
+  if (images.length === 0) {
+    return [
+      {
+        id: 'fallback-thumbnail',
+        url: SERVICE_FALLBACK_THUMBNAIL,
+        isMain: true,
+      },
+    ];
+  }
+
   return images.map((image) => ({
     id: image.id,
     url: resolveThumbnailUrl(image.imgUrl),
@@ -307,6 +319,7 @@ export async function getServiceDetailPageData(
     ...FALLBACK_EXPERT_STATS,
     totalReviews: reviews.pagination.totalCount,
     averageRating: reviews.averageRating,
+    purchaseRate: detail.purchaseRate ?? 0,
   };
 
   return {
@@ -319,5 +332,6 @@ export async function getServiceDetailPageData(
     contactTime: MOCK_EXPERT_CONTACT_TIME,
     reviewsHasMore: reviews.pagination.hasNext,
     relatedServiceTechStacks: otherServices.techStacksByServiceId,
+    totalAmount: detail.totalAmount,
   };
 }

@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import {
-  MessageReferenceType,
-  MessageType,
-  SystemMessageType,
-} from '@prisma/client';
+import { MessageType, OrderStatus, SystemMessageType } from '@prisma/client';
 
 import { CHAT_ERRORS } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
 import { PrismaService } from '../../prisma/prisma.service';
+
+import type { RoomWithOrder } from './chat.types';
 
 @Injectable()
 export class ChatRepository {
@@ -167,12 +165,11 @@ export class ChatRepository {
 
   async createMessage(data: {
     chatRoomId: string;
-    senderId: string;
+    senderId?: string;
     type: MessageType;
     content: string;
     systemType?: SystemMessageType;
-    referenceType?: MessageReferenceType;
-    referenceId?: string;
+    orderId?: string;
   }) {
     const message = await this.prisma.message.create({ data });
     await this.prisma.chatRoom.update({
@@ -353,5 +350,102 @@ export class ChatRepository {
           }),
         ),
     );
+  }
+
+  async findRoomForTradeRequest(roomId: string) {
+    return this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      select: {
+        clientUserId: true,
+        expertUserId: true,
+        currentService: {
+          select: { id: true, title: true, servicePrice: true },
+        },
+      },
+    });
+  }
+
+  async createPendingOrder(data: {
+    clientUserId: string;
+    expertUserId: string;
+    serviceId: string;
+    agreedServicePrice: number;
+    platformFee: number;
+    totalAmount: number;
+    chatRoomId: string;
+  }) {
+    return this.prisma.order.create({
+      data: { ...data, status: OrderStatus.PENDING },
+      select: {
+        id: true,
+        clientUserId: true,
+        expertUserId: true,
+        serviceId: true,
+        agreedServicePrice: true,
+        platformFee: true,
+        totalAmount: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async findOrderForTradeRequestCancel(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        expertUserId: true,
+        status: true,
+        chatRoomId: true,
+        agreedServicePrice: true,
+        platformFee: true,
+        totalAmount: true,
+        service: { select: { title: true } },
+      },
+    });
+  }
+
+  async deleteOrder(orderId: string): Promise<void> {
+    await this.prisma.order.delete({ where: { id: orderId } });
+  }
+
+  async findRoomWithOrder(roomId: string): Promise<RoomWithOrder | null> {
+    const room = await this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      include: {
+        currentService: {
+          select: {
+            id: true,
+            title: true,
+            servicePrice: true,
+          },
+        },
+      },
+    });
+    if (!room) return null;
+
+    const latestOrderMessage = await this.prisma.message.findFirst({
+      where: { chatRoomId: roomId, orderId: { not: null } },
+      orderBy: { createdAt: 'desc' },
+      select: { orderId: true },
+    });
+
+    const order = latestOrderMessage?.orderId
+      ? await this.prisma.order.findUnique({
+          where: { id: latestOrderMessage.orderId },
+          select: {
+            id: true,
+            status: true,
+            agreedServicePrice: true,
+            platformFee: true,
+            totalAmount: true,
+            startDate: true,
+            endDate: true,
+          },
+        })
+      : null;
+
+    return { room, order };
   }
 }

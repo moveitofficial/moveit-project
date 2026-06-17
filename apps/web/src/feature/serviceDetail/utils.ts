@@ -1,5 +1,6 @@
 import type { ServiceDetailViewerRole } from './types';
 import type { ServiceCategoryRef, ServiceGroupName } from '@/mocks/types';
+import type { Role } from '@/types/enums';
 import type { Route } from 'next';
 
 import {
@@ -11,33 +12,20 @@ export function buildServiceDetailHref(
   serviceId: string,
   group: ServiceGroupName,
 ): Route {
-  const query = new URLSearchParams({ group });
-  return `/services/${serviceId}?${query.toString()}` as Route;
-}
-
-export function parseServiceGroupParam(
-  value: string | null,
-): ServiceGroupName | null {
-  if (value === 'IT_COACHING' || value === 'PROJECT_REQUEST') {
-    return value;
-  }
-
-  return null;
+  const basePath =
+    group === 'IT_COACHING' ? '/it-coaching' : '/project-request';
+  return `${basePath}/service-detail/${serviceId}` as Route;
 }
 
 export function resolveViewerRole(
-  currentUserId: string | null,
-  expertUserId: string,
+  role: Role | null,
 ): ServiceDetailViewerRole {
-  if (currentUserId === null) {
+  if (role === null) {
     return 'guest';
   }
 
-  if (currentUserId === expertUserId) {
-    return 'owner';
-  }
-
-  return 'client';
+  // 판매자(EXPERT)는 구매 주체가 아니므로 바로구매·상담 버튼을 노출하지 않는다.
+  return role === 'EXPERT' ? 'owner' : 'client';
 }
 
 export function getServiceGroupLabel(group: ServiceCategoryRef['group']): string {

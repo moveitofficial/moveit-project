@@ -27,6 +27,7 @@ export interface ServiceDetailPageData {
   };
   reviewsHasMore: boolean;
   relatedServiceTechStacks: Record<string, TechStackName[]>;
+  totalAmount: number;
 }
 
 export interface ServiceDetailReviewResult {

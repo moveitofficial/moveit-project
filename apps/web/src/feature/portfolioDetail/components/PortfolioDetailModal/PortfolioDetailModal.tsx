@@ -1,6 +1,7 @@
 'use client';
 
 import { Modal } from '@repo/ui/Modal';
+import clsx from 'clsx';
 import { Heart, X } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -67,6 +68,7 @@ export default function PortfolioDetailModal({
   isLoading,
 }: Props) {
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
 
   const skillsByType =
     portfolio === null ? {} : groupSkillsByType(portfolio.skills);
@@ -130,24 +132,34 @@ export default function PortfolioDetailModal({
       {isLoading ? (
         <p className={styles.loadingState}>포트폴리오를 불러오는 중입니다.</p>
       ) : portfolio === null ? null : (
-        <div className={styles.body}>
-          <div className={styles.titleRow}>
-            <h2 className={styles.title}>{portfolio.title}</h2>
-            <button
-              type="button"
-              className={styles.favoriteButton}
-              aria-label="찜하기"
-            >
-              <Heart size={20} strokeWidth={2.5} />
-              <span className={styles.favoriteCount}>0</span>
-            </button>
-          </div>
+        <div className={styles.contentRow}>
+          <div className={styles.leftPanel}>
+            <div className={styles.titleRow}>
+              <h2 className={styles.title}>{portfolio.title}</h2>
+              <button
+                type="button"
+                className={clsx(
+                  styles.favoriteButton,
+                  isLiked && styles.favoriteButtonActive,
+                )}
+                onClick={() => {
+                  setIsLiked((prev) => !prev);
+                }}
+                aria-pressed={isLiked}
+                aria-label="공유하기"
+              >
+                <Heart
+                  size={20}
+                  strokeWidth={2.5}
+                  fill={isLiked ? 'currentColor' : 'none'}
+                />
+                <span className={styles.favoriteCount}>{isLiked ? 1 : 0}</span>
+              </button>
+            </div>
 
-          <div className={styles.contentRow}>
-            <div className={styles.leftPanel}>
-              <p className={styles.description}>{portfolio.description}</p>
+            <p className={styles.description}>{portfolio.description}</p>
 
-              <div className={styles.metaSection}>
+            <div className={styles.metaSection}>
                 <h3 className={styles.metaSectionTitle}>업종</h3>
                 <div className={styles.tagList}>
                   <span className={styles.tagChip}>
@@ -201,7 +213,6 @@ export default function PortfolioDetailModal({
               </div>
             </div>
           </div>
-        </div>
       )}
     </Modal>
 

@@ -2,12 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { NotificationCategory, OrderStatus } from '@prisma/client';
 
+import { ChatService } from '../chats/chat/chat.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
+import {
+  DEADLINE_IMMINENT_DAYS,
+  MS_PER_DAY,
+  PENDING_EXPIRY_DAYS,
+} from './orders.constants';
 import { OrdersRepository } from './orders.repository';
-
-const DEADLINE_IMMINENT_DAYS = 3;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class OrdersCron {
@@ -16,14 +19,55 @@ export class OrdersCron {
   constructor(
     private readonly ordersRepository: OrdersRepository,
     private readonly notificationsService: NotificationsService,
+    private readonly chatService: ChatService,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, { timeZone: 'Asia/Seoul' })
   async runDailyChecks(): Promise<void> {
     this.logger.log('일일 주문 마감 체크 시작');
+    await this.markTradeRequestExpired();
     await this.markDeadlineImminent();
     await this.markExpired();
     this.logger.log('일일 주문 마감 체크 종료');
+  }
+
+  private async markTradeRequestExpired(): Promise<void> {
+    const threshold = new Date(Date.now() - PENDING_EXPIRY_DAYS * MS_PER_DAY);
+    const orders =
+      await this.ordersRepository.findOrdersToPendingExpiry(threshold);
+    if (orders.length === 0) {
+      this.logger.log('거래요청 만료 처리 대상 없음');
+      return;
+    }
+
+    const orderIds = orders.map((o) => o.id);
+    await this.ordersRepository.updateOrdersStatus(
+      orderIds,
+      OrderStatus.TRADE_REQUEST_EXPIRED,
+    );
+
+    const roomMap = await this.ordersRepository.findRoomIdsByOrderIds(orderIds);
+
+    for (const order of orders) {
+      const roomId = roomMap.get(order.id);
+      if (!roomId) continue;
+
+      await this.chatService.sendSystemMessage(
+        roomId,
+        'TRADE_REQUEST_EXPIRED',
+        {
+          systemType: 'TRADE_REQUEST_EXPIRED',
+          serviceTitle: order.service.title,
+          servicePrice: order.agreedServicePrice,
+          platformFee: order.platformFee,
+          totalAmount: order.totalAmount,
+          expertSettlementAmount: order.agreedServicePrice - order.platformFee,
+        },
+        order.id,
+      );
+    }
+
+    this.logger.log(`거래요청 만료 처리 ${orders.length.toString()}건`);
   }
 
   private async markDeadlineImminent(): Promise<void> {

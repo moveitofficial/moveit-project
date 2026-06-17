@@ -1,16 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { MessageType, OrderStatus, SystemMessageType } from '@prisma/client';
+import {
+  SYSTEM_MESSAGE_CONTENT,
+  SYSTEM_MESSAGE_TEMPLATES,
+  SystemMessageSocketPayload,
+} from '@repo/socket-events';
 
-import { CHAT_ERRORS } from '../../common/constants/errors';
+import { CHAT_ERRORS, ORDER_ERRORS } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
 import { toWsException } from '../../common/utils/ws-exception.util';
+import {
+  calculatePlatformFee,
+  calculateTotalAmount,
+} from '../../orders/orders.constants';
 
+import { ChatGateway } from './chat.gateway';
 import { ChatRepository } from './chat.repository';
 import { SendMessageDto } from './dto/send-message.dto';
 
 @Injectable()
 export class ChatService {
-  constructor(private readonly chatRepository: ChatRepository) {}
+  constructor(
+    private readonly chatRepository: ChatRepository,
+    @Inject(forwardRef(() => ChatGateway))
+    private readonly chatGateway: ChatGateway,
+  ) {}
 
   async createRoom(
     clientUserId: string,
@@ -100,8 +115,7 @@ export class ChatService {
         type: dto.type,
         content: dto.content,
         systemType: dto.systemType,
-        referenceType: dto.referenceType,
-        referenceId: dto.referenceId,
+        orderId: dto.orderId,
       }),
       this.chatRepository.findRoomParticipantIds(roomId),
     ]);
@@ -109,6 +123,36 @@ export class ChatService {
     const receiverId =
       room.clientUserId === senderId ? room.expertUserId : room.clientUserId;
     return { message, receiverId };
+  }
+
+  async sendSystemMessage(
+    roomId: string,
+    systemType: SystemMessageType,
+    payload: SystemMessageSocketPayload,
+    orderId?: string,
+  ) {
+    const content = SYSTEM_MESSAGE_CONTENT[systemType];
+    const [message, room] = await Promise.all([
+      this.chatRepository.createMessage({
+        chatRoomId: roomId,
+        type: MessageType.SYSTEM,
+        content,
+        systemType,
+        ...(orderId && { orderId }),
+      }),
+      this.chatRepository.findRoomParticipantIds(roomId),
+    ]);
+    if (room) {
+      const { recipientRoles } = SYSTEM_MESSAGE_TEMPLATES[systemType];
+      this.chatGateway.broadcastSystemMessage(
+        roomId,
+        room.clientUserId,
+        room.expertUserId,
+        { message, payload },
+        recipientRoles,
+      );
+    }
+    return { message, payload, room };
   }
 
   async markRead(roomId: string, userId: string, messageId: string) {
@@ -150,9 +194,13 @@ export class ChatService {
     cursor?: string,
     limit = 30,
   ) {
-    const participant = await this.chatRepository.findRoom(roomId, userId);
+    const [participant, roomWithOrder] = await Promise.all([
+      this.chatRepository.findRoom(roomId, userId),
+      this.chatRepository.findRoomWithOrder(roomId),
+    ]);
     if (!participant)
       throw new AppException(CHAT_ERRORS.FORBIDDEN_NOT_PARTICIPANT);
+    if (!roomWithOrder) throw new AppException(CHAT_ERRORS.ROOM_NOT_FOUND);
     const messages = await this.chatRepository.findMessages(
       roomId,
       cursor,
@@ -160,7 +208,17 @@ export class ChatService {
     );
     const nextCursor =
       messages.length === limit ? (messages.at(-1)?.id ?? null) : null;
+    const { room, order } = roomWithOrder;
     return {
+      room: {
+        id: room.id,
+        currentService: {
+          id: room.currentService.id,
+          title: room.currentService.title,
+          servicePrice: room.currentService.servicePrice,
+        },
+        order,
+      },
       items: messages.toReversed(),
       nextCursor,
     };
@@ -196,5 +254,85 @@ export class ChatService {
 
   async dismissAllNotifications(userId: string) {
     await this.chatRepository.updateAllDismissedMessages(userId);
+  }
+
+  async createTradeRequest(
+    roomId: string,
+    expertUserId: string,
+    agreedServicePrice: number,
+  ) {
+    const room = await this.chatRepository.findRoomForTradeRequest(roomId);
+    if (!room) throw new AppException(CHAT_ERRORS.ROOM_NOT_FOUND);
+    if (room.expertUserId !== expertUserId)
+      throw new AppException(CHAT_ERRORS.FORBIDDEN_EXPERT_MISMATCH);
+
+    const { title, id: serviceId } = room.currentService;
+    const platformFee = calculatePlatformFee(agreedServicePrice);
+    const totalAmount = calculateTotalAmount(agreedServicePrice);
+
+    const order = await this.chatRepository.createPendingOrder({
+      clientUserId: room.clientUserId,
+      expertUserId,
+      serviceId,
+      agreedServicePrice,
+      platformFee,
+      totalAmount,
+      chatRoomId: roomId,
+    });
+
+    await this.sendSystemMessage(
+      roomId,
+      SystemMessageType.TRADE_REQUEST,
+      {
+        systemType: 'TRADE_REQUEST',
+        serviceTitle: title,
+        servicePrice: agreedServicePrice,
+        platformFee,
+        totalAmount,
+        expertSettlementAmount: agreedServicePrice,
+      },
+      order.id,
+    );
+
+    return {
+      orderId: order.id,
+      clientUserId: order.clientUserId,
+      expertUserId: order.expertUserId,
+      serviceId: order.serviceId,
+      agreedServicePrice: order.agreedServicePrice,
+      platformFee: order.platformFee,
+      totalAmount: order.totalAmount,
+      status: order.status,
+      createdAt: order.createdAt,
+    };
+  }
+
+  async cancelTradeRequest(orderId: string, expertUserId: string) {
+    const order =
+      await this.chatRepository.findOrderForTradeRequestCancel(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+    if (order.expertUserId !== expertUserId)
+      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+    if (order.status !== OrderStatus.PENDING)
+      throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+    await this.chatRepository.deleteOrder(orderId);
+
+    if (order.chatRoomId) {
+      await this.sendSystemMessage(
+        order.chatRoomId,
+        SystemMessageType.TRADE_REQUEST_CANCELED,
+        {
+          systemType: 'TRADE_REQUEST_CANCELED',
+          serviceTitle: order.service.title,
+          servicePrice: order.agreedServicePrice,
+          platformFee: order.platformFee,
+          totalAmount: order.totalAmount,
+          expertSettlementAmount: order.agreedServicePrice,
+        },
+      );
+    }
+
+    return {};
   }
 }

@@ -7,12 +7,14 @@ import * as styles from './MyInfoProfileSection.css';
 
 interface Props {
   profileImageUrl: string | null;
-  onChange: (nextUrl: string) => void;
+  onFileSelect: (file: File) => void;
+  disabled?: boolean;
 }
 
 export default function MyInfoProfileSection({
   profileImageUrl,
-  onChange,
+  onFileSelect,
+  disabled = false,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -20,8 +22,7 @@ export default function MyInfoProfileSection({
     const file = event.target.files?.[0];
     if (file === undefined) return;
 
-    const nextUrl = URL.createObjectURL(file);
-    onChange(nextUrl);
+    onFileSelect(file);
     event.target.value = '';
   };
 
@@ -45,6 +46,7 @@ export default function MyInfoProfileSection({
       <button
         type="button"
         className={styles.changeButton}
+        disabled={disabled}
         onClick={() => {
           inputRef.current?.click();
         }}
@@ -57,6 +59,7 @@ export default function MyInfoProfileSection({
         type="file"
         accept="image/jpeg,image/png,image/webp"
         className={styles.hiddenInput}
+        disabled={disabled}
         onChange={handleFileChange}
       />
     </div>

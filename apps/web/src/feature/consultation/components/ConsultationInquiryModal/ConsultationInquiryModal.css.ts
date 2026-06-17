@@ -6,7 +6,7 @@ export const content = style({
   display: 'flex',
   flexDirection: 'column',
   gap: '24px',
-  padding: '24px',
+  padding: '32px',
   boxSizing: 'border-box',
 });
 
@@ -23,8 +23,8 @@ export const expertAvatar = style([
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '48px',
-    height: '48px',
+    width: '40px',
+    height: '40px',
     borderRadius: '50%',
     backgroundColor: vars.color.blue400,
     color: vars.color.white,
@@ -40,7 +40,7 @@ export const expertInfo = style({
 });
 
 export const expertName = style([
-  typography.f16B,
+  typography.f16EB,
   {
     margin: 0,
     color: vars.color.black500,
@@ -48,7 +48,7 @@ export const expertName = style([
 ]);
 
 export const expertHours = style([
-  typography.f14R,
+  typography.f12R,
   {
     margin: 0,
     color: vars.color.gray400,
@@ -59,13 +59,14 @@ export const textarea = style([
   typography.f14R,
   {
     width: '100%',
-    minHeight: '160px',
-    padding: '16px',
+    height: '190px',
+    padding: '20px',
     border: `1px solid ${vars.color.line200}`,
-    borderRadius: '8px',
+    borderRadius: '12px',
     backgroundColor: vars.color.white,
     color: vars.color.black500,
-    resize: 'vertical',
+    resize: 'none',
+    overflowY: 'auto',
     boxSizing: 'border-box',
     fontFamily: vars.font.family,
     '::placeholder': {
@@ -120,61 +121,63 @@ export const attachHint = style([
 
 export const fileList = style({
   display: 'flex',
-  flexDirection: 'column',
-  gap: '8px',
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: '12px',
   margin: 0,
   padding: 0,
   listStyle: 'none',
 });
 
-export const fileItem = style([
-  typography.f14R,
-  {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '8px',
-    margin: 0,
-    padding: '8px 12px',
-    borderRadius: '8px',
-    backgroundColor: vars.color.background100,
-    color: vars.color.black500,
-  },
-]);
+export const thumbnail = style({
+  position: 'relative',
+  width: '100px',
+  height: '100px',
+  borderRadius: '8px',
+  overflow: 'hidden',
+  backgroundColor: vars.color.background100,
+  flexShrink: 0,
+});
 
-export const fileRemoveButton = style({
+export const thumbnailImage = style({
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+});
+
+export const thumbnailRemove = style({
+  position: 'absolute',
+  top: '4px',
+  right: '4px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '20px',
+  height: '20px',
   padding: 0,
-  border: 'none',
-  background: 'none',
+  borderRadius: '50%',
+  border: `1px solid ${vars.color.line200}`,
+  backgroundColor: vars.color.white,
   color: vars.color.gray400,
   cursor: 'pointer',
-  flexShrink: 0,
 });
 
 export const footer = style({
   display: 'flex',
   flexDirection: 'row',
+  alignItems: 'center',
   justifyContent: 'flex-end',
+  gap: '8px',
   width: '100%',
 });
 
-export const buttonGroup = style({
-  display: 'flex',
-  flexDirection: 'row',
-  width: '216px',
-  borderRadius: '8px',
-  overflow: 'hidden',
-  border: `1px solid ${vars.color.line200}`,
-});
-
 export const cancelButton = style([
-  typography.f16R,
+  typography.f16B,
   {
-    flex: 1,
-    padding: '12px 0',
-    border: 'none',
-    borderRight: `1px solid ${vars.color.line200}`,
+    height: '52px',
+    padding: '0 24px',
+    border: `1px solid ${vars.color.line200}`,
+    borderRadius: '8px',
     backgroundColor: vars.color.white,
     color: vars.color.black500,
     cursor: 'pointer',
@@ -182,11 +185,12 @@ export const cancelButton = style([
 ]);
 
 export const submitButton = style([
-  typography.f16R,
+  typography.f16EB,
   {
-    flex: 2,
-    padding: '12px 0',
+    width: '160px',
+    height: '52px',
     border: 'none',
+    borderRadius: '12px',
     backgroundColor: vars.color.blue300,
     color: vars.color.white,
     cursor: 'pointer',

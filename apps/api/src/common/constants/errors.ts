@@ -163,6 +163,10 @@ export const ORDER_ERRORS = {
     status: HttpStatus.CONFLICT,
     message: '이미 사용된 주문 ID입니다.',
   },
+  INVALID_END_DATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '과거 날짜로는 마감일을 설정할 수 없습니다.',
+  },
 } as const;
 
 export const PAYMENT_ERRORS = {
@@ -441,6 +445,11 @@ export const CHAT_ERRORS = {
     message: '클라이언트만 채팅방을 생성할 수 있습니다.',
     code: 'CHAT_FORBIDDEN_NOT_CLIENT',
   },
+  FORBIDDEN_EXPERT_MISMATCH: {
+    status: HttpStatus.FORBIDDEN,
+    message: '해당 채팅방의 전문가가 아닙니다.',
+    code: 'CHAT_FORBIDDEN_EXPERT_MISMATCH',
+  },
   INVALID_EXPERT: {
     status: HttpStatus.BAD_REQUEST,
     message: '해당 서비스의 전문가가 아닙니다.',
@@ -640,5 +649,13 @@ export const FAVORITES_ERRORS = {
     status: HttpStatus.CONFLICT,
     message: '이미 찜한 항목입니다.',
     code: 'FAVORITES_ALREADY_FAVORITED',
+  },
+} as const;
+
+export const STATISTICS_ERRORS = {
+  INVALID_DATE_RANGE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '시작일은 종료일보다 이전이어야 합니다.',
+    code: 'STATISTICS_INVALID_DATE_RANGE',
   },
 } as const;

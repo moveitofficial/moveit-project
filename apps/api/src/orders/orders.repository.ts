@@ -5,6 +5,7 @@ import {
   Prisma,
   RefundStatus,
   RefundType,
+  SystemMessageType,
 } from '@prisma/client';
 
 import {
@@ -28,8 +29,10 @@ import {
   orderListSelect,
   orderPolicySelect,
   orderReviewSelect,
+  orderScheduleChangePolicySelect,
   orderSchedulePolicySelect,
   orderStatusResponseSelect,
+  pendingOrderForPaySelect,
 } from './orders.types';
 
 import type { OrderListSort } from './orders.constants';
@@ -336,6 +339,7 @@ export class OrdersRepository {
           platformFee: data.platformFee,
           totalAmount: data.totalAmount,
           status: OrderStatus.NEGOTIATING,
+          startDate: new Date(),
           endDate: null,
           payment: {
             create: {
@@ -367,6 +371,73 @@ export class OrdersRepository {
         }
         if (targets.includes('id')) {
           throw new AppException(ORDER_ERRORS.DUPLICATE_ORDER_ID);
+        }
+      }
+      throw error;
+    }
+  }
+
+  async findPendingOrderForPay(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: pendingOrderForPaySelect,
+    });
+  }
+
+  async findOrderForScheduleChangeRequest(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: orderScheduleChangePolicySelect,
+    });
+  }
+
+  async payPendingOrder(data: {
+    orderId: string;
+    clientUserId: string;
+    totalAmount: number;
+    paymentKey: string;
+    approvedAt: Date;
+    method: string;
+    installmentMonths: number;
+    rawData: Prisma.InputJsonValue;
+  }) {
+    try {
+      const { count } = await this.prisma.order.updateMany({
+        where: { id: data.orderId, status: OrderStatus.PENDING },
+        data: { status: OrderStatus.NEGOTIATING, startDate: new Date() },
+      });
+      if (count === 0) return null;
+
+      await this.prisma.payment.create({
+        data: {
+          orderId: data.orderId,
+          clientUserId: data.clientUserId,
+          status: PaymentStatus.PAID,
+          paidAmount: data.totalAmount,
+          method: data.method,
+          installmentMonths: data.installmentMonths,
+          paymentKey: data.paymentKey,
+          rawData: data.rawData,
+          approvedAt: data.approvedAt,
+        },
+      });
+
+      const result = await this.prisma.order.findUnique({
+        where: { id: data.orderId },
+        include: { payment: true },
+      });
+      return result as typeof result & {
+        payment: NonNullable<NonNullable<typeof result>['payment']>;
+      };
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const target = error.meta?.target;
+        const targets = Array.isArray(target) ? target : [];
+        if (targets.includes('payment_key')) {
+          throw new AppException(PAYMENT_ERRORS.DUPLICATE_PAYMENT_KEY);
         }
       }
       throw error;
@@ -734,5 +805,148 @@ export class OrdersRepository {
       where: { id: { in: orderIds } },
       data: { status },
     });
+  }
+
+  async findOrdersToPendingExpiry(threshold: Date) {
+    return this.prisma.order.findMany({
+      where: { status: OrderStatus.PENDING, createdAt: { lte: threshold } },
+      select: {
+        id: true,
+        clientUserId: true,
+        expertUserId: true,
+        agreedServicePrice: true,
+        platformFee: true,
+        totalAmount: true,
+        service: { select: { title: true } },
+      },
+    });
+  }
+
+  async upsertStatistics(params: {
+    sellerUserId: string;
+    serviceGroupId: string;
+    serviceCategoryId: string;
+    agreedServicePrice: number;
+    date: Date;
+  }) {
+    const {
+      sellerUserId,
+      serviceGroupId,
+      serviceCategoryId,
+      agreedServicePrice,
+      date,
+    } = params;
+    await Promise.all([
+      this.prisma.statisticsBySeller.upsert({
+        where: { sellerUserId_date: { sellerUserId, date } },
+        create: {
+          sellerUserId,
+          date,
+          totalTransactionAmount: agreedServicePrice,
+          totalTransactionCount: 1,
+          maxTransactionAmount: agreedServicePrice,
+        },
+        update: {
+          totalTransactionAmount: { increment: agreedServicePrice },
+          totalTransactionCount: { increment: 1 },
+        },
+      }),
+      this.prisma.statisticsByCategory.upsert({
+        where: {
+          serviceGroupId_serviceCategoryId_date: {
+            serviceGroupId,
+            serviceCategoryId,
+            date,
+          },
+        },
+        create: {
+          serviceGroupId,
+          serviceCategoryId,
+          date,
+          totalTransactionAmount: agreedServicePrice,
+          totalTransactionCount: 1,
+          maxTransactionAmount: agreedServicePrice,
+        },
+        update: {
+          totalTransactionAmount: { increment: agreedServicePrice },
+          totalTransactionCount: { increment: 1 },
+        },
+      }),
+    ]);
+    await Promise.all([
+      this.prisma.statisticsBySeller.updateMany({
+        where: {
+          sellerUserId,
+          date,
+          maxTransactionAmount: { lt: agreedServicePrice },
+        },
+        data: { maxTransactionAmount: agreedServicePrice },
+      }),
+      this.prisma.statisticsByCategory.updateMany({
+        where: {
+          serviceGroupId,
+          serviceCategoryId,
+          date,
+          maxTransactionAmount: { lt: agreedServicePrice },
+        },
+        data: { maxTransactionAmount: agreedServicePrice },
+      }),
+    ]);
+  }
+
+  async decrementStatistics(params: {
+    sellerUserId: string;
+    serviceGroupId: string;
+    serviceCategoryId: string;
+    agreedServicePrice: number;
+    date: Date;
+  }) {
+    const {
+      sellerUserId,
+      serviceGroupId,
+      serviceCategoryId,
+      agreedServicePrice,
+      date,
+    } = params;
+    await Promise.all([
+      this.prisma.statisticsBySeller.update({
+        where: { sellerUserId_date: { sellerUserId, date } },
+        data: {
+          totalTransactionAmount: { decrement: agreedServicePrice },
+          totalTransactionCount: { decrement: 1 },
+        },
+      }),
+      this.prisma.statisticsByCategory.update({
+        where: {
+          serviceGroupId_serviceCategoryId_date: {
+            serviceGroupId,
+            serviceCategoryId,
+            date,
+          },
+        },
+        data: {
+          totalTransactionAmount: { decrement: agreedServicePrice },
+          totalTransactionCount: { decrement: 1 },
+        },
+      }),
+    ]);
+  }
+
+  async findRoomIdsByOrderIds(
+    orderIds: string[],
+  ): Promise<Map<string, string>> {
+    const messages = await this.prisma.message.findMany({
+      where: {
+        orderId: { in: orderIds },
+        systemType: SystemMessageType.TRADE_REQUEST,
+      },
+      select: { chatRoomId: true, orderId: true },
+      distinct: ['orderId'],
+    });
+    return new Map(
+      messages
+        .filter((m): m is typeof m & { orderId: string } => m.orderId !== null)
+        .map((m) => [m.orderId, m.chatRoomId]),
+    );
   }
 }

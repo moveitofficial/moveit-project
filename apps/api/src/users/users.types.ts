@@ -97,6 +97,9 @@ export const expertDetailSelect = {
     select: { status: true },
   },
   favoriteExperts: { select: { clientUserId: true } },
+  _count: {
+    select: { favoritedByClients: true },
+  },
 } satisfies Prisma.UserSelect;
 
 export type ExpertDetail = Prisma.UserGetPayload<{

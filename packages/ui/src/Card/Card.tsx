@@ -61,7 +61,7 @@ export default function Card({
   const rating = service.rating ?? 0;
   const reviewCount = service.reviewCount ?? 0;
   const price = `${service.price.toLocaleString()}원`;
-  const expertName = service.expert.name;
+  const expertName = service.expert.companyName || service.expert.name;
 
   return (
     <div

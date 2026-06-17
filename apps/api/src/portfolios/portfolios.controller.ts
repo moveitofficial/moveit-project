@@ -6,10 +6,14 @@ import {
   HttpStatus,
   Param,
   Post,
+  UploadedFile,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
@@ -22,7 +26,10 @@ import { ApiErrorResponse } from '../common/decorators/api-error-response.decora
 import { ApiFileBody } from '../common/decorators/api-file-body.decorator';
 import { ApiSuccessResponse } from '../common/decorators/api-success-response.decorator';
 import { RoleAuth } from '../common/decorators/jwt-auth.decorator';
-import { UploadPortfolioImagesResponseDto } from '../upload/dto/upload-response.dto';
+import {
+  UploadPortfolioImagesResponseDto,
+  UploadResponseDto,
+} from '../upload/dto/upload-response.dto';
 import { UploadService } from '../upload/upload.service';
 
 import { PortfolioResponseDto } from './dto/portfolio-response.dto';
@@ -89,5 +96,31 @@ export class PortfoliosController {
       ),
     ]);
     return { portfolioId, mainImage: mainImage[0], detailImages };
+  }
+
+  @ApiOperation({ summary: '포트폴리오 이미지 단일 업로드 (편집용)' })
+  @RoleAuth(Role.EXPERT)
+  @ApiConsumes('multipart/form-data')
+  @ApiFileBody([{ name: 'image' }])
+  @ApiSuccessResponse(HttpStatus.CREATED, UploadResponseDto)
+  @ApiErrorResponse(
+    UPLOAD_ERRORS.FILE_NOT_ATTACHED,
+    UPLOAD_ERRORS.INVALID_FILE_TYPE,
+    UPLOAD_ERRORS.IMAGE_METADATA_UNREADABLE,
+    UPLOAD_ERRORS.IMAGE_WIDTH_TOO_SMALL,
+    UPLOAD_ERRORS.IMAGE_HEIGHT_TOO_LARGE,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Post(':id/upload/image')
+  @UseInterceptors(FileInterceptor('image'))
+  async uploadPortfolioImage(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    const [image] = await this.uploadService.uploadImages(
+      file ? [file] : undefined,
+      `portfolios/${id}`,
+    );
+    return image; // { key, url }
   }
 }

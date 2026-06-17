@@ -23,6 +23,8 @@ export type ServiceCategory = 'WEB' | 'APP' | 'AI' | 'GAME' | 'DATA_ANALYTICS';
 export type ServiceStatus = 'ACTIVE' | 'PAUSED' | 'CLOSED';
 
 export type OrderStatus =
+  | 'PENDING'
+  | 'TRADE_REQUEST_EXPIRED'
   | 'NEGOTIATING'
   | 'CANCEL_REQUESTED'
   | 'PAYMENT_CANCELLED'
@@ -58,3 +60,23 @@ export type ReportReason =
 export type ReportStatus = 'PENDING' | 'COMPLETED';
 
 export type CSChatStatus = 'OPEN' | 'ASSIGNED' | 'CLOSED';
+
+export type Region =
+  | 'SEOUL'
+  | 'BUSAN'
+  | 'DAEGU'
+  | 'INCHEON'
+  | 'GWANGJU'
+  | 'DAEJEON'
+  | 'ULSAN'
+  | 'SEJONG'
+  | 'GYEONGGI_NORTH'
+  | 'GYEONGGI_SOUTH'
+  | 'GANGWON'
+  | 'CHUNGBUK'
+  | 'CHUNGNAM'
+  | 'JEONBUK'
+  | 'JEONNAM'
+  | 'GYEONGBUK'
+  | 'GYEONGNAM'
+  | 'JEJU';

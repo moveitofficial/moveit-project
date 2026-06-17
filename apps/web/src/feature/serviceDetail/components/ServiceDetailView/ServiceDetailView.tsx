@@ -64,6 +64,7 @@ export default function ServiceDetailView({ data, viewerRole }: Props) {
             service={service}
             viewerRole={viewerRole}
             contactTime={data.contactTime}
+            totalAmount={data.totalAmount}
           />
         </div>
       </div>

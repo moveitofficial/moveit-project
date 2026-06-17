@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationCategory, type CommunityCategory } from '@prisma/client';
+import { containsBannedWord } from '@repo/content-filter';
 
 import {
   COMMENTS_ERRORS,
@@ -24,7 +25,6 @@ import { CommunityPostsRepository } from './community-posts.repository';
 import {
   COMMENT_MAX_LENGTH,
   COMMENT_MIN_LENGTH,
-  containsBannedWord,
   getPostContentPlainTextLength,
   POST_MIN_LENGTH,
   sanitizePostContent,

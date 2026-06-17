@@ -67,6 +67,9 @@ export class OrderListItemDto {
   @ApiProperty()
   declare createdAt: Date;
 
+  @ApiPropertyOptional({ type: String, format: 'uuid', nullable: true })
+  declare chatRoomId: string | null;
+
   @ApiProperty({ type: OrderServiceSummaryDto })
   declare service: OrderServiceSummaryDto;
 

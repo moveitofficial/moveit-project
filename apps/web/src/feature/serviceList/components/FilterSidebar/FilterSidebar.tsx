@@ -60,9 +60,9 @@ function ListToggleButton({ expanded, onClick }: ListToggleButtonProps) {
 
 function SectionChevron({ expanded }: { expanded: boolean }) {
   return expanded ? (
-    <ChevronUp size={20} strokeWidth={2} className={styles.sectionChevronIcon} aria-hidden />
+    <ChevronUp size={16} strokeWidth={2} className={styles.sectionChevronIcon} aria-hidden />
   ) : (
-    <ChevronDown size={20} strokeWidth={2} className={styles.sectionChevronIcon} aria-hidden />
+    <ChevronDown size={16} strokeWidth={2} className={styles.sectionChevronIcon} aria-hidden />
   );
 }
 

@@ -53,6 +53,10 @@ export const favoriteButton = style({
   fontWeight: vars.font.weight.extraBold,
 });
 
+export const favoriteButtonActive = style({
+  color: vars.color.red200,
+});
+
 export const favoriteCount = style([
   typography.f14EB,
   {
@@ -74,6 +78,14 @@ export const statsRow = style({
   alignItems: 'center',
   gap: '12px',
 });
+
+export const newServiceNote = style([
+  typography.f16B,
+  {
+    margin: 0,
+    color: vars.color.blue300,
+  },
+]);
 
 export const ratingGroup = style({
   display: 'inline-flex',

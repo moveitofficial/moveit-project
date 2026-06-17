@@ -4,6 +4,12 @@ export const orderPaymentSelect = {
   id: true,
   clientUserId: true,
   expertUserId: true,
+  status: true,
+  agreedServicePrice: true,
+  platformFee: true,
+  totalAmount: true,
+  confirmedAt: true,
+  settledAt: true,
   payment: {
     select: {
       id: true,
@@ -36,3 +42,6 @@ type OrderPaymentRow = Prisma.OrderGetPayload<{
 }>;
 
 export type OrderPaymentData = NonNullable<OrderPaymentRow['payment']>;
+export type OrderPaymentOrder = Omit<OrderPaymentRow, 'payment'> & {
+  payment: OrderPaymentData;
+};

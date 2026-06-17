@@ -1,6 +1,13 @@
+import { OrderStatus } from '@prisma/client';
+
 import { isRecord } from '../common/utils/is-record.util';
 
-import type { OrderPaymentData } from './payments.types';
+import type { OrderPaymentData, OrderPaymentOrder } from './payments.types';
+
+const REFUNDED_STATUSES: ReadonlySet<OrderStatus> = new Set<OrderStatus>([
+  OrderStatus.PAYMENT_CANCELLED,
+  OrderStatus.REFUND_COMPLETED,
+]);
 
 type OrderRefundData = NonNullable<OrderPaymentData['refund']>;
 
@@ -52,18 +59,45 @@ function mapOrderRefund(refund: OrderRefundData) {
   };
 }
 
-export function mapOrderPayment(payment: OrderPaymentData) {
+function mapPaymentBase(order: OrderPaymentOrder) {
+  const { payment } = order;
   return {
-    id: payment.id,
-    status: payment.status,
+    orderStatus: order.status,
+    paymentId: payment.id,
+    paymentStatus: payment.status,
     method: payment.method,
-    paidAmount: payment.paidAmount,
     installmentMonths: payment.installmentMonths,
     paymentKey: payment.paymentKey,
-    createdAt: payment.createdAt,
     approvedAt: payment.approvedAt,
     card: extractPaymentCard(payment.rawData),
     receiptUrl: extractPaymentReceiptUrl(payment.rawData),
     refund: payment.refund === null ? null : mapOrderRefund(payment.refund),
+  };
+}
+
+export function mapOrderPaymentForClient(order: OrderPaymentOrder) {
+  const isRefunded = REFUNDED_STATUSES.has(order.status);
+  return {
+    ...mapPaymentBase(order),
+    agreedServicePrice: order.agreedServicePrice,
+    platformFee: order.platformFee,
+    totalAmount: isRefunded ? null : order.totalAmount,
+    refundAmount: isRefunded
+      ? (order.payment.refund?.refundAmount ?? null)
+      : null,
+  };
+}
+
+export function mapOrderPaymentForExpert(order: OrderPaymentOrder) {
+  const isRefunded = REFUNDED_STATUSES.has(order.status);
+  const refundAmountForExpert =
+    order.payment.refund === null
+      ? null
+      : order.payment.refund.refundAmount - order.platformFee;
+  return {
+    ...mapPaymentBase(order),
+    agreedServicePrice: isRefunded ? null : order.agreedServicePrice,
+    settlementAmount: isRefunded ? null : order.agreedServicePrice,
+    refundAmount: isRefunded ? refundAmountForExpert : null,
   };
 }
