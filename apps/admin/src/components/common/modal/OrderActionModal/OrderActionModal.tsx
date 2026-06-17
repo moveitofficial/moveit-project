@@ -10,7 +10,11 @@ import {
 } from '@repo/utils';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
-import { completeOrderSettlement } from './actions';
+import {
+  approveCancel,
+  approveRefund,
+  completeOrderSettlement,
+} from './actions';
 import {
   getOrderRefund,
   getOrderSettlement,
@@ -26,8 +30,7 @@ import type {
   OrderSettlementPreview,
   OrderTransaction,
 } from './types';
-
-import { isRefundStatusApproval, type RefundStatus } from '@/utils/constants';
+import type { RefundStatus } from '@/utils/constants';
 
 export type OrderActionModalType =
   | 'transaction'
@@ -240,20 +243,7 @@ export default function OrderActionModal(props: OrderActionModalProps) {
           return;
         }
 
-        // 취소·환불 승인
-        // TODO: 취소/환불 API 작성 시 refundStatus로 추가 분기 필요
-        if (isRefundStatusApproval(refundStatus)) {
-          const { data } = await getOrderTransaction(orderId);
-
-          if (cancelledRef.current) {
-            return;
-          }
-          setTransaction(data);
-          return;
-        }
-
-        // 취소·환불 완료
-        // TODO: 취소/환불 API 작성 시 refundStatus로 추가 분기 필요
+        // 취소·환불
         const { data } = await getOrderRefund(orderId);
         if (cancelledRef.current) {
           return;
@@ -276,11 +266,21 @@ export default function OrderActionModal(props: OrderActionModalProps) {
   }, [isOpen, orderId, type, refundStatus, onClose]);
 
   function handleRefundApprovalSubmit() {
-    if (!reason.trim()) {
+    if (!reason.trim() || refundStatus === undefined) {
       return;
     }
-    // TODO: 승인 액션 추가 후 아래 호출
-    onClose();
+    startTransition(() => {
+      void (async () => {
+        try {
+          await (refundStatus === 'CANCEL_REQUESTED'
+            ? approveCancel(orderId, reason)
+            : approveRefund(orderId, reason));
+          onClose();
+        } catch {
+          alert('처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+      })();
+    });
   }
 
   function handleSettlementApprove() {
@@ -288,18 +288,18 @@ export default function OrderActionModal(props: OrderActionModalProps) {
       return;
     }
 
-    startTransition(async () => {
-      try {
-        await completeOrderSettlement(orderId);
-        props.onCompleted();
-        onClose();
-      } catch {
-        alert('정산 완료 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
-      }
+    startTransition(() => {
+      void (async () => {
+        try {
+          await completeOrderSettlement(orderId);
+          props.onCompleted();
+          onClose();
+        } catch {
+          alert('정산 완료 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+      })();
     });
   }
-
-  const paymentInfo = transaction ?? refundDetail;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth={382}>
@@ -396,46 +396,34 @@ export default function OrderActionModal(props: OrderActionModalProps) {
             </div>
           )}
 
-          {!isLoading && type === 'refund' && paymentInfo !== null && (
+          {!isLoading && type === 'refund' && refundDetail !== null && (
             <div className={styles.infoSections}>
               <PaymentInfo
-                paidAt={paymentInfo.paidAt}
-                method={paymentInfo.method}
-                installmentMonths={paymentInfo.installmentMonths}
+                paidAt={refundDetail.paidAt}
+                method={refundDetail.method}
+                installmentMonths={refundDetail.installmentMonths}
               />
-              {transaction !== null && (
-                <AmountBlock
-                  servicePrice={transaction.servicePrice}
-                  platformFee={transaction.platformFee}
-                  totalLabel="취소 금액"
-                  totalAmount={transaction.totalAmount}
-                />
-              )}
-              {refundDetail !== null && (
-                <div className={styles.infoBlock}>
-                  <p className={`${typography.f14EB} ${styles.sectionTitle}`}>
-                    결제 금액
-                  </p>
-                  <div className={styles.infoRow}>
-                    <span className={`${typography.f14B} ${styles.rowLabel}`}>
-                      서비스 금액
-                    </span>
-                    <span className={`${typography.f14R} ${styles.rowValue}`}>
-                      {formatPrice(refundDetail.servicePrice)}
-                    </span>
-                  </div>
-                  <div className={styles.infoRow}>
-                    <span className={`${typography.f14B} ${styles.rowLabel}`}>
-                      취소 금액
-                    </span>
-                    <span
-                      className={`${typography.f16EB} ${styles.totalValue}`}
-                    >
-                      {formatPrice(refundDetail.refundAmount)}
-                    </span>
-                  </div>
+              <div className={styles.infoBlock}>
+                <p className={`${typography.f14EB} ${styles.sectionTitle}`}>
+                  결제 금액
+                </p>
+                <div className={styles.infoRow}>
+                  <span className={`${typography.f14B} ${styles.rowLabel}`}>
+                    서비스 금액
+                  </span>
+                  <span className={`${typography.f14R} ${styles.rowValue}`}>
+                    {formatPrice(refundDetail.servicePrice)}
+                  </span>
                 </div>
-              )}
+                <div className={styles.infoRow}>
+                  <span className={`${typography.f14B} ${styles.rowLabel}`}>
+                    취소 금액
+                  </span>
+                  <span className={`${typography.f16EB} ${styles.totalValue}`}>
+                    {formatPrice(refundDetail.refundAmount)}
+                  </span>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -461,14 +449,16 @@ export default function OrderActionModal(props: OrderActionModalProps) {
               <div className={styles.reasonMeta}>
                 <span className={typography.f12R}>
                   {refundCopy.completedDateLabel} :{' '}
-                  {formatDate(refundDetail.approvedAt)}
+                  {refundDetail.approvedAt
+                    ? formatDate(refundDetail.approvedAt)
+                    : '-'}
                 </span>
                 <span className={typography.f12R}>
-                  {refundDetail.approvedBy.name ?? '-'}
+                  {refundDetail.approvedBy?.name ?? '-'}
                 </span>
               </div>
               <p className={`${typography.f16R} ${styles.reasonText}`}>
-                {refundDetail.approvedBy.reason ?? '-'}
+                {refundDetail.approvedBy?.reason ?? '-'}
               </p>
             </div>
           )}
@@ -499,7 +489,7 @@ export default function OrderActionModal(props: OrderActionModalProps) {
                 <button
                   type="button"
                   className={styles.submitButton}
-                  disabled={!reason.trim()}
+                  disabled={isPending || !reason.trim()}
                   onClick={handleRefundApprovalSubmit}
                 >
                   {refundCopy.submitLabel}
@@ -507,6 +497,7 @@ export default function OrderActionModal(props: OrderActionModalProps) {
                 <button
                   type="button"
                   className={styles.cancelButton}
+                  disabled={isPending}
                   onClick={onClose}
                 >
                   닫기

@@ -23,6 +23,8 @@ export type ServiceCategory = 'WEB' | 'APP' | 'AI' | 'GAME' | 'DATA_ANALYTICS';
 export type ServiceStatus = 'ACTIVE' | 'PAUSED' | 'CLOSED';
 
 export type OrderStatus =
+  | 'PENDING'
+  | 'TRADE_REQUEST_EXPIRED'
   | 'NEGOTIATING'
   | 'CANCEL_REQUESTED'
   | 'PAYMENT_CANCELLED'
