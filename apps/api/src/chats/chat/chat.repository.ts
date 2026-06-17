@@ -264,6 +264,7 @@ export class ChatRepository {
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       take: limit,
       orderBy: { createdAt: 'desc' },
+      include: { attachments: true },
     });
   }
 
