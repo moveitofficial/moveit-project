@@ -1,6 +1,7 @@
 'use client';
 
 import { ApiError } from '@repo/fetcher';
+import { ConfirmModal } from '@repo/ui/Modal';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
@@ -29,6 +30,8 @@ export default function MyPostsView() {
   const [category, setCategory] = useState<MyPostCategoryFilter>('ALL');
   const [sort, setSort] = useState<MyPostSort>('latest');
   const [editingPost, setEditingPost] = useState<MyPostListItem | null>(null);
+  const [deletingPost, setDeletingPost] = useState<MyPostListItem | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -71,10 +74,28 @@ export default function MyPostsView() {
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const handleDelete = (postId: string) => {
-    if (globalThis.confirm('게시글을 삭제하시겠습니까?')) {
-      deletePost(postId);
+  const handleDelete = () => {
+    if (deletingPost === null || isDeleting) {
+      return;
     }
+
+    deletePost(deletingPost.id, {
+      onSuccess: () => {
+        setDeleteError(null);
+        setDeletingPost(null);
+      },
+      onError: (mutationError) => {
+        if (mutationError instanceof ApiError) {
+          setDeleteError(mutationError.message);
+          return;
+        }
+        if (mutationError instanceof Error) {
+          setDeleteError(mutationError.message);
+          return;
+        }
+        setDeleteError('게시글 삭제에 실패했습니다.');
+      },
+    });
   };
 
   const getErrorMessage = (): string | null => {
@@ -101,6 +122,30 @@ export default function MyPostsView() {
         onClose={() => {
           setEditingPost(null);
         }}
+      />
+      <ConfirmModal
+        isOpen={deletingPost !== null}
+        onClose={() => {
+          setDeleteError(null);
+          setDeletingPost(null);
+        }}
+        title="게시글을 삭제할까요?"
+        description={deleteError ?? '삭제 후에는 복구할 수 없습니다.'}
+        actions={[
+          {
+            label: '삭제',
+            variant: 'red',
+            onClick: handleDelete,
+          },
+          {
+            label: '취소',
+            variant: 'white',
+            onClick: () => {
+              setDeleteError(null);
+              setDeletingPost(null);
+            },
+          },
+        ]}
       />
       <h1 className={styles.pageTitle}>내가 쓴 게시글</h1>
 
@@ -170,7 +215,10 @@ export default function MyPostsView() {
                   post={post}
                   profileImageUrl={user?.profileImageUrl ?? null}
                   onEdit={handleEdit}
-                  onDelete={handleDelete}
+                  onDelete={() => {
+                    setDeleteError(null);
+                    setDeletingPost(post);
+                  }}
                   isDeleting={deletingPostId === post.id}
                 />
               ))}
