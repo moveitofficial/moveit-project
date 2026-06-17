@@ -8,9 +8,9 @@ import { RoundChip } from '@repo/ui/RoundChip';
 import Image, { type StaticImageData } from 'next/image';
 import { type ChangeEvent, useEffect, useState } from 'react';
 
+import { ExpertProfileSection } from '../ExpertProfileSection';
 import { MyInfoProfileSection } from '../MyInfoProfileSection';
 
-import ExpertProfileSection from './ExpertProfileSection';
 import * as styles from './ExpertProfileView.css';
 
 import type {
@@ -269,7 +269,9 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
     }
   };
 
-  const handleFoundedYearMonthChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFoundedYearMonthChange = (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
     const digits = event.target.value
       .replaceAll(/\D/g, '')
       .slice(0, FOUNDED_YEAR_MONTH_LENGTH);
@@ -351,9 +353,7 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
         <span className={approvalBadgeClassName}>{approvalLabel}</span>
       </div>
 
-      {saveError !== null && (
-        <p className={styles.errorMessage}>{saveError}</p>
-      )}
+      {saveError !== null && <p className={styles.errorMessage}>{saveError}</p>}
 
       <div className={styles.sections}>
         <ExpertProfileSection
@@ -377,7 +377,10 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
               <div className={styles.basicFields}>
                 <div className={styles.fieldGrid}>
                   <div className={styles.field}>
-                    <label htmlFor="expert-business-name" className={styles.label}>
+                    <label
+                      htmlFor="expert-business-name"
+                      className={styles.label}
+                    >
                       회사명
                     </label>
                     <input
@@ -471,169 +474,161 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
         >
           {(isEditing) => (
             <div className={styles.fieldGridFull}>
-              <div className={styles.fieldGrid}>
-                <div className={styles.field}>
-                  <span className={styles.label}>사업자 번호</span>
-                  <BusinessNumberField
-                    value={businessNumber}
-                    onChange={setBusinessNumber}
-                    inputClassName={styles.input}
-                    disabled={!isEditing}
-                  />
-                </div>
-
-                <div className={styles.field}>
-                  <span className={styles.label}>전화번호</span>
-                  <PhoneField
-                    value={phoneNumber}
-                    onChange={setPhoneNumber}
-                    disabled={!isEditing}
-                    className={styles.input}
-                  />
-                </div>
+              <div className={styles.field}>
+                <span className={styles.label}>사업자 번호</span>
+                <BusinessNumberField
+                  value={businessNumber}
+                  onChange={setBusinessNumber}
+                  inputClassName={styles.input}
+                  disabled={!isEditing}
+                />
               </div>
 
-              <div className={styles.fieldGrid}>
-                <div className={styles.field}>
-                  <label htmlFor="expert-founded-year" className={styles.label}>
-                    설립연도
-                  </label>
-                  <input
-                    id="expert-founded-year"
-                    type="text"
-                    placeholder="설립 년월을 입력해주세요 (예: 2025.05)"
-                    value={formatFoundedYear(foundedYearMonth)}
-                    disabled={!isEditing}
-                    onChange={handleFoundedYearMonthChange}
-                    className={styles.input}
-                  />
-                </div>
-
-                <div className={styles.field}>
-                  <span className={styles.label}>
-                    연락 가능한 시간을 설정해주세요
-                  </span>
-                  <div className={styles.timeRange}>
-                    <div className={styles.timeSlot}>
-                      <Dropdown
-                        options={TIME_OPTIONS}
-                        value={contactTimeStart}
-                        onChange={handleContactTimeStartChange}
-                        placeholder="시작 시간"
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <span className={styles.timeSeparator}>~</span>
-                    <div className={styles.timeSlot}>
-                      <Dropdown
-                        options={TIME_OPTIONS}
-                        value={contactTimeEnd}
-                        onChange={setContactTimeEnd}
-                        placeholder="종료 시간"
-                        disabled={!isEditing}
-                        disabledIds={endDisabledIds}
-                      />
-                    </div>
-                  </div>
-                </div>
+              <div className={styles.field}>
+                <span className={styles.label}>전화번호</span>
+                <PhoneField
+                  value={phoneNumber}
+                  onChange={setPhoneNumber}
+                  disabled={!isEditing}
+                  className={styles.input}
+                />
               </div>
 
-              <div className={styles.fieldGrid}>
-                <div className={styles.field}>
-                  <span className={styles.label}>인원 수</span>
-                  <div className={styles.employeeRange}>
-                    <div className={styles.employeeRangeSlot}>
-                      <div className={styles.employeeInputWrapper}>
-                        <input
-                          type="text"
-                          placeholder="숫자만 입력해주세요"
-                          value={employeeMin}
-                          disabled={!isEditing}
-                          onChange={(event) => {
-                            setEmployeeMin(
-                              event.target.value.replaceAll(/\D/g, ''),
-                            );
-                          }}
-                          className={styles.employeeInput}
-                        />
-                        <span className={styles.employeeSuffix}>이상</span>
-                      </div>
-                    </div>
-                    <span className={styles.employeeRangeSeparator}>~</span>
-                    <div className={styles.employeeRangeSlot}>
-                      <div className={styles.employeeInputWrapper}>
-                        <input
-                          type="text"
-                          placeholder="숫자만 입력해주세요"
-                          value={employeeMax}
-                          disabled={!isEditing}
-                          onChange={(event) => {
-                            setEmployeeMax(
-                              event.target.value.replaceAll(/\D/g, ''),
-                            );
-                          }}
-                          className={styles.employeeInput}
-                        />
-                        <span className={styles.employeeSuffix}>미만</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className={styles.field}>
+                <label htmlFor="expert-founded-year" className={styles.label}>
+                  설립연도
+                </label>
+                <input
+                  id="expert-founded-year"
+                  type="text"
+                  placeholder="설립 년월을 입력해주세요 (예: 2025.05)"
+                  value={formatFoundedYear(foundedYearMonth)}
+                  disabled={!isEditing}
+                  onChange={handleFoundedYearMonthChange}
+                  className={styles.input}
+                />
+              </div>
 
-                <div className={styles.field}>
-                  <span className={styles.label}>지역</span>
-                  {isEditing ? (
+              <div className={styles.field}>
+                <span className={styles.label}>
+                  연락 가능한 시간을 설정해주세요
+                </span>
+                <div className={styles.timeRange}>
+                  <div className={styles.timeSlot}>
                     <Dropdown
-                      options={REGIONS}
-                      value={region}
-                      onChange={(nextRegion) => {
-                        setRegion(nextRegion as Region);
-                      }}
-                      placeholder="지역을 선택해주세요"
+                      options={TIME_OPTIONS}
+                      value={contactTimeStart}
+                      onChange={handleContactTimeStartChange}
+                      placeholder="시작 시간"
+                      disabled={!isEditing}
                     />
-                  ) : (
-                    <input
-                      type="text"
-                      value={getRegionLabel(region)}
-                      disabled
-                      className={styles.input}
+                  </div>
+                  <span className={styles.timeSeparator}>~</span>
+                  <div className={styles.timeSlot}>
+                    <Dropdown
+                      options={TIME_OPTIONS}
+                      value={contactTimeEnd}
+                      onChange={setContactTimeEnd}
+                      placeholder="종료 시간"
+                      disabled={!isEditing}
+                      disabledIds={endDisabledIds}
                     />
-                  )}
+                  </div>
                 </div>
               </div>
 
-              <div className={styles.fieldGrid}>
-                <div className={styles.field}>
-                  <label htmlFor="expert-bank-name" className={styles.label}>
-                    은행명
-                  </label>
-                  <input
-                    id="expert-bank-name"
-                    type="text"
-                    placeholder="은행명을 입력해주세요"
-                    value={bankName}
-                    disabled={!isEditing}
-                    onChange={(event) => {
-                      setBankName(event.target.value);
-                    }}
-                    className={styles.input}
-                  />
+              <div className={styles.field}>
+                <span className={styles.label}>인원 수</span>
+                <div className={styles.employeeRange}>
+                  <div className={styles.employeeRangeSlot}>
+                    <div className={styles.employeeInputWrapper}>
+                      <input
+                        type="text"
+                        placeholder="숫자만 입력해주세요"
+                        value={employeeMin}
+                        disabled={!isEditing}
+                        onChange={(event) => {
+                          setEmployeeMin(
+                            event.target.value.replaceAll(/\D/g, ''),
+                          );
+                        }}
+                        className={styles.employeeInput}
+                      />
+                      <span className={styles.employeeSuffix}>이상</span>
+                    </div>
+                  </div>
+                  <span className={styles.employeeRangeSeparator}>~</span>
+                  <div className={styles.employeeRangeSlot}>
+                    <div className={styles.employeeInputWrapper}>
+                      <input
+                        type="text"
+                        placeholder="숫자만 입력해주세요"
+                        value={employeeMax}
+                        disabled={!isEditing}
+                        onChange={(event) => {
+                          setEmployeeMax(
+                            event.target.value.replaceAll(/\D/g, ''),
+                          );
+                        }}
+                        className={styles.employeeInput}
+                      />
+                      <span className={styles.employeeSuffix}>미만</span>
+                    </div>
+                  </div>
                 </div>
+              </div>
 
-                <div className={styles.field}>
-                  <label htmlFor="expert-bank-account" className={styles.label}>
-                    입금계좌
-                  </label>
+              <div className={styles.field}>
+                <span className={styles.label}>지역</span>
+                {isEditing ? (
+                  <Dropdown
+                    options={REGIONS}
+                    value={region}
+                    onChange={(nextRegion) => {
+                      setRegion(nextRegion as Region);
+                    }}
+                    placeholder="지역을 선택해주세요"
+                  />
+                ) : (
                   <input
-                    id="expert-bank-account"
                     type="text"
-                    placeholder="계좌번호를 입력해주세요"
-                    value={bankAccount}
-                    disabled={!isEditing}
-                    onChange={handleBankAccountChange}
+                    value={getRegionLabel(region)}
+                    disabled
                     className={styles.input}
                   />
-                </div>
+                )}
+              </div>
+
+              <div className={styles.field}>
+                <label htmlFor="expert-bank-name" className={styles.label}>
+                  은행명
+                </label>
+                <input
+                  id="expert-bank-name"
+                  type="text"
+                  placeholder="은행명을 입력해주세요"
+                  value={bankName}
+                  disabled={!isEditing}
+                  onChange={(event) => {
+                    setBankName(event.target.value);
+                  }}
+                  className={styles.input}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label htmlFor="expert-bank-account" className={styles.label}>
+                  입금계좌
+                </label>
+                <input
+                  id="expert-bank-account"
+                  type="text"
+                  placeholder="계좌번호를 입력해주세요"
+                  value={bankAccount}
+                  disabled={!isEditing}
+                  onChange={handleBankAccountChange}
+                  className={styles.input}
+                />
               </div>
             </div>
           )}

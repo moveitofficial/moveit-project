@@ -5,7 +5,7 @@ import { style } from '@vanilla-extract/css';
 export const card = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: '2rem',
+  gap: '1.5rem',
   padding: '2.625rem 2.5rem 2.5rem',
   border: `1px solid ${vars.color.line200}`,
   backgroundColor: vars.color.white,
