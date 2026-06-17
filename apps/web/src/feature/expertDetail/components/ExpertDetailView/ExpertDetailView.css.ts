@@ -94,6 +94,22 @@ export const infoItem = style({
   minWidth: 0,
 });
 
+// 협업사 칸은 넓게(2), 나머지는 1:1:1:1 비율.
+export const infoItemWide = style([
+  infoItem,
+  {
+    flex: 2,
+  },
+]);
+
+// 연락 가능 시간 칸은 값이 한 줄로 들어가도록 내용 폭만큼만 차지.
+export const infoItemTime = style([
+  infoItem,
+  {
+    flex: '0 0 auto',
+  },
+]);
+
 export const infoLabel = style([
   typography.f14EB,
   {
@@ -107,6 +123,13 @@ export const infoValue = style([
   {
     margin: 0,
     color: vars.color.black500,
+  },
+]);
+
+export const infoValueTime = style([
+  infoValue,
+  {
+    whiteSpace: 'nowrap',
   },
 ]);
 

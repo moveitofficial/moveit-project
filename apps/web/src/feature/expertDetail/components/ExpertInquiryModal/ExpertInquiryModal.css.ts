@@ -55,30 +55,18 @@ export const expertHours = style([
   },
 ]);
 
-export const serviceSelect = style([
-  typography.f14R,
-  {
-    width: '100%',
-    padding: '12px 14px',
-    borderRadius: '8px',
-    border: `1px solid ${vars.color.line200}`,
-    backgroundColor: vars.color.white,
-    color: vars.color.black500,
-    boxSizing: 'border-box',
-  },
-]);
-
 export const textarea = style([
   typography.f14R,
   {
     width: '100%',
-    minHeight: '160px',
+    height: '160px',
     padding: '16px',
     border: `1px solid ${vars.color.line200}`,
     borderRadius: '8px',
     backgroundColor: vars.color.white,
     color: vars.color.black500,
-    resize: 'vertical',
+    resize: 'none',
+    overflowY: 'auto',
     boxSizing: 'border-box',
     fontFamily: vars.font.family,
     '::placeholder': {

@@ -145,6 +145,9 @@ export const expertBanner = style({
   borderRadius: '12px',
   backgroundColor: vars.color.blue100,
   marginTop: 'auto',
+  textDecoration: 'none',
+  color: 'inherit',
+  cursor: 'pointer',
 });
 
 export const expertAvatar = style([

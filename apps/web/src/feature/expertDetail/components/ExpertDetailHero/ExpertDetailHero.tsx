@@ -13,10 +13,7 @@ import {
   removeFavoriteExpert,
 } from '../../api';
 import { canInteractWithExpert } from '../../utils';
-import {
-  ExpertInquirySuccessModal,
-  ExpertRestrictionModal,
-} from '../ExpertDetailModals/ExpertDetailModals';
+import { ExpertRestrictionModal } from '../ExpertDetailModals/ExpertDetailModals';
 import * as viewStyles from '../ExpertDetailView/ExpertDetailView.css';
 import ExpertInquiryModal from '../ExpertInquiryModal/ExpertInquiryModal';
 import ExpertReportModal from '../ExpertReportModal/ExpertReportModal';
@@ -30,6 +27,7 @@ import type {
   ExpertDetailViewerRole,
 } from '../../types';
 
+import { ConsultationSuccessModal } from '@/feature/consultation/components/ConsultationSuccessModal';
 import { getTechStackLabel } from '@/mocks/metadata';
 
 interface Props {
@@ -83,7 +81,7 @@ function StatBlock({
 function InfoBar({ info }: { info: ExpertDetailBusinessInfo }) {
   return (
     <div className={viewStyles.infoPanel}>
-      <div className={viewStyles.infoItem}>
+      <div className={viewStyles.infoItemWide}>
         <p className={viewStyles.infoLabel}>이런 분들과 협업 했어요</p>
         <div className={viewStyles.clientTagList}>
           {info.clientNames.map((name, index) => (
@@ -107,9 +105,9 @@ function InfoBar({ info }: { info: ExpertDetailBusinessInfo }) {
         <p className={viewStyles.infoLabel}>인원수</p>
         <p className={viewStyles.infoValue}>{info.employeeRangeLabel ?? '-'}</p>
       </div>
-      <div className={viewStyles.infoItem}>
+      <div className={viewStyles.infoItemTime}>
         <p className={viewStyles.infoLabel}>연락 가능 시간</p>
-        <p className={viewStyles.infoValue}>{info.contactTimeLabel}</p>
+        <p className={viewStyles.infoValueTime}>{info.contactTimeLabel}</p>
       </div>
     </div>
   );
@@ -126,9 +124,10 @@ export default function ExpertDetailHero({ data, viewer }: Props) {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [successRoomId, setSuccessRoomId] = useState<string | null>(null);
   const [isRestrictionOpen, setIsRestrictionOpen] = useState(false);
 
-  const showFavorite = viewer !== 'owner';
+  // 본인 페이지는 받은 찜 수만 표시(토글 불가), 그 외는 찜 버튼.
   const showReport = viewer === 'client';
   const canInteract = canInteractWithExpert(viewer);
 
@@ -206,9 +205,15 @@ export default function ExpertDetailHero({ data, viewer }: Props) {
           <div className={heroStyles.profileContent}>
             <div className={heroStyles.titleRow}>
               <h1 className={heroStyles.companyName}>{expert.companyName}</h1>
-              {showFavorite || showReport ? (
-                <div className={heroStyles.titleActions}>
-                  {showFavorite ? (
+              <div className={heroStyles.titleActions}>
+                  {viewer === 'owner' ? (
+                    <span className={heroStyles.favoriteButton}>
+                      <Heart size={20} strokeWidth={2.5} fill="none" />
+                      <span className={heroStyles.favoriteCount}>
+                        {Math.max(0, displayFavoriteCount).toLocaleString()}
+                      </span>
+                    </span>
+                  ) : (
                     <button
                       type="button"
                       className={clsx(
@@ -228,7 +233,7 @@ export default function ExpertDetailHero({ data, viewer }: Props) {
                         {Math.max(0, displayFavoriteCount).toLocaleString()}
                       </span>
                     </button>
-                  ) : null}
+                  )}
                   {showReport ? (
                     <button
                       type="button"
@@ -238,8 +243,7 @@ export default function ExpertDetailHero({ data, viewer }: Props) {
                       신고
                     </button>
                   ) : null}
-                </div>
-              ) : null}
+              </div>
             </div>
 
             {expert.ceoName ? (
@@ -277,16 +281,6 @@ export default function ExpertDetailHero({ data, viewer }: Props) {
             </button>
           ) : null}
 
-          {viewer === 'expert-other' ? (
-            <button
-              type="button"
-              className={heroStyles.primaryButton}
-              onClick={handleInquiryClick}
-            >
-              상담 견적 문의
-            </button>
-          ) : null}
-
           {viewer === 'guest' ? (
             <Link href="/signup" className={heroStyles.primaryButton}>
               회원가입
@@ -314,13 +308,15 @@ export default function ExpertDetailHero({ data, viewer }: Props) {
         }}
         expertContext={portfolioExpertContext}
         services={inquiryServices}
-        onSubmitSuccess={() => {
+        onSubmitSuccess={(roomId) => {
+          setSuccessRoomId(roomId);
           setIsSuccessOpen(true);
         }}
       />
 
-      <ExpertInquirySuccessModal
+      <ConsultationSuccessModal
         isOpen={isSuccessOpen}
+        roomId={successRoomId}
         onClose={() => {
           setIsSuccessOpen(false);
         }}

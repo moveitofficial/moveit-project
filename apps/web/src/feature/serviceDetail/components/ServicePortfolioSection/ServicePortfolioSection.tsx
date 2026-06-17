@@ -9,7 +9,7 @@ import type { PortfolioModalExpertContext } from '@/feature/portfolioDetail/type
 import type { PortfolioListItem } from '@/mocks/types';
 
 import { PortfolioCardGrid } from '@/feature/portfolioDetail/components/PortfolioCardGrid';
-import { buildExpertPortfoliosHref } from '@/feature/portfolioDetail/utils';
+import { buildExpertDetailHref } from '@/feature/portfolioDetail/utils';
 
 interface Props {
   expertUserId: string;
@@ -36,7 +36,7 @@ export default function ServicePortfolioSection({
         <h2 className={sectionStyles.sectionTitle}>포트폴리오</h2>
         {hasMore ? (
           <Link
-            href={buildExpertPortfoliosHref(expertUserId)}
+            href={buildExpertDetailHref(expertUserId)}
             className={styles.moreLink}
           >
             더보기

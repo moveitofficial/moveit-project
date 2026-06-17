@@ -204,6 +204,11 @@ export async function createTradeRequest(
   });
 }
 
+// 거래 요청 취소 — 판매자(전문가)만. PENDING 주문 삭제 + TRADE_REQUEST_CANCELED 시스템 메시지.
+export async function cancelTradeRequest(orderId: string): Promise<void> {
+  await api.delete<ApiSuccess<unknown>>(`/chat/trade-request/${orderId}`);
+}
+
 export interface UpdateScheduleParams {
   endDate: string;
   roomId?: string;

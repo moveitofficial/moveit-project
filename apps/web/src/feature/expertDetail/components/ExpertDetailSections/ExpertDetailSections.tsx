@@ -5,7 +5,6 @@ import { Card } from '@repo/ui/Card';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { EXPERT_DETAIL_PORTFOLIO_PREVIEW_COUNT } from '../../constants';
 import * as viewStyles from '../ExpertDetailView/ExpertDetailView.css';
 
 import type {
@@ -16,7 +15,6 @@ import type { ServiceListItem } from '@/mocks/types';
 import type { CardService } from '@repo/ui/Card';
 
 import { PortfolioCardGrid } from '@/feature/portfolioDetail/components/PortfolioCardGrid';
-import { buildExpertPortfoliosHref } from '@/feature/portfolioDetail/utils';
 import { buildServiceDetailHref } from '@/feature/serviceDetail/utils';
 import { getTechStackLabel } from '@/mocks/metadata';
 
@@ -50,35 +48,23 @@ function buildCardService(service: ServiceListItem): CardService {
 
 export default function ExpertDetailSections({ data, viewer }: Props) {
   const { expert, portfolios, services, portfolioExpertContext } = data;
-  const hasMorePortfolios = portfolios.length > EXPERT_DETAIL_PORTFOLIO_PREVIEW_COUNT;
-  const previewPortfolios = portfolios.slice(0, EXPERT_DETAIL_PORTFOLIO_PREVIEW_COUNT);
 
   return (
     <div className={viewStyles.contentInner}>
       <section className={viewStyles.section}>
         <div className={viewStyles.sectionHeader}>
           <h2 className={viewStyles.sectionTitle}>포트폴리오</h2>
-          {hasMorePortfolios || viewer === 'owner' ? (
+          {viewer === 'owner' ? (
             <div className={viewStyles.sectionHeaderActions}>
-              {hasMorePortfolios ? (
-                <Link
-                  href={buildExpertPortfoliosHref(expert.id)}
-                  className={viewStyles.sectionActionLink}
-                >
-                  더보기
-                </Link>
-              ) : null}
-              {viewer === 'owner' ? (
-                <Link href="/mypage/portfolios" className={viewStyles.sectionActionLink}>
-                  포트폴리오 편집
-                </Link>
-              ) : null}
+              <Link href="/mypage/portfolios" className={viewStyles.sectionActionLink}>
+                포트폴리오 편집
+              </Link>
             </div>
           ) : null}
         </div>
         <div className={viewStyles.portfolioGridWrap}>
           <PortfolioCardGrid
-            portfolios={previewPortfolios}
+            portfolios={portfolios}
             expert={portfolioExpertContext}
             expertUserId={expert.id}
             size="large"

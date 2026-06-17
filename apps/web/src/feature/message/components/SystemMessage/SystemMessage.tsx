@@ -17,6 +17,8 @@ interface Props {
   isSeller: boolean;
   isPaying: boolean;
   onPay: (order: MessageRoomOrder) => void;
+  onCancelTradeRequest: () => void;
+  isCancelingTrade: boolean;
   onChangeSchedule: () => void;
   scheduleChangeDone: boolean;
   onOpenOrderDetail: () => void;
@@ -121,6 +123,8 @@ export default function SystemMessage({
   isSeller,
   isPaying,
   onPay,
+  onCancelTradeRequest,
+  isCancelingTrade,
   onChangeSchedule,
   scheduleChangeDone,
   onOpenOrderDetail,
@@ -141,7 +145,12 @@ export default function SystemMessage({
         <ServiceField title={serviceTitle} />
         <SettlementBreakdown order={order} isSeller={isSeller} />
         {order.status === 'PENDING' && isSeller ? (
-          <button type="button" className={styles.payButton}>
+          <button
+            type="button"
+            className={styles.payButton}
+            onClick={onCancelTradeRequest}
+            disabled={isCancelingTrade}
+          >
             결제 요청 취소
           </button>
         ) : null}
@@ -281,6 +290,16 @@ export default function SystemMessage({
         <p className={styles.title}>거래가 취소되었어요</p>
         <ServiceField title={serviceTitle} />
         <AmountBreakdown order={order} totalLabel="환불 금액" />
+      </SystemCard>
+    );
+  }
+
+  if (systemType === 'TRADE_REQUEST_CANCELED') {
+    return (
+      <SystemCard>
+        <p className={styles.title}>거래 요청이 취소되었어요</p>
+        <p className={styles.desc}>전문가가 거래 요청을 취소했습니다.</p>
+        <ServiceField title={serviceTitle} />
       </SystemCard>
     );
   }
