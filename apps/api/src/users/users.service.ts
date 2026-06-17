@@ -148,6 +148,7 @@ export class UsersService {
       services,
       ordersAsExpert,
       favoriteExperts,
+      _count,
       ...rest
     } = user;
 
@@ -198,6 +199,7 @@ export class UsersService {
       topPurchaseRate,
       completionRate,
       isFavorite,
+      favoriteCount: _count.favoritedByClients,
     };
   }
 

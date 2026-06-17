@@ -89,4 +89,7 @@ export class ExpertDetailResponseDto {
 
   @ApiProperty({ example: false })
   declare isFavorite: boolean;
+
+  @ApiProperty({ example: 330 })
+  declare favoriteCount: number;
 }
