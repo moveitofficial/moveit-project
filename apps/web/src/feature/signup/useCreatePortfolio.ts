@@ -16,7 +16,7 @@ interface CreatePortfolioParams {
   body: Omit<PortfolioRequest, 'portfolioId' | 'images'>;
 }
 
-export function useCreatePortfolio() {
+export function useCreatePortfolio(returnUrl = '/signup/expert/portfolio') {
   const router = useRouter();
 
   return useMutation<unknown, Error, CreatePortfolioParams>({
@@ -35,7 +35,7 @@ export function useCreatePortfolio() {
       });
     },
     onSuccess: () => {
-      router.push('/signup/expert/portfolio'); // 목록으로 → 거기서 다시 조회
+      router.push(returnUrl);
     },
   });
 }

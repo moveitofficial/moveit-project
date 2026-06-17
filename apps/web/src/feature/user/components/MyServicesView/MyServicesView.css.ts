@@ -42,10 +42,10 @@ export const emptyBox = style({
   alignItems: 'center',
   justifyContent: 'center',
   gap: '24px',
-  minHeight: '240px',
-  padding: '40px',
+  width: '876px',
+  height: '448px',
   border: `1px solid ${vars.color.line200}`,
-  borderRadius: '12px',
+  borderRadius: '8px',
 });
 
 export const emptyText = style([

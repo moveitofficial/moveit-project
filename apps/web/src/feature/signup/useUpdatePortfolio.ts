@@ -26,7 +26,7 @@ interface UpdatePortfolioParams {
   body: Omit<PortfolioRequest, 'portfolioId' | 'images'>;
 }
 
-export function useUpdatePortfolio() {
+export function useUpdatePortfolio(returnUrl = '/signup/expert/portfolio') {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -55,7 +55,7 @@ export function useUpdatePortfolio() {
     onSuccess: (data, { portfolioId }) => {
       // 응답으로 상세 캐시를 갱신 → 재진입 시 깜빡임 없이 최신 데이터 표시
       queryClient.setQueryData(['portfolio', portfolioId], data);
-      router.push('/signup/expert/portfolio');
+      router.push(returnUrl as never);
     },
   });
 }

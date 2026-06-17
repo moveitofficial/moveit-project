@@ -28,6 +28,7 @@ import UploadErrorModal from './UploadErrorModal';
 
 interface Props {
   portfolioId?: string;
+  returnUrl?: string;
 }
 
 interface FormState {
@@ -87,7 +88,7 @@ const isValidImageSize = (
     img.src = url;
   });
 
-export default function ExpertPortfolioCreate({ portfolioId }: Props) {
+export default function ExpertPortfolioCreate({ portfolioId, returnUrl }: Props) {
   useBlockBack();
   const isEdit = portfolioId !== undefined;
 
@@ -96,8 +97,8 @@ export default function ExpertPortfolioCreate({ portfolioId }: Props) {
     queryFn: portfolioId ? () => getPortfolio(portfolioId) : skipToken,
   });
 
-  const create = useCreatePortfolio();
-  const update = useUpdatePortfolio();
+  const create = useCreatePortfolio(returnUrl);
+  const update = useUpdatePortfolio(returnUrl);
   const isPending = create.isPending || update.isPending;
   const errorMessage = isEdit
     ? toUpdatePortfolioErrorMessage(update.error)
