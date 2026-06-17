@@ -1,9 +1,10 @@
 'use client';
 
 import { ApiError } from '@repo/fetcher';
-import { Modal } from '@repo/ui/Modal';
 import clsx from 'clsx';
 import { useEffect, useId, useState } from 'react';
+
+import { UserModal } from '../UserModal';
 
 import * as styles from './MyCommentEditModal.css';
 
@@ -72,7 +73,7 @@ export default function MyCommentEditModal({
   const apiErrorMessage = error instanceof ApiError ? error.message : null;
 
   return (
-    <Modal
+    <UserModal
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth={MODAL_MAX_WIDTH}
@@ -115,6 +116,6 @@ export default function MyCommentEditModal({
           </button>
         </div>
       </div>
-    </Modal>
+    </UserModal>
   );
 }

@@ -1,12 +1,12 @@
 'use client';
 
 import { ApiError } from '@repo/fetcher';
-import { ConfirmModal } from '@repo/ui/Modal';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
 import { MyReviewCard } from '../MyReviewCard';
 import { MyReviewEditModal } from '../MyReviewEditModal';
+import { UserConfirmModal } from '../UserConfirmModal';
 
 import * as styles from './MyReviewsView.css';
 
@@ -105,7 +105,7 @@ export default function MyReviewsView() {
           setEditingReview(null);
         }}
       />
-      <ConfirmModal
+      <UserConfirmModal
         isOpen={deletingReview !== null}
         onClose={() => {
           setDeleteError(null);

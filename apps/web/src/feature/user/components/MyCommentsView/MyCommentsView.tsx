@@ -1,12 +1,12 @@
 'use client';
 
 import { ApiError } from '@repo/fetcher';
-import { ConfirmModal } from '@repo/ui/Modal';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
 import { MyCommentCard } from '../MyCommentCard';
 import { MyCommentEditModal } from '../MyCommentEditModal';
+import { UserConfirmModal } from '../UserConfirmModal';
 
 import * as styles from './MyCommentsView.css';
 
@@ -123,7 +123,7 @@ export default function MyCommentsView() {
           setEditingComment(null);
         }}
       />
-      <ConfirmModal
+      <UserConfirmModal
         isOpen={deletingComment !== null}
         onClose={() => {
           setDeleteError(null);

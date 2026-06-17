@@ -1,11 +1,11 @@
 'use client';
 
 import { ApiError } from '@repo/fetcher';
-import { Modal } from '@repo/ui/Modal';
 import clsx from 'clsx';
 import { useEffect, useId, useState } from 'react';
 
 import { ReviewStars } from '../ReviewStars';
+import { UserModal } from '../UserModal';
 
 import * as styles from './MyReviewEditModal.css';
 
@@ -79,7 +79,7 @@ export default function MyReviewEditModal({ isOpen, review, onClose }: Props) {
         : null;
 
   return (
-    <Modal
+    <UserModal
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth={MODAL_MAX_WIDTH}
@@ -134,6 +134,6 @@ export default function MyReviewEditModal({ isOpen, review, onClose }: Props) {
           </button>
         </div>
       </div>
-    </Modal>
+    </UserModal>
   );
 }

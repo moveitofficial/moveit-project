@@ -1,12 +1,12 @@
 'use client';
 
 import { ApiError } from '@repo/fetcher';
-import { ConfirmModal } from '@repo/ui/Modal';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
 import { MyPostCard } from '../MyPostCard';
 import { MyPostEditModal } from '../MyPostEditModal';
+import { UserConfirmModal } from '../UserConfirmModal';
 
 import * as styles from './MyPostsView.css';
 
@@ -123,7 +123,7 @@ export default function MyPostsView() {
           setEditingPost(null);
         }}
       />
-      <ConfirmModal
+      <UserConfirmModal
         isOpen={deletingPost !== null}
         onClose={() => {
           setDeleteError(null);
