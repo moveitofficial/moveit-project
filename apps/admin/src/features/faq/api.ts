@@ -15,4 +15,12 @@ export function deleteFaqs(ids: string[]): Promise<ApiSuccess<void>> {
   return api.delete<ApiSuccess<void>>('/admin/faqs', { ids });
 }
 
-// 등록, 수정은 에디터 페이지 구현 후 작성
+export interface CreateFaqBody {
+  title: string;
+  content: string;
+}
+
+// 등록: title + content(에디터 HTML)
+export function createFaq(body: CreateFaqBody): Promise<ApiSuccess<void>> {
+  return api.post<ApiSuccess<void>>('/admin/faqs', body);
+}
