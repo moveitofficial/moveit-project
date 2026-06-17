@@ -21,6 +21,37 @@ export interface ClientProfile {
   interestCategories: InterestCategory[];
 }
 
+export interface SpecialtyCategory {
+  group: string;
+  category: string;
+}
+
+export interface TechStack {
+  name: string;
+}
+
+export interface ExpertProfile {
+  id: string;
+  userId: string;
+  isApplied: boolean;
+  isApproved: boolean;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  rejectReason: string | null;
+  businessName: string | null;
+  businessNumber: string | null;
+  ceoName: string | null;
+  contactTimeStart: string | null;
+  contactTimeEnd: string | null;
+  foundedYear: number | null;
+  employeeMin: number | null;
+  employeeMax: number | null;
+  description: string | null;
+  specialtyCategories: SpecialtyCategory[];
+  techStacks: TechStack[];
+  createdAt: string;
+}
+
 export interface MyUser {
   id: string;
   email: string;
@@ -36,6 +67,7 @@ export interface MyUser {
   isDeleted: boolean;
   createdAt: string;
   clientProfile: ClientProfile | null;
+  expertProfile: ExpertProfile | null;
 }
 
 export interface PatchMyUserBody {
@@ -48,6 +80,20 @@ export interface PatchMyUserBody {
 export interface PatchClientProfileBody {
   nickname?: string;
   interestCategories?: InterestCategory[];
+}
+
+export interface PatchExpertProfileBody {
+  businessName?: string;
+  businessNumber?: string;
+  ceoName?: string;
+  contactTimeStart?: string;
+  contactTimeEnd?: string;
+  foundedYear?: string;
+  employeeMin?: number;
+  employeeMax?: number;
+  description?: string;
+  specialtyCategories?: SpecialtyCategory[];
+  techStackNames?: string[];
 }
 
 export interface ChangePasswordBody {
@@ -91,6 +137,15 @@ export function patchClientProfile(
   body: PatchClientProfileBody,
 ): Promise<ApiSuccess<ClientProfile>> {
   return api.patch<ApiSuccess<ClientProfile>>('/users/me/client-profile', body);
+}
+
+export function patchExpertProfile(
+  body: PatchExpertProfileBody,
+): Promise<ApiSuccess<ExpertProfile>> {
+  return api.patch<ApiSuccess<ExpertProfile>>(
+    '/users/me/expert-profile',
+    body,
+  );
 }
 
 export function patchProfileImage(file: File): Promise<MyUser> {
