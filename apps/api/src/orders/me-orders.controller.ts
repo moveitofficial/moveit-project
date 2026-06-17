@@ -38,6 +38,7 @@ import {
   ClientOrderTabCountsDto,
   ExpertOrderTabCountsDto,
 } from './dto/order-tab-counts-response.dto';
+import { ScheduleTabCountsResponseDto } from './dto/schedule-tab-counts-response.dto';
 import { UpdateOrderStatusResponseDto } from './dto/update-order-status-response.dto';
 import { OrdersService } from './orders.service';
 
@@ -95,6 +96,23 @@ export class MeOrdersController {
   getOrderTabCounts(@Req() req: Request, @Query() query: OrderSummaryQueryDto) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.getOrderTabCounts(user.userId, query.as);
+  }
+
+  @ApiOperation({
+    summary: '일정관리 탭별 카운트',
+    description: '전체/작업중/완료/마감임박/기한만료 (client·expert 공통)',
+  })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, ScheduleTabCountsResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get('schedule/counts')
+  getScheduleTabCounts(
+    @Req() req: Request,
+    @Query() query: OrderSummaryQueryDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.getScheduleTabCounts(user.userId, query.as);
   }
 
   @ApiOperation({ summary: '취소 요청' })
