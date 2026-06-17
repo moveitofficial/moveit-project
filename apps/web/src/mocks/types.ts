@@ -302,23 +302,34 @@ export interface ServiceDetail {
 
 export interface ExpertStats {
   totalReviews: number;
-  averageRating: number;
-  purchaseRate: number;
-  completionRate: number;
+  averageRating: number | null;
+  purchaseRate: number | null;
+  completionRate: number | null;
 }
 
 export interface ExpertDetail {
   id: string;
   name: string;
   companyName: string;
+  ceoName?: string;
   description: string;
   profileImageUrl: string | null;
   isFavorite: boolean;
+  favoriteCount?: number;
   stats: ExpertStats;
   specialtyCategories: ServiceCategoryRef[];
   techStacks: TechStackName[];
   portfolios: PortfolioListItem[];
   services: ServiceListItem[];
+  clientNames?: string[];
+  foundedYear?: number;
+  region?: Region | null;
+  employeeMin?: number | null;
+  employeeMax?: number | null;
+  contactTimeStart?: string;
+  contactTimeEnd?: string;
+  totalOrderCount?: number;
+  serviceCount?: number;
 }
 
 // =========================
