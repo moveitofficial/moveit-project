@@ -5,5 +5,7 @@ export const SECONDS_PER_MINUTE = 60; // 1분(초)
 export const MS_PER_MINUTE = MS_PER_SECOND * SECONDS_PER_MINUTE; // 1분(밀리초)
 
 export const MINUTES_PER_HOUR = 60; // 1시간(분)
+export const MS_PER_HOUR = MS_PER_MINUTE * MINUTES_PER_HOUR; // 1시간(밀리초)
 
 export const HOURS_PER_DAY = 24; // 1일(시간)
+export const MS_PER_DAY = MS_PER_HOUR * HOURS_PER_DAY; // 1일(밀리초)

@@ -23,6 +23,7 @@ interface Props<T> {
   getHref?: (item: T) => string;
   emptyContent?: ReactNode;
   fillHeight?: boolean;
+  borderless?: boolean;
 }
 
 function toRowNum(page: number, pageSize: number, index: number): string {
@@ -39,6 +40,7 @@ export default function AdminTable<T>({
   getHref,
   emptyContent,
   fillHeight = false,
+  borderless = false,
 }: Props<T>) {
   const useStickyScroll = fillHeight && items.length > 0;
 
@@ -90,7 +92,7 @@ export default function AdminTable<T>({
 
   return (
     <div
-      className={`${styles.wrapper} ${fillHeight ? styles.wrapperFill : ''}`}
+      className={`${styles.wrapper} ${borderless ? styles.wrapperNoBorder : ''} ${fillHeight ? styles.wrapperFill : ''}`}
     >
       {useStickyScroll ? (
         <div className={styles.scrollBody}>{header}{body}</div>

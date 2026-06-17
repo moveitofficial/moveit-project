@@ -8,6 +8,10 @@ export const wrapper = style({
   width: '100%',
 });
 
+export const wrapperNoBorder = style({
+  border: 'none',
+});
+
 export const wrapperFill = style({
   height: '100%',
   display: 'flex',

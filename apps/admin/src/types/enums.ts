@@ -58,3 +58,23 @@ export type ReportReason =
 export type ReportStatus = 'PENDING' | 'COMPLETED';
 
 export type CSChatStatus = 'OPEN' | 'ASSIGNED' | 'CLOSED';
+
+export type Region =
+  | 'SEOUL'
+  | 'BUSAN'
+  | 'DAEGU'
+  | 'INCHEON'
+  | 'GWANGJU'
+  | 'DAEJEON'
+  | 'ULSAN'
+  | 'SEJONG'
+  | 'GYEONGGI_NORTH'
+  | 'GYEONGGI_SOUTH'
+  | 'GANGWON'
+  | 'CHUNGBUK'
+  | 'CHUNGNAM'
+  | 'JEONBUK'
+  | 'JEONNAM'
+  | 'GYEONGBUK'
+  | 'GYEONGNAM'
+  | 'JEJU';
