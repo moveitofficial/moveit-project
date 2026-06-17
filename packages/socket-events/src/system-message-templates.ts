@@ -1,6 +1,7 @@
 export type SystemMessageType =
   | 'TRADE_REQUEST'
   | 'TRADE_CANCELED'
+  | 'TRADE_REQUEST_CANCELED'
   | 'TRADE_REQUEST_EXPIRED'
   | 'PAYMENT_HELD'
   | 'PAYMENT_COMPLETED'
@@ -22,6 +23,14 @@ export type SystemMessageSocketPayload =
     }
   | {
       systemType: 'TRADE_CANCELED';
+      serviceTitle: string;
+      servicePrice: number;
+      platformFee: number;
+      totalAmount: number;
+      expertSettlementAmount: number;
+    }
+  | {
+      systemType: 'TRADE_REQUEST_CANCELED';
       serviceTitle: string;
       servicePrice: number;
       platformFee: number;
@@ -85,6 +94,7 @@ export interface SystemMessageField {
 export const SYSTEM_MESSAGE_CONTENT: Record<SystemMessageType, string> = {
   TRADE_REQUEST: '거래 요청이 왔어요',
   TRADE_CANCELED: '거래가 취소됐어요',
+  TRADE_REQUEST_CANCELED: '거래 요청이 취소됐어요',
   TRADE_REQUEST_EXPIRED: '거래 요청이 만료됐어요',
   PAYMENT_HELD: '무빗이 결제 금액을 안전하게 보관하고 있어요',
   PAYMENT_COMPLETED: '결제가 완료됐어요',
@@ -122,6 +132,20 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<
   },
   TRADE_CANCELED: {
     title: () => '거래가 취소됐어요',
+    body: (role) =>
+      role === 'EXPERT'
+        ? '다시 거래를 원하신다면 고객과 협의 후 진행해 주세요.'
+        : '다시 거래를 원하신다면 전문가와 협의 후 진행해 주세요.',
+    fields: [
+      { label: '서비스명', key: 'serviceTitle', format: 'text' },
+      { label: '서비스 금액', key: 'servicePrice', format: 'currency' },
+      { label: '무빗 수수료', key: 'platformFee', format: 'currency', roles: ['CLIENT'] },
+      { label: '최종 결제금액', key: 'totalAmount', format: 'currency', roles: ['CLIENT'] },
+      { label: '최종 정산예정금액', key: 'expertSettlementAmount', format: 'currency', roles: ['EXPERT'] },
+    ],
+  },
+  TRADE_REQUEST_CANCELED: {
+    title: () => '거래 요청이 취소됐어요',
     body: (role) =>
       role === 'EXPERT'
         ? '다시 거래를 원하신다면 고객과 협의 후 진행해 주세요.'

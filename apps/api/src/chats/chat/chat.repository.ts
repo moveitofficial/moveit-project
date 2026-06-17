@@ -390,6 +390,26 @@ export class ChatRepository {
     });
   }
 
+  async findOrderForTradeRequestCancel(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        expertUserId: true,
+        status: true,
+        chatRoomId: true,
+        agreedServicePrice: true,
+        platformFee: true,
+        totalAmount: true,
+        service: { select: { title: true } },
+      },
+    });
+  }
+
+  async deleteOrder(orderId: string): Promise<void> {
+    await this.prisma.order.delete({ where: { id: orderId } });
+  }
+
   async findRoomWithOrder(roomId: string): Promise<RoomWithOrder | null> {
     const room = await this.prisma.chatRoom.findUnique({
       where: { id: roomId },

@@ -24,6 +24,7 @@ import { JwtAccessUser } from '../../auth/jwt/jwt-access.strategy';
 import {
   CHAT_ERRORS,
   COMMON_ERRORS,
+  ORDER_ERRORS,
   UPLOAD_ERRORS,
 } from '../../common/constants/errors';
 import { ApiErrorResponse } from '../../common/decorators/api-error-response.decorator';
@@ -232,5 +233,21 @@ export class ChatController {
       user.userId,
       body.agreedServicePrice,
     );
+  }
+
+  @ApiOperation({
+    summary: '거래 요청 취소 (전문가 → PENDING 주문 삭제 + 시스템 메시지)',
+  })
+  @RoleAuth(Role.EXPERT, ORDER_ERRORS.FORBIDDEN_NOT_OWNER)
+  @ApiSuccessResponse(HttpStatus.OK)
+  @ApiErrorResponse(ORDER_ERRORS.NOT_FOUND, ORDER_ERRORS.INVALID_STATUS)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Delete('trade-request/:orderId')
+  async cancelTradeRequest(
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Req() req: Request,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.chatService.cancelTradeRequest(orderId, user.userId);
   }
 }

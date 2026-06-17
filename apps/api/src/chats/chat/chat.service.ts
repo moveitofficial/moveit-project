@@ -1,12 +1,12 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { MessageType, SystemMessageType } from '@prisma/client';
+import { MessageType, OrderStatus, SystemMessageType } from '@prisma/client';
 import {
   SYSTEM_MESSAGE_CONTENT,
   SYSTEM_MESSAGE_TEMPLATES,
   SystemMessageSocketPayload,
 } from '@repo/socket-events';
 
-import { CHAT_ERRORS } from '../../common/constants/errors';
+import { CHAT_ERRORS, ORDER_ERRORS } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
 import { toWsException } from '../../common/utils/ws-exception.util';
@@ -305,5 +305,34 @@ export class ChatService {
       status: order.status,
       createdAt: order.createdAt,
     };
+  }
+
+  async cancelTradeRequest(orderId: string, expertUserId: string) {
+    const order =
+      await this.chatRepository.findOrderForTradeRequestCancel(orderId);
+    if (!order) throw new AppException(ORDER_ERRORS.NOT_FOUND);
+    if (order.expertUserId !== expertUserId)
+      throw new AppException(ORDER_ERRORS.FORBIDDEN_NOT_OWNER);
+    if (order.status !== OrderStatus.PENDING)
+      throw new AppException(ORDER_ERRORS.INVALID_STATUS);
+
+    await this.chatRepository.deleteOrder(orderId);
+
+    if (order.chatRoomId) {
+      await this.sendSystemMessage(
+        order.chatRoomId,
+        SystemMessageType.TRADE_REQUEST_CANCELED,
+        {
+          systemType: 'TRADE_REQUEST_CANCELED',
+          serviceTitle: order.service.title,
+          servicePrice: order.agreedServicePrice,
+          platformFee: order.platformFee,
+          totalAmount: order.totalAmount,
+          expertSettlementAmount: order.agreedServicePrice,
+        },
+      );
+    }
+
+    return {};
   }
 }
