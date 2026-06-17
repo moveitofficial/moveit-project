@@ -91,7 +91,14 @@ export const postEdit = style([
   typography.f14R,
   {
     color: vars.color.gray400,
+    padding: 0,
+    border: 'none',
+    background: 'none',
     cursor: 'pointer',
+    ':disabled': {
+      cursor: 'default',
+      opacity: 0.5,
+    },
   },
 ]);
 

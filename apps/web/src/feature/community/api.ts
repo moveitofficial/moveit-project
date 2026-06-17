@@ -34,6 +34,13 @@ export function updateCommunityPost(
   );
 }
 
+// 게시글 삭제(작성자만). 비작성자는 403.
+export function deleteCommunityPost(
+  postId: string,
+): Promise<ApiSuccess<{ id: string }>> {
+  return api.delete<ApiSuccess<{ id: string }>>(`/community-posts/${postId}`);
+}
+
 export interface GetPagedCommunityPostsParams {
   category: CommunityFilter['id'];
   page: number;
