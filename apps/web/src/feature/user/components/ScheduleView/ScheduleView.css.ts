@@ -92,3 +92,17 @@ export const list = style({
   padding: 0,
   listStyle: 'none',
 });
+
+export const sentinel = style({
+  height: '1px',
+});
+
+export const statusMessage = style([
+  typography.f16R,
+  { margin: 0, color: vars.color.gray400 },
+]);
+
+export const errorMessage = style([
+  typography.f16R,
+  { margin: 0, color: vars.color.red200 },
+]);

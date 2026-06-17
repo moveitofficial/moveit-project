@@ -50,10 +50,12 @@ export function mapUpdateOrderScheduleResponse(order: Order) {
 export function mapOrderListItem(
   order: OrderListRow,
   chatRoomId: string | null,
+  hasScheduleChangeRequest: boolean,
 ) {
   return {
     id: order.id,
     status: order.status,
+    hasScheduleChangeRequest,
     totalAmount: order.totalAmount,
     agreedServicePrice: order.agreedServicePrice,
     platformFee: order.platformFee,

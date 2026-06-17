@@ -1,79 +1,117 @@
 'use client';
 
+import { ApiError } from '@repo/fetcher';
 import { ConfirmModal } from '@repo/ui/Modal';
 import clsx from 'clsx';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
 import { ScheduleCard } from '../ScheduleCard';
 
 import * as styles from './ScheduleView.css';
 
-import type { OrderScheduleItem, ScheduleStatus } from '@/feature/user/api';
-import type { Role } from '@/types/enums';
+import type {
+  OrderScheduleItem,
+  ScheduleOrderListItem,
+  ScheduleSort,
+} from '@/feature/user/my-schedule/api';
 
-type ScheduleFilter = 'ALL' | ScheduleStatus;
-type ScheduleSort = 'LATEST' | 'DEADLINE';
+import {
+  SCHEDULE_FILTERS,
+  SCHEDULE_SORT_OPTIONS,
+  type ScheduleFilter,
+} from '@/feature/user/my-schedule/constants';
+import {
+  flattenSchedulePages,
+  useRequestScheduleChangeMutation,
+  useScheduleCounts,
+  useSchedulesInfinite,
+} from '@/feature/user/my-schedule/queries';
+import { useMyUserQuery } from '@/feature/user/queries';
 
-const FILTERS: { key: ScheduleFilter; label: string }[] = [
-  { key: 'ALL', label: '전체' },
-  { key: 'IN_PROGRESS', label: '작업중' },
-  { key: 'WORK_COMPLETED', label: '완료' },
-  { key: 'DEADLINE_IMMINENT', label: '마감 임박' },
-  { key: 'EXPIRED', label: '기한만료' },
-];
-
-const SORTS: { key: ScheduleSort; label: string }[] = [
-  { key: 'LATEST', label: '최신순' },
-  { key: 'DEADLINE', label: '마감일 순' },
-];
-
-interface Props {
-  orders: OrderScheduleItem[];
-  role: Role;
+function toCardItem(item: ScheduleOrderListItem): OrderScheduleItem {
+  return {
+    id: item.id,
+    title: item.service.title,
+    status: item.status,
+    amount: item.totalAmount,
+    startDate: item.startDate,
+    endDate: item.endDate ?? item.startDate,
+    hasScheduleChangeRequest: item.hasScheduleChangeRequest,
+  };
 }
 
-export default function ScheduleView({ orders, role }: Props) {
-  const [filter, setFilter] = useState<ScheduleFilter>('ALL');
-  const [sort, setSort] = useState<ScheduleSort>('LATEST');
+export default function ScheduleView() {
+  const router = useRouter();
+  const { data: user } = useMyUserQuery();
+  const role = user?.role ?? 'CLIENT';
+  const as = role === 'EXPERT' ? 'expert' : 'client';
 
-  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
-  // 일정 변경 요청을 보낼 대상 주문 id (다음 PR의 API 호출에 사용)
+  const [filter, setFilter] = useState<ScheduleFilter>('ALL');
+  const [sort, setSort] = useState<ScheduleSort>('latest');
   const [requestTargetOrderId, setRequestTargetOrderId] = useState<
     string | null
   >(null);
 
-  const openRequestModal = (orderId: string) => {
-    setRequestTargetOrderId(orderId);
-    setIsRequestModalOpen(true);
-  };
+  const statuses =
+    SCHEDULE_FILTERS.find((option) => option.key === filter)?.statuses ?? [];
+
+  const { data: counts } = useScheduleCounts(as);
+  const {
+    data,
+    error,
+    isPending,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useSchedulesInfinite(as, statuses, sort);
+  const { mutate: requestScheduleChange } =
+    useRequestScheduleChangeMutation();
+
+  const orders = flattenSchedulePages(data?.pages);
+  const sentinelRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasNextPage) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    observer.observe(sentinel);
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const closeRequestModal = () => {
-    setIsRequestModalOpen(false);
     setRequestTargetOrderId(null);
   };
 
   const handleConfirmRequest = () => {
-    if (requestTargetOrderId === null) return;
-    // TODO: POST /orders/{requestTargetOrderId}/schedule-change-request 연결 (다음 PR)
+    if (requestTargetOrderId === null) {
+      return;
+    }
+    const target = orders.find((order) => order.id === requestTargetOrderId);
+    requestScheduleChange({
+      orderId: requestTargetOrderId,
+      roomId: target?.chatRoomId ?? undefined,
+    });
     closeRequestModal();
   };
 
-  // TODO: 탭 카운트는 카운트 API로 교체 (다음 PR). 현재는 받은 목록 기준 계산.
-  const countOf = (key: ScheduleFilter) =>
-    key === 'ALL'
-      ? orders.length
-      : orders.filter((order) => order.status === key).length;
-
-  const filtered =
-    filter === 'ALL'
-      ? orders
-      : orders.filter((order) => order.status === filter);
-
-  const sorted = [...filtered].sort((a, b) =>
-    sort === 'LATEST'
-      ? b.startDate.localeCompare(a.startDate)
-      : a.endDate.localeCompare(b.endDate),
-  );
+  const errorMessage = isError
+    ? error instanceof ApiError
+      ? error.message
+      : '일정 목록을 불러오지 못했습니다.'
+    : null;
 
   return (
     <section className={styles.wrapper}>
@@ -81,8 +119,9 @@ export default function ScheduleView({ orders, role }: Props) {
 
       <div className={styles.toolbar}>
         <div className={styles.filters}>
-          {FILTERS.map(({ key, label }) => {
-            const text = `${label} ${countOf(key)}`;
+          {SCHEDULE_FILTERS.map(({ key, label, countKey }) => {
+            const count = counts?.[countKey];
+            const text = count === undefined ? label : `${label} ${count}`;
             return (
               <button
                 key={key}
@@ -93,8 +132,8 @@ export default function ScheduleView({ orders, role }: Props) {
                   filter === key && styles.filterButtonActive,
                 )}
                 onClick={() => {
-                setFilter(key);
-              }}
+                  setFilter(key);
+                }}
               >
                 {text}
               </button>
@@ -103,7 +142,7 @@ export default function ScheduleView({ orders, role }: Props) {
         </div>
 
         <div className={styles.sorts}>
-          {SORTS.map(({ key, label }) => (
+          {SCHEDULE_SORT_OPTIONS.map(({ key, label }) => (
             <button
               key={key}
               type="button"
@@ -122,22 +161,51 @@ export default function ScheduleView({ orders, role }: Props) {
         </div>
       </div>
 
-      <ul className={styles.list}>
-        {sorted.map((order) => (
-          <li key={order.id}>
-            <ScheduleCard
-              order={order}
-              role={role}
-              onRequestScheduleChange={() => {
-                openRequestModal(order.id);
-              }}
-            />
-          </li>
-        ))}
-      </ul>
+      {isPending ? (
+        <p className={styles.statusMessage}>일정을 불러오는 중입니다.</p>
+      ) : (
+        <>
+          {errorMessage === null ? null : (
+            <p className={styles.errorMessage}>{errorMessage}</p>
+          )}
+          {errorMessage === null && orders.length === 0 ? (
+            <p className={styles.statusMessage}>해당하는 일정이 없습니다.</p>
+          ) : null}
+          {errorMessage === null && orders.length > 0 ? (
+            <ul className={styles.list}>
+              {orders.map((order) => (
+                <li key={order.id}>
+                  <ScheduleCard
+                    order={toCardItem(order)}
+                    role={role}
+                    onChat={() => {
+                      if (order.chatRoomId) {
+                        router.push(
+                          `/service/message?roomId=${order.chatRoomId}`,
+                        );
+                      }
+                    }}
+                    onRequestScheduleChange={() => {
+                      setRequestTargetOrderId(order.id);
+                    }}
+                  />
+                </li>
+              ))}
+              {hasNextPage ? (
+                <li ref={sentinelRef} className={styles.sentinel} />
+              ) : null}
+              {isFetchingNextPage ? (
+                <p className={styles.statusMessage}>
+                  일정을 더 불러오는 중입니다.
+                </p>
+              ) : null}
+            </ul>
+          ) : null}
+        </>
+      )}
 
       <ConfirmModal
-        isOpen={isRequestModalOpen}
+        isOpen={requestTargetOrderId !== null}
         onClose={closeRequestModal}
         title="일정 변경 요청"
         description={

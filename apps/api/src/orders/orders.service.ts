@@ -211,8 +211,19 @@ export class OrdersService {
       }),
     ]);
 
+    const pendingScheduleChangeIds =
+      await this.ordersRepository.findPendingScheduleChangeOrderIds(
+        orders.map((order) => order.id),
+      );
+
     return toPaginatedResponse(
-      orders.map((order) => mapOrderListItem(order, order.chatRoomId ?? null)),
+      orders.map((order) =>
+        mapOrderListItem(
+          order,
+          order.chatRoomId ?? null,
+          pendingScheduleChangeIds.has(order.id),
+        ),
+      ),
       {
         page,
         pageSize,

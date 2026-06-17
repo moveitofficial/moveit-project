@@ -46,6 +46,13 @@ export class OrderListItemDto {
   @ApiProperty({ enum: OrderStatus, example: OrderStatus.IN_PROGRESS })
   declare status: OrderStatus;
 
+  @ApiProperty({
+    example: false,
+    description:
+      '일정 변경 요청 대기 여부 (전문가가 요청 후 의뢰인이 아직 일정 변경 안 함)',
+  })
+  declare hasScheduleChangeRequest: boolean;
+
   @ApiProperty({ example: 418_000 })
   declare totalAmount: number;
 
