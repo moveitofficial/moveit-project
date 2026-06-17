@@ -37,6 +37,8 @@ import {
   ORDER_TAB_STATUSES,
   ORDERS_LIST_DEFAULT_PAGE,
   ORDERS_LIST_DEFAULT_PAGE_SIZE,
+  SCHEDULE_LIST_STATUSES,
+  SCHEDULE_TAB_STATUSES,
 } from './orders.constants';
 import {
   mapCreateOrderResponse,
@@ -71,6 +73,7 @@ import type {
 } from './dto/order-tab-counts-response.dto';
 import type { PayOrderRequestDto } from './dto/pay-order-request.dto';
 import type { ScheduleChangeRequestDto } from './dto/schedule-change-request.dto';
+import type { ScheduleTabCountsResponseDto } from './dto/schedule-tab-counts-response.dto';
 import type { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
 import type { UpdateOrderStatusRequestDto } from './dto/update-order-status-request.dto';
 import type { OrderListAs } from './orders.constants';
@@ -208,8 +211,19 @@ export class OrdersService {
       }),
     ]);
 
+    const pendingScheduleChangeIds =
+      await this.ordersRepository.findPendingScheduleChangeOrderIds(
+        orders.map((order) => order.id),
+      );
+
     return toPaginatedResponse(
-      orders.map((order) => mapOrderListItem(order, order.chatRoomId ?? null)),
+      orders.map((order) =>
+        mapOrderListItem(
+          order,
+          order.chatRoomId ?? null,
+          pendingScheduleChangeIds.has(order.id),
+        ),
+      ),
       {
         page,
         pageSize,
@@ -313,6 +327,26 @@ export class OrdersService {
       expired,
       cancelRefund,
     };
+  }
+
+  async getScheduleTabCounts(
+    userId: string,
+    as: OrderListAs,
+  ): Promise<ScheduleTabCountsResponseDto> {
+    const field = ORDER_LIST_USER_ID_FIELD[as];
+    const count = (statuses: OrderStatus[]): Promise<number> =>
+      this.ordersRepository.countOrdersByUser({ userId, field, statuses });
+
+    const [all, inProgress, workCompleted, deadlineImminent, expired] =
+      await Promise.all([
+        count(SCHEDULE_LIST_STATUSES),
+        count(SCHEDULE_TAB_STATUSES.inProgress),
+        count(SCHEDULE_TAB_STATUSES.workCompleted),
+        count(SCHEDULE_TAB_STATUSES.deadlineImminent),
+        count(SCHEDULE_TAB_STATUSES.expired),
+      ]);
+
+    return { all, inProgress, workCompleted, deadlineImminent, expired };
   }
 
   async createOrder(clientUserId: string, dto: CreateOrderRequestDto) {

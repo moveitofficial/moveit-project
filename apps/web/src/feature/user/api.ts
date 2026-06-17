@@ -70,22 +70,6 @@ export interface MyUser {
   expertProfile: ExpertProfile | null;
 }
 
-export type ScheduleStatus =
-  | 'IN_PROGRESS'
-  | 'WORK_COMPLETED'
-  | 'DEADLINE_IMMINENT'
-  | 'EXPIRED';
-
-export interface OrderScheduleItem {
-  id: string;
-  title: string;
-  status: ScheduleStatus;
-  amount: number;
-  startDate: string;
-  endDate: string;
-  hasScheduleChangeRequest: boolean;
-}
-
 export interface PatchMyUserBody {
   region?: string;
   phoneNumber?: string;

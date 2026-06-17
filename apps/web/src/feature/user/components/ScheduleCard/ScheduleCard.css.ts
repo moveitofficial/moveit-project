@@ -50,6 +50,7 @@ const buttonBase = {
   borderRadius: '8px',
   backgroundColor: vars.color.white,
   color: vars.color.black500,
+  whiteSpace: 'nowrap',
   cursor: 'pointer',
 } as const;
 

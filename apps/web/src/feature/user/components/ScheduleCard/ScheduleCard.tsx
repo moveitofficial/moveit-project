@@ -5,7 +5,10 @@ import { formatDate, formatPrice } from '@repo/utils';
 
 import * as styles from './ScheduleCard.css';
 
-import type { OrderScheduleItem, ScheduleStatus } from '@/feature/user/api';
+import type {
+  OrderScheduleItem,
+  ScheduleStatus,
+} from '@/feature/user/my-schedule/api';
 import type { Role } from '@/types/enums';
 
 const STATUS_LABEL: Record<ScheduleStatus, string> = {

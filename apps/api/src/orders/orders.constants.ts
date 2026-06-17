@@ -70,6 +70,21 @@ export const ORDER_TAB_STATUSES = {
   [ORDER_LIST_AS.EXPERT]: ORDER_TAB_STATUSES_EXPERT,
 } as const;
 
+// 일정관리 탭별 카운트 — client·expert 공통 (전체 = 아래 4개 상태 합)
+export const SCHEDULE_TAB_STATUSES = {
+  inProgress: [OrderStatus.IN_PROGRESS],
+  workCompleted: [OrderStatus.WORK_COMPLETED],
+  deadlineImminent: [OrderStatus.DEADLINE_IMMINENT],
+  expired: [OrderStatus.EXPIRED],
+} satisfies Record<string, OrderStatus[]>;
+
+export const SCHEDULE_LIST_STATUSES: OrderStatus[] = [
+  OrderStatus.IN_PROGRESS,
+  OrderStatus.WORK_COMPLETED,
+  OrderStatus.DEADLINE_IMMINENT,
+  OrderStatus.EXPIRED,
+];
+
 // GET /users/me/orders 목록 — 정렬
 export const ORDER_LIST_SORT = ['latest', 'deadline'] as const;
 

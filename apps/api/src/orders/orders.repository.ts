@@ -129,6 +129,43 @@ export class OrdersRepository {
     });
   }
 
+  // 일정 변경 요청 대기 주문 id 집합 — 주문별 최신 일정 시스템 메시지가
+  // SCHEDULE_CHANGE_REQUEST(그 뒤 SCHEDULE_REGISTERED 없음)인 경우만 대기로 판단
+  async findPendingScheduleChangeOrderIds(
+    orderIds: string[],
+  ): Promise<Set<string>> {
+    if (orderIds.length === 0) {
+      return new Set();
+    }
+
+    const messages = await this.prisma.message.findMany({
+      where: {
+        orderId: { in: orderIds },
+        systemType: {
+          in: [
+            SystemMessageType.SCHEDULE_CHANGE_REQUEST,
+            SystemMessageType.SCHEDULE_REGISTERED,
+          ],
+        },
+      },
+      select: { orderId: true, systemType: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const pending = new Set<string>();
+    const resolved = new Set<string>();
+    for (const message of messages) {
+      if (message.orderId === null || resolved.has(message.orderId)) {
+        continue;
+      }
+      resolved.add(message.orderId);
+      if (message.systemType === SystemMessageType.SCHEDULE_CHANGE_REQUEST) {
+        pending.add(message.orderId);
+      }
+    }
+    return pending;
+  }
+
   findServiceById(serviceId: string) {
     return this.prisma.service.findUnique({
       where: { id: serviceId },
