@@ -78,9 +78,14 @@ export default function SettlementList({
                   handleActionClick(action.label, item.id);
                 },
               }))}
-              // TODO: 주문 상세 페이지 URL 확정 후 item.id 연결
               onCardClick={() => {
-                window.open('http://localhost:3000/', '_blank');
+                const base =
+                  process.env.NEXT_PUBLIC_CLIENT_URL ?? 'http://localhost:3000';
+                const path =
+                  item.service.categoryGroup === 'IT_COACHING'
+                    ? `/it-coaching/service-detail/${item.service.id}`
+                    : `/project-request/service-detail/${item.service.id}`;
+                window.open(`${base}${path}`, '_blank');
               }}
             />
           );
