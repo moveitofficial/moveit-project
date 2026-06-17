@@ -27,6 +27,10 @@ export function buildExpertPortfoliosHref(expertUserId: string): Route {
   return `/experts/${expertUserId}/portfolios` as Route;
 }
 
+export function buildExpertDetailHref(expertUserId: string): Route {
+  return `/experts/${expertUserId}` as Route;
+}
+
 export function getExpertInitials(companyName: string): string {
   return companyName.replaceAll(' ', '').slice(0, 2);
 }

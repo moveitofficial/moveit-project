@@ -457,7 +457,7 @@ export const CHAT_ERRORS = {
   },
   ROOM_ALREADY_EXISTS: {
     status: HttpStatus.CONFLICT,
-    message: '해당 서비스로 이미 채팅방이 존재합니다.',
+    message: '해당 서비스 이미 채팅방이 존재합니다.',
     code: 'CHAT_ROOM_ALREADY_EXISTS',
   },
 } as const;

@@ -50,6 +50,7 @@ export type ChatMessageType = 'TEXT' | 'FILE' | 'SYSTEM';
 export type SystemMessageType =
   | 'TRADE_REQUEST'
   | 'TRADE_CANCELED'
+  | 'TRADE_REQUEST_CANCELED'
   | 'TRADE_REQUEST_EXPIRED'
   | 'PAYMENT_COMPLETED'
   | 'PAYMENT_HELD'

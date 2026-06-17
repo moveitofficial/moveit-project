@@ -8,15 +8,24 @@ export const content = style({
   alignItems: 'center',
   gap: '16px',
   padding: '32px',
+  boxSizing: 'border-box',
   textAlign: 'center',
 });
 
 export const title = style([
+  typography.f18EB,
+  {
+    margin: 0,
+    color: vars.color.black400,
+  },
+]);
+
+export const description = style([
   typography.f16R,
   {
     margin: 0,
-    color: vars.color.black500,
-    textAlign: 'center',
+    color: vars.color.gray400,
+    whiteSpace: 'pre-wrap',
   },
 ]);
 
@@ -34,7 +43,13 @@ export const primaryButton = style([
   },
 ]);
 
-export const warningIcon = style({
-  color: vars.color.red200,
-  flexShrink: 0,
-});
+export const secondaryButton = style([
+  typography.f14R,
+  {
+    padding: 0,
+    border: 'none',
+    background: 'none',
+    cursor: 'pointer',
+    color: vars.color.gray400,
+  },
+]);

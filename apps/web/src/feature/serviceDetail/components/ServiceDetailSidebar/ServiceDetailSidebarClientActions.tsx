@@ -7,6 +7,7 @@ import * as styles from './ServiceDetailSidebar.css';
 import type { ConsultationInquiryContext } from '@/feature/consultation/types';
 
 import { ConsultationInquiryModal } from '@/feature/consultation/components/ConsultationInquiryModal';
+import { ConsultationSuccessModal } from '@/feature/consultation/components/ConsultationSuccessModal';
 import { requestServicePayment } from '@/feature/payment/toss';
 
 interface Props {
@@ -21,6 +22,8 @@ export default function ServiceDetailSidebarClientActions({
   amount,
 }: Props) {
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [successRoomId, setSuccessRoomId] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
 
   const handleBuy = () => {
@@ -61,6 +64,18 @@ export default function ServiceDetailSidebarClientActions({
           setIsConsultationOpen(false);
         }}
         context={consultationContext}
+        onSubmitSuccess={(roomId) => {
+          setSuccessRoomId(roomId);
+          setIsSuccessOpen(true);
+        }}
+      />
+
+      <ConsultationSuccessModal
+        isOpen={isSuccessOpen}
+        roomId={successRoomId}
+        onClose={() => {
+          setIsSuccessOpen(false);
+        }}
       />
     </>
   );
