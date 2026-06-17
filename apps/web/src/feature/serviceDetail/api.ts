@@ -1,7 +1,6 @@
 import { api, ApiError } from '@repo/fetcher';
 
 import {
-  MOCK_EXPERT_CONTACT_TIME,
   SERVICE_DETAIL_PORTFOLIO_PREVIEW_COUNT,
   SERVICE_DETAIL_REVIEW_PAGE_SIZE,
 } from './constants';
@@ -24,6 +23,8 @@ import type {
   ServiceListItem,
   TechStackName,
 } from '@/mocks/types';
+
+import { fetchExpertContactTime } from '@/utils/expertContactTime';
 
 interface ServiceImageApi {
   id: string;
@@ -298,16 +299,18 @@ export async function getServiceDetailPageData(
     return null;
   }
 
-  const [reviews, otherServices, portfolioResult] = await Promise.all([
-    fetchServiceReviewsPage(
-      serviceId,
-      1,
-      SERVICE_DETAIL_REVIEW_PAGE_SIZE,
-      'latest',
-    ),
-    fetchOtherServices(serviceId),
-    fetchExpertPortfolios(detail.expert.id),
-  ]);
+  const [reviews, otherServices, portfolioResult, contactTime] =
+    await Promise.all([
+      fetchServiceReviewsPage(
+        serviceId,
+        1,
+        SERVICE_DETAIL_REVIEW_PAGE_SIZE,
+        'latest',
+      ),
+      fetchOtherServices(serviceId),
+      fetchExpertPortfolios(detail.expert.id),
+      fetchExpertContactTime(detail.expert.id),
+    ]);
 
   const service = buildServiceDetailModel(
     detail,
@@ -329,7 +332,7 @@ export async function getServiceDetailPageData(
     favoriteCount: detail.favoriteCount,
     portfolios: portfolioResult.items,
     portfoliosHasMore: portfolioResult.hasMore,
-    contactTime: MOCK_EXPERT_CONTACT_TIME,
+    contactTime,
     reviewsHasMore: reviews.pagination.hasNext,
     relatedServiceTechStacks: otherServices.techStacksByServiceId,
     totalAmount: detail.totalAmount,
