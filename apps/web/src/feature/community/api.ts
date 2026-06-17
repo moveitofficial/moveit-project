@@ -34,7 +34,6 @@ export function updateCommunityPost(
   );
 }
 
-// 게시글 삭제(작성자만). 비작성자는 403.
 export function deleteCommunityPost(
   postId: string,
 ): Promise<ApiSuccess<{ id: string }>> {
