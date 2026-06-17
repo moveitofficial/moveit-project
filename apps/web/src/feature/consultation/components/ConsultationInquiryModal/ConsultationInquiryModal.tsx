@@ -1,5 +1,6 @@
 'use client';
 
+import { ApiError } from '@repo/fetcher';
 import { Modal } from '@repo/ui/Modal';
 import clsx from 'clsx';
 import { Paperclip, X } from 'lucide-react';
@@ -30,6 +31,8 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   context: ConsultationInquiryContext;
+  // 전송 성공 시 생성된 채팅방 id 전달(성공 모달·이동용). 없으면 닫기만.
+  onSubmitSuccess?: (roomId: string) => void;
 }
 
 function getExpertInitials(companyName: string): string {
@@ -44,6 +47,7 @@ export default function ConsultationInquiryModal({
   isOpen,
   onClose,
   context,
+  onSubmitSuccess,
 }: Props) {
   const textareaId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -133,7 +137,7 @@ export default function ConsultationInquiryModal({
           uploadedFiles = uploadResult.files;
         }
 
-        await createConsultationRoom({
+        const created = await createConsultationRoom({
           expertUserId: context.expertUserId,
           serviceId: context.serviceId,
           content: trimmedContent,
@@ -142,8 +146,13 @@ export default function ConsultationInquiryModal({
         });
 
         handleClose();
-      } catch {
-        setErrorMessage('문의 전송에 실패했습니다. 로그인 상태를 확인해 주세요.');
+        onSubmitSuccess?.(created.id);
+      } catch (error) {
+        setErrorMessage(
+          error instanceof ApiError
+            ? error.message
+            : '문의 전송에 실패했습니다. 로그인 상태를 확인해 주세요.',
+        );
         setIsSubmitting(false);
       }
     })();

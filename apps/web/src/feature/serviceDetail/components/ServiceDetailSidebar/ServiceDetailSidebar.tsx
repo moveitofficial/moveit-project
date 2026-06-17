@@ -48,12 +48,18 @@ export default function ServiceDetailSidebar({
         <div className={styles.infoBox}>
           <div className={styles.infoRow}>
             <p className={styles.infoLabel}>{durationLabel}</p>
-            <p className={styles.infoValue}>{service.workDuration}일</p>
+            <p className={styles.infoValue}>
+              {service.workDuration}
+              {isCoaching ? '개월' : '일'}
+            </p>
           </div>
-          <div className={styles.infoRow}>
-            <p className={styles.infoLabel}>수정 횟수</p>
-            <p className={styles.infoValue}>{service.revisionCount}회</p>
-          </div>
+          {/* IT 코칭은 수정 횟수 개념이 없어 표시하지 않는다. */}
+          {isCoaching ? null : (
+            <div className={styles.infoRow}>
+              <p className={styles.infoLabel}>수정 횟수</p>
+              <p className={styles.infoValue}>{service.revisionCount}회</p>
+            </div>
+          )}
           <div className={styles.infoRow}>
             <p className={styles.infoLabel}>제공 범위</p>
             <p className={styles.infoValue}>{service.serviceScope}</p>

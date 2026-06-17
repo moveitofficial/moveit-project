@@ -1,3 +1,5 @@
+import { EXPERT_DETAIL_CLIENT_PREVIEW_COUNT } from './constants';
+
 import type {
   ExpertDetailDisplayStats,
   ExpertDetailBusinessInfo,
@@ -6,7 +8,18 @@ import type {
 import type { ExpertDetail } from '@/mocks/types';
 import type { Role } from '@/types/enums';
 
+
 import { REGIONS } from '@/feature/signup/components/common/regions';
+
+// 협업사 이름은 서버가 주는 전체 목록에서 랜덤 2개만 노출(요청마다 무작위).
+function pickRandomClientNames(names: string[]): string[] {
+  if (names.length <= EXPERT_DETAIL_CLIENT_PREVIEW_COUNT) {
+    return names;
+  }
+  return [...names]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, EXPERT_DETAIL_CLIENT_PREVIEW_COUNT);
+}
 
 function getRegionLabel(region: ExpertDetail['region']): string | null {
   if (region === null || region === undefined) {
@@ -105,7 +118,7 @@ export function buildExpertDisplayStats(expert: ExpertDetail): ExpertDetailDispl
 
 export function buildExpertBusinessInfo(expert: ExpertDetail): ExpertDetailBusinessInfo {
   return {
-    clientNames: expert.clientNames ?? [],
+    clientNames: pickRandomClientNames(expert.clientNames ?? []),
     foundedYear: expert.foundedYear ?? null,
     regionLabel: getRegionLabel(expert.region),
     employeeRangeLabel: formatEmployeeRange(

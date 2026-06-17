@@ -1,6 +1,7 @@
 import starFill from '@public/Card/starFill.svg';
 import { Star } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { buildServiceDetailBreadcrumb } from '../../utils';
 
@@ -9,6 +10,7 @@ import * as styles from './ServiceDetailHero.css';
 
 import type { ServiceDetailPageData, ServiceDetailViewerRole } from '../../types';
 
+import { buildExpertDetailHref } from '@/feature/portfolioDetail/utils';
 import { getTechStackLabel } from '@/mocks/metadata';
 
 interface Props {
@@ -104,7 +106,10 @@ export default function ServiceDetailHero({ data, viewerRole }: Props) {
           )}
         </div>
 
-        <div className={styles.expertBanner}>
+        <Link
+          href={buildExpertDetailHref(service.expert.id)}
+          className={styles.expertBanner}
+        >
           <div className={styles.expertAvatar}>
             {getExpertInitials(service.expert.companyName)}
           </div>
@@ -114,7 +119,7 @@ export default function ServiceDetailHero({ data, viewerRole }: Props) {
               연락가능 시간 : {contactTime.start} ~ {contactTime.end}
             </p>
           </div>
-        </div>
+        </Link>
       </div>
 
       {mainImage === undefined ? null : (

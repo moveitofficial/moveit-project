@@ -25,7 +25,7 @@ const CLIENT_MENU: { label: string; href: Route }[] = [
 const EXPERT_MENU: { label: string; href: Route }[] = [
   { label: '내정보', href: '/mypage' },
   { label: '메세지', href: '/service/message' },
-  { label: '서비스 관리', href: '#' },
+  { label: '서비스 관리', href: '/mypage/services' },
   { label: '일정관리', href: '/mypage/schedule' },
 ];
 

@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from 'react';
 
 import {
+  cancelTradeRequest,
   createReport,
   createTradeRequest,
   getMessageRooms,
@@ -85,6 +86,13 @@ export function useCreateTradeRequest(roomId: string) {
   return useMutation({
     mutationFn: (agreedServicePrice: number) =>
       createTradeRequest(roomId, agreedServicePrice),
+  });
+}
+
+// 거래 요청 취소 뮤테이션 — 판매자. 취소 결과(TRADE_REQUEST_CANCELED)는 소켓으로 도착한다.
+export function useCancelTradeRequest() {
+  return useMutation({
+    mutationFn: (orderId: string) => cancelTradeRequest(orderId),
   });
 }
 

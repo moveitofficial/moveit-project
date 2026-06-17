@@ -29,6 +29,7 @@ import type { ChangeEvent, KeyboardEvent } from 'react';
 
 import { useAttachmentStore } from '@/feature/message/attachmentStore';
 import {
+  useCancelTradeRequest,
   useCreateTradeRequest,
   useRequestScheduleChange,
   useRoomService,
@@ -67,6 +68,7 @@ export default function Conversation({
   } = useMessageChat(roomId);
   const { data: serviceInfo } = useRoomService(room?.currentService.id ?? null);
   const tradeRequest = useCreateTradeRequest(roomId);
+  const cancelTrade = useCancelTradeRequest();
   const scheduleMutation = useUpdateSchedule(room?.order?.id ?? '');
   const scheduleChangeRequest = useRequestScheduleChange(room?.order?.id ?? '');
   const uploadMutation = useUploadRoomFile(roomId);
@@ -204,6 +206,13 @@ export default function Conversation({
     scheduleChangeRequest.mutate(roomId);
   };
 
+  // 거래 요청 취소(판매자) — 취소 시스템 메시지는 소켓으로 도착해 내역이 갱신된다.
+  const handleCancelTradeRequest = () => {
+    if (order !== null) {
+      cancelTrade.mutate(order.id);
+    }
+  };
+
   const handlePay = (order: MessageRoomOrder) => {
     setIsPaying(true);
     // 성공 시 토스 결제창으로 이동, 취소·실패 시 reset.
@@ -277,6 +286,8 @@ export default function Conversation({
                 isSeller={isSeller}
                 isPaying={isPaying}
                 onPay={handlePay}
+                onCancelTradeRequest={handleCancelTradeRequest}
+                isCancelingTrade={cancelTrade.isPending}
                 onChangeSchedule={() => {
                   setIsScheduleOpen(true);
                 }}

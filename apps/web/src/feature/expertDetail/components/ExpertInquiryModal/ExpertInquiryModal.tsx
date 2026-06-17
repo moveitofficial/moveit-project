@@ -25,6 +25,7 @@ import {
   CONSULTATION_INQUIRY_MAX_FILE_SIZE_BYTES,
   CONSULTATION_INQUIRY_PLACEHOLDER,
 } from '@/feature/consultation/constants';
+import Dropdown from '@/feature/signup/components/common/Dropdown';
 
 interface Props {
   isOpen: boolean;
@@ -32,7 +33,7 @@ interface Props {
   expertUserId: string;
   expertContext: PortfolioModalExpertContext;
   services: ExpertInquiryServiceOption[];
-  onSubmitSuccess: () => void;
+  onSubmitSuccess: (roomId: string) => void;
 }
 
 export default function ExpertInquiryModal({
@@ -54,6 +55,10 @@ export default function ExpertInquiryModal({
   const trimmedContent = content.trim();
   const canSubmit =
     serviceId.length > 0 && trimmedContent.length > 0 && !isSubmitting;
+  const serviceOptions = services.map((service) => ({
+    id: service.id,
+    label: service.title,
+  }));
 
   const resetForm = () => {
     setServiceId('');
@@ -106,7 +111,7 @@ export default function ExpertInquiryModal({
           uploadedFiles = uploadResult.files;
         }
 
-        await createConsultationRoom({
+        const created = await createConsultationRoom({
           expertUserId,
           serviceId,
           content: trimmedContent,
@@ -115,7 +120,7 @@ export default function ExpertInquiryModal({
         });
 
         handleClose();
-        onSubmitSuccess();
+        onSubmitSuccess(created.id);
       } catch (error) {
         setErrorMessage(
           error instanceof ApiError
@@ -148,20 +153,12 @@ export default function ExpertInquiryModal({
           </div>
         </div>
 
-        <select
-          className={styles.serviceSelect}
+        <Dropdown
+          options={serviceOptions}
           value={serviceId}
-          onChange={(event) => {
-            setServiceId(event.target.value);
-          }}
-        >
-          <option value="">문의할 서비스를 선택해주세요</option>
-          {services.map((service) => (
-            <option key={service.id} value={service.id}>
-              {service.title}
-            </option>
-          ))}
-        </select>
+          onChange={setServiceId}
+          placeholder="문의할 서비스를 선택해주세요"
+        />
 
         <textarea
           id={textareaId}
