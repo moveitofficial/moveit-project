@@ -34,6 +34,7 @@ import {
   ORDER_LIST_AS,
   ORDER_LIST_DEFAULT_SORT,
   ORDER_LIST_USER_ID_FIELD,
+  ORDER_TAB_STATUSES,
   ORDERS_LIST_DEFAULT_PAGE,
   ORDERS_LIST_DEFAULT_PAGE_SIZE,
 } from './orders.constants';
@@ -63,6 +64,10 @@ import type {
   ClientOrderSummaryDto,
   ExpertOrderSummaryDto,
 } from './dto/order-summary-response.dto';
+import type {
+  ClientOrderTabCountsDto,
+  ExpertOrderTabCountsDto,
+} from './dto/order-tab-counts-response.dto';
 import type { PayOrderRequestDto } from './dto/pay-order-request.dto';
 import type { ScheduleChangeRequestDto } from './dto/schedule-change-request.dto';
 import type { UpdateOrderScheduleRequestDto } from './dto/update-order-schedule-request.dto';
@@ -239,6 +244,74 @@ export class OrdersService {
         count([OrderStatus.REFUND_REQUESTED, OrderStatus.REFUND_COMPLETED]),
       ]);
     return { inProgress, purchaseConfirmPending, reviewable, refund };
+  }
+
+  async getOrderTabCounts(
+    userId: string,
+    as: OrderListAs,
+  ): Promise<ClientOrderTabCountsDto | ExpertOrderTabCountsDto> {
+    const field = ORDER_LIST_USER_ID_FIELD[as];
+    const groups = ORDER_TAB_STATUSES[as];
+    const count = (statuses?: OrderStatus[]): Promise<number> =>
+      this.ordersRepository.countOrdersByUser({ userId, field, statuses });
+
+    if (as === ORDER_LIST_AS.EXPERT) {
+      const g = groups as (typeof ORDER_TAB_STATUSES)['expert'];
+      const [
+        all,
+        working,
+        workCompleted,
+        purchaseConfirmed,
+        settlement,
+        expired,
+        cancelRefund,
+      ] = await Promise.all([
+        count(),
+        count(g.working),
+        count(g.workCompleted),
+        count(g.purchaseConfirmed),
+        count(g.settlement),
+        count(g.expired),
+        count(g.cancelRefund),
+      ]);
+      return {
+        all,
+        working,
+        workCompleted,
+        purchaseConfirmed,
+        settlement,
+        expired,
+        cancelRefund,
+      };
+    }
+
+    const g = groups as (typeof ORDER_TAB_STATUSES)['client'];
+    const [
+      all,
+      working,
+      workCompleted,
+      purchaseConfirmed,
+      deadlineImminent,
+      expired,
+      cancelRefund,
+    ] = await Promise.all([
+      count(),
+      count(g.working),
+      count(g.workCompleted),
+      count(g.purchaseConfirmed),
+      count(g.deadlineImminent),
+      count(g.expired),
+      count(g.cancelRefund),
+    ]);
+    return {
+      all,
+      working,
+      workCompleted,
+      purchaseConfirmed,
+      deadlineImminent,
+      expired,
+      cancelRefund,
+    };
   }
 
   async createOrder(clientUserId: string, dto: CreateOrderRequestDto) {
