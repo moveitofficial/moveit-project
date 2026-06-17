@@ -33,6 +33,7 @@ export const orderListSelect = {
       expertProfile: { select: { businessName: true } },
     },
   },
+  review: { select: { id: true } },
 } satisfies Prisma.OrderSelect;
 
 export type OrderListRow = Prisma.OrderGetPayload<{
