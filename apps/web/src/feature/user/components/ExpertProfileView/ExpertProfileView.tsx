@@ -336,21 +336,39 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
     );
   }
 
-  const approvalLabel = profile.isApproved
-    ? '판매자 승인 완료'
-    : profile.isApplied
-      ? '승인 검토 중'
-      : '승인 미신청';
+  const getApprovalStatus = () => {
+    if (profile.isApproved) {
+      return {
+        label: '판매자 승인 완료',
+        className: styles.approvalBadgeApproved,
+      };
+    }
+    if (profile.rejectedAt !== null) {
+      return {
+        label: '판매자 승인 거절',
+        className: styles.approvalBadgeRejected,
+      };
+    }
+    if (profile.isApplied) {
+      return {
+        label: '판매자 승인 대기',
+        className: styles.approvalBadgeWaiting,
+      };
+    }
+    return null;
+  };
 
-  const approvalBadgeClassName = profile.isApproved
-    ? styles.approvalBadge
-    : styles.approvalBadgePending;
+  const approvalStatus = getApprovalStatus();
 
   return (
     <section className={styles.root}>
       <div className={styles.titleRow}>
         <h1 className={styles.title}>프로필 관리</h1>
-        <span className={approvalBadgeClassName}>{approvalLabel}</span>
+        {approvalStatus !== null && (
+          <span className={approvalStatus.className}>
+            {approvalStatus.label}
+          </span>
+        )}
       </div>
 
       {saveError !== null && <p className={styles.errorMessage}>{saveError}</p>}

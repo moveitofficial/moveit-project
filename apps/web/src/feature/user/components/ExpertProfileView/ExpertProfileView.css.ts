@@ -13,7 +13,9 @@ export const root = style({
 export const titleRow = style({
   display: 'flex',
   alignItems: 'center',
+  justifyContent: 'space-between',
   gap: '0.75rem',
+  width: '100%',
 });
 
 export const title = style({
@@ -24,17 +26,27 @@ export const title = style({
   margin: 0,
 });
 
-export const approvalBadge = style([
+export const approvalBadgeApproved = style([
   typography.f14B,
   {
     color: vars.color.blue300,
+    flexShrink: 0,
   },
 ]);
 
-export const approvalBadgePending = style([
+export const approvalBadgeWaiting = style([
   typography.f14B,
   {
-    color: vars.color.gray400,
+    color: vars.color.yellow100,
+    flexShrink: 0,
+  },
+]);
+
+export const approvalBadgeRejected = style([
+  typography.f14B,
+  {
+    color: vars.color.red200,
+    flexShrink: 0,
   },
 ]);
 
