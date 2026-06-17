@@ -6,7 +6,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { EXPERT_DETAIL_PORTFOLIO_PREVIEW_COUNT } from '../../constants';
-
 import * as viewStyles from '../ExpertDetailView/ExpertDetailView.css';
 
 import type {

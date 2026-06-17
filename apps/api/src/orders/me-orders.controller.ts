@@ -21,6 +21,7 @@ import {
 } from '../common/constants/errors';
 import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
 import {
+  ApiOneOfSuccessResponse,
   ApiPaginatedResponse,
   ApiSuccessResponse,
 } from '../common/decorators/api-success-response.decorator';
@@ -28,6 +29,15 @@ import { JwtAuth, RoleAuth } from '../common/decorators/jwt-auth.decorator';
 
 import { GetOrdersQueryDto } from './dto/get-orders-query.dto';
 import { OrderListItemDto } from './dto/order-response.dto';
+import { OrderSummaryQueryDto } from './dto/order-summary-query.dto';
+import {
+  ClientOrderSummaryDto,
+  ExpertOrderSummaryDto,
+} from './dto/order-summary-response.dto';
+import {
+  ClientOrderTabCountsDto,
+  ExpertOrderTabCountsDto,
+} from './dto/order-tab-counts-response.dto';
 import { UpdateOrderStatusResponseDto } from './dto/update-order-status-response.dto';
 import { OrdersService } from './orders.service';
 
@@ -47,6 +57,44 @@ export class MeOrdersController {
   getOrders(@Req() req: Request, @Query() query: GetOrdersQueryDto) {
     const user = req.user as JwtAccessUser;
     return this.ordersService.getOrders(user.userId, query);
+  }
+
+  @ApiOperation({
+    summary: '내 주문 요약 카드 카운트',
+    description:
+      'as=client: 작업중/구매확정 대기/리뷰 작성 가능/환불요청·완료, as=expert: 신규주문/작업중/마감임박/구매확정 대기',
+  })
+  @JwtAuth()
+  @ApiOneOfSuccessResponse(
+    HttpStatus.OK,
+    ClientOrderSummaryDto,
+    ExpertOrderSummaryDto,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get('summary')
+  getOrderSummary(@Req() req: Request, @Query() query: OrderSummaryQueryDto) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.getOrderSummary(user.userId, query.as);
+  }
+
+  @ApiOperation({
+    summary: '내 주문 탭별 카운트',
+    description:
+      '전체/작업·논의중/작업완료/구매확정/기한만료/환불·취소 공통, as=client는 마감임박, as=expert는 정산요청·완료 추가',
+  })
+  @JwtAuth()
+  @ApiOneOfSuccessResponse(
+    HttpStatus.OK,
+    ClientOrderTabCountsDto,
+    ExpertOrderTabCountsDto,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get('counts')
+  getOrderTabCounts(@Req() req: Request, @Query() query: OrderSummaryQueryDto) {
+    const user = req.user as JwtAccessUser;
+    return this.ordersService.getOrderTabCounts(user.userId, query.as);
   }
 
   @ApiOperation({ summary: '취소 요청' })

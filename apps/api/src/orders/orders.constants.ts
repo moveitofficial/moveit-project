@@ -1,4 +1,4 @@
-import { PaymentStatus } from '@prisma/client';
+import { OrderStatus, PaymentStatus } from '@prisma/client';
 
 export const DEADLINE_IMMINENT_DAYS = 3;
 export const PENDING_EXPIRY_DAYS = 3;
@@ -26,6 +26,48 @@ export type OrderListAs = (typeof ORDER_LIST_AS)[keyof typeof ORDER_LIST_AS];
 export const ORDER_LIST_USER_ID_FIELD = {
   [ORDER_LIST_AS.CLIENT]: 'clientUserId',
   [ORDER_LIST_AS.EXPERT]: 'expertUserId',
+} as const;
+
+// 마이페이지 탭별 카운트 그룹 — 요청 상태는 직전 상태에 합치고, 환불·취소 탭은 완료분만
+// 전문가: 마감임박 탭 없음 → DEADLINE_IMMINENT를 작업/논의중에 포함
+const ORDER_TAB_STATUSES_EXPERT = {
+  working: [
+    OrderStatus.NEGOTIATING,
+    OrderStatus.IN_PROGRESS,
+    OrderStatus.DEADLINE_IMMINENT,
+    OrderStatus.CANCEL_REQUESTED,
+  ],
+  workCompleted: [OrderStatus.WORK_COMPLETED],
+  purchaseConfirmed: [OrderStatus.PURCHASE_CONFIRMED],
+  settlement: [
+    OrderStatus.SETTLEMENT_REQUESTED,
+    OrderStatus.SETTLEMENT_COMPLETED,
+  ],
+  expired: [OrderStatus.EXPIRED, OrderStatus.REFUND_REQUESTED],
+  cancelRefund: [OrderStatus.PAYMENT_CANCELLED, OrderStatus.REFUND_COMPLETED],
+} satisfies Record<string, OrderStatus[]>;
+
+// 의뢰인: 정산 탭 없음 → SETTLEMENT를 구매확정에 포함
+const ORDER_TAB_STATUSES_CLIENT = {
+  working: [
+    OrderStatus.NEGOTIATING,
+    OrderStatus.IN_PROGRESS,
+    OrderStatus.CANCEL_REQUESTED,
+  ],
+  workCompleted: [OrderStatus.WORK_COMPLETED],
+  purchaseConfirmed: [
+    OrderStatus.PURCHASE_CONFIRMED,
+    OrderStatus.SETTLEMENT_REQUESTED,
+    OrderStatus.SETTLEMENT_COMPLETED,
+  ],
+  deadlineImminent: [OrderStatus.DEADLINE_IMMINENT],
+  expired: [OrderStatus.EXPIRED, OrderStatus.REFUND_REQUESTED],
+  cancelRefund: [OrderStatus.PAYMENT_CANCELLED, OrderStatus.REFUND_COMPLETED],
+} satisfies Record<string, OrderStatus[]>;
+
+export const ORDER_TAB_STATUSES = {
+  [ORDER_LIST_AS.CLIENT]: ORDER_TAB_STATUSES_CLIENT,
+  [ORDER_LIST_AS.EXPERT]: ORDER_TAB_STATUSES_EXPERT,
 } as const;
 
 // GET /users/me/orders 목록 — 정렬
