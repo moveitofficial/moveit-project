@@ -335,3 +335,11 @@ export async function getServiceDetailPageData(
     totalAmount: detail.totalAmount,
   };
 }
+
+export async function addFavoriteService(serviceId: string): Promise<void> {
+  await api.post<unknown>(`/favorites/services/${serviceId}`, {});
+}
+
+export async function removeFavoriteService(serviceId: string): Promise<void> {
+  await api.delete<unknown>(`/favorites/services/${serviceId}`);
+}

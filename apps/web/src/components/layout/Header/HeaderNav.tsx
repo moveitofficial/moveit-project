@@ -20,7 +20,7 @@ const navItems: { label: string; href: Route }[] = [
   { label: 'IT코칭', href: '/it-coaching' },
   { label: '프로젝트의뢰', href: '/project-request' },
   { label: '자유게시판', href: '/community' },
-  { label: 'FAQ', href: '#' },
+  { label: 'FAQ', href: '/faq' },
 ];
 
 export default function HeaderNav() {

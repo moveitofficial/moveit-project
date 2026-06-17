@@ -19,7 +19,7 @@ const footerMenu: { title: string; items: { label: string; href: Route }[] }[] =
   {
     title: '고객지원',
     items: [
-      { label: 'FAQ', href: '#' },
+      { label: 'FAQ', href: '/faq' },
       { label: '1:1문의', href: '#' },
     ],
   },
