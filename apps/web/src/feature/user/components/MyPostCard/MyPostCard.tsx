@@ -32,6 +32,7 @@ const CATEGORY_COLOR: Record<CommunityCategory, RectLabelColor> = {
 interface Props {
   post: MyPostListItem;
   profileImageUrl: string | null;
+  onEdit: (post: MyPostListItem) => void;
   onDelete: (postId: string) => void;
   isDeleting: boolean;
 }
@@ -39,6 +40,7 @@ interface Props {
 export default function MyPostCard({
   post,
   profileImageUrl,
+  onEdit,
   onDelete,
   isDeleting,
 }: Props) {
@@ -52,15 +54,15 @@ export default function MyPostCard({
           color={CATEGORY_COLOR[post.category]}
         />
         <div className={styles.actionsRow}>
-          <Link
-            href={detailHref}
+          <button
+            type="button"
             className={styles.actionButton}
-            onClick={(event) => {
-              event.stopPropagation();
+            onClick={() => {
+              onEdit(post);
             }}
           >
             수정
-          </Link>
+          </button>
           <button
             type="button"
             className={styles.actionButton}

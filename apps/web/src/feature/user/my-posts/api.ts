@@ -43,6 +43,33 @@ export function getMyPosts(
   );
 }
 
+export interface UpdateCommunityPostBody {
+  category?: CommunityCategory;
+  title?: string;
+  content?: string;
+}
+
+export function updateCommunityPost(
+  postId: string,
+  body: UpdateCommunityPostBody,
+): Promise<
+  ApiSuccess<{
+    id: string;
+    category: CommunityCategory;
+    title: string;
+    content: string;
+  }>
+> {
+  return api.patch<
+    ApiSuccess<{
+      id: string;
+      category: CommunityCategory;
+      title: string;
+      content: string;
+    }>
+  >(`/community-posts/${postId}`, body);
+}
+
 export function deleteCommunityPost(
   postId: string,
 ): Promise<ApiSuccess<{ id: string }>> {

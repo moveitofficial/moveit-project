@@ -10,6 +10,7 @@ import {
 import {
   deleteCommunityPost,
   getMyPosts,
+  updateCommunityPost,
   type MyPostListItem,
 } from './api';
 import {
@@ -18,6 +19,8 @@ import {
   type MyPostCategoryFilter,
   type MyPostSort,
 } from './constants';
+
+import type { CommunityCategory } from '@/mocks/types';
 
 export const MY_POSTS_QUERY_KEY = ['users', 'me', 'posts'] as const;
 
@@ -74,6 +77,26 @@ export function useDeleteMyPostMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteCommunityPost,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: MY_POSTS_QUERY_KEY });
+    },
+  });
+}
+
+export function useUpdateMyPostMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      postId,
+      body,
+    }: {
+      postId: string;
+      body: {
+        category: CommunityCategory;
+        title: string;
+        content: string;
+      };
+    }) => updateCommunityPost(postId, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: MY_POSTS_QUERY_KEY });
     },

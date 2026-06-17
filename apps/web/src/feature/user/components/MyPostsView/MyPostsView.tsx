@@ -5,8 +5,11 @@ import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
 import { MyPostCard } from '../MyPostCard';
+import { MyPostEditModal } from '../MyPostEditModal';
 
 import * as styles from './MyPostsView.css';
+
+import type { MyPostListItem } from '@/feature/user/my-posts/api';
 
 import {
   MY_POST_CATEGORY_FILTERS,
@@ -25,6 +28,7 @@ import { useMyUserQuery } from '@/feature/user/queries';
 export default function MyPostsView() {
   const [category, setCategory] = useState<MyPostCategoryFilter>('ALL');
   const [sort, setSort] = useState<MyPostSort>('latest');
+  const [editingPost, setEditingPost] = useState<MyPostListItem | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -85,8 +89,19 @@ export default function MyPostsView() {
 
   const errorMessage = getErrorMessage();
 
+  const handleEdit = (post: MyPostListItem) => {
+    setEditingPost(post);
+  };
+
   return (
     <section className={styles.container}>
+      <MyPostEditModal
+        isOpen={editingPost !== null}
+        post={editingPost}
+        onClose={() => {
+          setEditingPost(null);
+        }}
+      />
       <h1 className={styles.pageTitle}>내가 쓴 게시글</h1>
 
       <div className={styles.toolbar}>
@@ -154,6 +169,7 @@ export default function MyPostsView() {
                   key={post.id}
                   post={post}
                   profileImageUrl={user?.profileImageUrl ?? null}
+                  onEdit={handleEdit}
                   onDelete={handleDelete}
                   isDeleting={deletingPostId === post.id}
                 />
