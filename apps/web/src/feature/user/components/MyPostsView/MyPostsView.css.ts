@@ -5,7 +5,7 @@ import { style } from '@vanilla-extract/css';
 export const container = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: '24px',
+  gap: '1rem',
 });
 
 export const pageTitle = style([
@@ -21,12 +21,10 @@ export const toolbar = style({
   flexDirection: 'row',
   alignItems: 'center',
   justifyContent: 'space-between',
-  gap: '24px',
   flexWrap: 'wrap',
   padding: '1rem 1.5rem',
-
   borderRadius: '0.75rem',
-  border: `1px solid var(--Line-Line-200, #E6E6E6)`,
+  border: `1px solid ${vars.color.line200}`,
 });
 
 export const categoryTabs = style({
@@ -34,7 +32,7 @@ export const categoryTabs = style({
   flexDirection: 'row',
   flexWrap: 'wrap',
   alignItems: 'center',
-  gap: '24px',
+  gap: '1.5rem',
 });
 
 export const categoryTab = style([
@@ -59,7 +57,7 @@ export const sortTabs = style({
   flexWrap: 'wrap',
   alignItems: 'center',
   justifyContent: 'flex-end',
-  gap: '24px',
+  gap: '1.5rem',
 });
 
 export const sortTab = style([
@@ -81,7 +79,7 @@ export const sortTabActive = style({
 export const list = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: '16px',
+  gap: '1rem',
 });
 
 export const sentinel = style({
