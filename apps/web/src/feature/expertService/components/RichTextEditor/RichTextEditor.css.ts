@@ -40,36 +40,10 @@ export const button = style({
   },
 });
 
-export const colorWrapper = style({
-  position: 'relative',
-  display: 'flex',
-  alignItems: 'center',
-});
-
-export const colorPicker = style({
-  position: 'absolute',
-  top: '100%',
-  left: 0,
-  marginTop: '8px',
-  padding: '8px',
-  backgroundColor: vars.color.white,
-  borderRadius: '8px',
-  border: `1px solid ${vars.color.line200}`,
-  display: 'grid',
-  gridTemplateColumns: 'repeat(4, 1fr)',
-  gap: '6px',
-  zIndex: 10,
-});
-
-export const swatch = style({
-  width: '24px',
-  height: '24px',
-  borderRadius: '50%',
-  border: `1px solid ${vars.color.line200}`,
-  cursor: 'pointer',
-  ':hover': {
-    transform: 'scale(1.15)',
-  },
+// 현재 선택/커서에 적용된 서식 버튼 표시.
+export const buttonActive = style({
+  backgroundColor: vars.color.blue50,
+  color: vars.color.blue300,
 });
 
 export const area = style([
