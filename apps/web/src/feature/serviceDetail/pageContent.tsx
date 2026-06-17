@@ -6,9 +6,20 @@ import { resolveViewerRole } from './utils';
 
 import type { ServiceDetailViewerRole } from './types';
 import type { ServiceGroupName } from '@/mocks/types';
+import type { Role } from '@/types/enums';
 import type { Metadata } from 'next';
 
-import { getMockAuthUser } from '@/mocks/user';
+import { getMe } from '@/feature/signup/api';
+
+// 로그인 쿠키로 현재 사용자 role을 구한다. 비로그인이면 null(=게스트).
+async function getCurrentUserRole(): Promise<Role | null> {
+  try {
+    const { data } = await getMe();
+    return data.role;
+  } catch {
+    return null;
+  }
+}
 
 interface ServiceDetailPageResult {
   data: NonNullable<Awaited<ReturnType<typeof getServiceDetailPageData>>>;
@@ -32,11 +43,8 @@ export async function getServiceDetailPageResult(
     return null;
   }
 
-  const currentUser = getMockAuthUser();
-  const viewerRole = resolveViewerRole(
-    currentUser?.id ?? null,
-    data.service.expert.id,
-  );
+  const role = await getCurrentUserRole();
+  const viewerRole = resolveViewerRole(role);
 
   return { data, viewerRole };
 }

@@ -160,6 +160,33 @@ export const date = style([
   },
 ]);
 
+export const emptyBox = style({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '24px',
+  marginTop: '8px',
+  padding: '72px 0',
+  borderRadius: '16px',
+  border: `1px solid ${vars.color.line200}`,
+  backgroundColor: vars.color.white,
+});
+
+export const emptyIllustration = style({
+  width: '320px',
+  height: '168px',
+});
+
+export const emptyText = style([
+  typography.f18EB,
+  {
+    margin: 0,
+    color: vars.color.gray400,
+    textAlign: 'center',
+  },
+]);
+
 export const moreButton = style([
   typography.f14R,
   {

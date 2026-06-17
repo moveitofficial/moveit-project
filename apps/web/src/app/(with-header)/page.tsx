@@ -1,5 +1,6 @@
 import { Card, type CardService } from '@repo/ui/Card';
 import { type Route } from 'next';
+import Link from 'next/link';
 
 import * as styles from './page.css';
 
@@ -23,6 +24,7 @@ import { Browse } from '@/feature/main/components/Browse';
 import { Hero } from '@/feature/main/components/Hero';
 import { Showcase } from '@/feature/main/components/Showcase';
 import { StripBanner } from '@/feature/main/components/StripBanner';
+import { buildServiceDetailHref } from '@/feature/serviceDetail/utils';
 import { getMe } from '@/feature/signup/api';
 import { getTechStackLabel } from '@/mocks/metadata';
 
@@ -70,11 +72,16 @@ const toExpertCardExpert = (e: MainExpertItem) => ({
 
 function serviceCards(items: MainServiceItem[]) {
   return items.map((s) => (
-    <Card
+    <Link
       key={s.id}
-      service={toCardService(s)}
-      expertTechStacks={s.techStacks.map((name) => getTechStackLabel(name))}
-    />
+      href={buildServiceDetailHref(s.id, s.categoryRef.group)}
+      className={styles.cardLink}
+    >
+      <Card
+        service={toCardService(s)}
+        expertTechStacks={s.techStacks.map((name) => getTechStackLabel(name))}
+      />
+    </Link>
   ));
 }
 

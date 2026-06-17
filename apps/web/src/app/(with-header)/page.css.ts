@@ -29,6 +29,11 @@ export const cardList = style({
   gap: '24px',
 });
 
+export const cardLink = style({
+  textDecoration: 'none',
+  color: 'inherit',
+});
+
 export const communityList = style({
   display: 'flex',
   flexDirection: 'column',

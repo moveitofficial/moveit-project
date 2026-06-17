@@ -28,7 +28,7 @@ export const heroControls = style({
 export const categoryFilters = style({
   display: 'flex',
   flexWrap: 'nowrap',
-  gap: '8px',
+  gap: '16px',
 });
 
 export const heroTextGroup = style({
@@ -87,6 +87,7 @@ export const categoryChip = style([
 
 export const categoryChipActive = style({
   color: vars.color.white,
+  fontWeight: vars.font.weight.extraBold,
 });
 
 export const featuredBand = style({
@@ -140,7 +141,7 @@ export const listSection = style({
   display: 'flex',
   flexDirection: 'row',
   alignItems: 'flex-start',
-  gap: '24px',
+  gap: '56px',
 });
 
 export const listContent = style({
@@ -155,11 +156,11 @@ export const sortTabs = style({
   display: 'flex',
   flexWrap: 'wrap',
   justifyContent: 'flex-end',
-  gap: '16px',
+  gap: '24px',
 });
 
 export const sortTab = style([
-  typography.f14R,
+  typography.f16R,
   {
     color: vars.color.gray400,
     textDecoration: 'none',
@@ -167,7 +168,7 @@ export const sortTab = style([
 ]);
 
 export const sortTabActive = style({
-  fontWeight: vars.font.weight.bold,
+  fontWeight: vars.font.weight.extraBold,
   color: vars.color.blue300,
 });
 

@@ -1,6 +1,7 @@
 'use client';
 
 import starFill from '@public/Card/starFill.svg';
+import reviewEmpty from '@public/serviceDetail/reviewEmpty.svg';
 import { formatDate } from '@repo/utils';
 import clsx from 'clsx';
 import { Star } from 'lucide-react';
@@ -130,6 +131,33 @@ export default function ServiceReviewSection({
       setIsLoading(false);
     }
   };
+
+  const isEmpty = totalCount === 0;
+
+  if (isEmpty) {
+    return (
+      <section id="reviews" className={sectionStyles.section}>
+        <div className={styles.header}>
+          <h2 className={sectionStyles.sectionTitle}>리뷰</h2>
+        </div>
+
+        <div className={styles.emptyBox}>
+          <Image
+            src={reviewEmpty}
+            alt=""
+            width={320}
+            height={168}
+            className={styles.emptyIllustration}
+          />
+          <p className={styles.emptyText}>
+            새롭게 등록된 서비스로
+            <br aria-hidden />
+            아직 리뷰가 없어요
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="reviews" className={sectionStyles.section}>
