@@ -75,6 +75,7 @@ export default function ServiceDetailHero({ data, viewerRole }: Props) {
 
             {showFavorite ? (
               <ServiceDetailFavoriteButton
+                serviceId={service.id}
                 initialFavorite={service.isFavorite}
                 favoriteCount={favoriteCount}
               />

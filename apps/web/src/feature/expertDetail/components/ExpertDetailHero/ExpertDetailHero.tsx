@@ -2,11 +2,12 @@
 
 import expertImageFallback from '@public/profile.svg';
 import { RectLabel } from '@repo/ui/RectLabel';
+import { useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { Heart } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   addFavoriteExpert,
@@ -28,6 +29,10 @@ import type {
 } from '../../types';
 
 import { ConsultationSuccessModal } from '@/feature/consultation/components/ConsultationSuccessModal';
+import {
+  FAVORITES_KEY,
+  useFavoriteExpertsQuery,
+} from '@/feature/favorites/queries';
 import { getTechStackLabel } from '@/mocks/metadata';
 
 interface Props {
@@ -116,10 +121,26 @@ function InfoBar({ info }: { info: ExpertDetailBusinessInfo }) {
 export default function ExpertDetailHero({ data, viewer }: Props) {
   const { expert, displayStats, businessInfo, favoriteCount, portfolioExpertContext } =
     data;
-  const initialFavorite = expert.isFavorite;
-  const [isFavorite, setIsFavorite] = useState(initialFavorite);
-  const favoriteCountDelta =
-    isFavorite === initialFavorite ? 0 : isFavorite ? 1 : -1;
+  // 찜 여부는 찜목록(클라이언트 캐시)에서 렌더 시점에 판정한다.
+  // SSR/소프트네비 시 상세의 isFavorite가 어긋나도, 찜목록 캐시 기준이라 즉시 정확.
+  const queryClient = useQueryClient();
+  const { data: favoriteExperts } = useFavoriteExpertsQuery();
+  const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(
+    null,
+  );
+  // 진입 시점의 찜 상태 기준(= favoriteCount가 반영하는 상태). 카운트 증감 계산용.
+  const [favoriteCountBase, setFavoriteCountBase] = useState<boolean | null>(
+    null,
+  );
+
+  const queryFavorite =
+    favoriteExperts === undefined
+      ? null
+      : favoriteExperts.some((item) => item.id === expert.id);
+  const serverFavorite = queryFavorite ?? expert.isFavorite;
+  const isFavorite = optimisticFavorite ?? serverFavorite;
+  const countBase = favoriteCountBase ?? expert.isFavorite;
+  const favoriteCountDelta = isFavorite === countBase ? 0 : isFavorite ? 1 : -1;
   const displayFavoriteCount = favoriteCount + favoriteCountDelta;
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
@@ -130,6 +151,13 @@ export default function ExpertDetailHero({ data, viewer }: Props) {
   // 본인 페이지는 받은 찜 수만 표시(토글 불가), 그 외는 찜 버튼.
   const showReport = viewer === 'client';
   const canInteract = canInteractWithExpert(viewer);
+
+  // 첫 조회 결과로 카운트 기준을 한 번만 고정(이후 토글 증감이 정확히 반영되도록).
+  useEffect(() => {
+    if (queryFavorite !== null && favoriteCountBase === null) {
+      setFavoriteCountBase(queryFavorite);
+    }
+  }, [queryFavorite, favoriteCountBase]);
 
   const openRestrictedAction = () => {
     setIsRestrictionOpen(true);
@@ -142,15 +170,21 @@ export default function ExpertDetailHero({ data, viewer }: Props) {
     }
 
     const nextFavorite = !isFavorite;
-    setIsFavorite(nextFavorite);
+    setOptimisticFavorite(nextFavorite);
 
     void (async () => {
       try {
         await (nextFavorite
           ? addFavoriteExpert(expert.id)
           : removeFavoriteExpert(expert.id));
+        // 찜목록 캐시 갱신 후 낙관값 해제 → 서버 기준으로 동기화.
+        await queryClient.invalidateQueries({
+          queryKey: [...FAVORITES_KEY, 'experts'],
+        });
       } catch {
-        setIsFavorite(!nextFavorite);
+        // 실패 시에도 낙관값 해제 → 서버 기준 복귀
+      } finally {
+        setOptimisticFavorite(null);
       }
     })();
   };
