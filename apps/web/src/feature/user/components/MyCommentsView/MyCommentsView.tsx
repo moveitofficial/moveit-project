@@ -5,8 +5,11 @@ import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
 import { MyCommentCard } from '../MyCommentCard';
+import { MyCommentEditModal } from '../MyCommentEditModal';
 
 import * as styles from './MyCommentsView.css';
+
+import type { MyCommentListItem } from '@/feature/user/my-comments/api';
 
 import {
   MY_COMMENT_SORT_OPTIONS,
@@ -20,6 +23,9 @@ import {
 
 export default function MyCommentsView() {
   const [sort, setSort] = useState<MyCommentSort>('latest');
+  const [editingComment, setEditingComment] = useState<MyCommentListItem | null>(
+    null,
+  );
   const listRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -78,8 +84,19 @@ export default function MyCommentsView() {
 
   const errorMessage = getErrorMessage();
 
+  const handleEdit = (comment: MyCommentListItem) => {
+    setEditingComment(comment);
+  };
+
   return (
     <section className={styles.container}>
+      <MyCommentEditModal
+        isOpen={editingComment !== null}
+        comment={editingComment}
+        onClose={() => {
+          setEditingComment(null);
+        }}
+      />
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>내가 쓴 댓글</h1>
         <div className={styles.sortTabs}>
@@ -121,6 +138,7 @@ export default function MyCommentsView() {
                 <MyCommentCard
                   key={comment.id}
                   comment={comment}
+                  onEdit={handleEdit}
                   onDelete={handleDelete}
                   isDeleting={deletingCommentId === comment.id}
                 />

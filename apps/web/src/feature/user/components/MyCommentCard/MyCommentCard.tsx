@@ -30,11 +30,17 @@ const CATEGORY_COLOR: Record<CommunityCategory, RectLabelColor> = {
 
 interface Props {
   comment: MyCommentListItem;
+  onEdit: (comment: MyCommentListItem) => void;
   onDelete: (postId: string, commentId: string) => void;
   isDeleting: boolean;
 }
 
-export default function MyCommentCard({ comment, onDelete, isDeleting }: Props) {
+export default function MyCommentCard({
+  comment,
+  onEdit,
+  onDelete,
+  isDeleting,
+}: Props) {
   const postHref = `/community/${comment.post.id}` as Route;
 
   return (
@@ -50,9 +56,15 @@ export default function MyCommentCard({ comment, onDelete, isDeleting }: Props) 
           </Link>
         </div>
         <div className={styles.actionsRow}>
-          <Link href={postHref} className={styles.actionButton}>
+          <button
+            type="button"
+            className={styles.actionButton}
+            onClick={() => {
+              onEdit(comment);
+            }}
+          >
             수정
-          </Link>
+          </button>
           <button
             type="button"
             className={styles.actionButton}

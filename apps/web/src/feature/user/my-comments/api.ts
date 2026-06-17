@@ -42,6 +42,17 @@ export function getMyComments(
   );
 }
 
+export function updateCommunityComment(
+  postId: string,
+  commentId: string,
+  body: { content: string },
+): Promise<ApiSuccess<{ id: string; content: string }>> {
+  return api.patch<ApiSuccess<{ id: string; content: string }>>(
+    `/community-posts/${postId}/comments/${commentId}`,
+    body,
+  );
+}
+
 export function deleteCommunityComment(
   postId: string,
   commentId: string,

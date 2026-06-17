@@ -9,6 +9,7 @@ import {
 import {
   deleteCommunityComment,
   getMyComments,
+  updateCommunityComment,
   type MyCommentListItem,
 } from './api';
 import {
@@ -43,6 +44,24 @@ export function useDeleteMyCommentMutation() {
       postId: string;
       commentId: string;
     }) => deleteCommunityComment(postId, commentId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: MY_COMMENTS_QUERY_KEY });
+    },
+  });
+}
+
+export function useUpdateMyCommentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      postId,
+      commentId,
+      content,
+    }: {
+      postId: string;
+      commentId: string;
+      content: string;
+    }) => updateCommunityComment(postId, commentId, { content }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: MY_COMMENTS_QUERY_KEY });
     },
