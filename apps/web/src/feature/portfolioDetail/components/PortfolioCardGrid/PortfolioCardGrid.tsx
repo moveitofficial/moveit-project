@@ -11,11 +11,19 @@ import * as styles from './PortfolioCardGrid.css';
 import type { PortfolioModalExpertContext } from '../../types';
 import type { PortfolioDetail, PortfolioListItem } from '@/mocks/types';
 
+const THUMB_SIZE = {
+  default: 163,
+  large: 276,
+} as const;
+
+type PortfolioCardGridSize = keyof typeof THUMB_SIZE;
+
 interface Props {
   portfolios: PortfolioListItem[];
   expert: PortfolioModalExpertContext;
   expertUserId?: string;
   serviceId?: string;
+  size?: PortfolioCardGridSize;
 }
 
 export default function PortfolioCardGrid({
@@ -23,6 +31,7 @@ export default function PortfolioCardGrid({
   expert,
   expertUserId,
   serviceId,
+  size = 'default',
 }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,9 +71,12 @@ export default function PortfolioCardGrid({
     return null;
   }
 
+  const isLarge = size === 'large';
+  const thumbPx = THUMB_SIZE[size];
+
   return (
     <>
-      <div className={styles.grid}>
+      <div className={isLarge ? styles.gridLarge : styles.grid}>
         {portfolios.map((portfolio) => (
           <button
             key={portfolio.id}
@@ -74,17 +86,23 @@ export default function PortfolioCardGrid({
               handleCardClick(portfolio.id);
             }}
           >
-            <span className={styles.card}>
-              <span className={styles.thumbnailWrapper}>
+            <span className={isLarge ? styles.cardLarge : styles.card}>
+              <span
+                className={
+                  isLarge ? styles.thumbnailWrapperLarge : styles.thumbnailWrapper
+                }
+              >
                 <Image
                   src={portfolio.thumbnailUrl}
                   alt={portfolio.title}
-                  width={163}
-                  height={163}
-                  className={styles.thumbnail}
+                  width={thumbPx}
+                  height={thumbPx}
+                  className={isLarge ? styles.thumbnailLarge : styles.thumbnail}
                 />
               </span>
-              <span className={styles.cardTitle}>{portfolio.title}</span>
+              <span className={isLarge ? styles.cardTitleLarge : styles.cardTitle}>
+                {portfolio.title}
+              </span>
             </span>
           </button>
         ))}

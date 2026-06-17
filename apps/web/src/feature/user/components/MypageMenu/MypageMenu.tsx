@@ -42,7 +42,7 @@ export default function MypageMenu({ role }: Props) {
                   href={{ pathname: item.href }}
                   className={clsx(
                     styles.menuLink,
-                    isActive && styles.menuLinkActive,
+                    isActive ? styles.menuLinkActive : styles.menuLinkInactive,
                   )}
                   aria-current={isActive ? 'page' : undefined}
                 >
