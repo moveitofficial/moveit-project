@@ -361,6 +361,9 @@ export class MyReviewListItemResponseDto {
   @ApiProperty({ format: 'uuid' })
   declare id: string;
 
+  @ApiProperty({ format: 'uuid' })
+  declare orderId: string;
+
   @ApiProperty({
     example: 5,
     minimum: 1,
