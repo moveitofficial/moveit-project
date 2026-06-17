@@ -45,7 +45,7 @@ export async function uploadConsultationFiles(
   }
 
   return authMultipartPost<UploadConsultationFilesResponse>(
-    '/consultation/rooms/new/upload',
+    '/chat/rooms/new/upload',
     formData,
   );
 }
@@ -58,7 +58,7 @@ export async function createConsultationRoom(params: {
   files?: ConsultationChatFile[];
 }): Promise<CreateConsultationRoomResponse> {
   const response = await api.post<ApiSuccess<CreateConsultationRoomResponse>>(
-    '/consultation/rooms',
+    '/chat/rooms',
     params,
   );
 

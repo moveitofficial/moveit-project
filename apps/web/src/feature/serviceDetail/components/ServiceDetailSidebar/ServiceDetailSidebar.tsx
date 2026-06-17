@@ -14,12 +14,14 @@ interface Props {
   service: ServiceDetail;
   viewerRole: ServiceDetailViewerRole;
   contactTime: ConsultationInquiryContext['contactTime'];
+  totalAmount: number;
 }
 
 export default function ServiceDetailSidebar({
   service,
   viewerRole,
   contactTime,
+  totalAmount,
 }: Props) {
   const consultationContext: ConsultationInquiryContext = {
     expertUserId: service.expert.id,
@@ -27,6 +29,10 @@ export default function ServiceDetailSidebar({
     companyName: service.expert.companyName,
     contactTime,
   };
+
+  const isCoaching = service.categoryRef.group === 'IT_COACHING';
+  const priceUnit = isCoaching ? '원 / 한달' : '원';
+  const durationLabel = isCoaching ? '월기준' : '작업 기간';
 
   return (
     <aside>
@@ -36,12 +42,12 @@ export default function ServiceDetailSidebar({
           <p className={styles.priceValue}>
             {service.servicePrice.toLocaleString()}
           </p>
-          <p className={styles.priceUnit}>원 / 기본페이지</p>
+          <p className={styles.priceUnit}>{priceUnit}</p>
         </div>
 
         <div className={styles.infoBox}>
           <div className={styles.infoRow}>
-            <p className={styles.infoLabel}>작업 기간</p>
+            <p className={styles.infoLabel}>{durationLabel}</p>
             <p className={styles.infoValue}>{service.workDuration}일</p>
           </div>
           <div className={styles.infoRow}>
@@ -63,6 +69,8 @@ export default function ServiceDetailSidebar({
         {viewerRole === 'client' ? (
           <ServiceDetailSidebarClientActions
             consultationContext={consultationContext}
+            orderName={service.title}
+            amount={totalAmount}
           />
         ) : null}
       </div>

@@ -3,7 +3,9 @@ import { typography } from '@repo/styles/typography';
 import { style } from '@vanilla-extract/css';
 
 export const modalPanel = style({
-  height: 'min(90vh, 820px)',
+  height: 'min(90vh, 1020px)',
+  // 베이스 Modal의 maxHeight(820)를 이 모달에서만 덮어쓴다.
+  maxHeight: 'min(90vh, 1020px)',
 });
 
 export const header = style({
@@ -101,18 +103,13 @@ export const closeButton = style({
   cursor: 'pointer',
 });
 
-export const body = style({
-  display: 'flex',
-  flexDirection: 'column',
-  flex: 1,
-  minHeight: 0,
-  overflowY: 'auto',
-});
-
+// 왼쪽은 고정, 오른쪽(이미지)만 독립 스크롤되도록 행 전체가 패널 높이를 채운다.
 export const contentRow = style({
   display: 'flex',
   flexDirection: 'row',
-  alignItems: 'flex-start',
+  alignItems: 'stretch',
+  flex: 1,
+  minHeight: 0,
 });
 
 export const leftPanel = style({
@@ -121,17 +118,19 @@ export const leftPanel = style({
   gap: '24px',
   width: '320px',
   flexShrink: 0,
-  padding: '0 24px 24px',
+  padding: '24px',
   borderRight: `1px solid ${vars.color.line200}`,
   boxSizing: 'border-box',
+  overflowY: 'auto',
 });
 
 export const rightPanel = style({
   flex: 1,
   minWidth: 0,
-  padding: '0 24px 24px',
+  padding: '24px',
   backgroundColor: vars.color.background100,
   boxSizing: 'border-box',
+  overflowY: 'auto',
 });
 
 export const titleRow = style({
@@ -140,8 +139,6 @@ export const titleRow = style({
   alignItems: 'flex-start',
   justifyContent: 'space-between',
   gap: '12px',
-  padding: '24px 24px 16px',
-  boxSizing: 'border-box',
 });
 
 export const title = style([
@@ -163,6 +160,10 @@ export const favoriteButton = style({
   cursor: 'pointer',
   color: vars.color.black500,
   flexShrink: 0,
+});
+
+export const favoriteButtonActive = style({
+  color: vars.color.red200,
 });
 
 export const favoriteCount = style([

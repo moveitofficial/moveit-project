@@ -51,6 +51,8 @@ interface ServiceDetailApi {
   faqs: ServiceDetail['faqs'];
   orderCount: number;
   favoriteCount: number;
+  purchaseRate: number | null;
+  totalAmount: number;
 }
 
 interface ServiceListItemApi {
@@ -317,6 +319,7 @@ export async function getServiceDetailPageData(
     ...FALLBACK_EXPERT_STATS,
     totalReviews: reviews.pagination.totalCount,
     averageRating: reviews.averageRating,
+    purchaseRate: detail.purchaseRate ?? 0,
   };
 
   return {
@@ -329,5 +332,6 @@ export async function getServiceDetailPageData(
     contactTime: MOCK_EXPERT_CONTACT_TIME,
     reviewsHasMore: reviews.pagination.hasNext,
     relatedServiceTechStacks: otherServices.techStacksByServiceId,
+    totalAmount: detail.totalAmount,
   };
 }
