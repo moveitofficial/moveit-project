@@ -61,6 +61,20 @@ function loadTossPayments(): Promise<TossPaymentsFactory> {
   return loadPromise;
 }
 
+interface TossCardOptions {
+  useEscrow: boolean;
+  flowMode: 'DEFAULT';
+  useCardPoint: boolean;
+  useAppCardOnly: boolean;
+}
+
+const DEFAULT_CARD_OPTIONS: TossCardOptions = {
+  useEscrow: false,
+  flowMode: 'DEFAULT',
+  useCardPoint: false,
+  useAppCardOnly: false,
+};
+
 interface RequestServicePaymentParams {
   serviceId: string;
   orderName: string;
@@ -83,11 +97,34 @@ export async function requestServicePayment(
     orderName: params.orderName,
     successUrl: `${origin}${PAYMENT_SUCCESS_PATH}?serviceId=${params.serviceId}`,
     failUrl: `${origin}${PAYMENT_FAIL_PATH}`,
-    card: {
-      useEscrow: false,
-      flowMode: 'DEFAULT',
-      useCardPoint: false,
-      useAppCardOnly: false,
-    },
+    card: DEFAULT_CARD_OPTIONS,
+  });
+}
+
+interface RequestOrderPaymentParams {
+  orderId: string;
+  roomId: string;
+  orderName: string;
+  amount: number;
+}
+
+// 채팅에서 이미 만들어진 주문(PENDING)을 결제한다. 복귀 후 /orders/:id/pay로 확정.
+export async function requestOrderPayment(
+  params: RequestOrderPaymentParams,
+): Promise<void> {
+  const TossPayments = await loadTossPayments();
+  const tossPayments = TossPayments(TOSS_CLIENT_KEY);
+  const payment = tossPayments.payment({ customerKey: crypto.randomUUID() });
+
+  const { origin } = globalThis.location;
+  await payment.requestPayment({
+    method: 'CARD',
+    amount: { currency: 'KRW', value: params.amount },
+    // 백엔드 payOrder가 우리 주문 id로 Toss 승인을 확정하므로, Toss orderId도 주문 id로 맞춘다.
+    orderId: params.orderId,
+    orderName: params.orderName,
+    successUrl: `${origin}${PAYMENT_SUCCESS_PATH}?payOrderId=${params.orderId}&roomId=${params.roomId}`,
+    failUrl: `${origin}${PAYMENT_FAIL_PATH}`,
+    card: DEFAULT_CARD_OPTIONS,
   });
 }

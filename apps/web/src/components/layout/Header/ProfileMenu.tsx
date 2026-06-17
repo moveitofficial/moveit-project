@@ -18,13 +18,13 @@ import { useUserStore } from '@/stores/user-store';
 
 const CLIENT_MENU: { label: string; href: Route }[] = [
   { label: '내정보', href: '/mypage' },
-  { label: '메세지', href: '#' },
+  { label: '메세지', href: '/service/message' },
   { label: '일정관리', href: '#' },
 ];
 
 const EXPERT_MENU: { label: string; href: Route }[] = [
   { label: '내정보', href: '/mypage' },
-  { label: '메세지', href: '#' },
+  { label: '메세지', href: '/service/message' },
   { label: '서비스 관리', href: '#' },
   { label: '일정관리', href: '#' },
 ];

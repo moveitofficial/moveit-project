@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-import { confirmOrder } from '@/feature/payment/api';
+import { confirmOrder, payOrder } from '@/feature/payment/api';
 import * as styles from '@/feature/payment/result.css';
 
 
@@ -27,6 +28,9 @@ const COPY: Record<Status, { title: string; description: string }> = {
 
 export default function PaymentSuccessPage() {
   const [status, setStatus] = useState<Status>('confirming');
+  // 채팅 결제였으면 끝나고 그 방으로 돌아간다.
+  const [returnRoomId, setReturnRoomId] = useState<string | null>(null);
+  const router = useRouter();
   const calledRef = useRef(false);
 
   useEffect(() => {
@@ -36,35 +40,59 @@ export default function PaymentSuccessPage() {
     calledRef.current = true;
 
     const params = new URLSearchParams(globalThis.location.search);
-    const serviceId = params.get('serviceId');
-    const orderId = params.get('orderId');
     const paymentKey = params.get('paymentKey');
     const amount = params.get('amount');
+    // 채팅 거래요청 결제(기존 주문) 식별자
+    const payOrderId = params.get('payOrderId');
+    const roomId = params.get('roomId');
+    // 서비스 상세 직접구매 식별자
+    const serviceId = params.get('serviceId');
+    const orderId = params.get('orderId');
 
-    if (
-      serviceId === null ||
-      orderId === null ||
-      paymentKey === null ||
-      amount === null
-    ) {
+    if (paymentKey === null || amount === null) {
       setStatus('error');
       return;
     }
 
     void (async () => {
       try {
-        await confirmOrder({
-          serviceId,
-          orderId,
-          paymentKey,
-          amount: Number(amount),
-        });
+        if (payOrderId !== null) {
+          await payOrder(payOrderId, {
+            paymentKey,
+            amount: Number(amount),
+            roomId: roomId ?? undefined,
+          });
+          setReturnRoomId(roomId);
+        } else if (serviceId !== null && orderId !== null) {
+          await confirmOrder({
+            serviceId,
+            orderId,
+            paymentKey,
+            amount: Number(amount),
+          });
+        } else {
+          setStatus('error');
+          return;
+        }
         setStatus('success');
       } catch {
         setStatus('error');
       }
     })();
   }, []);
+
+  // 채팅 결제 성공 시 잠시 후 그 방으로 이동.
+  useEffect(() => {
+    if (status !== 'success' || returnRoomId === null) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      router.replace(`/service/message?roomId=${returnRoomId}`);
+    }, 1500);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [status, returnRoomId, router]);
 
   const copy = COPY[status];
 
@@ -74,9 +102,21 @@ export default function PaymentSuccessPage() {
       <p className={styles.description}>{copy.description}</p>
       {status === 'confirming' ? null : (
         <div className={styles.actions}>
-          <Link href="/" className={styles.primaryLink}>
-            홈으로
-          </Link>
+          {returnRoomId === null ? (
+            <Link href="/" className={styles.primaryLink}>
+              홈으로
+            </Link>
+          ) : (
+            <Link
+              href={{
+                pathname: '/service/message',
+                query: { roomId: returnRoomId },
+              }}
+              className={styles.primaryLink}
+            >
+              채팅으로 돌아가기
+            </Link>
+          )}
         </div>
       )}
     </div>

@@ -18,6 +18,11 @@ export const MY_POST_CATEGORY_FILTERS: {
   { id: 'FREE', label: '자유' },
 ];
 
+export const MY_POST_EDIT_CATEGORIES = MY_POST_CATEGORY_FILTERS.filter(
+  (filter): filter is { id: CommunityCategory; label: string } =>
+    filter.id !== 'ALL',
+);
+
 export const MY_POST_SORT_OPTIONS: { id: MyPostSort; label: string }[] = [
   { id: 'latest', label: '최신순' },
   { id: 'likes', label: '좋아요순' },

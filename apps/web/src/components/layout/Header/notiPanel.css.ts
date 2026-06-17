@@ -69,7 +69,20 @@ export const emptyText = style({
 
 export const item = style({
   display: 'flex',
+  alignItems: 'flex-start',
   gap: '12px',
+});
+
+export const itemMain = style({
+  flex: 1,
+  minWidth: 0,
+  display: 'flex',
+  gap: '12px',
+  padding: 0,
+  border: 'none',
+  background: 'none',
+  textAlign: 'left',
+  cursor: 'pointer',
 });
 
 export const avatar = style({

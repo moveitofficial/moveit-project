@@ -6,6 +6,7 @@ import { typography } from '@repo/styles/typography';
 import clsx from 'clsx';
 import { MessageSquareMore } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { formatDotDate } from './format';
 import * as styles from './Header.css';
@@ -25,10 +26,12 @@ import {
 function MessageRow({
   notification,
   role,
+  onSelect,
   onDelete,
 }: {
   notification: ChatNotification;
   role: Role;
+  onSelect: (roomId: string) => void;
   onDelete: (roomId: string) => void;
 }) {
   const other =
@@ -36,44 +39,50 @@ function MessageRow({
 
   return (
     <li className={menu.item}>
-      {/* TODO: 채팅방 라우트 생성 후 행 클릭 시 router.push(`/chat/${notification.id}`) */}
-      <div className={menu.avatar}>
-        <Image
-          src={other.profileImageUrl ?? profileFallback}
-          alt=""
-          width={40}
-          height={40}
-          className={menu.avatarImage}
-        />
-        <span className={menu.unreadDot} />
-      </div>
-      <div className={menu.itemBody}>
-        <p className={clsx(typography.f14R, menu.content)}>
-          {notification.lastMessage?.content ?? ''}
-        </p>
-        <div className={clsx(typography.f12R, menu.meta)}>
-          <span>
+      <button
+        type="button"
+        className={menu.itemMain}
+        onClick={() => {
+          onSelect(notification.id);
+        }}
+      >
+        <div className={menu.avatar}>
+          <Image
+            src={other.profileImageUrl ?? profileFallback}
+            alt=""
+            width={40}
+            height={40}
+            className={menu.avatarImage}
+          />
+          <span className={menu.unreadDot} />
+        </div>
+        <div className={menu.itemBody}>
+          <p className={clsx(typography.f14R, menu.content)}>
+            {notification.lastMessage?.content ?? ''}
+          </p>
+          <span className={clsx(typography.f12R, menu.meta)}>
             {notification.lastMessage
               ? formatDotDate(notification.lastMessage.createdAt)
               : ''}
           </span>
-          <button
-            type="button"
-            className={clsx(typography.f12R, menu.deleteButton)}
-            onClick={() => {
-              onDelete(notification.id);
-            }}
-          >
-            삭제
-          </button>
         </div>
-      </div>
+      </button>
+      <button
+        type="button"
+        className={clsx(typography.f12R, menu.deleteButton)}
+        onClick={() => {
+          onDelete(notification.id);
+        }}
+      >
+        삭제
+      </button>
     </li>
   );
 }
 
 export default function MessageMenu({ role }: { role: Role }) {
   const { ref, open, setOpen } = useDropdown();
+  const router = useRouter();
 
   useChatNotificationSocket();
   const { data } = useChatNotifications();
@@ -113,6 +122,10 @@ export default function MessageMenu({ role }: { role: Role }) {
                   key={notification.id}
                   notification={notification}
                   role={role}
+                  onSelect={(roomId) => {
+                    router.push(`/service/message?roomId=${roomId}`);
+                    setOpen(false);
+                  }}
                   onDelete={(roomId) => {
                     deleteOne.mutate(roomId);
                   }}

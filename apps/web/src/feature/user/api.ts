@@ -118,6 +118,12 @@ export interface ChangePasswordBody {
   newPasswordConfirm: string;
 }
 
+export interface WithdrawData {
+  isDeleted: boolean;
+  deletedAt: string | null;
+  deletionReason: string | null;
+}
+
 async function multipartPatch<T>(path: string, formData: FormData): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     method: 'PATCH',
@@ -177,4 +183,10 @@ export function patchPassword(
     '/users/me/password',
     body,
   );
+}
+
+export function withdrawUser(
+  deletionReason: string,
+): Promise<ApiSuccess<WithdrawData>> {
+  return api.delete<ApiSuccess<WithdrawData>>('/users/me', { deletionReason });
 }
