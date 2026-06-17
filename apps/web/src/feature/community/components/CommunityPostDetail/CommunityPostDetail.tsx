@@ -5,11 +5,24 @@ import { formatDate } from '@repo/utils';
 import clsx from 'clsx';
 import { ThumbsUp } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+
+import {
+  createCommunityComment,
+  deleteCommunityComment,
+  toggleCommunityPostLike,
+  updateCommunityComment,
+} from '../../api';
 
 import * as styles from './CommunityPostDetail.css';
 
-import type { CommunityCategory, CommunityComment, CommunityPost } from '@/mocks/types';
+import type {
+  CommunityCategory,
+  CommunityCommentItem,
+  CommunityPostDetailItem,
+} from '../../types';
 
 const COMMENT_TEXTAREA_MIN_HEIGHT = 40;
 
@@ -22,8 +35,8 @@ const CATEGORY_LABEL: Record<CommunityCategory, string> = {
 };
 
 interface Props {
-  post: CommunityPost;
-  comments: CommunityComment[];
+  post: CommunityPostDetailItem;
+  comments: CommunityCommentItem[];
   currentUserId: string | null;
 }
 
@@ -35,14 +48,20 @@ function CommentItem({
   onEditDraftChange,
   onStartEdit,
   onCancelEdit,
+  onSubmitEdit,
+  onDelete,
+  pending,
 }: {
-  comment: CommunityComment;
+  comment: CommunityCommentItem;
   isMine: boolean;
   isEditing: boolean;
   editDraft: string;
   onEditDraftChange: (value: string) => void;
   onStartEdit: () => void;
   onCancelEdit: () => void;
+  onSubmitEdit: () => void;
+  onDelete: () => void;
+  pending: boolean;
 }) {
   const canSubmitEdit = editDraft.trim().length > 0;
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -67,10 +86,10 @@ function CommentItem({
   return (
     <div className={styles.commentBlock}>
       <div className={styles.commentHeader}>
-        {comment.author.profileImageUrl ? (
+        {comment.authorProfileImageUrl ? (
           <Image
-            src={comment.author.profileImageUrl}
-            alt={comment.author.name}
+            src={comment.authorProfileImageUrl}
+            alt={comment.authorDisplayName}
             width={20}
             height={20}
             className={styles.commentAvatar}
@@ -79,7 +98,9 @@ function CommentItem({
           <div className={styles.commentAvatarFallback} />
         )}
         <div className={styles.commentMeta}>
-          <div className={styles.commentAuthorName}>{comment.author.name}</div>
+          <div className={styles.commentAuthorName}>
+            {comment.authorDisplayName}
+          </div>
           <div className={styles.commentDate}>{formatDate(comment.createdAt)}</div>
         </div>
         {isEditing || isMine ? (
@@ -101,7 +122,12 @@ function CommentItem({
                 >
                   수정
                 </button>
-                <button type="button" className={styles.commentHeaderAction}>
+                <button
+                  type="button"
+                  className={styles.commentHeaderAction}
+                  onClick={onDelete}
+                  disabled={pending}
+                >
                   삭제
                 </button>
               </>
@@ -133,7 +159,8 @@ function CommentItem({
             <button
               type="button"
               className={styles.commentEditSubmitButton}
-              disabled={!canSubmitEdit}
+              disabled={!canSubmitEdit || pending}
+              onClick={onSubmitEdit}
             >
               수정
             </button>
@@ -146,40 +173,8 @@ function CommentItem({
   );
 }
 
-function getTotalCommentCount(items: CommunityComment[]): number {
-  return items.reduce((acc, item) => {
-    const replyCount = item.replies?.length ?? 0;
-    return acc + 1 + replyCount;
-  }, 0);
-}
-
-function splitContent(raw: string): { paragraphs: string[]; code?: string } {
-  const re = /```[\s\S]*?```/u;
-  const match = re.exec(raw);
-  if (!match) {
-    const paragraphs = raw
-      .split(/\n{2,}/u)
-      .map((p) => p.trim())
-      .filter((p) => p.length > 0);
-    return { paragraphs };
-  }
-
-  const codeBlock = match[0];
-  const matchIndex = match.index;
-  const before = raw.slice(0, matchIndex);
-  const after = raw.slice(matchIndex + codeBlock.length);
-
-  const paragraphs = `${before}\n\n${after}`
-    .split(/\n{2,}/u)
-    .map((p) => p.trim())
-    .filter((p) => p.length > 0);
-
-  const code = codeBlock
-    .replace(/^```/u, '')
-    .replace(/```$/u, '')
-    .trim();
-
-  return { paragraphs, code };
+function getTotalCommentCount(items: CommunityCommentItem[]): number {
+  return items.length;
 }
 
 export default function CommunityPostDetail({
@@ -187,7 +182,6 @@ export default function CommunityPostDetail({
   comments,
   currentUserId,
 }: Props) {
-  const { paragraphs, code } = splitContent(post.content);
   const totalCommentCount = getTotalCommentCount(comments);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
@@ -195,6 +189,14 @@ export default function CommunityPostDetail({
   const canSubmitComment = commentDraft.trim().length > 0;
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [isMultilineComment, setIsMultilineComment] = useState(false);
+
+  const router = useRouter();
+  const isLoggedIn = currentUserId !== null;
+  // 본인 글에는 좋아요 불가.
+  const isOwnPost = currentUserId !== null && currentUserId === post.userId;
+  const [isLiked, setIsLiked] = useState(post.isLiked);
+  const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [pending, setPending] = useState(false);
 
   useEffect(() => {
     const el = commentTextareaRef.current;
@@ -208,7 +210,7 @@ export default function CommunityPostDetail({
     setIsMultilineComment(contentHeight > COMMENT_TEXTAREA_MIN_HEIGHT);
   }, [commentDraft]);
 
-  const handleStartEdit = (comment: CommunityComment) => {
+  const handleStartEdit = (comment: CommunityCommentItem) => {
     setEditingCommentId(comment.id);
     setEditDraft(comment.content);
   };
@@ -216,6 +218,68 @@ export default function CommunityPostDetail({
   const handleCancelEdit = () => {
     setEditingCommentId(null);
     setEditDraft('');
+  };
+
+  // 좋아요 토글 — 낙관적 갱신 후 서버 응답으로 동기화(실패 시 되돌림).
+  const handleToggleLike = () => {
+    if (!isLoggedIn || isOwnPost || pending) {
+      return;
+    }
+    const next = !isLiked;
+    setIsLiked(next);
+    setLikeCount((count) => count + (next ? 1 : -1));
+    void toggleCommunityPostLike(post.id)
+      .then((res) => {
+        setIsLiked(res.data.isLiked);
+      })
+      .catch(() => {
+        setIsLiked(!next);
+        setLikeCount((count) => count + (next ? -1 : 1));
+      });
+  };
+
+  const handleSubmitComment = () => {
+    if (!canSubmitComment || pending) {
+      return;
+    }
+    setPending(true);
+    void createCommunityComment(post.id, commentDraft.trim())
+      .then(() => {
+        setCommentDraft('');
+        router.refresh();
+      })
+      .finally(() => {
+        setPending(false);
+      });
+  };
+
+  const handleSubmitEdit = () => {
+    if (editingCommentId === null || editDraft.trim() === '' || pending) {
+      return;
+    }
+    setPending(true);
+    void updateCommunityComment(post.id, editingCommentId, editDraft.trim())
+      .then(() => {
+        handleCancelEdit();
+        router.refresh();
+      })
+      .finally(() => {
+        setPending(false);
+      });
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (pending) {
+      return;
+    }
+    setPending(true);
+    void deleteCommunityComment(post.id, commentId)
+      .then(() => {
+        router.refresh();
+      })
+      .finally(() => {
+        setPending(false);
+      });
   };
 
   return (
@@ -226,75 +290,89 @@ export default function CommunityPostDetail({
 
         <div className={styles.postMetaRow}>
           <div className={styles.postAuthorGroup}>
-            {post.author.profileImageUrl ? (
-              <Image
-                src={post.author.profileImageUrl}
-                alt={post.author.name}
-                width={24}
-                height={24}
-                className={styles.avatar}
-              />
-            ) : (
-              <div className={styles.avatarFallback} />
-            )}
-            <div className={styles.postAuthorName}>{post.author.name}</div>
+            <div className={styles.avatarFallback} />
+            <div className={styles.postAuthorName}>
+              {post.authorDisplayName}
+            </div>
             <div className={styles.postDate}>{formatDate(post.createdAt)}</div>
           </div>
 
-          <div className={styles.postLike}>
-            <ThumbsUp size={16} strokeWidth={3} color={vars.color.black300} />
-            <div className={styles.postLikeCount}>{post.likeCount}</div>
+          <div className={styles.postMetaRight}>
+            {isOwnPost ? (
+              <Link
+                href={`/community/write?id=${post.id}`}
+                className={styles.postEdit}
+              >
+                수정
+              </Link>
+            ) : null}
+            <button
+              type="button"
+              className={styles.postLike}
+              onClick={handleToggleLike}
+              disabled={!isLoggedIn || isOwnPost}
+              aria-pressed={isLiked}
+              aria-label="좋아요"
+            >
+              <ThumbsUp
+                size={16}
+                strokeWidth={3}
+                color={isLiked ? vars.color.blue300 : vars.color.black300}
+                fill={isLiked ? vars.color.blue300 : 'none'}
+              />
+              <div className={styles.postLikeCount}>{likeCount}</div>
+            </button>
           </div>
         </div>
 
-        <div className={styles.postContent}>
-          {paragraphs.map((p) => (
-            <p key={p} className={styles.postParagraph}>
-              {p}
-            </p>
-          ))}
-          {code ? <pre className={styles.codeBlock}>{code}</pre> : null}
-        </div>
+        {/* 본문은 에디터로 작성된 HTML이라 그대로 렌더한다. */}
+        <div
+          className={styles.postContent}
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
       </section>
 
       <section className={styles.commentSection}>
         <div className={styles.commentTitle}>댓글 {totalCommentCount}</div>
 
-        <div
-          className={clsx(
-            styles.commentComposer,
-            styles.commentComposerAtSection,
-            isMultilineComment && styles.commentComposerEditingMultiline,
-          )}
-        >
-          <textarea
-            ref={commentTextareaRef}
+        {isLoggedIn ? (
+          <div
             className={clsx(
-              styles.commentTextarea,
-              !isMultilineComment && styles.commentTextareaSingleLine,
+              styles.commentComposer,
+              styles.commentComposerAtSection,
+              isMultilineComment && styles.commentComposerEditingMultiline,
             )}
-            placeholder="따뜻한 댓글을 남겨주세요."
-            rows={1}
-            value={commentDraft}
-            onChange={(e) => {
-              setCommentDraft(e.target.value);
-            }}
-          />
-          <button
-            type="button"
-            className={styles.commentSubmitButton}
-            disabled={!canSubmitComment}
           >
-            등록
-          </button>
-        </div>
+            <textarea
+              ref={commentTextareaRef}
+              className={clsx(
+                styles.commentTextarea,
+                !isMultilineComment && styles.commentTextareaSingleLine,
+              )}
+              placeholder="따뜻한 댓글을 남겨주세요."
+              rows={1}
+              value={commentDraft}
+              onChange={(e) => {
+                setCommentDraft(e.target.value);
+              }}
+            />
+            <button
+              type="button"
+              className={styles.commentSubmitButton}
+              disabled={!canSubmitComment || pending}
+              onClick={handleSubmitComment}
+            >
+              등록
+            </button>
+          </div>
+        ) : null}
 
         <div className={styles.commentList}>
           {comments.map((comment) => (
             <article key={comment.id} className={styles.commentItem}>
               <CommentItem
                 comment={comment}
-                isMine={currentUserId !== null && comment.author.id === currentUserId}
+                isMine={currentUserId !== null && comment.userId === currentUserId}
                 isEditing={editingCommentId === comment.id}
                 editDraft={editDraft}
                 onEditDraftChange={setEditDraft}
@@ -302,32 +380,12 @@ export default function CommunityPostDetail({
                   handleStartEdit(comment);
                 }}
                 onCancelEdit={handleCancelEdit}
+                onSubmitEdit={handleSubmitEdit}
+                onDelete={() => {
+                  handleDeleteComment(comment.id);
+                }}
+                pending={pending}
               />
-              {comment.replies && comment.replies.length > 0 ? (
-                <>
-                  <div className={styles.commentReplyDivider} />
-                  {comment.replies.map((reply, replyIndex) => (
-                    <div key={reply.id}>
-                      {replyIndex > 0 ? (
-                        <div className={styles.commentReplyDivider} />
-                      ) : null}
-                      <div className={styles.commentReplyItem}>
-                        <CommentItem
-                          comment={reply}
-                          isMine={currentUserId !== null && reply.author.id === currentUserId}
-                          isEditing={editingCommentId === reply.id}
-                          editDraft={editDraft}
-                          onEditDraftChange={setEditDraft}
-                          onStartEdit={() => {
-                            handleStartEdit(reply);
-                          }}
-                          onCancelEdit={handleCancelEdit}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </>
-              ) : null}
             </article>
           ))}
         </div>

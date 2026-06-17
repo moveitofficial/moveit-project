@@ -1,5 +1,6 @@
 'use client';
 
+import clsx from 'clsx';
 import {
   AlignCenter,
   AlignLeft,
@@ -8,12 +9,12 @@ import {
   Italic,
   List,
   ListOrdered,
-  Palette,
   Underline,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import * as styles from './RichTextEditor.css';
+
 
 import type { LucideIcon } from 'lucide-react';
 
@@ -21,19 +22,9 @@ interface Props {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
+  // 지정 시 본문 영역 높이를 고정(px). 미지정이면 기본 min/max 자동.
+  bodyHeight?: number;
 }
-
-// 텍스트 색상 팔레트(사용자 선택용 임의 색상 — 테마 토큰 아님).
-const COLORS = [
-  '#000000',
-  '#FF0000',
-  '#FF8800',
-  '#FFCC00',
-  '#00CC00',
-  '#0066FF',
-  '#9933FF',
-  '#FF3399',
-];
 
 // 서식 버튼 그룹: B/I/U, 정렬, 리스트.
 const COMMAND_GROUPS: { icon: LucideIcon; command: string; label: string }[][] =
@@ -54,9 +45,26 @@ const COMMAND_GROUPS: { icon: LucideIcon; command: string; label: string }[][] =
     ],
   ];
 
-export default function RichTextEditor({ value, onChange, placeholder }: Props) {
+export default function RichTextEditor({
+  value,
+  onChange,
+  placeholder,
+  bodyHeight,
+}: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
-  const [isColorOpen, setIsColorOpen] = useState(false);
+  const [active, setActive] = useState<Record<string, boolean>>({});
+
+  // 현재 선택/커서 기준으로 각 서식 버튼의 활성 상태를 갱신.
+  const refreshActive = () => {
+    const next: Record<string, boolean> = {};
+    for (const groupItems of COMMAND_GROUPS) {
+      for (const { command } of groupItems) {
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
+        next[command] = document.queryCommandState(command);
+      }
+    }
+    setActive(next);
+  };
 
   // 외부 value가 현재 내용과 다를 때만 반영(입력 중엔 동일 → 커서 유지).
   useEffect(() => {
@@ -75,6 +83,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
       element.focus();
       onChange(element.innerHTML);
     }
+    refreshActive();
   };
 
   const handleInput = () => {
@@ -89,11 +98,6 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
     onChange(element.innerHTML);
   };
 
-  const handleColorSelect = (color: string) => {
-    runCommand('foreColor', color);
-    setIsColorOpen(false);
-  };
-
   return (
     <div className={styles.editor}>
       {/* 툴바 — onMouseDown + preventDefault로 에디터 선택 영역을 유지한다. */}
@@ -104,8 +108,9 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
               <button
                 key={command}
                 type="button"
-                className={styles.button}
+                className={clsx(styles.button, active[command] && styles.buttonActive)}
                 aria-label={label}
+                aria-pressed={active[command] ?? false}
                 onMouseDown={(event) => {
                   event.preventDefault();
                   runCommand(command);
@@ -116,49 +121,26 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
             ))}
           </div>
         ))}
-
-        <div className={styles.colorWrapper}>
-          <button
-            type="button"
-            className={styles.button}
-            aria-label="글자 색상"
-            onMouseDown={(event) => {
-              event.preventDefault();
-              setIsColorOpen((prev) => !prev);
-            }}
-          >
-            <Palette size={18} aria-hidden />
-          </button>
-          {isColorOpen ? (
-            <div className={styles.colorPicker}>
-              {COLORS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  className={styles.swatch}
-                  style={{ backgroundColor: color }}
-                  aria-label={`색상 ${color}`}
-                  onMouseDown={(event) => {
-                    event.preventDefault();
-                    handleColorSelect(color);
-                  }}
-                />
-              ))}
-            </div>
-          ) : null}
-        </div>
       </div>
 
       {/* 본문 — contentEditable */}
       <div
         ref={editorRef}
         className={styles.area}
+        style={
+          bodyHeight === undefined
+            ? undefined
+            : { height: bodyHeight, minHeight: bodyHeight, maxHeight: bodyHeight }
+        }
         contentEditable
         suppressContentEditableWarning
         role="textbox"
         aria-multiline
         data-placeholder={placeholder}
         onInput={handleInput}
+        onKeyUp={refreshActive}
+        onMouseUp={refreshActive}
+        onFocus={refreshActive}
       />
     </div>
   );

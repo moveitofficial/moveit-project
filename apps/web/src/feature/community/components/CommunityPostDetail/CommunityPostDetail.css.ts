@@ -1,6 +1,6 @@
 import { vars } from '@repo/styles/tokens';
 import { typography } from '@repo/styles/typography';
-import { style } from '@vanilla-extract/css';
+import { globalStyle, style } from '@vanilla-extract/css';
 
 export const page = style({
   display: 'flex',
@@ -69,10 +69,31 @@ export const postLike = style([
     alignItems: 'center',
     gap: '4px',
     color: vars.color.black300,
+    padding: 0,
+    border: 'none',
+    background: 'none',
+    cursor: 'pointer',
+    ':disabled': {
+      cursor: 'default',
+    },
   },
 ]);
 
 export const postLikeCount = style([typography.f14EB]);
+
+export const postMetaRight = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '16px',
+});
+
+export const postEdit = style([
+  typography.f14R,
+  {
+    color: vars.color.gray400,
+    cursor: 'pointer',
+  },
+]);
 
 export const postContent = style([
   typography.f14R,
@@ -81,32 +102,15 @@ export const postContent = style([
     color: vars.color.black500,
     whiteSpace: 'pre-wrap',
     lineHeight: '24px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '19px',
   },
 ]);
 
-export const postParagraph = style({
-  margin: 0,
-});
-
-export const codeBlock = style([
-  typography.f16R,
-  {
-    margin: 0,
-    width: '776px',
-    padding: '20px',
-    borderRadius: '12px',
-    border: `1px solid ${vars.color.line200}`,
-    backgroundColor: vars.color.white,
-    color: vars.color.black300,
-    whiteSpace: 'pre-wrap',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-  },
-]);
+// 에디터 HTML 본문 — 전역 reset(list-style:none 등)에 가려진 서식을 복구.
+globalStyle(`${postContent} ul`, { listStyle: 'disc', paddingLeft: '24px' });
+globalStyle(`${postContent} ol`, { listStyle: 'decimal', paddingLeft: '24px' });
+globalStyle(`${postContent} b, ${postContent} strong`, { fontWeight: 700 });
+globalStyle(`${postContent} u`, { textDecoration: 'underline' });
+globalStyle(`${postContent} i, ${postContent} em`, { fontStyle: 'italic' });
 
 export const avatar = style({
   width: '24px',

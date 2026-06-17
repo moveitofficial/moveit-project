@@ -9,17 +9,33 @@ import { COMMUNITY_FILTERS, type CommunityFilter } from '../../constants';
 
 import * as styles from './CommunityBoard.css';
 
+import type { CommunityPostListItem } from '../../types';
 import type { CommunityPost } from '@/mocks/types';
 
 import { CommunityCard } from '@/components/common/CommunityCard';
 
-
 interface Props {
-  items: CommunityPost[];
+  items: CommunityPostListItem[];
   category: CommunityFilter['id'];
   page: number;
   totalPages: number;
   canWritePost: boolean;
+}
+
+// API 목록 항목 → 공용 CommunityCard 입력 형태로 변환(목록엔 프로필 이미지가 없어 null).
+function toCardPost(item: CommunityPostListItem): CommunityPost {
+  return {
+    id: item.id,
+    category: item.category,
+    title: item.title,
+    content: item.content,
+    author: { id: item.userId, name: item.authorDisplayName, profileImageUrl: null },
+    likeCount: item.likeCount,
+    commentCount: item.commentCount,
+    viewCount: 0,
+    isLiked: false,
+    createdAt: item.createdAt,
+  };
 }
 
 function getFilterHref(filterId: CommunityFilter['id']): Route {
@@ -48,9 +64,9 @@ export default function CommunityBoard({
           </div>
         </div>
         {canWritePost ? (
-          <button type="button" className={styles.writeButton}>
+          <Link href="/community/write" className={styles.writeButton}>
             게시글 작성
-          </button>
+          </Link>
         ) : null}
       </div>
 
@@ -84,7 +100,7 @@ export default function CommunityBoard({
       <div className={styles.list}>
         {items.map((post) => (
           <Link key={post.id} href={`/community/${post.id}` as Route}>
-            <CommunityCard post={post} />
+            <CommunityCard post={toCardPost(post)} />
           </Link>
         ))}
       </div>
