@@ -1,7 +1,5 @@
 import { api, ApiError, publicApi } from '@repo/fetcher';
 
-import { PORTFOLIO_MODAL_CONTACT_TIME } from './constants';
-
 import type { PortfolioModalExpertContext } from './types';
 import type {
   ApiSuccess,
@@ -13,6 +11,8 @@ import type {
   StackType,
   TechStackName,
 } from '@/mocks/types';
+
+import { fetchExpertProfileSummary } from '@/utils/expertContactTime';
 
 const PORTFOLIO_FALLBACK_THUMBNAIL =
   'https://picsum.photos/seed/moveit-fallback/400/300';
@@ -128,33 +128,8 @@ export async function getExpertPortfolioList(
   }
 }
 
-const FALLBACK_PORTFOLIO_MODAL_EXPERT: PortfolioModalExpertContext = {
-  companyName: '전문가',
-  contactTime: PORTFOLIO_MODAL_CONTACT_TIME,
-};
-
 export async function getPortfolioModalExpertContext(
   expertUserId: string,
 ): Promise<PortfolioModalExpertContext> {
-  try {
-    const servicesResponse = await api.get<
-      ApiSuccess<{ items: { id: string }[] }>
-    >(`/users/${expertUserId}/services?page=1&pageSize=1`);
-
-    const firstServiceId = servicesResponse.data.items[0]?.id;
-    if (firstServiceId === undefined) {
-      return FALLBACK_PORTFOLIO_MODAL_EXPERT;
-    }
-
-    const detailResponse = await api.get<
-      ApiSuccess<{ expert: { companyName: string } }>
-    >(`/services/${firstServiceId}`);
-
-    return {
-      companyName: detailResponse.data.expert.companyName,
-      contactTime: PORTFOLIO_MODAL_CONTACT_TIME,
-    };
-  } catch {
-    return FALLBACK_PORTFOLIO_MODAL_EXPERT;
-  }
+  return fetchExpertProfileSummary(expertUserId);
 }
