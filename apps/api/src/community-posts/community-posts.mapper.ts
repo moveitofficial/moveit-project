@@ -12,6 +12,7 @@ export function mapPostListItem(post: PostListItem) {
     content: post.content,
     createdAt: post.createdAt,
     authorDisplayName: resolveAuthorDisplayName(post.user),
+    authorProfileImageUrl: post.user.profileImageUrl,
     commentCount: post._count.comments,
     likeCount: post._count.likeRecords,
   };
