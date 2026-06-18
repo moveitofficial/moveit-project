@@ -34,7 +34,7 @@ export const sortTabs = style({
 });
 
 export const sortTab = style([
-  typography.f16R,
+  typography.f12R,
   {
     padding: 0,
     border: 'none',
