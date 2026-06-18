@@ -1,5 +1,6 @@
 'use client';
 
+import { RectLabel } from '@repo/ui/RectLabel';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -8,16 +9,15 @@ import { ReportModal } from '../ReportModal';
 
 import * as styles from './ServicePanel.css';
 
+import { ORDER_STATUS_BADGE_CONFIG } from '@/feature/orders/constants';
+import type { OrderStatus } from '@/feature/orders/types';
 import {
   useMessageHistory,
   useRoomOtherServices,
   useRoomService,
   useSubmitReport,
 } from '@/feature/message/useMessage';
-import {
-  formatScheduleDate,
-  getOrderStatusLabel,
-} from '@/feature/message/utils';
+import { formatScheduleDate } from '@/feature/message/utils';
 import { buildServiceDetailHref } from '@/feature/serviceDetail/utils';
 
 interface Props {
@@ -140,9 +140,12 @@ export default function ServicePanel({
             <h3 className={styles.sectionTitle}>
               {hasSchedule ? '등록된 일정' : '결제한 서비스'}
             </h3>
-            <span className={styles.statusBadge}>
-              {getOrderStatusLabel(order.status)}
-            </span>
+            {ORDER_STATUS_BADGE_CONFIG[order.status as OrderStatus] && (
+              <RectLabel
+                text={ORDER_STATUS_BADGE_CONFIG[order.status as OrderStatus].text}
+                color={ORDER_STATUS_BADGE_CONFIG[order.status as OrderStatus].color}
+              />
+            )}
           </div>
           <div className={styles.serviceCard}>
             <ServiceThumbnail url={thumb} />
