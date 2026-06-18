@@ -118,15 +118,6 @@ export const servicePrice = style([
   },
 ]);
 
-export const statusBadge = style([
-  typography.f12B,
-  {
-    padding: '4px 10px',
-    borderRadius: '100px',
-    backgroundColor: vars.color.blue300,
-    color: vars.color.white,
-  },
-]);
 
 export const scheduleText = style([
   typography.f12R,
