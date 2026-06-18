@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   createCommunityComment,
   deleteCommunityComment,
+  deleteCommunityPost,
   toggleCommunityPostLike,
   updateCommunityComment,
 } from '../../api';
@@ -282,6 +283,23 @@ export default function CommunityPostDetail({
       });
   };
 
+  const handleDeletePost = () => {
+    if (pending) {
+      return;
+    }
+    if (!globalThis.confirm('게시글을 삭제하시겠습니까?')) {
+      return;
+    }
+    setPending(true);
+    void deleteCommunityPost(post.id)
+      .then(() => {
+        router.push('/community');
+      })
+      .finally(() => {
+        setPending(false);
+      });
+  };
+
   return (
     <div className={styles.page}>
       <section className={styles.postSection}>
@@ -299,12 +317,22 @@ export default function CommunityPostDetail({
 
           <div className={styles.postMetaRight}>
             {isOwnPost ? (
-              <Link
-                href={`/community/write?id=${post.id}`}
-                className={styles.postEdit}
-              >
-                수정
-              </Link>
+              <>
+                <Link
+                  href={`/community/write?id=${post.id}`}
+                  className={styles.postEdit}
+                >
+                  수정
+                </Link>
+                <button
+                  type="button"
+                  className={styles.postEdit}
+                  onClick={handleDeletePost}
+                  disabled={pending}
+                >
+                  삭제
+                </button>
+              </>
             ) : null}
             <button
               type="button"

@@ -34,6 +34,12 @@ export function updateCommunityPost(
   );
 }
 
+export function deleteCommunityPost(
+  postId: string,
+): Promise<ApiSuccess<{ id: string }>> {
+  return api.delete<ApiSuccess<{ id: string }>>(`/community-posts/${postId}`);
+}
+
 export interface GetPagedCommunityPostsParams {
   category: CommunityFilter['id'];
   page: number;
