@@ -38,12 +38,20 @@ export const postMetaRow = style({
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: '16px',
+  paddingBottom: '24px',
+  borderBottom: `1px solid ${vars.color.line200}`,
 });
 
 export const postAuthorGroup = style({
   display: 'inline-flex',
   alignItems: 'center',
   gap: '8px',
+});
+
+export const postAuthorMeta = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
 });
 
 export const postAuthorName = style([
@@ -105,10 +113,11 @@ export const postEdit = style([
 export const postContent = style([
   typography.f14R,
   {
-    marginTop: '24px',
+    padding: '40px 0',
     color: vars.color.black500,
     whiteSpace: 'pre-wrap',
     lineHeight: '24px',
+    borderBottom: `1px solid ${vars.color.line200}`,
   },
 ]);
 
@@ -120,8 +129,6 @@ globalStyle(`${postContent} u`, { textDecoration: 'underline' });
 globalStyle(`${postContent} i, ${postContent} em`, { fontStyle: 'italic' });
 
 export const avatar = style({
-  width: '24px',
-  height: '24px',
   borderRadius: '50%',
   objectFit: 'cover',
   objectPosition: 'center',

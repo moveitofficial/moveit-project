@@ -14,6 +14,7 @@ export interface CommunityPostListItem {
   content: string;
   createdAt: string;
   authorDisplayName: string;
+  authorProfileImageUrl: string | null;
   likeCount: number;
   commentCount: number;
 }

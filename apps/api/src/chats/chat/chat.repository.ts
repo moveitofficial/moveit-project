@@ -121,6 +121,29 @@ export class ChatRepository {
     });
   }
 
+  async createRoomOnly(data: {
+    clientUserId: string;
+    expertUserId: string;
+    serviceId: string;
+  }) {
+    return this.prisma.chatRoom.create({
+      data: {
+        clientUserId: data.clientUserId,
+        expertUserId: data.expertUserId,
+        currentServiceId: data.serviceId,
+        participants: {
+          createMany: {
+            data: [
+              { userId: data.clientUserId },
+              { userId: data.expertUserId },
+            ],
+          },
+        },
+      },
+      select: { id: true },
+    });
+  }
+
   async findRoom(roomId: string, userId: string) {
     return this.prisma.chatParticipant.findUnique({
       where: { chatRoomId_userId: { chatRoomId: roomId, userId } },
