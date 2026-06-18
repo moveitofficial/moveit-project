@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import type { NestedOrderModal } from '@/feature/orders/constants';
 import type { OrderStatus } from '@/feature/orders/types';
 import type { Role } from '@/types/enums';
@@ -25,6 +27,7 @@ export default function NestedOrderModals({
   onStatusUpdate,
   onReviewIdUpdate,
 }: Props) {
+  const router = useRouter();
   return (
     <>
       {nestedModal?.type === 'transaction' && (
@@ -130,6 +133,35 @@ export default function NestedOrderModals({
           onCompleted={() => {
             onStatusUpdate(nestedModal.orderId, 'SETTLEMENT_REQUESTED');
             onClose();
+          }}
+        />
+      )}
+
+      {nestedModal?.type === 'requestScheduleChange' && (
+        <OrderActionModal
+          type="requestScheduleChange"
+          orderId={nestedModal.orderId}
+          roomId={nestedModal.roomId}
+          isOpen={true}
+          onClose={onClose}
+          onCompleted={() => {
+            const { roomId } = nestedModal;
+            onClose();
+            router.push(`/service/message?roomId=${roomId}`);
+          }}
+        />
+      )}
+
+      {nestedModal?.type === 'requestPurchaseConfirm' && (
+        <OrderActionModal
+          type="requestPurchaseConfirm"
+          roomId={nestedModal.roomId}
+          isOpen={true}
+          onClose={onClose}
+          onCompleted={() => {
+            const { roomId } = nestedModal;
+            onClose();
+            router.push(`/service/message?roomId=${roomId}`);
           }}
         />
       )}

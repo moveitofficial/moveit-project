@@ -19,8 +19,10 @@ import {
   rejectRefund,
   requestCancel,
   requestRefund,
+  requestScheduleChange,
   requestSettlement,
 } from '@/feature/orders/actions';
+import { sendChatText } from '@/feature/orders/sendChatText';
 
 export type OrderActionModalProps =
   | {
@@ -70,6 +72,21 @@ export type OrderActionModalProps =
   | {
       type: 'completeWork';
       orderId: string;
+      isOpen: boolean;
+      onClose: () => void;
+      onCompleted: () => void;
+    }
+  | {
+      type: 'requestScheduleChange';
+      orderId: string;
+      roomId: string;
+      isOpen: boolean;
+      onClose: () => void;
+      onCompleted: () => void;
+    }
+  | {
+      type: 'requestPurchaseConfirm';
+      roomId: string;
       isOpen: boolean;
       onClose: () => void;
       onCompleted: () => void;
@@ -301,6 +318,30 @@ export default function OrderActionModal(props: OrderActionModalProps) {
       CONFIRM_COPY.completeWork,
       'blue',
       () => completeWork(props.orderId),
+      props.onCompleted,
+    );
+  }
+
+  if (type === 'requestScheduleChange') {
+    return confirmAction(
+      CONFIRM_COPY.requestScheduleChange,
+      'blue',
+      () => requestScheduleChange(props.orderId, props.roomId),
+      props.onCompleted,
+    );
+  }
+
+  if (type === 'requestPurchaseConfirm') {
+    return confirmAction(
+      CONFIRM_COPY.requestPurchaseConfirm,
+      'blue',
+      () => {
+        sendChatText(
+          props.roomId,
+          '작업이 완료되었어요. 작업물을 확인하고 구매확정을 진행해 주세요.',
+        );
+        return Promise.resolve();
+      },
       props.onCompleted,
     );
   }

@@ -108,19 +108,34 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     message: unknown,
     recipientRoles?: SystemMessageRole[],
   ) {
-    if (!recipientRoles) {
+    // 방/유저 채널에 시스템 메시지 표시 (기존 동작 유지)
+    if (recipientRoles) {
+      if (recipientRoles.includes('CLIENT')) {
+        this.server
+          .to(`user-${clientUserId}`)
+          .emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+      }
+      if (recipientRoles.includes('EXPERT')) {
+        this.server
+          .to(`user-${expertUserId}`)
+          .emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+      }
+    } else {
       this.server.to(roomId).emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
-      return;
     }
-    if (recipientRoles.includes('CLIENT')) {
+
+    // 헤더 알림 실시간 — 수신자 유저 채널로 CHAT_NOTIFICATION도 발송 (텍스트와 동일).
+    // recipientRoles 있으면 해당 역할만, 없으면(양쪽 대상) 둘 다.
+    const notifyTargets = recipientRoles
+      ? [
+          ...(recipientRoles.includes('CLIENT') ? [clientUserId] : []),
+          ...(recipientRoles.includes('EXPERT') ? [expertUserId] : []),
+        ]
+      : [clientUserId, expertUserId];
+    for (const userId of notifyTargets) {
       this.server
-        .to(`user-${clientUserId}`)
-        .emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
-    }
-    if (recipientRoles.includes('EXPERT')) {
-      this.server
-        .to(`user-${expertUserId}`)
-        .emit(CHAT_EVENTS.RECEIVE_MESSAGE, message);
+        .to(`user-${userId}`)
+        .emit(CHAT_EVENTS.CHAT_NOTIFICATION, message);
     }
   }
 

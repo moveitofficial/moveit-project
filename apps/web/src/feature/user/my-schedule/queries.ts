@@ -11,6 +11,7 @@ import {
   getScheduleCounts,
   getSchedules,
   requestScheduleChange,
+  updateOrderSchedule,
   type ScheduleAs,
   type ScheduleOrderListItem,
   type ScheduleSort,
@@ -50,6 +51,24 @@ export function useRequestScheduleChangeMutation() {
   return useMutation({
     mutationFn: ({ orderId, roomId }: { orderId: string; roomId?: string }) =>
       requestScheduleChange(orderId, roomId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: SCHEDULES_QUERY_KEY });
+    },
+  });
+}
+
+export function useUpdateScheduleMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      endDate,
+      roomId,
+    }: {
+      orderId: string;
+      endDate: string;
+      roomId?: string;
+    }) => updateOrderSchedule(orderId, endDate, roomId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: SCHEDULES_QUERY_KEY });
     },

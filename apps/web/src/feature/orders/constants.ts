@@ -15,7 +15,7 @@ export const TAB_STATUS_MAP_BY_ROLE: Record<
   Record<OrderTabKey, OrderStatus[]>
 > = {
   CLIENT: {
-    working: ['NEGOTIATING', 'IN_PROGRESS', 'CANCEL_REQUESTED'],
+    working: ['NEGOTIATING', 'IN_PROGRESS'],
     workCompleted: ['WORK_COMPLETED'],
     purchaseConfirmed: [
       'PURCHASE_CONFIRMED',
@@ -25,21 +25,16 @@ export const TAB_STATUS_MAP_BY_ROLE: Record<
     settlement: [],
     deadlineImminent: ['DEADLINE_IMMINENT'],
     expired: ['EXPIRED', 'REFUND_REQUESTED'],
-    cancelRefund: ['PAYMENT_CANCELLED', 'REFUND_COMPLETED'],
+    cancelRefund: ['CANCEL_REQUESTED', 'PAYMENT_CANCELLED', 'REFUND_COMPLETED'],
   },
   EXPERT: {
-    working: [
-      'NEGOTIATING',
-      'IN_PROGRESS',
-      'DEADLINE_IMMINENT',
-      'CANCEL_REQUESTED',
-    ],
+    working: ['NEGOTIATING', 'IN_PROGRESS', 'DEADLINE_IMMINENT'],
     workCompleted: ['WORK_COMPLETED'],
     purchaseConfirmed: ['PURCHASE_CONFIRMED'],
     settlement: ['SETTLEMENT_REQUESTED', 'SETTLEMENT_COMPLETED'],
     deadlineImminent: [],
     expired: ['EXPIRED', 'REFUND_REQUESTED'],
-    cancelRefund: ['PAYMENT_CANCELLED', 'REFUND_COMPLETED'],
+    cancelRefund: ['CANCEL_REQUESTED', 'PAYMENT_CANCELLED', 'REFUND_COMPLETED'],
   },
 };
 
@@ -192,6 +187,8 @@ export type NestedOrderModal =
     }
   | { type: 'deleteReview'; orderId: string; reviewId: string }
   | { type: 'requestSettlement'; orderId: string }
+  | { type: 'requestScheduleChange'; orderId: string; roomId: string }
+  | { type: 'requestPurchaseConfirm'; roomId: string }
   | { type: 'completeWork'; orderId: string }
   | { type: 'approveRefund'; orderId: string }
   | { type: 'rejectRefund'; orderId: string }

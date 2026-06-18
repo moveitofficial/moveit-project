@@ -89,3 +89,15 @@ export function requestScheduleChange(
     roomId === undefined ? {} : { roomId },
   );
 }
+
+// 일정(마감일) 변경 — 구매자가 판매자의 변경 요청에 응해 새 마감일 설정
+export function updateOrderSchedule(
+  orderId: string,
+  endDate: string,
+  roomId?: string,
+): Promise<ApiSuccess<unknown>> {
+  return api.patch<ApiSuccess<unknown>>(`/orders/${orderId}/schedule`, {
+    endDate,
+    ...(roomId === undefined ? {} : { roomId }),
+  });
+}

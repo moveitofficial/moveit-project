@@ -11,7 +11,11 @@ import type { NestedOrderModal } from '@/feature/orders/constants';
 import type { OrderFilterParams, OrderItem, OrderStatus } from '@/feature/orders/types';
 import type { Role } from '@/types/enums';
 
-import { fetchMoreOrders } from '@/feature/orders/actions';
+import { ScheduleModal } from '@/feature/message/components/ScheduleModal';
+import {
+  fetchMoreOrders,
+  updateOrderSchedule,
+} from '@/feature/orders/actions';
 import { NestedOrderModals } from '@/feature/orders/components/modal/NestedOrderModals';
 import {
   getNestedModalFromLabel,
@@ -47,6 +51,8 @@ export default function OrderCardList({
       scrollRoot,
     );
   const [nestedModal, setNestedModal] = useState<NestedOrderModal | null>(null);
+  const [scheduleOrder, setScheduleOrder] = useState<OrderItem | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleStatusUpdate(orderId: string, newStatus: OrderStatus) {
     setItems((prev) =>
@@ -68,15 +74,26 @@ export default function OrderCardList({
       return;
     }
     if (label === '일정등록') {
-      // TODO: 일정등록 모달 연결
+      setScheduleOrder(item);
       return;
     }
     if (label === '일정변경 요청') {
-      // TODO: API 확인 후 연동(알림)
+      if (item.chatRoomId !== null) {
+        setNestedModal({
+          type: 'requestScheduleChange',
+          orderId: item.id,
+          roomId: item.chatRoomId,
+        });
+      }
       return;
     }
     if (label === '구매확정 요청') {
-      // TODO: API 확인 후 연동(알림)
+      if (item.chatRoomId !== null) {
+        setNestedModal({
+          type: 'requestPurchaseConfirm',
+          roomId: item.chatRoomId,
+        });
+      }
       return;
     }
     if (label === '환불요청') {
@@ -165,6 +182,33 @@ export default function OrderCardList({
         onStatusUpdate={handleStatusUpdate}
         onReviewIdUpdate={handleReviewIdUpdate}
       />
+
+      {scheduleOrder !== null && (
+        <ScheduleModal
+          isOpen
+          onClose={() => {
+            setScheduleOrder(null);
+          }}
+          title="일정 등록"
+          submitLabel="등록"
+          isSubmitting={isSubmitting}
+          onSubmit={(endDateIso) => {
+            setIsSubmitting(true);
+            void updateOrderSchedule(
+              scheduleOrder.id,
+              endDateIso,
+              scheduleOrder.chatRoomId ?? undefined,
+            )
+              .then(() => {
+                handleStatusUpdate(scheduleOrder.id, 'IN_PROGRESS');
+                setScheduleOrder(null);
+              })
+              .finally(() => {
+                setIsSubmitting(false);
+              });
+          }}
+        />
+      )}
     </>
   );
 }
