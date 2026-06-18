@@ -1,6 +1,6 @@
 import { vars } from '@repo/styles/tokens';
 import { typography } from '@repo/styles/typography';
-import { style } from '@vanilla-extract/css';
+import { globalStyle, style } from '@vanilla-extract/css';
 
 const listToggleButtonBase = style([
   typography.f14R,
@@ -109,20 +109,21 @@ export const sectionTitle = style([
   },
 ]);
 
-export const sectionBadge = style([
-  typography.f12B,
-  {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: '20px',
-    height: '20px',
-    padding: '0 6px',
-    borderRadius: '999px',
-    backgroundColor: vars.color.blue300,
-    color: vars.color.white,
-  },
-]);
+export const sectionCountChip = style({
+  display: 'inline-flex',
+});
+
+globalStyle(`${sectionCountChip} > div`, {
+  fontSize: '0.75rem',
+  lineHeight: '1.125rem',
+  fontWeight: vars.font.weight.bold,
+  letterSpacing: '0.05em',
+  padding: '2px 8px',
+  minWidth: '20px',
+  color: vars.color.blue300,
+  cursor: 'default',
+  border: 'none',
+});
 
 export const sectionChevronIcon = style({
   flexShrink: 0,

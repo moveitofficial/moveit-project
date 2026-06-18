@@ -95,6 +95,9 @@ export const SERVICE_LIST_REGION_FILTERS: ServiceListRegionFilter[] = [
   { id: 'SEJONG', label: '세종' },
 ];
 
+/** GET /services techStacks 쿼리 상한 (ServiceListQueryDto @ArrayMaxSize(3)와 동일) */
+export const SERVICE_LIST_MAX_TECH_STACKS = 3;
+
 export const SERVICE_LIST_TECH_STACK_VISIBLE_COUNT = 10;
 
 export const SERVICE_LIST_REGION_VISIBLE_COUNT = 10;

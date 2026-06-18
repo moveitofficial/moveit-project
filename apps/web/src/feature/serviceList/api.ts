@@ -7,6 +7,7 @@ import {
   SERVICE_LIST_TECH_STACK_FILTERS,
   type ServiceListSort,
 } from './constants';
+import { normalizeTechStacks } from './utils';
 
 import type {
   GetServiceListPageDataParams,
@@ -152,9 +153,9 @@ function buildListQuery(
     query.set('search', keyword);
   }
 
-  const techStacks = params.techStacks ?? [];
+  const techStacks = normalizeTechStacks(params.techStacks ?? []);
   if (techStacks.length > 0) {
-    query.set('techStacks', techStacks.slice(0, 3).join(','));
+    query.set('techStacks', techStacks.join(','));
   }
 
   const regions = params.regions ?? [];
@@ -278,49 +279,47 @@ async function fetchCategoryFilterCounts(
   };
 }
 
-async function fetchContextualSidebarCounts(
+async function fetchSidebarFilterCounts(
   group: ServiceGroupName,
-  params: ServiceListSearchParams & { pageSize: number },
 ): Promise<
   Pick<ServiceListFilterCounts, 'priceCounts' | 'techStackCounts' | 'regionCounts'>
 > {
+  const baseParams: ServiceListSearchParams & { pageSize: number } = {
+    category: 'ALL',
+    page: 1,
+    sort: 'RECOMMENDED',
+    keyword: '',
+    techStacks: [],
+    regions: [],
+    price: null,
+    pageSize: 1,
+  };
+
   const [priceCountsList, techStackCountsList, regionCountsList] =
     await Promise.all([
       Promise.all(
         SERVICE_LIST_PRICE_FILTERS.map(async (price) => ({
           id: price.id,
-          count: await fetchTotalCount(group, params, {
+          count: await fetchTotalCount(group, baseParams, {
             price: price.id,
           }),
         })),
       ),
       Promise.all(
-        SERVICE_LIST_TECH_STACK_FILTERS.map(async (stack) => {
-          const nextTechStacks = params.techStacks.includes(stack.id)
-            ? params.techStacks
-            : [...params.techStacks, stack.id];
-
-          return {
-            id: stack.id,
-            count: await fetchTotalCount(group, params, {
-              techStacks: nextTechStacks,
-            }),
-          };
-        }),
+        SERVICE_LIST_TECH_STACK_FILTERS.map(async (stack) => ({
+          id: stack.id,
+          count: await fetchTotalCount(group, baseParams, {
+            techStacks: [stack.id],
+          }),
+        })),
       ),
       Promise.all(
-        SERVICE_LIST_REGION_FILTERS.map(async (region) => {
-          const nextRegions = params.regions.includes(region.id)
-            ? params.regions
-            : [...params.regions, region.id];
-
-          return {
-            id: region.id,
-            count: await fetchTotalCount(group, params, {
-              regions: nextRegions.length === 1 ? nextRegions : [region.id],
-            }),
-          };
-        }),
+        SERVICE_LIST_REGION_FILTERS.map(async (region) => ({
+          id: region.id,
+          count: await fetchTotalCount(group, baseParams, {
+            regions: [region.id],
+          }),
+        })),
       ),
     ]);
 
@@ -377,7 +376,7 @@ export async function getServiceListPageData(
       fetchServiceList(listQuery),
       fetchServiceList(featuredQuery),
       fetchCategoryFilterCounts(group),
-      fetchContextualSidebarCounts(group, params),
+      fetchSidebarFilterCounts(group),
     ]);
 
   const totalPages = Math.max(
