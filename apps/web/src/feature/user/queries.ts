@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
+  applyExpertApproval,
   getMyUser,
   patchClientProfile,
   patchExpertProfile,
@@ -49,6 +50,16 @@ export function usePatchExpertProfileMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: PatchExpertProfileBody) => patchExpertProfile(body),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: myUserQueryKey });
+    },
+  });
+}
+
+export function useApplyExpertApprovalMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: applyExpertApproval,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: myUserQueryKey });
     },

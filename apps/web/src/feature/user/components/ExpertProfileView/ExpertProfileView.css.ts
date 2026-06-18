@@ -290,11 +290,18 @@ export const applyBtn = style({
   justifyContent: 'center',
   alignItems: 'center',
   gap: '0.625rem',
+  border: 'none',
   borderRadius: '0.75rem',
   background: `var(--Primary-blue-300, #1B92FF)`,
+  cursor: 'pointer',
 
   color: vars.color.white,
   fontFamily: vars.font.family,
   fontWeight: vars.font.weight.extraBold,
   fontSize: '1rem',
+});
+
+export const applyBtnDisabled = style({
+  cursor: 'not-allowed',
+  opacity: 0.5,
 });

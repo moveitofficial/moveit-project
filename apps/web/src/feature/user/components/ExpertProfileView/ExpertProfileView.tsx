@@ -5,21 +5,27 @@ import kakaoLogo from '@public/login/kaLogo.svg';
 import naverLogo from '@public/login/naver.svg';
 import { ApiError } from '@repo/fetcher';
 import { RoundChip } from '@repo/ui/RoundChip';
+import { useQuery } from '@tanstack/react-query';
+import clsx from 'clsx';
 import Image, { type StaticImageData } from 'next/image';
 import { type ChangeEvent, useEffect, useState } from 'react';
 
 import { ExpertProfileSection } from '../ExpertProfileSection';
 import { MyInfoProfileSection } from '../MyInfoProfileSection';
+import { UserConfirmModal } from '../UserConfirmModal';
 
 import * as styles from './ExpertProfileView.css';
 
+
 import type {
   AuthProvider,
+  ExpertProfile,
   MyUser,
   SpecialtyCategory,
 } from '@/feature/user/api';
 import type { Region } from '@/mocks/types';
 
+import { getMyPortfolios } from '@/feature/signup/api';
 import CheckboxGroup from '@/feature/signup/components/common/CheckboxGroup';
 import Dropdown from '@/feature/signup/components/common/Dropdown';
 import PhoneField from '@/feature/signup/components/common/PhoneField';
@@ -41,10 +47,24 @@ import {
   MAX_TECH_STACKS,
 } from '@/feature/signup/components/ExpertCompanyInfo/constants';
 import {
+  useApplyExpertApprovalMutation,
   usePatchExpertProfileMutation,
   usePatchMyUserMutation,
   usePatchProfileImageMutation,
 } from '@/feature/user/queries';
+
+const isExpertProfileComplete = (expert: ExpertProfile): boolean =>
+  expert.businessName !== null &&
+  expert.businessNumber !== null &&
+  expert.ceoName !== null &&
+  expert.contactTimeStart !== null &&
+  expert.contactTimeEnd !== null &&
+  expert.foundedYear !== null &&
+  expert.employeeMin !== null &&
+  expert.employeeMax !== null &&
+  expert.description !== null &&
+  expert.specialtyCategories.length > 0 &&
+  expert.techStacks.length > 0;
 
 const PROVIDERS: { id: AuthProvider; src: StaticImageData; alt: string }[] = [
   { id: 'NAVER', src: naverLogo, alt: '네이버' },
@@ -116,6 +136,14 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
   } = usePatchExpertProfileMutation();
   const { mutateAsync: patchProfileImage, isPending: isPatchingProfileImage } =
     usePatchProfileImageMutation();
+  const { mutate: applyForApproval, isPending: isApplying } =
+    useApplyExpertApprovalMutation();
+
+  const { data: portfoliosResponse } = useQuery({
+    queryKey: ['my-portfolios'],
+    queryFn: getMyPortfolios,
+    staleTime: 0,
+  });
 
   const [user, setUser] = useState(initialUser);
   const [businessName, setBusinessName] = useState('');
@@ -135,6 +163,8 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
   const [specialtyCategories, setSpecialtyCategories] = useState<string[]>([]);
   const [techStacks, setTechStacks] = useState<string[]>([]);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [applyError, setApplyError] = useState<string | null>(null);
+  const [applyDoneOpen, setApplyDoneOpen] = useState(false);
 
   const isSaving =
     isPatchingMyUser || isPatchingExpertProfile || isPatchingProfileImage;
@@ -359,6 +389,39 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
   };
 
   const approvalStatus = getApprovalStatus();
+  const portfolioCount = portfoliosResponse?.data.items.length ?? 0;
+  const canApply =
+    isExpertProfileComplete(profile) && portfolioCount > 0 && !isApplying;
+
+  const handleApplyForApproval = () => {
+    if (!canApply) {
+      return;
+    }
+    setApplyError(null);
+    applyForApproval(undefined, {
+      onSuccess: () => {
+        setUser((prev) => ({
+          ...prev,
+          expertProfile:
+            prev.expertProfile === null
+              ? null
+              : { ...prev.expertProfile, isApplied: true },
+        }));
+        setApplyDoneOpen(true);
+      },
+      onError: (error) => {
+        if (error instanceof ApiError) {
+          setApplyError(error.message);
+          return;
+        }
+        if (error instanceof Error) {
+          setApplyError(error.message);
+          return;
+        }
+        setApplyError('승인 신청에 실패했습니다.');
+      },
+    });
+  };
 
   return (
     <section className={styles.root}>
@@ -372,6 +435,25 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
       </div>
 
       {saveError !== null && <p className={styles.errorMessage}>{saveError}</p>}
+      {applyError !== null && <p className={styles.errorMessage}>{applyError}</p>}
+
+      <UserConfirmModal
+        isOpen={applyDoneOpen}
+        onClose={() => {
+          setApplyDoneOpen(false);
+        }}
+        title="판매자 승인 신청이 완료되었습니다."
+        description="관리자 승인 후 판매 활동을 시작할 수 있어요."
+        actions={[
+          {
+            label: '확인',
+            variant: 'blue',
+            onClick: () => {
+              setApplyDoneOpen(false);
+            },
+          },
+        ]}
+      />
 
       <div className={styles.sections}>
         <ExpertProfileSection
@@ -751,7 +833,12 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
         </ExpertProfileSection>
 
         {!profile.isApproved && !profile.isApplied && (
-          <button type="button" className={styles.applyBtn}>
+          <button
+            type="button"
+            className={clsx(styles.applyBtn, !canApply && styles.applyBtnDisabled)}
+            disabled={!canApply}
+            onClick={handleApplyForApproval}
+          >
             판매자 승인 신청
           </button>
         )}

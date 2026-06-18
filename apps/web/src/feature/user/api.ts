@@ -154,6 +154,20 @@ export function patchExpertProfile(
   );
 }
 
+export interface ApplyExpertApprovalResponse {
+  isApplied: boolean;
+  isApproved: boolean;
+}
+
+export function applyExpertApproval(): Promise<
+  ApiSuccess<ApplyExpertApprovalResponse>
+> {
+  return api.post<ApiSuccess<ApplyExpertApprovalResponse>>(
+    '/users/me/expert-profiles/apply',
+    {},
+  );
+}
+
 export function patchProfileImage(file: File): Promise<MyUser> {
   const formData = new FormData();
   formData.append('profileImage', file);
