@@ -256,6 +256,15 @@ export class ChatService {
     await this.chatRepository.updateAllDismissedMessages(userId);
   }
 
+  async createRoomForOrder(data: {
+    clientUserId: string;
+    expertUserId: string;
+    serviceId: string;
+  }) {
+    const room = await this.chatRepository.createRoomOnly(data);
+    return room.id;
+  }
+
   async createTradeRequest(
     roomId: string,
     expertUserId: string,

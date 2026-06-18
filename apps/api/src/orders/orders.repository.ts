@@ -172,6 +172,14 @@ export class OrdersRepository {
     });
   }
 
+  updateOrderChatRoomId(orderId: string, chatRoomId: string) {
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: { chatRoomId },
+      select: { id: true },
+    });
+  }
+
   async findOrderPolicy(orderId: string) {
     return this.prisma.order.findUnique({
       where: { id: orderId },

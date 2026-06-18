@@ -403,43 +403,55 @@ export class OrdersService {
           );
         });
 
-      if (dto.roomId) {
-        const roomId = dto.roomId;
-        void (async () => {
-          try {
-            await this.chatService.sendSystemMessage(
-              roomId,
-              'PAYMENT_COMPLETED',
-              {
-                systemType: 'PAYMENT_COMPLETED',
-                serviceTitle: service.title,
-                servicePrice: agreedServicePrice,
-                platformFee,
-                totalAmount,
-                expertSettlementAmount: agreedServicePrice,
-              },
+      void (async () => {
+        try {
+          const roomId =
+            dto.roomId ??
+            (await this.chatService.createRoomForOrder({
+              clientUserId,
+              expertUserId: service.expertUserId,
+              serviceId: service.id,
+            }));
+
+          if (!dto.roomId) {
+            await this.ordersRepository.updateOrderChatRoomId(
               dto.orderId,
-            );
-            await this.chatService.sendSystemMessage(
               roomId,
-              'PAYMENT_HELD',
-              { systemType: 'PAYMENT_HELD' },
-              dto.orderId,
-            );
-            await this.chatService.sendSystemMessage(
-              roomId,
-              'SCHEDULE_REQUEST',
-              { systemType: 'SCHEDULE_REQUEST' },
-              dto.orderId,
-            );
-          } catch (error: unknown) {
-            this.logger.error(
-              `결제 후 시스템 메시지 발송 실패. orderId=${dto.orderId}`,
-              error instanceof Error ? error.stack : String(error),
             );
           }
-        })();
-      }
+
+          await this.chatService.sendSystemMessage(
+            roomId,
+            'PAYMENT_COMPLETED',
+            {
+              systemType: 'PAYMENT_COMPLETED',
+              serviceTitle: service.title,
+              servicePrice: agreedServicePrice,
+              platformFee,
+              totalAmount,
+              expertSettlementAmount: agreedServicePrice,
+            },
+            dto.orderId,
+          );
+          await this.chatService.sendSystemMessage(
+            roomId,
+            'PAYMENT_HELD',
+            { systemType: 'PAYMENT_HELD' },
+            dto.orderId,
+          );
+          await this.chatService.sendSystemMessage(
+            roomId,
+            'SCHEDULE_REQUEST',
+            { systemType: 'SCHEDULE_REQUEST' },
+            dto.orderId,
+          );
+        } catch (error: unknown) {
+          this.logger.error(
+            `결제 후 채팅방/시스템 메시지 처리 실패. orderId=${dto.orderId}`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        }
+      })();
 
       return mapCreateOrderResponse(order);
     } catch (error: unknown) {
