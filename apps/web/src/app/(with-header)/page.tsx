@@ -54,7 +54,7 @@ const toCommunityPost = (p: PopularPost): CommunityPost => ({
   category: p.category,
   title: p.title,
   content: p.content,
-  author: { id: p.userId, name: p.authorDisplayName, profileImageUrl: null },
+  author: { id: p.userId, name: p.authorDisplayName, profileImageUrl: p.authorProfileImageUrl },
   likeCount: p.likeCount,
   commentCount: p.commentCount,
   viewCount: 0,
@@ -184,7 +184,13 @@ export default async function Home() {
       <Showcase title="MOVIT 인기 게시글" viewAllHref="/community">
         <div className={styles.communityList}>
           {popularPosts.map((post) => (
-            <CommunityCard key={post.id} post={toCommunityPost(post)} />
+            <Link
+              key={post.id}
+              href={`/community/${post.id}`}
+              className={styles.communityCardLink}
+            >
+              <CommunityCard post={toCommunityPost(post)} />
+            </Link>
           ))}
         </div>
       </Showcase>
@@ -192,10 +198,13 @@ export default async function Home() {
       <Showcase title="MOVIT 인기 프로젝트 의뢰 전문가">
         <div className={styles.cardList}>
           {sections.moveitPopularProjectExpert.map((expert) => (
-            <ExpertCard
+            <Link
               key={expert.userId}
-              expert={toExpertCardExpert(expert)}
-            />
+              href={`/experts/${expert.userId}`}
+              className={styles.cardLink}
+            >
+              <ExpertCard expert={toExpertCardExpert(expert)} />
+            </Link>
           ))}
         </div>
       </Showcase>
@@ -203,10 +212,13 @@ export default async function Home() {
       <Showcase title="MOVIT 인기 코칭">
         <div className={styles.cardList}>
           {sections.moveitPopularCoaching.map((expert) => (
-            <ExpertCard
+            <Link
               key={expert.userId}
-              expert={toExpertCardExpert(expert)}
-            />
+              href={`/experts/${expert.userId}`}
+              className={styles.cardLink}
+            >
+              <ExpertCard expert={toExpertCardExpert(expert)} />
+            </Link>
           ))}
         </div>
       </Showcase>
