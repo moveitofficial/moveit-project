@@ -58,11 +58,13 @@ export class AdminAuthService {
     refreshToken: string,
   ): void {
     const secure = this.config.get<string>('NODE_ENV') === 'production';
+    const cookieDomain = this.config.get<string>('COOKIE_DOMAIN');
     const base = {
       httpOnly: true,
       secure,
       sameSite: 'lax' as const,
       path: '/',
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
     };
     res.cookie(ADMIN_ACCESS_COOKIE_NAME, accessToken, {
       ...base,
@@ -76,11 +78,13 @@ export class AdminAuthService {
 
   clearAuthCookies(res: Response): void {
     const secure = this.config.get<string>('NODE_ENV') === 'production';
+    const cookieDomain = this.config.get<string>('COOKIE_DOMAIN');
     const base = {
       httpOnly: true,
       secure,
       sameSite: 'lax' as const,
       path: '/',
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
     };
     res.clearCookie(ADMIN_ACCESS_COOKIE_NAME, base);
     res.clearCookie(ADMIN_REFRESH_COOKIE_NAME, base);
