@@ -185,7 +185,7 @@ CS 채팅            CsChatRoom, CsMessage, CsMessageAttachment
 ### `ExpertProfile` (User 1:1)
 - `userId @unique`
 - 신청·승인: `isApplied`, `isApproved`, `approvedAt?`, `approvedByAdminId?` → `Admin`, `rejectedAt?`, `rejectReason?`
-- 사업자 정보: `businessName?`, `businessNumber?`, `ceoName?`, `contactTimeStart?`, `contactTimeEnd?`, `foundedYear?`, `employeeMin?`, `employeeMax?`
+- 사업자 정보: `businessName?`, `businessNumber?`, `ceoName?`, `contactTimeStart?`, `contactTimeEnd?`, `foundedYear? (Int, YYYYMM)`, `employeeMin?`, `employeeMax?`
 - 평점 집계: `avgRating?`, `reviewCount @default(0)`
 - 관계: `specialtyCategories`, `techStacks`, `portfolios`, `approvedByAdmin?`
 
@@ -378,7 +378,7 @@ CS 채팅            CsChatRoom, CsMessage, CsMessageAttachment
 - 핵심: `chatRoomId`, `senderId`, `content`
 - 분류: `type: MessageType` (TEXT/FILE/SYSTEM)
 - 시스템 메시지: `systemType?: SystemMessageType` (거래 요청/결제/일정 등 10가지)
-- 다형 참조: `referenceType?: MessageReferenceType` (ORDER/PAYMENT), `referenceId?`
+- 주문 연결: `orderId?: Order` (nullable FK — 시스템 메시지가 어느 주문과 연관됐는지 추적)
 - 관계: `attachments: MessageAttachment[]`, `chatRoomAsLast` (ChatRoom의 lastMessage 역참조)
 
 ### `MessageAttachment` (Message 1:N, **onDelete: Cascade**)
@@ -474,5 +474,5 @@ CS 채팅            CsChatRoom, CsMessage, CsMessageAttachment
 - DB 컬럼명: `@map("snake_case")` 일관 적용, 테이블명도 `@@map` 사용
 - 자식 모델은 대부분 `onDelete: Cascade` (포트폴리오 이미지/스킬, 서비스 자식, 채팅 첨부, 댓글, 좋아요, 신고 이미지)
 - `lastMessageId` 캐시 패턴: ChatRoom·CsChatRoom 모두 마지막 메시지 ID를 자기 자신에 저장 (목록 정렬 N+1 회피)
-- 다형 참조: `referenceType` + `referenceId` 쌍 (Notification, Message), `referenceId?` (AdminActivityLog) — Prisma FK가 아니라 애플리케이션 레벨 라우팅용
+- 다형 참조: `referenceType` + `referenceId` 쌍 (Notification), `referenceId?` (AdminActivityLog) — Prisma FK가 아니라 애플리케이션 레벨 라우팅용
 - 일별 통계 모델은 `date: Date` + 복합 유니크 키로 일별 누적 row 보관

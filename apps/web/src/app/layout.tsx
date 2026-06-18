@@ -5,11 +5,10 @@ import '@repo/styles/reset';
 import '@repo/styles/globals';
 import clsx from 'clsx';
 
-import type { Metadata } from 'next';
 
-import { Container } from '@/components/layout/Container';
-import { Footer } from '@/components/layout/Footer';
-import { Header } from '@/components/layout/Header';
+import FetcherInit from './FetcherInit';
+
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -24,11 +23,8 @@ export default function RootLayout({
   return (
     <html lang="ko" className={clsx(nanumSquare.variable, themeClass)}>
       <body>
-        <Header />
-        <QueryProvider>
-          <Container>{children}</Container>
-        </QueryProvider>
-        <Footer />
+        <FetcherInit />
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );

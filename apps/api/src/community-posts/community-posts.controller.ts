@@ -1,0 +1,242 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+
+import { JwtAccessUser } from '../auth/jwt/jwt-access.strategy';
+import {
+  COMMENTS_ERRORS,
+  COMMON_ERRORS,
+  COMMUNITY_POSTS_ERRORS,
+} from '../common/constants/errors';
+import { ApiErrorResponse } from '../common/decorators/api-error-response.decorator';
+import {
+  ApiPaginatedResponse,
+  ApiSuccessResponse,
+} from '../common/decorators/api-success-response.decorator';
+import {
+  JwtAuth,
+  OptionalJwtAuth,
+} from '../common/decorators/jwt-auth.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+
+import { CommunityPostsService } from './community-posts.service';
+import { PostListQueryDto } from './dto/post-list-query.dto';
+import {
+  CommentRequestDto,
+  PostRequestDto,
+  UpdateCommentRequestDto,
+  UpdatePostRequestDto,
+} from './dto/post-request.dto';
+import {
+  CommentDeletionResponseDto,
+  CommentListItemResponseDto,
+  CommentResponseDto,
+  PostDeletionResponseDto,
+  PostDetailResponseDto,
+  PostListItemResponseDto,
+  PostResponseDto,
+  ToggleLikeResponseDto,
+} from './dto/post-response.dto';
+
+import type { Request } from 'express';
+
+@ApiTags('community-posts')
+@Controller('community-posts')
+export class CommunityPostsController {
+  constructor(private readonly communityPostsService: CommunityPostsService) {}
+
+  @ApiOperation({ summary: '게시글 생성' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.CREATED, PostResponseDto)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMUNITY_POSTS_ERRORS.CONTAINS_BANNED_WORD,
+  )
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Post()
+  createPost(@Req() req: Request, @Body() body: PostRequestDto) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.createPost(user.userId, body);
+  }
+
+  @ApiOperation({ summary: '모든 게시글 조회' })
+  @ApiPaginatedResponse(HttpStatus.OK, PostListItemResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get()
+  getAllPosts(@Query() query: PostListQueryDto) {
+    return this.communityPostsService.getAllPosts(query);
+  }
+
+  @ApiOperation({
+    summary: '인기 게시글 (메인용)',
+    description: '좋아요 상위 20개 풀에서 랜덤 4개 반환. 삭제된 글 제외.',
+  })
+  @ApiSuccessResponse(HttpStatus.OK, [PostListItemResponseDto])
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @Get('popular')
+  getPopularPosts(): Promise<PostListItemResponseDto[]> {
+    return this.communityPostsService.getPopularPosts();
+  }
+
+  @ApiOperation({ summary: '게시글 상세 조회' })
+  @OptionalJwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, PostDetailResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Get(':id')
+  getPost(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser | undefined;
+    return this.communityPostsService.getPost(postId, user?.userId);
+  }
+
+  @ApiOperation({ summary: '게시글 수정' })
+  @JwtAuth(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
+  @ApiSuccessResponse(HttpStatus.OK, PostResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(
+    COMMUNITY_POSTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMUNITY_POSTS_ERRORS.NOTHING_TO_UPDATE,
+    COMMON_ERRORS.VALIDATION_ERROR,
+    COMMUNITY_POSTS_ERRORS.CONTAINS_BANNED_WORD,
+  )
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Patch(':id')
+  updatePost(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePostRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.updatePost(user.userId, id, dto);
+  }
+
+  @ApiOperation({ summary: '게시글 삭제' })
+  @JwtAuth(COMMUNITY_POSTS_ERRORS.FORBIDDEN)
+  @ApiSuccessResponse(HttpStatus.OK, PostDeletionResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Delete(':id')
+  deletePost(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.deletePost(postId, user.userId);
+  }
+
+  @ApiOperation({ summary: '게시글 좋아요 토글' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.OK, ToggleLikeResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @HttpCode(HttpStatus.OK)
+  @Post(':id/like')
+  toggleLike(@Req() req: Request, @Param('id', ParseUUIDPipe) postId: string) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.toggleLike(postId, user.userId);
+  }
+
+  @ApiOperation({ summary: '댓글 생성' })
+  @JwtAuth()
+  @ApiSuccessResponse(HttpStatus.CREATED, CommentResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    COMMENTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMENTS_ERRORS.CONTENT_TOO_LONG,
+  )
+  @Post(':id/comments')
+  createComment(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) postId: string,
+    @Body() dto: CommentRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.createComment(user.userId, postId, dto);
+  }
+
+  @ApiOperation({ summary: '댓글 수정' })
+  @JwtAuth(COMMENTS_ERRORS.FORBIDDEN)
+  @ApiSuccessResponse(HttpStatus.OK, CommentResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND, COMMENTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    COMMUNITY_POSTS_ERRORS.ALREADY_DELETED,
+    COMMENTS_ERRORS.ALREADY_DELETED,
+  )
+  @ApiErrorResponse(
+    COMMON_ERRORS.VALIDATION_ERROR,
+    COMMENTS_ERRORS.CONTENT_TOO_SHORT,
+    COMMENTS_ERRORS.CONTENT_TOO_LONG,
+    COMMENTS_ERRORS.NOTHING_TO_UPDATE,
+  )
+  @Patch(':id/comments/:commentId')
+  updateComment(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) postId: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+    @Body() dto: UpdateCommentRequestDto,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.updateComment(
+      user.userId,
+      commentId,
+      postId,
+      dto,
+    );
+  }
+
+  @ApiOperation({ summary: '댓글 목록 조회' })
+  @ApiPaginatedResponse(HttpStatus.OK, CommentListItemResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.VALIDATION_ERROR)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.ALREADY_DELETED)
+  @Get(':id/comments')
+  getComments(
+    @Param('id', ParseUUIDPipe) postId: string,
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.communityPostsService.getComments(postId, query);
+  }
+
+  @ApiOperation({ summary: '댓글 삭제' })
+  @JwtAuth(COMMENTS_ERRORS.FORBIDDEN)
+  @ApiSuccessResponse(HttpStatus.OK, CommentDeletionResponseDto)
+  @ApiErrorResponse(COMMON_ERRORS.INTERNAL_SERVER_ERROR)
+  @ApiErrorResponse(COMMUNITY_POSTS_ERRORS.NOT_FOUND, COMMENTS_ERRORS.NOT_FOUND)
+  @ApiErrorResponse(
+    COMMUNITY_POSTS_ERRORS.ALREADY_DELETED,
+    COMMENTS_ERRORS.ALREADY_DELETED,
+  )
+  @Delete(':id/comments/:commentId')
+  deleteComment(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) postId: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+  ) {
+    const user = req.user as JwtAccessUser;
+    return this.communityPostsService.deleteComment(
+      user.userId,
+      postId,
+      commentId,
+    );
+  }
+}

@@ -92,35 +92,4 @@ export class AdminDashboardRepository {
       include: { expertUser: { select: { name: true } } },
     });
   }
-
-  // ─── Admin activity logs (offset 페이지네이션) ─────────
-  countActivities(): Promise<number> {
-    return this.prisma.adminActivityLog.count();
-  }
-
-  findActivities(skip: number, take: number) {
-    return this.prisma.adminActivityLog.findMany({
-      skip,
-      take,
-      orderBy: { createdAt: 'desc' },
-      include: { admin: { select: { name: true } } },
-    });
-  }
-
-  // 활동 로그 enrich용 batch 조회 — referenceId 묶음으로 한 번에
-  findUsersByIds(ids: string[]) {
-    if (ids.length === 0) return Promise.resolve([]);
-    return this.prisma.user.findMany({
-      where: { id: { in: ids } },
-      select: { id: true, name: true },
-    });
-  }
-
-  findFaqsByIds(ids: string[]) {
-    if (ids.length === 0) return Promise.resolve([]);
-    return this.prisma.faq.findMany({
-      where: { id: { in: ids } },
-      select: { id: true, title: true },
-    });
-  }
 }

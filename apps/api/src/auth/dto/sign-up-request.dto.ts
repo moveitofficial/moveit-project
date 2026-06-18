@@ -7,6 +7,7 @@ import {
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class SignUpRequestDto {
@@ -35,13 +36,15 @@ export class SignUpRequestDto {
 
   @ApiProperty({
     example: '킹한준',
-    description: 'name',
-    required: true,
+    description: 'name. CLIENT role 필수, EXPERT role 불필요',
+    required: false,
+    nullable: true,
   })
+  @ValidateIf((o: SignUpRequestDto) => o.role === Role.CLIENT)
   @IsString()
   @MinLength(1)
   @MaxLength(50)
-  declare name: string;
+  declare name: string | null;
 
   @ApiProperty({
     enum: Role,

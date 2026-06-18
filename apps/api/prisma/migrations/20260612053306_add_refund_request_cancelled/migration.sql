@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "NotificationCategory" ADD VALUE 'REFUND_REQUEST_CANCELLED';

@@ -1,17 +1,22 @@
-/**
- * 실제 API 작성 시 수정 예정
- */
+import { api } from '@repo/fetcher';
+
 import type {
-  AdminExpert,
-  AdminUser,
-  ApiSuccess,
+  CommunityDeletionInfo,
+  UserCommentItem,
+  UserDetailData,
+  UserItem,
+  UserOrderItem,
+  UserPostItem,
+  UserReportReceivedItem,
+  UserReportSentItem,
+  UserServiceItem,
+} from './types';
+import type { ApiSuccess, PaginatedResult } from '@/types/api';
+import type {
   ExpertApprovalStatus,
-  PaginatedResult,
   Provider,
   ServiceType,
-} from '@/mocks';
-
-import { mockAdminExperts, mockAdminUsers } from '@/mocks';
+} from '@/types/enums';
 
 export interface GetPagedUsersParams {
   tab: 'CLIENT' | 'EXPERT';
@@ -24,73 +29,117 @@ export interface GetPagedUsersParams {
   serviceType?: ServiceType;
 }
 
-export function getUserTabCounts(): Promise<{
+export async function getUserTabCounts(): Promise<{
   clientCount: number;
   expertCount: number;
 }> {
-  return Promise.resolve({
-    clientCount: mockAdminUsers.length,
-    expertCount: mockAdminExperts.length,
-  });
+  const res = await api.get<ApiSuccess<{ client: number; expert: number }>>(
+    '/admin/users/counts',
+  );
+
+  return { clientCount: res.data.client, expertCount: res.data.expert };
 }
 
 export function getPagedUsers(
   params: GetPagedUsersParams,
-): Promise<ApiSuccess<PaginatedResult<AdminUser | AdminExpert>>> {
-  const baseData: (AdminUser | AdminExpert)[] =
-    params.tab === 'CLIENT' ? mockAdminUsers : mockAdminExperts;
-
-  const approvalStatus =
-    params.tab === 'EXPERT' ? params.approvalStatus : undefined;
-  const serviceType = params.tab === 'EXPERT' ? params.serviceType : undefined;
-
-  const filteredData = baseData
-    .filter((user) => {
-      if (params.search === undefined) return true;
-      const query = params.search.toLowerCase().trim();
-      return (
-        user.name.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query) ||
-        ('companyName' in user &&
-          user.companyName.toLowerCase().includes(query))
-      );
-    })
-    .filter(
-      (user) =>
-        params.provider === undefined || user.provider === params.provider,
-    )
-    .filter(
-      (user) => params.region === undefined || user.region === params.region,
-    )
-    .filter(
-      (user) =>
-        approvalStatus === undefined ||
-        ('approvalStatus' in user && user.approvalStatus === approvalStatus),
-    )
-    .filter(
-      (user) =>
-        serviceType === undefined ||
-        ('serviceType' in user && user.serviceType === serviceType),
-    );
-
-  const totalCount = filteredData.length;
-  const startIndex = (params.page - 1) * params.pageSize;
-  const pagedItems = filteredData.slice(
-    startIndex,
-    startIndex + params.pageSize,
-  );
-
-  return Promise.resolve({
-    success: true,
-    message: '조회 성공',
-    data: {
-      items: pagedItems,
-      pagination: {
-        page: params.page,
-        pageSize: params.pageSize,
-        totalCount,
-        hasNext: startIndex + params.pageSize < totalCount,
-      },
-    },
+): Promise<ApiSuccess<PaginatedResult<UserItem>>> {
+  const query = new URLSearchParams({
+    role: params.tab,
+    page: String(params.page),
+    pageSize: String(params.pageSize),
   });
+
+  if (params.search !== undefined) {
+    query.set('search', params.search);
+  }
+  if (params.provider !== undefined) {
+    query.set('provider', params.provider);
+  }
+  if (params.region !== undefined) {
+    query.set('region', params.region);
+  }
+  if (params.approvalStatus !== undefined) {
+    query.set('status', params.approvalStatus);
+  }
+  if (params.serviceType !== undefined) {
+    query.set('specialtyGroup', params.serviceType);
+  }
+
+  return api.get<ApiSuccess<PaginatedResult<UserItem>>>(
+    `/admin/users?${query.toString()}`,
+  );
+}
+
+export function getUserDetail(id: string): Promise<ApiSuccess<UserDetailData>> {
+  return api.get<ApiSuccess<UserDetailData>>(`/admin/users/${id}`);
+}
+
+export function getUserOrders(
+  id: string,
+  page: number,
+): Promise<ApiSuccess<PaginatedResult<UserOrderItem>>> {
+  return api.get<ApiSuccess<PaginatedResult<UserOrderItem>>>(
+    `/admin/users/${id}/orders?page=${page}`,
+  );
+}
+
+export function getUserServices(
+  id: string,
+  page: number,
+): Promise<ApiSuccess<PaginatedResult<UserServiceItem>>> {
+  return api.get<ApiSuccess<PaginatedResult<UserServiceItem>>>(
+    `/admin/users/${id}/services?page=${page}`,
+  );
+}
+
+export function getUserReportsReceived(
+  id: string,
+  page: number,
+): Promise<ApiSuccess<PaginatedResult<UserReportReceivedItem>>> {
+  return api.get<ApiSuccess<PaginatedResult<UserReportReceivedItem>>>(
+    `/admin/users/${id}/reports/received?page=${page}`,
+  );
+}
+
+export function getUserReportsSent(
+  id: string,
+  page: number,
+): Promise<ApiSuccess<PaginatedResult<UserReportSentItem>>> {
+  return api.get<ApiSuccess<PaginatedResult<UserReportSentItem>>>(
+    `/admin/users/${id}/reports/sent?page=${page}`,
+  );
+}
+
+export function getUserPosts(
+  id: string,
+  page: number,
+): Promise<ApiSuccess<PaginatedResult<UserPostItem>>> {
+  return api.get<ApiSuccess<PaginatedResult<UserPostItem>>>(
+    `/admin/users/${id}/posts?page=${page}`,
+  );
+}
+
+export function getUserComments(
+  id: string,
+  page: number,
+): Promise<ApiSuccess<PaginatedResult<UserCommentItem>>> {
+  return api.get<ApiSuccess<PaginatedResult<UserCommentItem>>>(
+    `/admin/users/${id}/comments?page=${page}`,
+  );
+}
+
+export function getPostDeletion(
+  postId: string,
+): Promise<ApiSuccess<CommunityDeletionInfo>> {
+  return api.get<ApiSuccess<CommunityDeletionInfo>>(
+    `/admin/community/posts/${postId}/deletion`,
+  );
+}
+
+export function getCommentDeletion(
+  commentId: string,
+): Promise<ApiSuccess<CommunityDeletionInfo>> {
+  return api.get<ApiSuccess<CommunityDeletionInfo>>(
+    `/admin/community/comments/${commentId}/deletion`,
+  );
 }

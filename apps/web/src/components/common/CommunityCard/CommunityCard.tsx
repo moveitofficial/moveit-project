@@ -24,6 +24,13 @@ const CATEGORY_COLOR: Record<CommunityCategory, RectLabelColor> = {
   FREE: 'blue100',
 };
 
+// 본문이 HTML(에디터 출력)이므로 목록 미리보기는 태그를 제거한 평문으로 표시.
+const toPlainText = (html: string): string =>
+  html
+    .replaceAll(/<[^>]*>/g, ' ')
+    .replaceAll(/\s+/g, ' ')
+    .trim();
+
 interface Props {
   post: CommunityPost;
   flexRow?: 'main' | 'mypage';
@@ -40,7 +47,7 @@ export default function CommunityCard({ post, flexRow }: Props) {
         <div className={styles.dateText}>{formatDate(post.createdAt)}</div>
       </div>
       <div className={styles.titleText}>{post.title}</div>
-      <div className={styles.contentText}>{post.content}</div>
+      <div className={styles.contentText}>{toPlainText(post.content)}</div>
       <div className={styles.communityInfoContainer({ flexRow })}>
         <div className={styles.userInfoContainer}>
           {post.author.profileImageUrl ? (

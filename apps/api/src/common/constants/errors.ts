@@ -91,6 +91,18 @@ export const USER_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '새 비밀번호가 일치하지 않습니다.',
   },
+  ROLE_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '해당 사용자 역할에서는 조회할 수 없는 리소스입니다.',
+  },
+  ALREADY_BLOCKED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 블랙리스트에 등록된 회원입니다.',
+  },
+  NOT_BLOCKED: {
+    status: HttpStatus.CONFLICT,
+    message: '블랙리스트에 등록되지 않은 회원입니다.',
+  },
 } as const;
 
 export const SERVICE_ERRORS = {
@@ -109,6 +121,10 @@ export const SERVICE_ERRORS = {
   FORBIDDEN_NOT_OWNER: {
     status: HttpStatus.FORBIDDEN,
     message: '본인이 등록한 서비스만 수정, 상태 변경 또는 종료할 수 있습니다.',
+  },
+  FORBIDDEN_NOT_EXPERT: {
+    status: HttpStatus.FORBIDDEN,
+    message: '전문가의 서비스만 조회할 수 있습니다.',
   },
   IMAGE_PARTIAL_UPDATE: {
     status: HttpStatus.BAD_REQUEST,
@@ -133,31 +149,23 @@ export const ORDER_ERRORS = {
   },
   FORBIDDEN_NOT_OWNER: {
     status: HttpStatus.FORBIDDEN,
-    message: '본인의 주문만 결제하거나 조회할 수 있습니다.',
-  },
-  FORBIDDEN_SELF_ORDER: {
-    status: HttpStatus.FORBIDDEN,
-    message: '본인의 서비스는 구매할 수 없습니다.',
+    message: '본인의 주문에만 접근할 수 있습니다.',
   },
   INVALID_STATUS: {
     status: HttpStatus.BAD_REQUEST,
     message: '유효하지 않은 주문 상태입니다.',
   },
-  AMOUNT_MISMATCH: {
-    status: HttpStatus.BAD_REQUEST,
-    message: '결제 요청 금액이 실제 주문 금액과 일치하지 않습니다.',
-  },
-  ALREADY_CANCELED: {
-    status: HttpStatus.CONFLICT,
-    message: '이미 취소된 주문입니다.',
-  },
-  ALREADY_REFUNDED: {
-    status: HttpStatus.CONFLICT,
-    message: '이미 환불된 주문입니다.',
-  },
   ALREADY_PROCESSED: {
     status: HttpStatus.CONFLICT,
     message: '이미 결제가 완료되었거나 취소된 주문건입니다.',
+  },
+  DUPLICATE_ORDER_ID: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 사용된 주문 ID입니다.',
+  },
+  INVALID_END_DATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '과거 날짜로는 마감일을 설정할 수 없습니다.',
   },
 } as const;
 
@@ -175,8 +183,16 @@ export const PAYMENT_ERRORS = {
     message: '결제 금액이 일치하지 않습니다.',
   },
   ALREADY_CONFIRMED: {
-    status: HttpStatus.BAD_REQUEST,
+    status: HttpStatus.CONFLICT,
     message: '이미 승인된 결제입니다.',
+  },
+  DUPLICATE_PAYMENT_KEY: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 사용된 결제 키입니다.',
+  },
+  CANCEL_FAILED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '결제 취소에 실패했습니다.',
   },
 } as const;
 
@@ -186,12 +202,28 @@ export const REFUND_ERRORS = {
     message: '환불 정보를 찾을 수 없습니다.',
   },
   ALREADY_REQUESTED: {
-    status: HttpStatus.BAD_REQUEST,
-    message: '이미 환불 요청된 주문입니다.',
+    status: HttpStatus.CONFLICT,
+    message: '이미 취소/환불 요청된 주문입니다.',
   },
   INVALID_STATUS: {
     status: HttpStatus.BAD_REQUEST,
     message: '유효하지 않은 환불 상태입니다.',
+  },
+  CANCEL_NOT_ALLOWED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '작업 시작 전 상태에서만 취소 요청할 수 있습니다.',
+  },
+  REFUND_NOT_ALLOWED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '기한 만료 상태에서만 환불 요청할 수 있습니다.',
+  },
+  NOT_APPROVABLE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '처리할 수 없는 취소/환불 요청입니다.',
+  },
+  REQUEST_NOT_CANCELABLE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '환불 요청 상태에서만 취소할 수 있습니다.',
   },
 } as const;
 
@@ -222,6 +254,30 @@ export const EXPERT_PROFILE_ERRORS = {
   MIXED_SERVICE_GROUP: {
     status: HttpStatus.BAD_REQUEST,
     message: '전문 분야는 하나의 서비스 그룹에서만 선택할 수 있습니다.',
+  },
+  ALREADY_APPLIED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 판매자 승인을 신청하였습니다.',
+    code: 'EXPERT_PROFILE_ALREADY_APPLIED',
+  },
+  ALREADY_APPROVED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 판매자 승인이 완료되었습니다.',
+    code: 'EXPERT_PROFILE_ALREADY_APPROVED',
+  },
+  NOT_APPLIED: {
+    status: HttpStatus.CONFLICT,
+    message: '전문가 승인 신청 상태가 아닙니다.',
+    code: 'EXPERT_PROFILE_NOT_APPLIED',
+  },
+  INCOMPLETE_PROFILE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '승인 신청 전 전문가 프로필의 모든 항목을 입력해 주세요.',
+    code: 'EXPERT_PROFILE_INCOMPLETE_PROFILE',
+  },
+  NOT_APPROVED: {
+    status: HttpStatus.FORBIDDEN,
+    message: '승인되지 않은 전문가입니다.',
   },
 } as const;
 
@@ -280,6 +336,11 @@ export const REVIEW_ERRORS = {
     message: '주문과 서비스가 일치하지 않습니다.',
     code: 'REVIEW_ORDER_SERVICE_MISMATCH',
   },
+  ORDER_REVIEW_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '주문과 리뷰가 일치하지 않습니다.',
+    code: 'REVIEW_ORDER_REVIEW_MISMATCH',
+  },
   NOTHING_TO_UPDATE: {
     status: HttpStatus.BAD_REQUEST,
     message: '수정된 내용이 없습니다.',
@@ -312,23 +373,289 @@ export const UPLOAD_ERRORS = {
     status: HttpStatus.BAD_REQUEST,
     message: '프로필 이미지의 가로와 세로는 각각 500px 이하여야 합니다.',
   },
+  REPORT_IMAGE_TOO_LARGE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '신고하기 증거 이미지의 크기는 최대 5MB까지 허용됩니다.',
+  },
+  REPORT_IMAGES_TOO_MANY: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '파일은 최대 3개까지 업로드할 수 있습니다.',
+  },
+  INVALID_CHAT_FILE_TYPE: {
+    status: HttpStatus.BAD_REQUEST,
+    message:
+      '허용되지 않는 파일 형식입니다. (jpg, jpeg, png, pdf, xlsx, xls, pptx, ppt, docx, doc만 허용)',
+  },
+  CHAT_FILE_TOO_LARGE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '파일 크기는 최대 500MB까지 허용됩니다.',
+  },
+  CHAT_FILES_TOO_MANY: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '파일은 최대 3개까지 업로드할 수 있습니다.',
+  },
 } as const;
 
-export const EXPERT_ERRORS = {
+export const COMMUNITY_POSTS_ERRORS = {
   NOT_FOUND: {
     status: HttpStatus.NOT_FOUND,
-    message: '전문가를 찾을 수 없습니다.',
+    message: '게시글을 찾을 수 없습니다.',
+    code: 'COMMUNITY_POSTS_NOT_FOUND',
   },
-  NOT_APPROVED: {
+  FORBIDDEN: {
     status: HttpStatus.FORBIDDEN,
-    message: '승인되지 않은 전문가입니다.',
+    message: '본인이 등록한 게시글만 수정, 삭제할 수 있습니다.',
+    code: 'COMMUNITY_POSTS_FORBIDDEN',
   },
-  ALREADY_APPROVED: {
+  ALREADY_DELETED: {
+    status: HttpStatus.CONFLICT,
+    message: '삭제된 게시글입니다.',
+    code: 'COMMUNITY_POSTS_ALREADY_DELETED',
+  },
+  CONTENT_TOO_SHORT: {
     status: HttpStatus.BAD_REQUEST,
-    message: '이미 승인된 전문가입니다.',
+    message: '게시글 내용은 최소 1자 이상이어야 합니다.',
+    code: 'COMMUNITY_POSTS_CONTENT_TOO_SHORT',
   },
-  REJECTED: {
+  NOTHING_TO_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '수정할 항목이 없습니다.',
+    code: 'COMMUNITY_POSTS_NOTHING_TO_UPDATE',
+  },
+  CONTAINS_BANNED_WORD: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '글 내용에 부적절한 단어가 포함되어 있습니다.',
+    code: 'COMMUNITY_POSTS_CONTAINS_BANNED_WORD',
+  },
+} as const;
+
+export const CHAT_ERRORS = {
+  ROOM_NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '채팅방을 찾을 수 없습니다.',
+    code: 'CHAT_ROOM_NOT_FOUND',
+  },
+  FORBIDDEN_NOT_PARTICIPANT: {
     status: HttpStatus.FORBIDDEN,
-    message: '승인이 거절된 전문가입니다.',
+    message: '채팅방 참여자만 접근할 수 있습니다.',
+    code: 'CHAT_FORBIDDEN_NOT_PARTICIPANT',
+  },
+  FORBIDDEN_NOT_CLIENT: {
+    status: HttpStatus.FORBIDDEN,
+    message: '클라이언트만 채팅방을 생성할 수 있습니다.',
+    code: 'CHAT_FORBIDDEN_NOT_CLIENT',
+  },
+  FORBIDDEN_EXPERT_MISMATCH: {
+    status: HttpStatus.FORBIDDEN,
+    message: '해당 채팅방의 전문가가 아닙니다.',
+    code: 'CHAT_FORBIDDEN_EXPERT_MISMATCH',
+  },
+  INVALID_EXPERT: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '해당 서비스의 전문가가 아닙니다.',
+    code: 'CHAT_INVALID_EXPERT',
+  },
+  ROOM_ALREADY_EXISTS: {
+    status: HttpStatus.CONFLICT,
+    message: '해당 서비스 이미 채팅방이 존재합니다.',
+    code: 'CHAT_ROOM_ALREADY_EXISTS',
+  },
+} as const;
+
+export const CS_CHAT_ERRORS = {
+  ROOM_NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '문의방을 찾을 수 없습니다.',
+    code: 'CS_CHAT_ROOM_NOT_FOUND',
+  },
+  FORBIDDEN: {
+    status: HttpStatus.FORBIDDEN,
+    message: '접근 권한이 없습니다.',
+    code: 'CS_CHAT_FORBIDDEN',
+  },
+  ALREADY_CLOSED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '이미 종료된 문의입니다.',
+    code: 'CS_CHAT_ALREADY_CLOSED',
+  },
+  FORBIDDEN_NOT_ADMIN: {
+    status: HttpStatus.FORBIDDEN,
+    message: '관리자만 이 작업을 수행할 수 있습니다.',
+    code: 'CS_CHAT_FORBIDDEN_NOT_ADMIN',
+  },
+  ALREADY_ASSIGNED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '이미 상담원이 배정된 문의입니다.',
+    code: 'CS_CHAT_ALREADY_ASSIGNED',
+  },
+} as const;
+
+export const COMMENTS_ERRORS = {
+  FORBIDDEN: {
+    status: HttpStatus.FORBIDDEN,
+    message: '본인이 등록한 댓글만 수정할 수 있습니다.',
+    code: 'COMMENTS_FORBIDDEN',
+  },
+  NOTHING_TO_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '수정할 항목이 없습니다.',
+    code: 'COMMENTS_NOTHING_TO_UPDATE',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '댓글을 찾을 수 없습니다.',
+    code: 'COMMENTS_NOT_FOUND',
+  },
+  ALREADY_DELETED: {
+    status: HttpStatus.CONFLICT,
+    message: '삭제된 댓글입니다.',
+    code: 'COMMENTS_ALREADY_DELETED',
+  },
+  CONTENT_TOO_SHORT: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '댓글 내용은 최소 1자 이상이어야 합니다.',
+    code: 'COMMENTS_CONTENT_TOO_SHORT',
+  },
+  CONTENT_TOO_LONG: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '댓글 내용은 최대 1000자 이하여야 합니다.',
+    code: 'COMMENTS_CONTENT_TOO_LONG',
+  },
+} as const;
+
+export const NOTIFICATION_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '알림을 찾을 수 없습니다.',
+  },
+} as const;
+
+export const REPORT_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '신고 내역을 찾을 수 없습니다.',
+    code: 'REPORT_NOT_FOUND',
+  },
+  SELF_REPORT: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '자신을 신고할 수 없습니다.',
+    code: 'REPORT_SELF_REPORT',
+  },
+  FORBIDDEN_SAME_ROLE: {
+    status: HttpStatus.FORBIDDEN,
+    message: '같은 역할의 유저는 신고할 수 없습니다.',
+  },
+} as const;
+
+export const MAIN_SETTING_ERRORS = {
+  LIMIT_EXCEEDED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '섹션당 최대 4개까지 등록할 수 있습니다.',
+    code: 'MAIN_SETTING_LIMIT_EXCEEDED',
+  },
+  GROUP_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '섹션과 대상의 카테고리가 일치하지 않습니다.',
+    code: 'MAIN_SETTING_GROUP_MISMATCH',
+  },
+  DUPLICATE: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 등록된 항목이 포함되어 있습니다.',
+    code: 'MAIN_SETTING_DUPLICATE',
+  },
+  TARGET_NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '등록 대상을 찾을 수 없습니다.',
+    code: 'MAIN_SETTING_TARGET_NOT_FOUND',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '삭제할 메인세팅 항목을 찾을 수 없습니다.',
+    code: 'MAIN_SETTING_NOT_FOUND',
+  },
+  SECTION_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '삭제 대상이 지정한 섹션에 속하지 않습니다.',
+    code: 'MAIN_SETTING_SECTION_MISMATCH',
+  },
+} as const;
+
+export const BANNER_ERRORS = {
+  LIMIT_EXCEEDED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '띠배너는 최대 1개까지 등록할 수 있습니다.',
+    code: 'BANNER_LIMIT_EXCEEDED',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '삭제할 띠배너를 찾을 수 없습니다.',
+    code: 'BANNER_NOT_FOUND',
+  },
+} as const;
+
+export const FAQ_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: 'FAQ를 찾을 수 없습니다.',
+    code: 'FAQ_NOT_FOUND',
+  },
+  NOTHING_TO_UPDATE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '수정할 항목이 없습니다.',
+    code: 'FAQ_NOTHING_TO_UPDATE',
+  },
+} as const;
+
+export const CATEGORY_FEATURED_ERRORS = {
+  LIMIT_EXCEEDED: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '카테고리 대표서비스는 그룹당 최대 4개까지 등록할 수 있습니다.',
+    code: 'CATEGORY_FEATURED_LIMIT_EXCEEDED',
+  },
+  GROUP_MISMATCH: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '서비스 그룹과 대상의 카테고리가 일치하지 않습니다.',
+    code: 'CATEGORY_FEATURED_GROUP_MISMATCH',
+  },
+  DUPLICATE: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 등록된 항목이 포함되어 있습니다.',
+    code: 'CATEGORY_FEATURED_DUPLICATE',
+  },
+  TARGET_NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '등록 대상 서비스를 찾을 수 없습니다.',
+    code: 'CATEGORY_FEATURED_TARGET_NOT_FOUND',
+  },
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '삭제할 카테고리 대표서비스 항목을 찾을 수 없습니다.',
+    code: 'CATEGORY_FEATURED_NOT_FOUND',
+  },
+  GROUP_MISMATCH_ON_DELETE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '삭제 대상이 지정한 서비스 그룹에 속하지 않습니다.',
+    code: 'CATEGORY_FEATURED_GROUP_MISMATCH_ON_DELETE',
+  },
+} as const;
+
+export const FAVORITES_ERRORS = {
+  NOT_FOUND: {
+    status: HttpStatus.NOT_FOUND,
+    message: '찜 내역을 찾을 수 없습니다.',
+    code: 'FAVORITES_NOT_FOUND',
+  },
+  ALREADY_FAVORITED: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 찜한 항목입니다.',
+    code: 'FAVORITES_ALREADY_FAVORITED',
+  },
+} as const;
+
+export const STATISTICS_ERRORS = {
+  INVALID_DATE_RANGE: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '시작일은 종료일보다 이전이어야 합니다.',
+    code: 'STATISTICS_INVALID_DATE_RANGE',
   },
 } as const;

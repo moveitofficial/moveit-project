@@ -1,15 +1,16 @@
 import { Module } from '@nestjs/common';
 
-import { AuthModule } from '../auth/auth.module';
 import { UploadModule } from '../upload/upload.module';
 
+import { MeServicesController } from './me-services.controller';
 import { ServicesController } from './services.controller';
 import { ServicesRepository } from './services.repository';
 import { ServicesService } from './services.service';
 
 @Module({
-  imports: [AuthModule, UploadModule],
-  controllers: [ServicesController],
+  imports: [UploadModule],
+  controllers: [ServicesController, MeServicesController],
   providers: [ServicesService, ServicesRepository],
+  exports: [ServicesService, ServicesRepository],
 })
 export class ServicesModule {}

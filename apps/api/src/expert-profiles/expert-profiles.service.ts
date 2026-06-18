@@ -12,11 +12,66 @@ import { ExpertProfilesRepository } from './expert-profiles.repository';
 
 import type { ExpertProfileWithRelations } from './expert-profiles.types';
 
-function mapProfile(profile: ExpertProfileWithRelations) {
+function mapUpdatedProfile(profile: ExpertProfileWithRelations) {
   return {
-    ...profile,
+    id: profile.id,
+    userId: profile.userId,
+    businessName: profile.businessName,
+    businessNumber: profile.businessNumber,
+    ceoName: profile.ceoName,
+    contactTimeStart: profile.contactTimeStart,
+    contactTimeEnd: profile.contactTimeEnd,
+    foundedYear: profile.foundedYear,
+    employeeMin: profile.employeeMin,
+    employeeMax: profile.employeeMax,
+    description: profile.description,
+    avgRating: profile.avgRating,
+    reviewCount: profile.reviewCount,
+    createdAt: profile.createdAt,
     specialtyCategories: mapServiceCategories(profile.specialtyCategories),
     techStacks: profile.techStacks.map((ts) => ({ name: ts.techStack.name })),
+    portfolios: profile.portfolios.map((p) => ({
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      clientName: p.clientName,
+      businessSector: p.businessSector,
+      createdAt: p.createdAt,
+    })),
+  };
+}
+
+function mapProfile(profile: ExpertProfileWithRelations) {
+  return {
+    id: profile.id,
+    userId: profile.userId,
+    isApplied: profile.isApplied,
+    isApproved: profile.isApproved,
+    approvedAt: profile.approvedAt,
+    rejectedAt: profile.rejectedAt,
+    rejectReason: profile.rejectReason,
+    businessName: profile.businessName,
+    businessNumber: profile.businessNumber,
+    ceoName: profile.ceoName,
+    contactTimeStart: profile.contactTimeStart,
+    contactTimeEnd: profile.contactTimeEnd,
+    foundedYear: profile.foundedYear,
+    employeeMin: profile.employeeMin,
+    employeeMax: profile.employeeMax,
+    description: profile.description,
+    avgRating: profile.avgRating,
+    reviewCount: profile.reviewCount,
+    createdAt: profile.createdAt,
+    specialtyCategories: mapServiceCategories(profile.specialtyCategories),
+    techStacks: profile.techStacks.map((ts) => ({ name: ts.techStack.name })),
+    portfolios: profile.portfolios.map((p) => ({
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      clientName: p.clientName,
+      businessSector: p.businessSector,
+      createdAt: p.createdAt,
+    })),
   };
 }
 
@@ -60,7 +115,7 @@ export class ExpertProfilesService {
           ceoName: dto.ceoName,
           contactTimeStart: dto.contactTimeStart,
           contactTimeEnd: dto.contactTimeEnd,
-          foundedYear: dto.foundedYear,
+          foundedYear: Number.parseInt(dto.foundedYear, 10),
           employeeMin: dto.employeeMin,
           employeeMax: dto.employeeMax,
           description: dto.description,
@@ -98,7 +153,10 @@ export class ExpertProfilesService {
           ceoName: dto.ceoName,
           contactTimeStart: dto.contactTimeStart,
           contactTimeEnd: dto.contactTimeEnd,
-          foundedYear: dto.foundedYear,
+          foundedYear:
+            dto.foundedYear === undefined
+              ? undefined
+              : Number.parseInt(dto.foundedYear, 10),
           employeeMin: dto.employeeMin,
           employeeMax: dto.employeeMax,
           description: dto.description,
@@ -111,7 +169,10 @@ export class ExpertProfilesService {
           ceoName: dto.ceoName,
           contactTimeStart: dto.contactTimeStart,
           contactTimeEnd: dto.contactTimeEnd,
-          foundedYear: dto.foundedYear,
+          foundedYear:
+            dto.foundedYear === undefined
+              ? undefined
+              : Number.parseInt(dto.foundedYear, 10),
           employeeMin: dto.employeeMin,
           employeeMax: dto.employeeMax,
           description: dto.description,
@@ -119,6 +180,46 @@ export class ExpertProfilesService {
           techStackNames: dto.techStackNames,
         }));
 
-    return mapProfile(profile);
+    return mapUpdatedProfile(profile);
+  }
+
+  async checkBusinessNumber(businessNumber: string) {
+    const available =
+      await this.expertProfilesRepository.isBusinessNumberAvailable(
+        businessNumber,
+      );
+    return { available };
+  }
+
+  async applyForApproval(userId: string) {
+    const profile =
+      await this.expertProfilesRepository.findByUserIdWithRelations(userId);
+    if (profile === null)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
+    if (profile.isApproved)
+      throw new AppException(EXPERT_PROFILE_ERRORS.ALREADY_APPROVED);
+    if (profile.isApplied)
+      throw new AppException(EXPERT_PROFILE_ERRORS.ALREADY_APPLIED);
+
+    const isComplete =
+      profile.businessName !== null &&
+      profile.businessNumber !== null &&
+      profile.ceoName !== null &&
+      profile.contactTimeStart !== null &&
+      profile.contactTimeEnd !== null &&
+      profile.foundedYear !== null &&
+      profile.employeeMin !== null &&
+      profile.employeeMax !== null &&
+      profile.description !== null &&
+      profile.specialtyCategories.length > 0 &&
+      profile.techStacks.length > 0 &&
+      profile.portfolios.length > 0;
+
+    if (!isComplete)
+      throw new AppException(EXPERT_PROFILE_ERRORS.INCOMPLETE_PROFILE);
+
+    const { isApplied, isApproved } =
+      await this.expertProfilesRepository.applyForApproval(userId);
+    return { isApplied, isApproved };
   }
 }

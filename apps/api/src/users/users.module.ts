@@ -2,10 +2,13 @@ import { Module } from '@nestjs/common';
 
 import { ClientProfilesModule } from '../client-profiles/client-profiles.module';
 import { ExpertProfilesModule } from '../expert-profiles/expert-profiles.module';
+import { OrdersModule } from '../orders/orders.module';
+import { MePortfoliosController } from '../portfolios/me-portfolios.controller';
 import { PortfoliosModule } from '../portfolios/portfolios.module';
+import { MeServicesController } from '../services/me-services.controller';
+import { ServicesModule } from '../services/services.module';
 import { UploadModule } from '../upload/upload.module';
 
-import { MePortfoliosController } from './me-portfolios.controller';
 import { MeController } from './me.controller';
 import { UsersController } from './users.controller';
 import { UsersRepository } from './users.repository';
@@ -15,11 +18,18 @@ import { UsersService } from './users.service';
   imports: [
     ClientProfilesModule,
     ExpertProfilesModule,
+    OrdersModule,
     PortfoliosModule,
     UploadModule,
+    ServicesModule,
   ],
   providers: [UsersRepository, UsersService],
-  controllers: [UsersController, MeController, MePortfoliosController],
-  exports: [UsersService],
+  controllers: [
+    MeController,
+    MePortfoliosController,
+    MeServicesController,
+    UsersController,
+  ],
+  exports: [UsersService, UsersRepository],
 })
 export class UsersModule {}

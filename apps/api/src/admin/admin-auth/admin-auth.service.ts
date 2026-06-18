@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcrypt';
 
-import { AUTH_ERRORS } from '../../common/constants/errors';
+import { AUTH_ERRORS, USER_ERRORS } from '../../common/constants/errors';
 import { AppException } from '../../common/exceptions/app.exception';
 import { AdminAccountService } from '../admin-account/admin-account.service';
 
@@ -23,6 +23,7 @@ import type {
   AdminJwtRefreshPayload,
 } from './admin-auth.types';
 import type { AdminSignInRequestDto } from './dto/admin-sign-in-request.dto';
+import type { AdminUpdatePasswordRequestDto } from './dto/admin-update-password-request.dto';
 import type { Admin } from '@prisma/client';
 import type { Response } from 'express';
 
@@ -90,6 +91,7 @@ export class AdminAuthService {
       sub: admin.id,
       email: admin.email,
       isSuper: admin.isSuper,
+      mustChangePassword: admin.mustChangePassword,
       typ: ADMIN_JWT_ACCESS_TYP,
     };
     const accessToken = this.jwtService.sign(accessPayload, {
@@ -115,5 +117,30 @@ export class AdminAuthService {
       isSuper: admin.isSuper,
       mustChangePassword: admin.mustChangePassword,
     };
+  }
+
+  async updatePassword(
+    adminId: string,
+    dto: AdminUpdatePasswordRequestDto,
+  ): Promise<void> {
+    const admin = await this.adminAccountService.findById(adminId);
+    if (!admin) {
+      throw new AppException(AUTH_ERRORS.ACCESS_TOKEN_INVALID);
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(
+      dto.currentPassword,
+      admin.password,
+    );
+    if (!isCurrentPasswordValid) {
+      throw new AppException(USER_ERRORS.INVALID_PASSWORD);
+    }
+
+    if (dto.newPassword !== dto.newPasswordConfirm) {
+      throw new AppException(USER_ERRORS.PASSWORD_MISMATCH);
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 12);
+    await this.adminAccountService.updatePassword(adminId, hashedPassword);
   }
 }

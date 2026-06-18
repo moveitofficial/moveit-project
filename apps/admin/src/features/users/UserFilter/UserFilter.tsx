@@ -1,7 +1,5 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-
 import * as styles from './UserFilter.css';
 
 import type { UserFilterParams } from '@/features/users/types';
@@ -14,28 +12,15 @@ import {
   PROVIDER_OPTIONS,
   REGION_OPTIONS,
   SERVICE_TYPE_OPTIONS,
-} from '@/features/users/constants';
+} from '@/utils/constants';
+import { useUpdateParam } from '@/utils/hooks';
 
 interface Props {
   params: UserFilterParams;
 }
 
 export default function UserFilter({ params }: Props) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const updateParam = (key: string, value: string | undefined) => {
-    const next = new URLSearchParams(searchParams.toString());
-
-    if (value === undefined) {
-      next.delete(key);
-    } else {
-      next.set(key, value);
-    }
-
-    next.delete('page');
-    router.push(`?${next.toString()}`);
-  };
+  const updateParam = useUpdateParam();
 
   return (
     <div className={styles.container}>

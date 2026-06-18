@@ -111,6 +111,7 @@ export const serviceDetailInclude = {
     select: {
       orders: true,
       favoriteServices: true,
+      chatRooms: true,
     },
   },
 } satisfies Prisma.ServiceInclude;
@@ -121,11 +122,15 @@ export type ServiceDetail = Prisma.ServiceGetPayload<{
 
 export const reviewWithUserSelect = {
   id: true,
+  orderId: true,
   rating: true,
   content: true,
   createdAt: true,
   user: {
     select: { id: true, name: true, profileImageUrl: true },
+  },
+  order: {
+    select: { expertUserId: true },
   },
 } satisfies Prisma.ReviewSelect;
 
@@ -133,9 +138,42 @@ export type ReviewWithUser = Prisma.ReviewGetPayload<{
   select: typeof reviewWithUserSelect;
 }>;
 
+export const myReviewListSelect = {
+  id: true,
+  orderId: true,
+  rating: true,
+  content: true,
+  createdAt: true,
+  order: {
+    select: {
+      id: true,
+      service: {
+        select: {
+          title: true,
+          expertUser: {
+            select: {
+              id: true,
+              name: true,
+              profileImageUrl: true,
+              expertProfile: { select: { businessName: true } },
+            },
+          },
+        },
+      },
+    },
+  },
+} satisfies Prisma.ReviewSelect;
+
+export type MyReviewListItem = Prisma.ReviewGetPayload<{
+  select: typeof myReviewListSelect;
+}>;
+
 export const SERVICE_REVIEW_SORT = ['latest', 'rating'] as const;
 
 export type ServiceReviewSort = (typeof SERVICE_REVIEW_SORT)[number];
+
+export type { MyReviewSort } from './dto/my-reviews-query.dto';
+export { MY_REVIEW_SORT } from './dto/my-reviews-query.dto';
 
 export const REVIEWABLE_ORDER_STATUSES: OrderStatus[] = [
   OrderStatus.PURCHASE_CONFIRMED,

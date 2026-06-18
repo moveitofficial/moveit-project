@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import basicAuth from 'express-basic-auth';
 
+import { ADMIN_ACCESS_COOKIE_NAME } from './admin/admin-auth/admin-auth.constants';
 import { AppModule } from './app.module';
 import { ACCESS_COOKIE_NAME } from './auth/auth.constants';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -43,15 +44,41 @@ async function bootstrap() {
       { type: 'apiKey', in: 'cookie', name: ACCESS_COOKIE_NAME },
       'cookieAuth',
     )
+    .addCookieAuth(
+      ADMIN_ACCESS_COOKIE_NAME,
+      { type: 'apiKey', in: 'cookie', name: ADMIN_ACCESS_COOKIE_NAME },
+      'adminCookieAuth',
+    )
     .addTag('health')
     .addTag('auth')
-    .addTag('users')
+    .addTag('expert-profiles')
     .addTag('users/me')
     .addTag('users/me/portfolios')
+    .addTag('users/me/orders')
+    .addTag('users')
     .addTag('portfolios')
     .addTag('services')
+    .addTag('orders')
+    .addTag('community-posts')
+    .addTag('notifications')
+    .addTag('chat')
+    .addTag('cs')
+    .addTag('favorites')
+    .addTag('reports')
+    .addTag('faqs')
+    .addTag('main')
     .addTag('admin-auth')
     .addTag('admin-account')
+    .addTag('admin-dashboard')
+    .addTag('admin-user')
+    .addTag('admin-service')
+    .addTag('admin-order')
+    .addTag('admin-community')
+    .addTag('admin-cs')
+    .addTag('admin-report')
+    .addTag('admin-faq')
+    .addTag('admin-main-setting')
+    .addTag('admin-category-featured')
     .addTag('catalogs')
     .build();
   app.use(

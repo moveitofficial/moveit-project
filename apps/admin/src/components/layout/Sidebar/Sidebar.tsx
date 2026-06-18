@@ -7,6 +7,10 @@ import { usePathname } from 'next/navigation';
 
 import * as styles from './Sidebar.css';
 
+import type { AdminProfile } from '@/features/login/adminProfileCookie';
+
+import { useAdminStore } from '@/stores/admin-store';
+
 const menuGroups = [
   {
     title: '회원관리',
@@ -43,15 +47,26 @@ const menuGroups = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({
+  initialProfile,
+}: {
+  initialProfile: AdminProfile | null;
+}) {
   const pathname = usePathname();
+  const admin = useAdminStore((s) => s.admin);
+
+  // SSR엔 쿠키값(initialProfile), 클라이언트엔 스토어값 → 같은 값이라 깜박임 없음
+  const name = admin?.name ?? initialProfile?.name;
+  const email = admin?.email ?? initialProfile?.email;
 
   return (
     <aside className={styles.wrapper}>
       <div className={styles.brand}>
-        <h1 className={clsx(typography.f16EB, styles.logo)}>moveit</h1>
+        <Link href="/dashboard" className={clsx(typography.f16EB, styles.logo)}>
+          moveit
+        </Link>
         <p className={clsx(typography.f12R, styles.email)}>
-          최고관리자 · admin@moveit.kr
+          {name ? `${name} · ${email}` : null}
         </p>
       </div>
       <nav className={styles.menu}>

@@ -11,3 +11,98 @@ export const userWithProfilesInclude = {
 export type UserWithProfiles = Prisma.UserGetPayload<{
   include: typeof userWithProfilesInclude;
 }>;
+
+export const myPostListSelect = {
+  id: true,
+  userId: true,
+  category: true,
+  title: true,
+  content: true,
+  createdAt: true,
+  user: {
+    select: {
+      id: true,
+      role: true,
+      name: true,
+      profileImageUrl: true,
+      clientProfile: { select: { nickname: true } },
+      expertProfile: { select: { businessName: true } },
+    },
+  },
+  _count: {
+    select: {
+      comments: { where: { deletedAt: null } },
+      likeRecords: true,
+    },
+  },
+} satisfies Prisma.CommunityPostSelect;
+
+export type MyPostListItem = Prisma.CommunityPostGetPayload<{
+  select: typeof myPostListSelect;
+}>;
+
+export const myCommentListSelect = {
+  id: true,
+  content: true,
+  createdAt: true,
+  post: {
+    select: {
+      id: true,
+      category: true,
+      title: true,
+      deletedAt: true,
+      _count: {
+        select: {
+          likeRecords: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.CommentSelect;
+
+export type MyCommentListItem = Prisma.CommentGetPayload<{
+  select: typeof myCommentListSelect;
+}>;
+
+export const expertDetailSelect = {
+  id: true,
+  profileImageUrl: true,
+  region: true,
+  expertProfile: {
+    select: {
+      businessName: true,
+      ceoName: true,
+      description: true,
+      foundedYear: true,
+      employeeMin: true,
+      employeeMax: true,
+      contactTimeStart: true,
+      contactTimeEnd: true,
+      avgRating: true,
+      reviewCount: true,
+      techStacks: {
+        select: { techStack: { select: { name: true } } },
+      },
+      portfolios: {
+        select: { clientName: true },
+      },
+    },
+  },
+  services: {
+    where: { status: 'ACTIVE' as const },
+    select: {
+      _count: { select: { orders: true, chatRooms: true } },
+    },
+  },
+  ordersAsExpert: {
+    select: { status: true },
+  },
+  favoriteExperts: { select: { clientUserId: true } },
+  _count: {
+    select: { favoritedByClients: true },
+  },
+} satisfies Prisma.UserSelect;
+
+export type ExpertDetail = Prisma.UserGetPayload<{
+  select: typeof expertDetailSelect;
+}>;

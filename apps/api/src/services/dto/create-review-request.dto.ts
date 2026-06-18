@@ -3,20 +3,12 @@ import {
   IsInt,
   IsNotEmpty,
   IsString,
-  IsUUID,
   Max,
   MaxLength,
   Min,
 } from 'class-validator';
 
 export class CreateReviewRequestDto {
-  @ApiProperty({
-    format: 'uuid',
-    description: 'order id',
-  })
-  @IsUUID()
-  declare orderId: string;
-
   @ApiProperty({
     example: 5,
     minimum: 1,

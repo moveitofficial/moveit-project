@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@repo/styles": "workspace:*",
+    "@repo/utils": "workspace:^",
     "@vanilla-extract/css": "^1.20.1",
     "@vanilla-extract/recipes": "^0.5.7",
     "clsx": "^2.1.1",

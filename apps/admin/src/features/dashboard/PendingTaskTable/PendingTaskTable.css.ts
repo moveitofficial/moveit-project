@@ -2,10 +2,14 @@ import { vars } from '@repo/styles/tokens';
 import { style } from '@vanilla-extract/css';
 
 export const section = style({
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
   backgroundColor: vars.color.white,
   border: `1px solid ${vars.color.line200}`,
   borderRadius: '8px',
   overflow: 'hidden',
+  minHeight: 0,
 });
 
 export const titleGroup = style({
@@ -24,8 +28,17 @@ export const subtitle = style({
 });
 
 export const listWrapper = style({
-  width: '100%',
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: 0,
   overflowX: 'auto',
+});
+
+export const listScroll = style({
+  flex: 1,
+  minHeight: 0,
+  overflowY: 'auto',
 });
 
 export const list = style({
@@ -37,6 +50,7 @@ const rowBase = style({
   display: 'flex',
   alignItems: 'center',
   height: '56px',
+  flexShrink: 0,
   gap: '12px',
 });
 
@@ -73,12 +87,12 @@ export const colBadge = style({
 
 export const colRequester = style({
   ...cellBase,
-  width: '70px',
+  width: '120px',
 });
 
 export const colDate = style({
   ...cellBase,
-  width: '100px',
+  width: '120px',
   paddingRight: '16px',
 });
 
@@ -97,3 +111,9 @@ export const colTitleHeader = style([
     textAlign: 'center',
   },
 ]);
+
+export const loadingRow = style({
+  display: 'flex',
+  justifyContent: 'center',
+  padding: '12px',
+});

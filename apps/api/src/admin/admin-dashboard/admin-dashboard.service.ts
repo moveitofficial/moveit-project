@@ -1,28 +1,21 @@
 import { Injectable } from '@nestjs/common';
 
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { type Paginated } from '../../common/types/paginated.type';
 import { toPaginatedResponse } from '../../common/utils/list-response.util';
+import { AdminActivityService } from '../admin-activity/admin-activity.service';
+import { ActivityItemDto } from '../admin-activity/dto/activity-item.dto';
 
 import { AdminDashboardRepository } from './admin-dashboard.repository';
-import {
-  FAQ_TARGET_ACTIONS,
-  PendingType,
-  USER_TARGET_ACTIONS,
-} from './admin-dashboard.types';
-import {
-  ActivitiesResponseDataDto,
-  ActivityItemDto,
-} from './dto/activities-response.dto';
-import {
-  PendingItemDto,
-  PendingResponseDataDto,
-} from './dto/pending-response.dto';
+import { PendingType } from './admin-dashboard.types';
+import { PendingItemDto } from './dto/pending-response.dto';
 import { SummaryResponseDataDto } from './dto/summary-response.dto';
 
 @Injectable()
 export class AdminDashboardService {
   constructor(
     private readonly adminDashboardRepository: AdminDashboardRepository,
+    private readonly adminActivityService: AdminActivityService,
   ) {}
 
   async getSummary(): Promise<SummaryResponseDataDto> {
@@ -42,7 +35,9 @@ export class AdminDashboardService {
     };
   }
 
-  async getPending(query: PaginationQueryDto): Promise<PendingResponseDataDto> {
+  async getPending(
+    query: PaginationQueryDto,
+  ): Promise<Paginated<PendingItemDto>> {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
 
@@ -97,57 +92,12 @@ export class AdminDashboardService {
     return toPaginatedResponse(sliced, { page, pageSize, totalCount });
   }
 
-  async getActivities(
+  getActivities(
     query: PaginationQueryDto,
-  ): Promise<ActivitiesResponseDataDto> {
-    const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 20;
-    const skip = (page - 1) * pageSize;
-
-    const [rows, totalCount] = await Promise.all([
-      this.adminDashboardRepository.findActivities(skip, pageSize),
-      this.adminDashboardRepository.countActivities(),
-    ]);
-
-    // referenceId를 카테고리별로 묶어서 한 번에 batch 조회 → N+1 회피
-    const userIds: string[] = [];
-    const faqIds: string[] = [];
-    for (const r of rows) {
-      if (r.referenceId === null) continue;
-      if (USER_TARGET_ACTIONS.has(r.actionType)) {
-        userIds.push(r.referenceId);
-      } else if (FAQ_TARGET_ACTIONS.has(r.actionType)) {
-        faqIds.push(r.referenceId);
-      }
-    }
-
-    const [users, faqs] = await Promise.all([
-      this.adminDashboardRepository.findUsersByIds(userIds),
-      this.adminDashboardRepository.findFaqsByIds(faqIds),
-    ]);
-
-    const userNameMap = new Map(users.map((u) => [u.id, u.name]));
-    const faqTitleMap = new Map(faqs.map((f) => [f.id, f.title]));
-
-    const items: ActivityItemDto[] = rows.map((r) => {
-      let targetName: string | null = null;
-      if (r.referenceId !== null) {
-        if (USER_TARGET_ACTIONS.has(r.actionType)) {
-          targetName = userNameMap.get(r.referenceId) ?? null;
-        } else if (FAQ_TARGET_ACTIONS.has(r.actionType)) {
-          targetName = faqTitleMap.get(r.referenceId) ?? null;
-        }
-      }
-      return {
-        id: r.id,
-        actionType: r.actionType,
-        referenceId: r.referenceId,
-        targetName,
-        adminName: r.admin.name,
-        createdAt: r.createdAt,
-      };
+  ): Promise<Paginated<ActivityItemDto>> {
+    return this.adminActivityService.getActivities({
+      page: query.page,
+      pageSize: query.pageSize,
     });
-
-    return toPaginatedResponse(items, { page, pageSize, totalCount });
   }
 }

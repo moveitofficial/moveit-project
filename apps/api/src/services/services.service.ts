@@ -2,21 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { ServiceStatus, type Prisma } from '@prisma/client';
 
 import {
-  COMMON_ERRORS,
-  ORDER_ERRORS,
-  REVIEW_ERRORS,
+  EXPERT_PROFILE_ERRORS,
   SERVICE_ERRORS,
 } from '../common/constants/errors';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
+import { Paginated } from '../common/types/paginated.type';
 import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { UploadService } from '../upload/upload.service';
 
-import { CreateReviewRequestDto } from './dto/create-review-request.dto';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
-import { UpdateReviewRequestDto } from './dto/update-review-request.dto';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { UpdateServiceStatusRequestDto } from './dto/update-service-status-request.dto';
 import {
+  ExpertServiceListItemResponse,
+  mapExpertServiceListItem,
   mapReview,
   mapService,
   mapServiceDetail,
@@ -29,7 +29,6 @@ import {
   type ServiceListItem,
   type ServiceReviewStats,
   type ServiceResponse,
-  REVIEWABLE_ORDER_STATUSES,
 } from './services.types';
 
 import type {
@@ -198,6 +197,103 @@ export class ServicesService {
     return mapServiceDetail(service, isFavorite);
   }
 
+  async getOtherServicesByExpertId(
+    serviceId: string,
+  ): Promise<ServiceListItemResponse[]> {
+    const service = await this.servicesRepository.findById(serviceId);
+
+    if (service === null) {
+      throw new AppException(SERVICE_ERRORS.NOT_FOUND);
+    }
+
+    const others = await this.servicesRepository.findManyByExpertUserId({
+      expertUserId: service.expertUserId,
+      currentServiceId: serviceId,
+      take: 4,
+    });
+
+    if (others.length === 0) return [];
+
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      others.map((s) => s.id),
+    );
+
+    return others.map((s) => {
+      const stats = statsMap.get(s.id) ?? { reviewCount: 0, rating: 0 };
+      return mapServiceListItem(s, stats);
+    });
+  }
+
+  async getMyServices(
+    expertUserId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<ExpertServiceListItemResponse>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const [services, totalCount] = await Promise.all([
+      this.servicesRepository.findMany({
+        where: { expertUserId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+      this.servicesRepository.count({ expertUserId }),
+    ]);
+
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      services.map((s) => s.id),
+    );
+
+    return toPaginatedResponse(
+      services.map((service) => {
+        const stats = statsMap.get(service.id) ?? { reviewCount: 0, rating: 0 };
+        return mapExpertServiceListItem(service, stats);
+      }),
+      { page, pageSize, totalCount },
+    );
+  }
+
+  async getAllServicesByExpertId(
+    expertUserId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<ExpertServiceListItemResponse>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const [services, totalCount] = await Promise.all([
+      this.servicesRepository.findMany({
+        where: {
+          expertUserId,
+          status: ServiceStatus.ACTIVE,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: pageSize,
+      }),
+      this.servicesRepository.count({
+        expertUserId,
+        status: ServiceStatus.ACTIVE,
+      }),
+    ]);
+
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      services.map((s) => s.id),
+    );
+
+    return toPaginatedResponse(
+      services.map((service) => {
+        const stats = statsMap.get(service.id) ?? { reviewCount: 0, rating: 0 };
+        return mapExpertServiceListItem(service, stats);
+      }),
+      { page, pageSize, totalCount },
+    );
+  }
+
   async getServiceReviews(serviceId: string, query: ServiceReviewsQueryDto) {
     const service = await this.servicesRepository.findById(serviceId);
     if (!service) {
@@ -231,37 +327,15 @@ export class ServicesService {
     };
   }
 
-  async getOtherServicesByExpertId(
-    serviceId: string,
-  ): Promise<ServiceListItemResponse[]> {
-    const service = await this.servicesRepository.findById(serviceId);
-
-    if (service === null) {
-      throw new AppException(SERVICE_ERRORS.NOT_FOUND);
-    }
-
-    const others = await this.servicesRepository.findManyByExpertUserId({
-      expertUserId: service.expertUserId,
-      currentServiceId: serviceId,
-      take: 4,
-    });
-
-    if (others.length === 0) return [];
-
-    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
-      others.map((s) => s.id),
-    );
-
-    return others.map((s) => {
-      const stats = statsMap.get(s.id) ?? { reviewCount: 0, rating: 0 };
-      return mapServiceListItem(s, stats);
-    });
-  }
-
   async createService(
     expertUserId: string,
     dto: CreateServiceRequestDto,
   ): Promise<ServiceResponse> {
+    const expertProfile =
+      await this.servicesRepository.findExpertProfileByUserId(expertUserId);
+    if (!expertProfile) throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
+    if (!expertProfile.isApproved)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_APPROVED);
     const service = await this.servicesRepository.create({
       id: dto.serviceId,
       expertUser: { connect: { id: expertUserId } },
@@ -449,106 +523,91 @@ export class ServicesService {
     return mapService(updated);
   }
 
-  async createServiceReview(
+  async getRecentServices(): Promise<ServiceListItemResponse[]> {
+    const POOL_SIZE = 50;
+    const PICK = 4;
+    const pool =
+      await this.servicesRepository.findRecentServicesPool(POOL_SIZE);
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, PICK);
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      picked.map((s) => s.id),
+    );
+    return this.toListItems(picked, statsMap);
+  }
+
+  async getRecommendedByInterest(
     userId: string,
-    serviceId: string,
-    dto: CreateReviewRequestDto,
-  ) {
-    const service = await this.servicesRepository.findById(serviceId);
+  ): Promise<ServiceListItemResponse[]> {
+    const POOL_SIZE = 50;
+    const PICK = 4;
 
-    if (service === null) {
-      throw new AppException(SERVICE_ERRORS.NOT_FOUND);
-    }
+    const pairs = await this.servicesRepository.findClientInterestPairs(userId);
+    if (pairs.length === 0) return [];
 
-    const order = await this.servicesRepository.findOrderForReview(dto.orderId);
+    const pool = await this.servicesRepository.findServicesByCategoryPairs(
+      pairs,
+      POOL_SIZE,
+    );
+    if (pool.length === 0) return [];
 
-    if (order === null) {
-      throw new AppException(ORDER_ERRORS.NOT_FOUND);
-    }
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, PICK);
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      picked.map((s) => s.id),
+    );
+    return this.toListItems(picked, statsMap);
+  }
 
-    if (order.serviceId !== serviceId) {
-      throw new AppException(REVIEW_ERRORS.ORDER_SERVICE_MISMATCH);
-    }
+  async getServicesByRegion(
+    userId: string,
+  ): Promise<ServiceListItemResponse[]> {
+    const POOL_SIZE = 50;
+    const PICK = 4;
 
-    if (order.clientUserId !== userId) {
-      throw new AppException(COMMON_ERRORS.FORBIDDEN);
-    }
+    const user = await this.servicesRepository.findUserRegion(userId);
+    if (!user?.region) return [];
 
-    if (!REVIEWABLE_ORDER_STATUSES.includes(order.status)) {
-      throw new AppException(REVIEW_ERRORS.ORDER_NOT_REVIEWABLE);
-    }
+    const pool = await this.servicesRepository.findServicesByExpertRegion(
+      user.region,
+      POOL_SIZE,
+    );
+    if (pool.length === 0) return [];
 
-    if (order.review !== null) {
-      throw new AppException(REVIEW_ERRORS.ALREADY_EXISTS);
-    }
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, PICK);
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      picked.map((s) => s.id),
+    );
+    return this.toListItems(picked, statsMap);
+  }
 
-    const review = await this.servicesRepository.createReview({
-      orderId: dto.orderId,
+  async getMyRecentlyViewedServices(
+    userId: string,
+  ): Promise<ServiceListItemResponse[]> {
+    const PICK = 4;
+
+    const viewed = await this.servicesRepository.findRecentlyViewedByUser(
       userId,
-      rating: dto.rating,
-      content: dto.content,
-    });
-
-    return mapReview(review);
-  }
-
-  async updateServiceReview(
-    userId: string,
-    serviceId: string,
-    reviewId: string,
-    dto: UpdateReviewRequestDto,
-  ) {
-    if (dto.rating === undefined && dto.content === undefined) {
-      throw new AppException(REVIEW_ERRORS.NOTHING_TO_UPDATE);
-    }
-
-    const review = await this.servicesRepository.findReviewById(
-      reviewId,
-      serviceId,
+      PICK,
     );
+    if (viewed.length === 0) return [];
 
-    if (review === null) {
-      throw new AppException(REVIEW_ERRORS.NOT_FOUND);
+    const services = viewed.map((v) => v.service);
+
+    const first = services[0];
+    if (services.length === 1 && first) {
+      const similar = await this.servicesRepository.findSimilarActiveServices(
+        first.serviceCategoryId,
+        [first.id],
+        3,
+      );
+      services.push(...similar);
     }
 
-    if (review.user.id !== userId) {
-      throw new AppException(COMMON_ERRORS.FORBIDDEN);
-    }
-
-    const updateData: { rating?: number; content?: string } = {};
-    if (dto.rating !== undefined) {
-      updateData.rating = dto.rating;
-    }
-    if (dto.content !== undefined) {
-      updateData.content = dto.content;
-    }
-
-    const updated = await this.servicesRepository.updateReview(
-      reviewId,
-      updateData,
+    const statsMap = await this.servicesRepository.getReviewStatsByServiceIds(
+      services.map((s) => s.id),
     );
-
-    return mapReview(updated);
-  }
-
-  async deleteServiceReview(
-    userId: string,
-    serviceId: string,
-    reviewId: string,
-  ): Promise<void> {
-    const review = await this.servicesRepository.findReviewById(
-      reviewId,
-      serviceId,
-    );
-
-    if (review === null) {
-      throw new AppException(REVIEW_ERRORS.NOT_FOUND);
-    }
-
-    if (review.user.id !== userId) {
-      throw new AppException(COMMON_ERRORS.FORBIDDEN);
-    }
-
-    await this.servicesRepository.deleteReview(reviewId);
+    return this.toListItems(services, statsMap);
   }
 }

@@ -96,6 +96,18 @@ pnpm --filter api run prisma:studio
 pnpm --filter api run prisma:validate
 ```
 
+### 패키지 빌드
+
+```bash
+# socket-events 빌드 (채팅 관련 타입/이벤트 수정 후 반드시 실행)
+pnpm --filter @repo/socket-events build
+
+# content-filter 빌드 (금지어 목록/필터 함수 수정 후 반드시 실행)
+pnpm --filter @repo/content-filter build
+```
+
+> 두 패키지 모두 `pnpm install` 시 자동 빌드됩니다. 수동으로 수정했을 때만 위 명령어를 실행하세요.
+
 ---
 
 ## 4. Import 꼬임 → 린트 오류 한번에 수정

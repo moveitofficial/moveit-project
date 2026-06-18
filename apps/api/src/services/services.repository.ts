@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ServiceStatus, type Prisma } from '@prisma/client';
+import { Region, ServiceStatus, type Prisma } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -41,6 +41,16 @@ export class ServicesRepository {
     });
   }
 
+  async isFavorite(clientUserId: string, serviceId: string): Promise<boolean> {
+    const row = await this.prisma.favoriteService.findUnique({
+      where: {
+        clientUserId_serviceId: { clientUserId, serviceId },
+      },
+      select: { id: true },
+    });
+    return row !== null;
+  }
+
   findReviews(args: {
     serviceId: string;
     skip: number;
@@ -65,83 +75,6 @@ export class ServicesRepository {
     return this.prisma.review.count({
       where: { order: { serviceId } },
     });
-  }
-
-  findOrderForReview(orderId: string) {
-    return this.prisma.order.findUnique({
-      where: { id: orderId },
-      select: {
-        id: true,
-        clientUserId: true,
-        serviceId: true,
-        status: true,
-        review: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    });
-  }
-
-  findReviewById(
-    reviewId: string,
-    serviceId: string,
-  ): Promise<ReviewWithUser | null> {
-    return this.prisma.review.findFirst({
-      where: {
-        id: reviewId,
-        order: { serviceId },
-      },
-      select: reviewWithUserSelect,
-    });
-  }
-
-  createReview(data: {
-    orderId: string;
-    userId: string;
-    rating: number;
-    content: string;
-  }): Promise<ReviewWithUser> {
-    return this.prisma.review.create({
-      data: {
-        orderId: data.orderId,
-        userId: data.userId,
-        rating: data.rating,
-        content: data.content,
-      },
-      select: reviewWithUserSelect,
-    });
-  }
-
-  updateReview(
-    reviewId: string,
-    data: {
-      rating?: number;
-      content?: string;
-    },
-  ): Promise<ReviewWithUser> {
-    return this.prisma.review.update({
-      where: { id: reviewId },
-      data,
-      select: reviewWithUserSelect,
-    });
-  }
-
-  async deleteReview(reviewId: string): Promise<void> {
-    await this.prisma.review.delete({
-      where: { id: reviewId },
-    });
-  }
-
-  async isFavorite(clientUserId: string, serviceId: string): Promise<boolean> {
-    const row = await this.prisma.favoriteService.findUnique({
-      where: {
-        clientUserId_serviceId: { clientUserId, serviceId },
-      },
-      select: { id: true },
-    });
-    return row !== null;
   }
 
   update(
@@ -244,6 +177,94 @@ export class ServicesRepository {
         createdAt: 'desc',
       },
       take: args.take,
+      include: serviceListInclude,
+    });
+  }
+
+  findExpertProfileByUserId(userId: string) {
+    return this.prisma.expertProfile.findUnique({
+      where: { userId },
+    });
+  }
+
+  findRecentServicesPool(take: number) {
+    return this.prisma.service.findMany({
+      where: { status: ServiceStatus.ACTIVE },
+      orderBy: { createdAt: 'desc' },
+      take,
+      include: serviceListInclude,
+    });
+  }
+
+  findClientInterestPairs(userId: string) {
+    return this.prisma.clientInterestCategory.findMany({
+      where: { clientProfile: { userId } },
+      select: { serviceGroupId: true, serviceCategoryId: true },
+    });
+  }
+
+  findServicesByCategoryPairs(
+    pairs: { serviceGroupId: string; serviceCategoryId: string }[],
+    take: number,
+  ) {
+    if (pairs.length === 0) return Promise.resolve([]);
+    return this.prisma.service.findMany({
+      where: {
+        status: ServiceStatus.ACTIVE,
+        OR: pairs.map((p) => ({
+          serviceGroupId: p.serviceGroupId,
+          serviceCategoryId: p.serviceCategoryId,
+        })),
+      },
+      orderBy: { createdAt: 'desc' },
+      take,
+      include: serviceListInclude,
+    });
+  }
+
+  findUserRegion(userId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { region: true },
+    });
+  }
+
+  findServicesByExpertRegion(region: Region, take: number) {
+    return this.prisma.service.findMany({
+      where: {
+        status: ServiceStatus.ACTIVE,
+        expertUser: { region },
+      },
+      orderBy: { createdAt: 'desc' },
+      take,
+      include: serviceListInclude,
+    });
+  }
+
+  findRecentlyViewedByUser(userId: string, take: number) {
+    return this.prisma.recentlyViewedService.findMany({
+      where: { clientUserId: userId },
+      orderBy: { viewedAt: 'desc' },
+      take,
+      select: {
+        service: { include: serviceListInclude },
+      },
+    });
+  }
+
+  findSimilarActiveServices(
+    serviceCategoryId: string,
+    excludeIds: string[],
+    take: number,
+  ) {
+    return this.prisma.service.findMany({
+      where: {
+        status: ServiceStatus.ACTIVE,
+        serviceCategoryId,
+        id: { notIn: excludeIds },
+      },
+      orderBy: { createdAt: 'desc' },
+      take,
       include: serviceListInclude,
     });
   }

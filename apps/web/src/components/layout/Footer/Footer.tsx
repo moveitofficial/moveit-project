@@ -11,15 +11,15 @@ const footerMenu: { title: string; items: { label: string; href: Route }[] }[] =
   {
     title: '서비스',
     items: [
-      { label: 'IT코칭', href: '#' },
-      { label: '프로젝트 의뢰', href: '#' },
+      { label: 'IT코칭', href: '/it-coaching' },
+      { label: '프로젝트 의뢰', href: '/project-request' },
       { label: '판매자 인증', href: '#' },
     ],
   },
   {
     title: '고객지원',
     items: [
-      { label: 'FAQ', href: '#' },
+      { label: 'FAQ', href: '/faq' },
       { label: '1:1문의', href: '#' },
     ],
   },

@@ -4,13 +4,11 @@ import * as styles from './DashboardSummaryCards.css';
 
 import type { DashboardSummary } from '@/features/dashboard/types';
 
+import { getDashboardSummary } from '@/features/dashboard/api';
 import { SUMMARY_CARD_CONFIG } from '@/features/dashboard/constants';
 
-interface Props {
-  summary: DashboardSummary;
-}
-
-export default function DashboardSummaryCards({ summary }: Props) {
+export default async function DashboardSummaryCards() {
+  const { data: summary } = await getDashboardSummary();
   const cardList = Object.entries(SUMMARY_CARD_CONFIG) as [
     keyof DashboardSummary,
     (typeof SUMMARY_CARD_CONFIG)[keyof DashboardSummary],

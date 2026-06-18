@@ -15,7 +15,6 @@ import {
   IsString,
   Length,
   Matches,
-  Max,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -61,11 +60,12 @@ export class ExpertProfileRequestDto {
   })
   declare contactTimeEnd: string;
 
-  @ApiProperty({ example: 2021 })
-  @IsInt()
-  @Min(1900)
-  @Max(new Date().getFullYear())
-  declare foundedYear: number;
+  @ApiProperty({ example: '202101' })
+  @IsString()
+  @Matches(/^(19|20)\d{2}(0[1-9]|1[0-2])$/, {
+    message: '설립 연월은 YYYYMM 형식이어야 합니다. (예: 202101)',
+  })
+  declare foundedYear: string;
 
   @ApiProperty({ example: 5 })
   @IsInt()

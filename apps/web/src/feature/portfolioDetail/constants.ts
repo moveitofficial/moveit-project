@@ -1,0 +1,1 @@
+export const PORTFOLIO_MODAL_MAX_WIDTH = 976;

@@ -43,6 +43,10 @@ export const roundGroup = style({
   gap: '16px',
 });
 
+export const chipLink = style({
+  display: 'inline-flex',
+});
+
 export const webDataGroup = style({
   display: 'flex',
   flexDirection: 'row',

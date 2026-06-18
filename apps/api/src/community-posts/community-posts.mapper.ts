@@ -1,0 +1,76 @@
+import { resolveAuthorDisplayName } from '../common/utils/users.util';
+
+import type { CommentListItem, PostListItem } from './community-posts.types';
+import type { Comment, CommunityPost } from '@prisma/client';
+
+export function mapPostListItem(post: PostListItem) {
+  return {
+    id: post.id,
+    userId: post.userId,
+    category: post.category,
+    title: post.title,
+    content: post.content,
+    createdAt: post.createdAt,
+    authorDisplayName: resolveAuthorDisplayName(post.user),
+    authorProfileImageUrl: post.user.profileImageUrl,
+    commentCount: post._count.comments,
+    likeCount: post._count.likeRecords,
+  };
+}
+
+export function mapPost(post: CommunityPost) {
+  return {
+    id: post.id,
+    userId: post.userId,
+    category: post.category,
+    title: post.title,
+    content: post.content,
+    createdAt: post.createdAt,
+  };
+}
+
+export function mapPostDetail(post: PostListItem, isLiked: boolean) {
+  return {
+    ...mapPostListItem(post),
+    isLiked,
+  };
+}
+
+export function mapPostToBeDeleted(post: CommunityPost) {
+  return {
+    id: post.id,
+    userId: post.userId,
+    title: post.title,
+    createdAt: post.createdAt,
+    deletedAt: post.deletedAt,
+  };
+}
+
+export function mapComment(comment: Comment) {
+  return {
+    id: comment.id,
+    userId: comment.userId,
+    content: comment.content,
+    createdAt: comment.createdAt,
+  };
+}
+
+export function mapCommentListItem(comment: CommentListItem) {
+  return {
+    id: comment.id,
+    userId: comment.userId,
+    content: comment.content,
+    createdAt: comment.createdAt,
+    authorDisplayName: resolveAuthorDisplayName(comment.user),
+    authorProfileImageUrl: comment.user.profileImageUrl,
+  };
+}
+
+export function mapCommentToBeDeleted(comment: Comment) {
+  return {
+    id: comment.id,
+    userId: comment.userId,
+    createdAt: comment.createdAt,
+    deletedAt: comment.deletedAt,
+  };
+}

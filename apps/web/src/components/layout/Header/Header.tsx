@@ -1,25 +1,20 @@
 import headerLogo from '@public/header/headerLogo.svg';
-import { typography } from '@repo/styles/typography';
-import clsx from 'clsx';
-import { type Route } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import * as styles from './Header.css';
+import HeaderNav from './HeaderNav';
+import HeaderUserMenu from './HeaderUserMenu';
 
-const navItems: { label: string; href: Route }[] = [
-  { label: 'IT코칭', href: '#' },
-  { label: '프로젝트의뢰', href: '#' },
-  { label: '자유게시판', href: '#' },
-  { label: 'FAQ', href: '#' },
-];
+import type { Role } from '@/types/enums';
 
-const userMenuItems: { label: string; href: Route }[] = [
-  { label: '전문가 등록', href: '#' },
-  { label: '로그인', href: '#' },
-];
-
-export default function Header() {
+export default function Header({
+  role,
+  displayName,
+}: {
+  role: Role | null;
+  displayName: string | null;
+}) {
   return (
     <header className={styles.wrapper}>
       <div className={styles.inner}>
@@ -27,32 +22,9 @@ export default function Header() {
           <Link href="/" aria-label="moveit 홈">
             <Image src={headerLogo} alt="moveit" className={styles.logo} />
           </Link>
-          <nav className={styles.navMenu}>
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={clsx(typography.f16R, styles.navLink)}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <HeaderNav />
         </div>
-        <div className={styles.userMenuGroup}>
-          {userMenuItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={clsx(typography.f16R, styles.navLink)}
-            >
-              {item.label}
-            </Link>
-          ))}
-          <Link href="#" className={clsx(typography.f16B, styles.signUpButton)}>
-            회원가입
-          </Link>
-        </div>
+        <HeaderUserMenu role={role} displayName={displayName} />
       </div>
     </header>
   );

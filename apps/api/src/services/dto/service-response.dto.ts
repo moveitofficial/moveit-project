@@ -228,7 +228,11 @@ class ServiceExpertSummaryResponseDto {
   @ApiProperty({ example: '코드잇 에이전시' })
   declare companyName: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'https://example.img.com/image.jpg',
+  })
   declare profileImageUrl: string | null;
 
   @ApiProperty({ enum: Region, nullable: true, example: Region.SEOUL })
@@ -328,10 +332,56 @@ class ReviewerResponseDto {
   declare name: string;
 
   @ApiProperty({
+    type: String,
     nullable: true,
     example: 'https://example.img.com/image.jpg',
   })
   declare profileImageUrl: string | null;
+}
+
+class MyReviewExpertResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: '김전문' })
+  declare name: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'https://example.img.com/image.jpg',
+  })
+  declare profileImageUrl: string | null;
+
+  @ApiProperty({ example: '코드잇 에이전시' })
+  declare companyName: string;
+}
+
+export class MyReviewListItemResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ format: 'uuid' })
+  declare orderId: string;
+
+  @ApiProperty({
+    example: 5,
+    minimum: 1,
+    maximum: 5,
+  })
+  declare rating: number;
+
+  @ApiProperty({ example: '리뷰 내용' })
+  declare content: string;
+
+  @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
+  declare createdAt: string;
+
+  @ApiProperty({ example: 'React 입문 코칭' })
+  declare serviceTitle: string;
+
+  @ApiProperty({ type: MyReviewExpertResponseDto })
+  declare expert: MyReviewExpertResponseDto;
 }
 
 export class ReviewResponseDto {
@@ -409,8 +459,21 @@ export class ServiceDetailResponseDto {
   @ApiProperty()
   declare serviceScope: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 10_000 })
   declare servicePrice: number;
+
+  @ApiProperty({
+    example: 1000,
+    description: '플랫폼 수수료 (servicePrice × 10%, 소수점 버림)',
+  })
+  declare platformFee: number;
+
+  @ApiProperty({
+    example: 11_000,
+    description:
+      '결제 위젯에 전달할 최종 결제 금액 (servicePrice + platformFee)',
+  })
+  declare totalAmount: number;
 
   @ApiProperty()
   declare description: string;
@@ -450,4 +513,45 @@ export class ServiceDetailResponseDto {
 
   @ApiProperty({ example: 45 })
   declare favoriteCount: number;
+
+  @ApiPropertyOptional({
+    example: 80,
+    description:
+      '구매율 (주문수/문의수 × 100, 반올림, 최대 100). 주문이 없으면 null',
+    nullable: true,
+  })
+  declare purchaseRate: number | null;
+}
+
+export class ExpertServiceListItemResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  declare id: string;
+
+  @ApiProperty({ example: '안드로이드 / iOS 앱 개발' })
+  declare title: string;
+
+  @ApiProperty({ example: 380_000 })
+  declare servicePrice: number;
+
+  @ApiProperty({ example: 'https://...' })
+  declare thumbnailUrl: string;
+
+  @ApiProperty({ enum: ServiceStatus })
+  declare status: ServiceStatus;
+
+  @ApiProperty({
+    enum: TechStackName,
+    isArray: true,
+    example: [TechStackName.REACT],
+  })
+  declare techStacks: TechStackName[];
+
+  @ApiProperty({ example: 4.9 })
+  declare rating: number;
+
+  @ApiProperty({ example: 328 })
+  declare reviewCount: number;
+
+  @ApiProperty({ example: 120 })
+  declare orderCount: number;
 }

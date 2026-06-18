@@ -2,15 +2,34 @@ import { Injectable } from '@nestjs/common';
 import { AuthProvider, Role, type User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
-import { EXPERT_ERRORS, USER_ERRORS } from '../common/constants/errors';
+import {
+  EXPERT_PROFILE_ERRORS,
+  SERVICE_ERRORS,
+  USER_ERRORS,
+} from '../common/constants/errors';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { AppException } from '../common/exceptions/app.exception';
+import { Paginated } from '../common/types/paginated.type';
+import { toPaginatedResponse } from '../common/utils/list-response.util';
 import { mapServiceCategories } from '../common/utils/service-category.util';
+import { resolveAuthorDisplayName } from '../common/utils/users.util';
 import { ExpertProfilesRepository } from '../expert-profiles/expert-profiles.repository';
+import { OrdersService } from '../orders/orders.service';
 import { PortfoliosService } from '../portfolios/portfolios.service';
+import { MyReviewsQueryDto } from '../services/dto/my-reviews-query.dto';
+import { MyReviewListItemResponseDto } from '../services/dto/service-response.dto';
+import { ExpertServiceListItemResponse } from '../services/services.mapper';
+import { ServicesService } from '../services/services.service';
 import { UploadService } from '../upload/upload.service';
 
+import { MyCommentsQueryDto } from './dto/my-comments-query.dto';
+import { MyPostsQueryDto } from './dto/my-posts-query.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import {
+  MyCommentListItemResponseDto,
+  MyPostListItemResponseDto,
+} from './dto/user-response.dto';
 import { UsersRepository } from './users.repository';
 
 import type { UserWithProfiles } from './users.types';
@@ -65,6 +84,8 @@ export class UsersService {
     private readonly expertProfilesRepository: ExpertProfilesRepository,
     private readonly portfoliosService: PortfoliosService,
     private readonly uploadService: UploadService,
+    private readonly servicesService: ServicesService,
+    private readonly ordersService: OrdersService,
   ) {}
 
   async getUserWithPortfolios(userId: string) {
@@ -75,13 +96,29 @@ export class UsersService {
     const expertProfile =
       await this.expertProfilesRepository.findByUserId(userId);
 
-    if (expertProfile === null) throw new AppException(EXPERT_ERRORS.NOT_FOUND);
+    if (expertProfile === null)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
 
     return this.portfoliosService.findManyByExpertProfileId(expertProfile.id);
   }
 
-  getAllUser() {
-    return 'all user';
+  async getUserWithServices(
+    userId: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<ExpertServiceListItemResponse>> {
+    const user = await this.usersRepository.findById(userId);
+
+    if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (user.role !== Role.EXPERT)
+      throw new AppException(SERVICE_ERRORS.FORBIDDEN_NOT_EXPERT);
+
+    const expertProfile =
+      await this.expertProfilesRepository.findByUserId(userId);
+
+    if (expertProfile === null)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
+
+    return this.servicesService.getAllServicesByExpertId(userId, query);
   }
 
   async getUserById(id: string) {
@@ -90,6 +127,80 @@ export class UsersService {
       throw new AppException(USER_ERRORS.NOT_FOUND);
     }
     return mapUser(user);
+  }
+
+  async getExpertDetail(
+    expertUserId: string,
+    viewer?: { userId: string; role: Role },
+  ) {
+    const viewerId = viewer?.role === Role.CLIENT ? viewer.userId : undefined;
+
+    const user = await this.usersRepository.findExpertDetail(
+      expertUserId,
+      viewerId,
+    );
+    if (!user) throw new AppException(USER_ERRORS.NOT_FOUND);
+    if (!user.expertProfile)
+      throw new AppException(EXPERT_PROFILE_ERRORS.NOT_FOUND);
+
+    const {
+      expertProfile,
+      services,
+      ordersAsExpert,
+      favoriteExperts,
+      _count,
+      ...rest
+    } = user;
+
+    const totalOrderCount = ordersAsExpert.length;
+    const nonExpiredCount = ordersAsExpert.filter(
+      (o) => o.status !== 'EXPIRED',
+    ).length;
+    const completionRate =
+      totalOrderCount > 0
+        ? Math.min(Math.round((nonExpiredCount / totalOrderCount) * 100), 100)
+        : null;
+
+    const purchaseRates = services
+      .filter((s) => s._count.orders > 0)
+      .map((s) =>
+        s._count.chatRooms === 0
+          ? 100
+          : Math.min(
+              Math.round((s._count.orders / s._count.chatRooms) * 100),
+              100,
+            ),
+      );
+    const topPurchaseRate =
+      purchaseRates.length > 0 ? Math.max(...purchaseRates) : null;
+
+    const isFavorite =
+      viewerId !== undefined &&
+      favoriteExperts.some((f) => f.clientUserId === viewerId);
+
+    return {
+      id: rest.id,
+      profileImageUrl: rest.profileImageUrl,
+      region: rest.region,
+      businessName: expertProfile.businessName,
+      ceoName: expertProfile.ceoName,
+      description: expertProfile.description,
+      foundedYear: expertProfile.foundedYear,
+      employeeMin: expertProfile.employeeMin,
+      employeeMax: expertProfile.employeeMax,
+      contactTimeStart: expertProfile.contactTimeStart,
+      contactTimeEnd: expertProfile.contactTimeEnd,
+      avgRating: expertProfile.avgRating,
+      reviewCount: expertProfile.reviewCount,
+      techStacks: expertProfile.techStacks.map((ts) => ts.techStack.name),
+      clientNames: expertProfile.portfolios.map((p) => p.clientName),
+      totalOrderCount,
+      serviceCount: services.length,
+      topPurchaseRate,
+      completionRate,
+      isFavorite,
+      favoriteCount: _count.favoritedByClients,
+    };
   }
 
   findUserById(id: string): Promise<User | null> {
@@ -107,13 +218,13 @@ export class UsersService {
   createLocalUser(params: {
     email: string;
     passwordHash: string;
-    name: string;
+    name: string | null;
     role: Role;
   }): Promise<User> {
     return this.usersRepository.create({
       email: params.email,
       password: params.passwordHash,
-      name: params.name,
+      name: params.name ?? null,
       role: params.role,
       provider: AuthProvider.LOCAL,
     });
@@ -202,5 +313,94 @@ export class UsersService {
       });
 
     return { isDeleted, deletedAt, deletionReason };
+  }
+
+  async getAllReviewsByUserId(
+    userId: string,
+    query: MyReviewsQueryDto,
+  ): Promise<Paginated<MyReviewListItemResponseDto>> {
+    const user = await this.usersRepository.findById(userId);
+
+    if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    return this.ordersService.getAllReviewsByUserId(userId, query);
+  }
+
+  async getAllPostsByUserId(
+    userId: string,
+    query: MyPostsQueryDto,
+  ): Promise<Paginated<MyPostListItemResponseDto>> {
+    const user = await this.usersRepository.findById(userId);
+
+    if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
+    const sort = query.sort ?? 'latest';
+    const skip = (page - 1) * pageSize;
+    const category = query.category;
+
+    const [posts, totalCount] = await Promise.all([
+      this.usersRepository.findAllPostsByUserId({
+        userId,
+        skip,
+        take: pageSize,
+        sort,
+        category,
+      }),
+      this.usersRepository.countPosts(userId, category),
+    ]);
+
+    return toPaginatedResponse(
+      posts.map((post) => ({
+        id: post.id,
+        category: post.category,
+        title: post.title,
+        content: post.content,
+        createdAt: post.createdAt.toISOString(),
+        authorDisplayName: resolveAuthorDisplayName(post.user),
+        likeCount: post._count.likeRecords,
+        commentCount: post._count.comments,
+      })),
+      { page, pageSize, totalCount },
+    );
+  }
+
+  async getAllCommentsByUserId(
+    userId: string,
+    query: MyCommentsQueryDto,
+  ): Promise<Paginated<MyCommentListItemResponseDto>> {
+    const user = await this.usersRepository.findById(userId);
+
+    if (user === null) throw new AppException(USER_ERRORS.NOT_FOUND);
+
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
+    const skip = (page - 1) * pageSize;
+
+    const [comments, totalCount] = await Promise.all([
+      this.usersRepository.findAllComments({
+        userId,
+        skip,
+        take: pageSize,
+        sort: query.sort ?? 'latest',
+      }),
+      this.usersRepository.countComments(userId),
+    ]);
+
+    return toPaginatedResponse(
+      comments.map((comment) => ({
+        id: comment.id,
+        content: comment.content,
+        createdAt: comment.createdAt.toISOString(),
+        post: {
+          id: comment.post.id,
+          category: comment.post.category,
+          title: comment.post.title,
+          likeCount: comment.post._count.likeRecords,
+        },
+      })),
+      { page, pageSize, totalCount },
+    );
   }
 }

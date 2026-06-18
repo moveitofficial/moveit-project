@@ -62,3 +62,7 @@ export const tag = style({
   flexDirection: 'row',
   gap: '8px',
 });
+
+export const chipLink = style({
+  display: 'inline-flex',
+});

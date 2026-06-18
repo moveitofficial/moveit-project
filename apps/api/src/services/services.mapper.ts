@@ -1,6 +1,11 @@
 import { mapServiceCategoryRef } from '../common/utils/service-category.util';
+import {
+  calculatePlatformFee,
+  calculateTotalAmount,
+} from '../orders/orders.constants';
 
 import type {
+  MyReviewListItem,
   ReviewWithUser,
   ServiceDetail,
   ServiceListItem,
@@ -22,6 +27,28 @@ export function mapReview(review: ReviewWithUser) {
     },
   };
 }
+
+export function mapMyReviewListItem(review: MyReviewListItem) {
+  const { service } = review.order;
+  const expert = service.expertUser;
+
+  return {
+    id: review.id,
+    orderId: review.orderId,
+    rating: review.rating,
+    content: review.content,
+    createdAt: review.createdAt.toISOString(),
+    serviceTitle: service.title,
+    expert: {
+      id: expert.id,
+      name: expert.name ?? '',
+      profileImageUrl: expert.profileImageUrl,
+      companyName: expert.expertProfile?.businessName ?? expert.name ?? '',
+    },
+  };
+}
+
+export type MyReviewListItemResponse = ReturnType<typeof mapMyReviewListItem>;
 
 export function mapServiceListItem(
   service: ServiceListItem,
@@ -85,6 +112,8 @@ export function mapServiceDetail(service: ServiceDetail, isFavorite: boolean) {
     revisionCount: rest.revisionCount,
     serviceScope: rest.serviceScope,
     servicePrice: rest.servicePrice,
+    platformFee: calculatePlatformFee(rest.servicePrice),
+    totalAmount: calculateTotalAmount(rest.servicePrice),
     description: rest.description,
     preparationNotes: rest.preparationNotes,
     refundPolicy: rest.refundPolicy,
@@ -109,6 +138,17 @@ export function mapServiceDetail(service: ServiceDetail, isFavorite: boolean) {
     faqs,
     orderCount: service._count.orders,
     favoriteCount: service._count.favoriteServices,
+    purchaseRate:
+      service._count.orders === 0
+        ? null
+        : service._count.chatRooms === 0
+          ? 100
+          : Math.min(
+              Math.round(
+                (service._count.orders / service._count.chatRooms) * 100,
+              ),
+              100,
+            ),
   };
 }
 
@@ -127,3 +167,26 @@ export function mapService(service: ServiceWithRelations): ServiceResponse {
     categoryRef: mapServiceCategoryRef({ serviceGroup, serviceCategory }),
   };
 }
+
+export function mapExpertServiceListItem(
+  service: ServiceListItem,
+  stats: ServiceReviewStats,
+) {
+  const { images, techStacks } = service;
+
+  return {
+    id: service.id,
+    title: service.title,
+    servicePrice: service.servicePrice,
+    thumbnailUrl: images[0]?.imgUrl ?? '',
+    status: service.status,
+    techStacks: techStacks.map(({ techStack }) => techStack.name),
+    rating: stats.rating,
+    reviewCount: stats.reviewCount,
+    orderCount: service._count.orders,
+  };
+}
+
+export type ExpertServiceListItemResponse = ReturnType<
+  typeof mapExpertServiceListItem
+>;

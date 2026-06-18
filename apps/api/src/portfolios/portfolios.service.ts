@@ -65,6 +65,15 @@ export class PortfoliosService {
     private readonly uploadService: UploadService,
   ) {}
 
+  async findManyByUserId(userId: string) {
+    const expertProfile =
+      await this.expertProfilesRepository.findByUserId(userId);
+    if (expertProfile === null) {
+      return toListResponse([]);
+    }
+    return this.findManyByExpertProfileId(expertProfile.id);
+  }
+
   async findManyByExpertProfileId(expertProfileId: string) {
     const portfolios =
       await this.portfoliosRepository.findManyByExpertProfileId(
@@ -152,10 +161,15 @@ export class PortfoliosService {
       }
     }
 
-    const oldImageKeys =
+    const keptKeys = new Set(
+      (dto.images ?? []).map((img) => new URL(img.imgUrl).pathname.slice(1)),
+    );
+    const removedImageKeys =
       dto.images === undefined
         ? []
-        : portfolio.images.map((img) => new URL(img.imgUrl).pathname.slice(1));
+        : portfolio.images
+            .map((img) => new URL(img.imgUrl).pathname.slice(1))
+            .filter((key) => !keptKeys.has(key));
 
     const updated = await this.portfoliosRepository.update({
       id: portfolioId,
@@ -167,8 +181,8 @@ export class PortfoliosService {
       skills: dto.skills,
     });
 
-    if (oldImageKeys.length > 0) {
-      await this.uploadService.deleteImages(oldImageKeys);
+    if (removedImageKeys.length > 0) {
+      await this.uploadService.deleteImages(removedImageKeys);
     }
 
     return mapPortfolio(updated);

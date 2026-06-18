@@ -107,9 +107,11 @@ enum ServiceStatus {
 }
 
 enum OrderStatus {
+  PENDING // 결제 요청됨 (채팅 결제 요청 시 생성, 결제 완료 전)
+  TRADE_REQUEST_EXPIRED // 거래 요청 만료 (PENDING 상태에서 72시간 내 미결제 시 크론잡 자동 전환)
   NEGOTIATING // 논의중
   CANCEL_REQUESTED // 취소요청
-  PAYMENT_CANCELLED // 결제취소
+  PAYMENT_CANCELLED // 결제 취소 완료
 
   IN_PROGRESS // 작업중
   DEADLINE_IMMINENT // 마감임박
@@ -157,31 +159,62 @@ enum NotificationType {
   COMMUNITY // 게시글 관련
   TRANSACTION // 거래 관련
   REMINDER // 리마인드 관련
+  ACCOUNT // 계정 상태 관련 (전문가 승인/거절 등)
 }
 
 enum NotificationCategory {
   // 커뮤니티
-  POST_COMMENT // 내 게시글에 댓글이 달렸어요
-  POST_REPLY // 내 댓글에 답글이 달렸어요
-  POST_LIKE // 내 게시글에 좋아요가 달렸어요
+  POST_COMMENT // 내 게시글에 댓글이 달렸어요 (게시글 작성자에게)
+  POST_REPLY // 내 댓글에 답글이 달렸어요 (댓글 작성자에게)
+  POST_LIKE // 내 게시글에 좋아요가 달렸어요 (게시글 작성자에게)
+  POST_DELETED_BY_ADMIN // 게시글이 삭제되었어요 (게시글 작성자에게)
+  COMMENT_DELETED_BY_ADMIN // 댓글이 삭제되었어요 (댓글 작성자에게)
 
-  // 거래
-  ORDER_CREATED // 새 주문이 생성되었어요
-  ORDER_CANCELLED // 주문이 취소되었어요
-  PAYMENT_SUCCESS // 결제가 완료되었어요
-  REFUND_REQUESTED // 환불 요청이 들어왔어요
-  PURCHASE_CONFIRM_REQUEST // 구매확정을 요청해주세요 (의뢰인에게)
-  PURCHASE_CONFIRMED // 구매확정이 완료되었어요 (전문가에게)
-  SETTLEMENT_REQUESTED // 정산 요청이 들어왔어요 (어드민에게)
-  SETTLEMENT_DONE // 정산이 완료되었어요
+  // 계정
+  EXPERT_APPROVED // 전문가 승인이 완료되었어요 (본인에게)
+  EXPERT_REJECTED // 전문가 승인이 거절되었어요 (본인에게)
+
+  // 거래 - 주문
+  ORDER_CREATED // 새 주문이 생성되었어요 (판매자에게)
+  PAYMENT_SUCCESS // 결제가 완료되었어요 (구매자/판매자에게)
+
+  // 거래 - 취소
+  ORDER_CANCEL_REQUESTED // 취소 요청이 들어왔어요 (판매자에게)
+  ORDER_CANCEL_REQUESTED_TO_CLIENT // 취소 요청이 완료되었어요 (구매자 본인에게)
+  ORDER_CANCEL_APPROVED_BY_EXPERT // 판매자가 취소 요청을 승인했어요 (구매자에게)
+  ORDER_CANCEL_APPROVED_BY_ADMIN // 어드민이 취소 요청을 승인했어요 (구매자/판매자에게)
+  ORDER_CANCEL_REJECTED_BY_EXPERT // 판매자가 취소 요청을 거절했어요 (구매자에게)
+  ORDER_CANCELLED // 주문이 취소되었어요 (구매자에게)
+
+  // 거래 - 환불
+  REFUND_REQUESTED // 환불 요청이 들어왔어요 (판매자에게)
+  REFUND_REQUESTED_TO_CLIENT // 환불 요청이 완료되었어요 (구매자 본인에게)
+  REFUND_APPROVED_BY_EXPERT // 판매자가 환불 요청을 승인했어요 (구매자에게)
+  REFUND_APPROVED_BY_ADMIN // 어드민이 환불 요청을 승인했어요 (구매자/판매자에게)
+  REFUND_REJECTED_BY_EXPERT // 판매자가 환불 요청을 거절했어요 (구매자에게)
+
+  // 거래 - 작업/구매확정/정산
+  WORK_COMPLETED // 작업이 완료되었어요 (구매자에게)
+  PURCHASE_CONFIRM_REQUEST // 구매확정을 요청해주세요 (구매자에게)
+  PURCHASE_CONFIRM_REMINDER // 아직 구매확정되지 않은 작업물이 있어요 (구매자에게)
+  PURCHASE_CONFIRM_PENDING // 아직 구매확정되지 않은 주문건이 있어요 (판매자에게)
+  PURCHASE_CONFIRMED // 구매확정이 완료되었어요 (판매자에게)
+  PURCHASE_AUTO_CONFIRMED // 기한 경과로 자동 구매확정되었어요 (구매자/판매자에게)
+  SETTLEMENT_REQUEST_REMINDER // 정산 요청을 해주세요 (판매자에게)
+  SETTLEMENT_DONE // 정산이 완료되었어요 (판매자에게)
 
   // 일정
-  SCHEDULE_REGISTERED // 일정이 등록되었어요
-  SCHEDULE_CHANGE_REQUEST // 일정 변경 요청이 왔어요
-  SCHEDULE_REMINDER // 일정 시작·마감 리마인더 (무빗 알림)
+  SCHEDULE_REGISTERED // 일정이 등록되었어요 (구매자/판매자에게)
+  SCHEDULE_CHANGE_REQUEST // 일정 변경 요청이 왔어요 (구매자에게)
+  SCHEDULE_CHANGED // 일정이 변경되었어요 (구매자/판매자에게)
+  SCHEDULE_REMINDER // 일정 시작·마감 리마인더
 
   // 리마인더
-  DEADLINE_REMINDER // 기한이 얼마 남지 않았어요
+  DEADLINE_REMINDER // 기한이 얼마 남지 않았어요 (구매자/판매자에게)
+  DEADLINE_EXPIRED // 기한이 만료되었어요 (구매자/판매자에게)
+
+  // 거래 - 환불 (위치 안전성을 위해 enum 끝에 추가)
+  REFUND_REQUEST_CANCELLED // 구매자가 환불 요청을 취소했어요 (판매자에게)
 }
 
 enum ReferenceType {
@@ -216,16 +249,15 @@ enum MessageType {
 }
 
 enum SystemMessageType {
-  TRADE_REQUEST_SENT // 고객에게 거래를 요청했어요 (전문가 측)
-  TRADE_REQUEST_RECEIVED // 전문가가 거래를 요청했어요 (고객 측)
+  TRADE_REQUEST // 거래를 요청했어요
   TRADE_CANCELED // 거래 요청이 취소되었어요
-  PAYMENT_REQUEST // 결제 요청
-  PAYMENT_HELD // 무빗이 결제 금액을 안전하게 보관하고 있어요 (전문가 측)
-  PAYMENT_COMPLETED // 결제가 완료되었습니다 (고객 측)
+  TRADE_REQUEST_CANCELED // 전문가가 거래 요청을 취소했어요 (PENDING 주문 삭제)
+  TRADE_REQUEST_EXPIRED // 거래 요청이 만료되었어요
+  PAYMENT_COMPLETED // 결제가 완료되었습니다
+  PAYMENT_HELD // 무빗이 결제 금액을 안전하게 보관하고 있어요
   SCHEDULE_REQUEST // 일정을 등록해주세요
   SCHEDULE_REGISTERED // 일정 등록이 완료되었습니다
   SCHEDULE_CHANGE_REQUEST // 일정 변경 요청
-  ORDER_COMPLETION_PENDING // 구매 확정 대기
 }
 
 enum SenderType {
@@ -237,11 +269,6 @@ enum CsChatStatus {
   OPEN
   ASSIGNED
   CLOSED
-}
-
-enum MessageReferenceType {
-  ORDER
-  PAYMENT
 }
 
 enum AdminActionType {
@@ -257,6 +284,7 @@ enum AdminActionType {
   CANCEL_APPROVED // 취소 승인
   CS_ASSIGNED // 문의 처리중
   CS_CLOSED // 문의 처리 완료
+  SETTLEMENT_COMPLETED // 정산 완료
 }
 
 enum ReportReason {
@@ -369,13 +397,14 @@ model ExpertProfile {
   id                String    @id @default(uuid()) @db.Uuid
   userId            String    @unique @map("user_id") @db.Uuid
   isApplied         Boolean   @default(false) @map("is_applied")
+  appliedAt         DateTime? @map("applied_at") // <- (6/2추가)
   isApproved        Boolean   @default(false) @map("is_approved")
   approvedAt        DateTime? @map("approved_at")
   approvedByAdminId String?   @map("approved_by_admin_id") @db.Uuid
   rejectedAt        DateTime? @map("rejected_at")
   rejectReason      String?   @map("reject_reason")
   businessName      String?   @map("business_name")
-  businessNumber    String?   @map("business_number")
+  businessNumber    String?   @unique @map("business_number")
   ceoName           String?   @map("ceo_name")
   contactTimeStart  String?   @map("contact_time_start")
   contactTimeEnd    String?   @map("contact_time_end")
@@ -636,20 +665,24 @@ model Order {
   platformFee        Int         @map("platform_fee")
   totalAmount        Int         @map("total_amount")
   status             OrderStatus
-  startDate          DateTime    @map("start_date")
-  endDate            DateTime    @map("end_date")
+  startDate          DateTime?   @map("start_date")
+  endDate            DateTime?   @map("end_date")
   refundReason       String?     @map("refund_reason")
   createdAt          DateTime    @default(now()) @map("created_at")
   confirmedAt        DateTime?   @map("confirmed_at")
   settledAt          DateTime?   @map("settled_at")
   settledByAdminId   String?     @map("settled_by_admin_id") @db.Uuid
 
-  clientUser     User     @relation("ClientOrders", fields: [clientUserId], references: [id])
-  expertUser     User     @relation("ExpertOrders", fields: [expertUserId], references: [id])
-  service        Service  @relation(fields: [serviceId], references: [id])
-  settledByAdmin Admin?   @relation(fields: [settledByAdminId], references: [id])
+  chatRoomId String? @map("chat_room_id") @db.Uuid
+
+  clientUser     User      @relation("ClientOrders", fields: [clientUserId], references: [id])
+  expertUser     User      @relation("ExpertOrders", fields: [expertUserId], references: [id])
+  service        Service   @relation(fields: [serviceId], references: [id])
+  settledByAdmin Admin?    @relation(fields: [settledByAdminId], references: [id])
+  chatRoom       ChatRoom? @relation(fields: [chatRoomId], references: [id])
   payment        Payment?
   review         Review?
+  messages       Message[]
 
   @@map("orders")
 }
@@ -807,6 +840,7 @@ model Comment {
   parentCommentId  String?   @map("parent_comment_id") @db.Uuid
   content          String
   deletedAt        DateTime? @map("deleted_at")
+  deleteReason     String?   @map("delete_reason")
   deletedByAdminId String?   @map("deleted_by_admin_id") @db.Uuid
   createdAt        DateTime  @default(now()) @map("created_at")
 
@@ -845,14 +879,18 @@ model Notification {
 
   content String
 
-  referenceType ReferenceType @map("reference_type")
-  referenceId   String        @map("reference_id") @db.Uuid
+  referenceType ReferenceType? @map("reference_type")
+  referenceId   String?        @map("reference_id") @db.Uuid
 
-  isRead    Boolean  @default(false) @map("is_read")
-  createdAt DateTime @default(now()) @map("created_at")
+  isRead    Boolean   @default(false) @map("is_read")
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id])
 
+  @@index([userId, createdAt])
+  @@index([userId, isRead])
   @@map("moveit_notifications")
 }
 
@@ -937,6 +975,7 @@ model ChatRoom {
   currentService Service           @relation(fields: [currentServiceId], references: [id])
   participants   ChatParticipant[]
 
+  orders      Order[]
   messages    Message[] @relation("ChatRoomMessages")
   lastMessage Message?  @relation("ChatRoomLastMessage", fields: [lastMessageId], references: [id])
 
@@ -945,36 +984,39 @@ model ChatRoom {
 }
 
 model ChatParticipant {
-  id                String   @id @default(uuid()) @db.Uuid
-  chatRoomId        String   @map("chat_room_id") @db.Uuid
-  userId            String   @map("user_id") @db.Uuid
-  lastReadMessageId String?  @map("last_read_message_id") @db.Uuid
-  createdAt         DateTime @default(now()) @map("created_at")
+  id                     String   @id @default(uuid()) @db.Uuid
+  chatRoomId             String   @map("chat_room_id") @db.Uuid
+  userId                 String   @map("user_id") @db.Uuid
+  lastReadMessageId      String?  @map("last_read_message_id") @db.Uuid
+  lastDismissedMessageId String?  @map("last_dismissed_message_id") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at")
 
-  chatRoom        ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [userId], references: [id])
-  lastReadMessage Message? @relation("ParticipantLastRead", fields: [lastReadMessageId], references: [id])
+  chatRoom             ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user                 User     @relation(fields: [userId], references: [id])
+  lastReadMessage      Message? @relation("ParticipantLastRead", fields: [lastReadMessageId], references: [id])
+  lastDismissedMessage Message? @relation("ParticipantLastDismissed", fields: [lastDismissedMessageId], references: [id])
 
   @@unique([chatRoomId, userId])
   @@map("chat_participants")
 }
 
 model Message {
-  id            String                @id @default(uuid()) @db.Uuid
-  chatRoomId    String                @map("chat_room_id") @db.Uuid
-  senderId      String                @map("sender_id") @db.Uuid
-  type          MessageType
-  systemType    SystemMessageType?    @map("system_type")
-  referenceType MessageReferenceType? @map("reference_type")
-  referenceId   String?               @map("reference_id") @db.Uuid
-  content       String
-  createdAt     DateTime              @default(now()) @map("created_at")
+  id         String             @id @default(uuid()) @db.Uuid
+  chatRoomId String             @map("chat_room_id") @db.Uuid
+  senderId   String?            @map("sender_id") @db.Uuid
+  type       MessageType
+  systemType SystemMessageType? @map("system_type")
+  orderId    String?            @map("order_id") @db.Uuid
+  content    String
+  createdAt  DateTime           @default(now()) @map("created_at")
 
-  chatRoom               ChatRoom            @relation("ChatRoomMessages", fields: [chatRoomId], references: [id])
-  chatRoomAsLast         ChatRoom[]          @relation("ChatRoomLastMessage")
-  sender                 User                @relation(fields: [senderId], references: [id])
-  participantsAsLastRead ChatParticipant[]   @relation("ParticipantLastRead")
-  attachments            MessageAttachment[]
+  chatRoom                    ChatRoom            @relation("ChatRoomMessages", fields: [chatRoomId], references: [id])
+  chatRoomAsLast              ChatRoom[]          @relation("ChatRoomLastMessage")
+  sender                      User?               @relation(fields: [senderId], references: [id])
+  order                       Order?              @relation(fields: [orderId], references: [id])
+  participantsAsLastRead      ChatParticipant[]   @relation("ParticipantLastRead")
+  participantsAsLastDismissed ChatParticipant[]   @relation("ParticipantLastDismissed")
+  attachments                 MessageAttachment[]
 
   @@map("messages")
 }
@@ -997,12 +1039,14 @@ model MessageAttachment {
 // =========================
 
 model CsChatRoom {
-  id              String       @id @default(uuid()) @db.Uuid
-  userId          String       @map("user_id") @db.Uuid
-  assignedAdminId String?      @map("assigned_admin_id") @db.Uuid
-  lastMessageId   String?      @map("last_message_id") @db.Uuid
-  status          CsChatStatus
-  createdAt       DateTime     @default(now()) @map("created_at")
+  id                     String       @id @default(uuid()) @db.Uuid
+  userId                 String       @map("user_id") @db.Uuid
+  assignedAdminId        String?      @map("assigned_admin_id") @db.Uuid
+  lastMessageId          String?      @map("last_message_id") @db.Uuid
+  userLastReadMessageId  String?      @map("user_last_read_message_id") @db.Uuid
+  adminLastReadMessageId String?      @map("admin_last_read_message_id") @db.Uuid
+  status                 CsChatStatus
+  createdAt              DateTime     @default(now()) @map("created_at")
 
   user          User        @relation(fields: [userId], references: [id])
   assignedAdmin Admin?      @relation(fields: [assignedAdminId], references: [id])

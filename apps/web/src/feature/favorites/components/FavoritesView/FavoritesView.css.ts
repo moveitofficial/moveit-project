@@ -79,3 +79,8 @@ export const cardGrid = style({
   flexWrap: 'wrap',
   gap: '24px',
 });
+
+export const cardLink = style({
+  textDecoration: 'none',
+  color: 'inherit',
+});

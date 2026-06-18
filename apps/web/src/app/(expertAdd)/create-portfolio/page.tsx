@@ -1,0 +1,12 @@
+import { ExpertPortfolioCreate } from '@/feature/signup/components/ExpertPortfolioCreate';
+
+interface Props {
+  searchParams: Promise<{ id?: string; returnUrl?: string }>;
+}
+
+export default async function ExpertPortfolioCreatePage({
+  searchParams,
+}: Props) {
+  const { id, returnUrl } = await searchParams;
+  return <ExpertPortfolioCreate portfolioId={id} returnUrl={returnUrl} />;
+}
