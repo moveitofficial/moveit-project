@@ -169,7 +169,7 @@ export class CommunityPostsRepository {
     return this.prisma.comment.findMany({
       where: this.buildCommentListWhere(args.postId),
       select: commentListSelect,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
       skip: args.skip,
       take: args.take,
     });

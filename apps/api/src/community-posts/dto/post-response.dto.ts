@@ -28,6 +28,13 @@ export class PostListItemResponseDto extends PostResponseDto {
   })
   declare authorDisplayName: string;
 
+  @ApiProperty({
+    nullable: true,
+    example: 'https://example.com/profile.jpg',
+    description: '게시글 작성자 프로필 이미지',
+  })
+  declare authorProfileImageUrl: string | null;
+
   @ApiProperty({ example: 233 })
   declare likeCount: number;
 

@@ -309,11 +309,25 @@ export default function CommunityPostDetail({
 
         <div className={styles.postMetaRow}>
           <div className={styles.postAuthorGroup}>
-            <div className={styles.avatarFallback} />
-            <div className={styles.postAuthorName}>
-              {post.authorDisplayName}
+            {post.authorProfileImageUrl ? (
+              <Image
+                src={post.authorProfileImageUrl}
+                alt={post.authorDisplayName}
+                width={40}
+                height={40}
+                className={styles.avatar}
+              />
+            ) : (
+              <div className={styles.avatarFallback} />
+            )}
+            <div className={styles.postAuthorMeta}>
+              <div className={styles.postAuthorName}>
+                {post.authorDisplayName}
+              </div>
+              <div className={styles.postDate}>
+                {formatDate(post.createdAt)}
+              </div>
             </div>
-            <div className={styles.postDate}>{formatDate(post.createdAt)}</div>
           </div>
 
           <div className={styles.postMetaRight}>
