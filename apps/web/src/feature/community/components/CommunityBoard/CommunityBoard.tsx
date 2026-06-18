@@ -22,14 +22,18 @@ interface Props {
   canWritePost: boolean;
 }
 
-// API 목록 항목 → 공용 CommunityCard 입력 형태로 변환(목록엔 프로필 이미지가 없어 null).
+// API 목록 항목 → 공용 CommunityCard 입력 형태로 변환.
 function toCardPost(item: CommunityPostListItem): CommunityPost {
   return {
     id: item.id,
     category: item.category,
     title: item.title,
     content: item.content,
-    author: { id: item.userId, name: item.authorDisplayName, profileImageUrl: null },
+    author: {
+      id: item.userId,
+      name: item.authorDisplayName,
+      profileImageUrl: item.authorProfileImageUrl,
+    },
     likeCount: item.likeCount,
     commentCount: item.commentCount,
     viewCount: 0,

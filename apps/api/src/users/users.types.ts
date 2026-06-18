@@ -24,6 +24,7 @@ export const myPostListSelect = {
       id: true,
       role: true,
       name: true,
+      profileImageUrl: true,
       clientProfile: { select: { nickname: true } },
       expertProfile: { select: { businessName: true } },
     },
