@@ -749,6 +749,12 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
             </div>
           )}
         </ExpertProfileSection>
+
+        {!profile.isApproved && !profile.isApplied && (
+          <button type="button" className={styles.applyBtn}>
+            판매자 승인 신청
+          </button>
+        )}
       </div>
     </section>
   );
