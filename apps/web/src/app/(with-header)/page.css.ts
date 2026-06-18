@@ -32,6 +32,14 @@ export const cardList = style({
 export const cardLink = style({
   textDecoration: 'none',
   color: 'inherit',
+  cursor: 'pointer',
+});
+
+export const communityCardLink = style({
+  textDecoration: 'none',
+  color: 'inherit',
+  cursor: 'pointer',
+  display: 'block',
 });
 
 export const communityList = style({
