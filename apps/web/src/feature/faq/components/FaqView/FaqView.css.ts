@@ -33,7 +33,7 @@ export const subtitle = style([
 
 export const searchBox = style({
   position: 'relative',
-  width: '410px',
+  width: '763px',
   maxWidth: '100%',
   marginTop: '24px',
 });
@@ -42,7 +42,7 @@ export const searchInput = style([
   typography.f14R,
   {
     width: '100%',
-    padding: '12px 44px 12px 16px',
+    padding: '14px 44px 14px 16px',
     border: `1px solid ${vars.color.line200}`,
     borderRadius: '8px',
     color: vars.color.black500,
