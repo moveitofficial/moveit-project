@@ -33,7 +33,7 @@ import {
   type ServiceCategoryId,
 } from '@/feature/signup/components/common/serviceCategories';
 import {
-  SERVICE_GROUPS,
+  SERVICE_GROUPS_EXPERT,
   type ServiceGroupId,
 } from '@/feature/signup/components/common/serviceGroups';
 import { TECH_STACKS, type TechStackId } from '@/feature/signup/components/common/techStacks';
@@ -321,7 +321,7 @@ export default function ExpertServiceCreate({ serviceId }: Props) {
         <div className={styles.field}>
           <span className={styles.label}>카테고리 선택</span>
           <Dropdown
-            options={SERVICE_GROUPS}
+            options={SERVICE_GROUPS_EXPERT}
             value={serviceGroup}
             onChange={handleGroupChange}
             placeholder="카테고리를 선택해주세요"
