@@ -4,62 +4,63 @@ import { ApiError } from '@repo/fetcher';
 import clsx from 'clsx';
 import { useEffect, useId, useState } from 'react';
 
+import { ReviewStars } from '../ReviewStars';
 import { UserModal } from '../UserModal';
 
-import * as styles from './MyCommentEditModal.css';
+import * as styles from './MyReviewEditModal.css';
 
-import type { MyCommentListItem } from '@/feature/user/my-comments/api';
+import type { MyReviewListItem } from '@/feature/user/my-reviews/api';
 
-import { useUpdateMyCommentMutation } from '@/feature/user/my-comments/queries';
+import { useUpdateMyReviewMutation } from '@/feature/user/my-reviews/queries';
 
 const MODAL_MAX_WIDTH = 480;
-const COMMENT_MAX_LENGTH = 1000;
 
 interface Props {
   isOpen: boolean;
-  comment: MyCommentListItem | null;
+  review: MyReviewListItem | null;
   onClose: () => void;
 }
 
-export default function MyCommentEditModal({
-  isOpen,
-  comment,
-  onClose,
-}: Props) {
+export default function MyReviewEditModal({ isOpen, review, onClose }: Props) {
   const titleId = useId();
+  const [rating, setRating] = useState(5);
   const [content, setContent] = useState('');
-  const { mutate, isPending, error, reset } = useUpdateMyCommentMutation();
+  const { mutate, isPending, error, reset } = useUpdateMyReviewMutation();
 
   useEffect(() => {
-    if (!isOpen || comment === null) {
+    if (!isOpen || review === null) {
       return;
     }
-    setContent(comment.content);
+    setRating(Math.round(review.rating));
+    setContent(review.content);
     reset();
-  }, [comment, isOpen, reset]);
+  }, [isOpen, review, reset]);
 
   const trimmedContent = content.trim();
-  const originalContent = comment?.content.trim() ?? '';
   const canSubmit =
+    review !== null &&
+    rating >= 1 &&
+    rating <= 5 &&
     trimmedContent.length > 0 &&
-    trimmedContent !== originalContent &&
+    (rating !== Math.round(review.rating) || trimmedContent !== review.content.trim()) &&
     !isPending;
 
   const handleClose = () => {
+    setRating(5);
     setContent('');
     reset();
     onClose();
   };
 
   const handleSubmit = () => {
-    if (comment === null || !canSubmit) {
+    if (review === null || !canSubmit) {
       return;
     }
-
     mutate(
       {
-        postId: comment.post.id,
-        commentId: comment.id,
+        orderId: review.orderId,
+        reviewId: review.id,
+        rating,
         content: trimmedContent,
       },
       {
@@ -70,7 +71,12 @@ export default function MyCommentEditModal({
     );
   };
 
-  const apiErrorMessage = error instanceof ApiError ? error.message : null;
+  const apiErrorMessage =
+    error instanceof ApiError
+      ? error.message
+      : error instanceof Error
+        ? error.message
+        : null;
 
   return (
     <UserModal
@@ -81,20 +87,32 @@ export default function MyCommentEditModal({
     >
       <div className={styles.content}>
         <h2 id={titleId} className={styles.title}>
-          댓글 수정
+          리뷰작성
         </h2>
+
+        <div className={styles.ratingRow}>
+          <ReviewStars
+            value={rating}
+            onChange={(value) => {
+              setRating(value);
+            }}
+          />
+          <p className={styles.ratingValue}>{rating}</p>
+        </div>
+
         <textarea
           className={styles.textarea}
-          placeholder="댓글을 입력해 주세요."
-          maxLength={COMMENT_MAX_LENGTH}
+          placeholder="리뷰를 입력해 주세요."
           value={content}
           onChange={(event) => {
             setContent(event.target.value);
           }}
         />
+
         {apiErrorMessage === null ? null : (
           <p className={styles.errorMessage}>{apiErrorMessage}</p>
         )}
+
         <div className={styles.footer}>
           <button
             type="button"
@@ -105,7 +123,7 @@ export default function MyCommentEditModal({
             disabled={!canSubmit}
             onClick={handleSubmit}
           >
-            댓글 수정
+            리뷰 수정
           </button>
           <button
             type="button"

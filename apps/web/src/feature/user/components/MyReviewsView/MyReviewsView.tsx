@@ -4,50 +4,37 @@ import { ApiError } from '@repo/fetcher';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
-import { MyCommentCard } from '../MyCommentCard';
-import { MyCommentEditModal } from '../MyCommentEditModal';
+import { MyReviewCard } from '../MyReviewCard';
+import { MyReviewEditModal } from '../MyReviewEditModal';
 import { UserConfirmModal } from '../UserConfirmModal';
 
-import * as styles from './MyCommentsView.css';
+import * as styles from './MyReviewsView.css';
 
-import type { MyCommentListItem } from '@/feature/user/my-comments/api';
+import type { MyReviewListItem } from '@/feature/user/my-reviews/api';
 
 import {
-  MY_COMMENT_SORT_OPTIONS,
-  type MyCommentSort,
-} from '@/feature/user/my-comments/constants';
+  MY_REVIEW_SORT_OPTIONS,
+  type MyReviewSort,
+} from '@/feature/user/my-reviews/constants';
 import {
-  flattenMyCommentPages,
-  useDeleteMyCommentMutation,
-  useMyCommentsInfinite,
-} from '@/feature/user/my-comments/queries';
+  flattenMyReviewPages,
+  useDeleteMyReviewMutation,
+  useMyReviewsInfinite,
+} from '@/feature/user/my-reviews/queries';
 
-export default function MyCommentsView() {
-  const [sort, setSort] = useState<MyCommentSort>('latest');
-  const [editingComment, setEditingComment] = useState<MyCommentListItem | null>(
-    null,
-  );
-  const [deletingComment, setDeletingComment] = useState<MyCommentListItem | null>(
-    null,
-  );
+export default function MyReviewsView() {
+  const [sort, setSort] = useState<MyReviewSort>('latest');
+  const [editingReview, setEditingReview] = useState<MyReviewListItem | null>(null);
+  const [deletingReview, setDeletingReview] = useState<MyReviewListItem | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const {
-    data,
-    error,
-    isPending,
-    isError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useMyCommentsInfinite(sort);
-  const { mutate: deleteComment, isPending: isDeleting, variables } =
-    useDeleteMyCommentMutation();
+  const { data, error, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useMyReviewsInfinite(sort);
+  const { mutate: deleteReview, isPending: isDeleting } = useDeleteMyReviewMutation();
 
-  const comments = flattenMyCommentPages(data?.pages);
-  const deletingCommentId = isDeleting ? variables.commentId : null;
+  const reviews = flattenMyReviewPages(data?.pages);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -69,19 +56,18 @@ export default function MyCommentsView() {
     return () => {
       observer.disconnect();
     };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const handleDelete = () => {
-    if (deletingComment === null || isDeleting) {
+    if (deletingReview === null || isDeleting) {
       return;
     }
-
-    deleteComment(
-      { postId: deletingComment.post.id, commentId: deletingComment.id },
+    deleteReview(
+      { orderId: deletingReview.orderId, reviewId: deletingReview.id },
       {
         onSuccess: () => {
           setDeleteError(null);
-          setDeletingComment(null);
+          setDeletingReview(null);
         },
         onError: (mutationError) => {
           if (mutationError instanceof ApiError) {
@@ -92,7 +78,7 @@ export default function MyCommentsView() {
             setDeleteError(mutationError.message);
             return;
           }
-          setDeleteError('댓글 삭제에 실패했습니다.');
+          setDeleteError('리뷰 삭제에 실패했습니다.');
         },
       },
     );
@@ -103,33 +89,29 @@ export default function MyCommentsView() {
       return error.message;
     }
     if (isError) {
-      return '댓글 목록을 불러오지 못했습니다.';
+      return '리뷰 목록을 불러오지 못했습니다.';
     }
     return null;
   };
 
   const errorMessage = getErrorMessage();
 
-  const handleEdit = (comment: MyCommentListItem) => {
-    setEditingComment(comment);
-  };
-
   return (
     <section className={styles.container}>
-      <MyCommentEditModal
-        isOpen={editingComment !== null}
-        comment={editingComment}
+      <MyReviewEditModal
+        isOpen={editingReview !== null}
+        review={editingReview}
         onClose={() => {
-          setEditingComment(null);
+          setEditingReview(null);
         }}
       />
       <UserConfirmModal
-        isOpen={deletingComment !== null}
+        isOpen={deletingReview !== null}
         onClose={() => {
           setDeleteError(null);
-          setDeletingComment(null);
+          setDeletingReview(null);
         }}
-        title="댓글을 삭제할까요?"
+        title="리뷰를 삭제할까요?"
         description={deleteError ?? '삭제 후에는 복구할 수 없습니다.'}
         actions={[
           {
@@ -142,25 +124,22 @@ export default function MyCommentsView() {
             variant: 'white',
             onClick: () => {
               setDeleteError(null);
-              setDeletingComment(null);
+              setDeletingReview(null);
             },
           },
         ]}
       />
-      <div className={styles.header}>
-        <h1 className={styles.pageTitle}>내가 쓴 댓글</h1>
-        <div className={styles.sortTabs}>
-          {MY_COMMENT_SORT_OPTIONS.map((option) => {
-            const isActive = option.id === sort;
 
+      <div className={styles.header}>
+        <h1 className={styles.pageTitle}>내가 쓴 리뷰</h1>
+        <div className={styles.sortTabs}>
+          {MY_REVIEW_SORT_OPTIONS.map((option) => {
+            const isActive = option.id === sort;
             return (
               <button
                 key={option.id}
                 type="button"
-                className={clsx(
-                  styles.sortTab,
-                  isActive && styles.sortTabActive,
-                )}
+                className={clsx(styles.sortTab, isActive && styles.sortTabActive)}
                 onClick={() => {
                   setSort(option.id);
                 }}
@@ -173,36 +152,33 @@ export default function MyCommentsView() {
       </div>
 
       {isPending ? (
-        <p className={styles.statusMessage}>댓글을 불러오는 중입니다.</p>
+        <p className={styles.statusMessage}>리뷰를 불러오는 중입니다.</p>
       ) : (
         <>
           {errorMessage === null ? null : (
             <p className={styles.errorMessage}>{errorMessage}</p>
           )}
-          {errorMessage === null && comments.length === 0 ? (
-            <p className={styles.statusMessage}>작성한 댓글이 없습니다.</p>
+          {errorMessage === null && reviews.length === 0 ? (
+            <p className={styles.statusMessage}>작성한 리뷰가 없습니다.</p>
           ) : null}
-          {errorMessage === null && comments.length > 0 ? (
+          {errorMessage === null && reviews.length > 0 ? (
             <div ref={listRef} className={styles.list}>
-              {comments.map((comment) => (
-                <MyCommentCard
-                  key={comment.id}
-                  comment={comment}
-                  onEdit={handleEdit}
-                  onDelete={() => {
-                    setDeleteError(null);
-                    setDeletingComment(comment);
+              {reviews.map((review) => (
+                <MyReviewCard
+                  key={review.id}
+                  review={review}
+                  onEdit={(targetReview) => {
+                    setEditingReview(targetReview);
                   }}
-                  isDeleting={deletingCommentId === comment.id}
+                  onDelete={(targetReview) => {
+                    setDeleteError(null);
+                    setDeletingReview(targetReview);
+                  }}
                 />
               ))}
-              {hasNextPage ? (
-                <div ref={sentinelRef} className={styles.sentinel} />
-              ) : null}
+              {hasNextPage ? <div ref={sentinelRef} className={styles.sentinel} /> : null}
               {isFetchingNextPage ? (
-                <p className={styles.statusMessage}>
-                  댓글을 더 불러오는 중입니다.
-                </p>
+                <p className={styles.statusMessage}>리뷰를 더 불러오는 중입니다.</p>
               ) : null}
             </div>
           ) : null}
