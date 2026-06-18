@@ -44,6 +44,26 @@ function formatEmployeeRange(
   return `${String(min)}명이상 ~ ${String(max)}명미만`;
 }
 
+/** API foundedYear는 YYYYMM 정수(예: 202105). 4자리면 연도만. */
+export function formatFoundedYearMonth(
+  value: number | null | undefined,
+): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const digits = String(value);
+  if (digits.length >= 6) {
+    return `${digits.slice(0, 4)}년 ${digits.slice(4, 6)}월`;
+  }
+
+  if (digits.length === 4) {
+    return `${digits}년`;
+  }
+
+  return `${digits}년`;
+}
+
 function formatContactTimePart(value: string): string {
   const [hourText, minuteText = '00'] = value.split(':');
   const hour = Number(hourText);
@@ -119,7 +139,7 @@ export function buildExpertDisplayStats(expert: ExpertDetail): ExpertDetailDispl
 export function buildExpertBusinessInfo(expert: ExpertDetail): ExpertDetailBusinessInfo {
   return {
     clientNames: pickRandomClientNames(expert.clientNames ?? []),
-    foundedYear: expert.foundedYear ?? null,
+    foundedYearLabel: formatFoundedYearMonth(expert.foundedYear),
     regionLabel: getRegionLabel(expert.region),
     employeeRangeLabel: formatEmployeeRange(
       expert.employeeMin,

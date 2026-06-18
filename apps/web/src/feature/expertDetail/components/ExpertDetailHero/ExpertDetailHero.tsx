@@ -99,7 +99,7 @@ function InfoBar({ info }: { info: ExpertDetailBusinessInfo }) {
       <div className={viewStyles.infoItem}>
         <p className={viewStyles.infoLabel}>설립년도</p>
         <p className={viewStyles.infoValue}>
-          {info.foundedYear === null ? '-' : `${String(info.foundedYear)}년`}
+          {info.foundedYearLabel ?? '-'}
         </p>
       </div>
       <div className={viewStyles.infoItem}>
