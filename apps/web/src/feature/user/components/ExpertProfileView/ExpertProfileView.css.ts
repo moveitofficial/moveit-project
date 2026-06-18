@@ -50,6 +50,22 @@ export const approvalBadgeRejected = style([
   },
 ]);
 
+export const rejectReason = style({
+  display: 'flex',
+  padding: '1rem',
+  alignItems: 'flex-start',
+  gap: '0.625rem',
+
+  borderRadius: '0.25rem',
+  background: `var(--Secondary-red-200, #FF4F64)`,
+
+  color: vars.color.white,
+  fontFamily: vars.font.family,
+  fontSize: '0.875rem',
+  fontWeight: vars.font.weight.extraBold,
+  lineHeight: '1.375rem',
+});
+
 export const sections = style({
   display: 'flex',
   flexDirection: 'column',

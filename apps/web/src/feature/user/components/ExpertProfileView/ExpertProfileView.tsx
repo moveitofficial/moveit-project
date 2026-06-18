@@ -434,6 +434,12 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
         )}
       </div>
 
+      {profile.rejectedAt !== null && (
+        <div className={styles.rejectReason}>
+          {profile.rejectReason}
+        </div>
+      )}
+
       {saveError !== null && <p className={styles.errorMessage}>{saveError}</p>}
       {applyError !== null && <p className={styles.errorMessage}>{applyError}</p>}
 
