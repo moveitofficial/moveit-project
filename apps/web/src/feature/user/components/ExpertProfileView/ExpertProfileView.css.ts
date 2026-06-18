@@ -280,3 +280,28 @@ export const errorMessage = style([
     color: vars.color.red200,
   },
 ]);
+
+export const applyBtn = style({
+  margin: '2rem auto 0',
+
+  display: 'flex',
+  width: '23.4375rem',
+  padding: '0.875rem',
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: '0.625rem',
+  border: 'none',
+  borderRadius: '0.75rem',
+  background: `var(--Primary-blue-300, #1B92FF)`,
+  cursor: 'pointer',
+
+  color: vars.color.white,
+  fontFamily: vars.font.family,
+  fontWeight: vars.font.weight.extraBold,
+  fontSize: '1rem',
+});
+
+export const applyBtnDisabled = style({
+  cursor: 'not-allowed',
+  opacity: 0.5,
+});
