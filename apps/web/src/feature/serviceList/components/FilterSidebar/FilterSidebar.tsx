@@ -1,10 +1,12 @@
 'use client';
 
+import { RoundChip } from '@repo/ui/RoundChip';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import {
+  SERVICE_LIST_MAX_TECH_STACKS,
   SERVICE_LIST_PRICE_FILTERS,
   SERVICE_LIST_REGION_FILTERS,
   SERVICE_LIST_REGION_VISIBLE_COUNT,
@@ -66,6 +68,18 @@ function SectionChevron({ expanded }: { expanded: boolean }) {
   );
 }
 
+function FilterSectionCountChip({ count }: { count: number }) {
+  if (count === 0) {
+    return null;
+  }
+
+  return (
+    <span className={styles.sectionCountChip}>
+      <RoundChip text={String(count)} size="web" color="blue100" />
+    </span>
+  );
+}
+
 export default function FilterSidebar({ config, params, filterCounts }: Props) {
   const router = useRouter();
 
@@ -99,6 +113,14 @@ export default function FilterSidebar({ config, params, filterCounts }: Props) {
   };
 
   const handleTechStackToggle = (stack: TechStackName) => {
+    const isSelected = params.techStacks.includes(stack);
+    if (
+      !isSelected &&
+      params.techStacks.length >= SERVICE_LIST_MAX_TECH_STACKS
+    ) {
+      return;
+    }
+
     pushParams({
       techStacks: toggleCsvValue(params.techStacks, stack),
     });
@@ -138,6 +160,9 @@ export default function FilterSidebar({ config, params, filterCounts }: Props) {
   const visibleRegions = regionListExpanded
     ? SERVICE_LIST_REGION_FILTERS
     : SERVICE_LIST_REGION_FILTERS.slice(0, SERVICE_LIST_REGION_VISIBLE_COUNT);
+
+  const atTechStackLimit =
+    params.techStacks.length >= SERVICE_LIST_MAX_TECH_STACKS;
 
   const activeTags = [
     ...params.techStacks.map((stack) => {
@@ -217,9 +242,7 @@ export default function FilterSidebar({ config, params, filterCounts }: Props) {
         >
           <span className={styles.sectionTitleGroup}>
             <span className={styles.sectionTitle}>기술태그</span>
-            {params.techStacks.length > 0 ? (
-              <span className={styles.sectionBadge}>{params.techStacks.length}</span>
-            ) : null}
+            <FilterSectionCountChip count={params.techStacks.length} />
           </span>
           <SectionChevron expanded={techExpanded} />
         </button>
@@ -228,6 +251,7 @@ export default function FilterSidebar({ config, params, filterCounts }: Props) {
           <div className={styles.optionList}>
             {visibleTechStacks.map((item) => {
               const checked = params.techStacks.includes(item.id);
+              const disabled = !checked && atTechStackLimit;
 
               return (
                 <label key={item.id} className={styles.optionRow}>
@@ -235,6 +259,7 @@ export default function FilterSidebar({ config, params, filterCounts }: Props) {
                     type="checkbox"
                     className={styles.checkbox}
                     checked={checked}
+                    disabled={disabled}
                     onChange={() => {
                       handleTechStackToggle(item.id);
                     }}
@@ -269,9 +294,7 @@ export default function FilterSidebar({ config, params, filterCounts }: Props) {
         >
           <span className={styles.sectionTitleGroup}>
             <span className={styles.sectionTitle}>지역</span>
-            {params.regions.length > 0 ? (
-              <span className={styles.sectionBadge}>{params.regions.length}</span>
-            ) : null}
+            <FilterSectionCountChip count={params.regions.length} />
           </span>
           <SectionChevron expanded={regionExpanded} />
         </button>
@@ -319,7 +342,10 @@ export default function FilterSidebar({ config, params, filterCounts }: Props) {
             setPriceExpanded((prev) => !prev);
           }}
         >
-          <span className={styles.sectionTitle}>가격</span>
+          <span className={styles.sectionTitleGroup}>
+            <span className={styles.sectionTitle}>가격</span>
+            <FilterSectionCountChip count={params.price === null ? 0 : 1} />
+          </span>
           <SectionChevron expanded={priceExpanded} />
         </button>
 

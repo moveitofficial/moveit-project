@@ -1,4 +1,5 @@
 import {
+  SERVICE_LIST_MAX_TECH_STACKS,
   SERVICE_LIST_PRICE_FILTERS,
   SERVICE_LIST_REGION_FILTERS,
   SERVICE_LIST_SORT_OPTIONS,
@@ -64,6 +65,12 @@ export function parseCsv(raw: string | string[] | undefined): string[] {
     .filter((item) => item.length > 0);
 }
 
+export function normalizeTechStacks(
+  techStacks: TechStackName[],
+): TechStackName[] {
+  return techStacks.slice(0, SERVICE_LIST_MAX_TECH_STACKS);
+}
+
 export function parseTechStacks(
   raw: string | string[] | undefined,
 ): TechStackName[] {
@@ -72,8 +79,10 @@ export function parseTechStacks(
     SERVICE_LIST_TECH_STACK_FILTERS.map((item) => item.id),
   );
 
-  return values.filter((value): value is TechStackName =>
-    validNames.has(value as TechStackName),
+  return normalizeTechStacks(
+    values.filter((value): value is TechStackName =>
+      validNames.has(value as TechStackName),
+    ),
   );
 }
 
