@@ -137,6 +137,9 @@ export default function MessageMenu({ role }: { role: Role }) {
             <button
               type="button"
               className={clsx(typography.f16B, menu.footerButton)}
+              onClick={() => {
+                deleteAll.mutate();
+              }}
             >
               모두읽음
             </button>

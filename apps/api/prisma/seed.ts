@@ -479,6 +479,9 @@ interface SeededOrderInfo {
 // ─── Seeder ─────────────────────────────────────────────────────────────
 class Seeder {
   readonly #prisma: PrismaClient;
+  // (client-expert-service) 조합 → 채팅방 id 캐시.
+  // 모든 주문이 이 게이트웨이를 통해 방을 공유/생성 → 주문마다 채팅 진입 보장 + 방 중복 방지.
+  readonly #roomCache = new Map<string, string>();
 
   constructor(prisma: PrismaClient) {
     this.#prisma = prisma;
@@ -582,11 +585,11 @@ class Seeder {
       `✅ 게시판 ${postCount.toString()}건 (댓글 ${commentCount.toString()} / 좋아요 ${likeCount.toString()})`,
     );
 
-    await this.#seedChatRooms(clients, experts, services);
+    // 채팅방은 #seedOrdersAndPayments / 테스트 주문 시드에서 주문마다 생성·연결됨
     const chatRoomCount = await this.#prisma.chatRoom.count();
     const messageCount = await this.#prisma.message.count();
     console.warn(
-      `✅ 1:1 채팅 ${chatRoomCount.toString()}방 (메시지 ${messageCount.toString()})`,
+      `✅ 1:1 채팅 ${chatRoomCount.toString()}방 (메시지 ${messageCount.toString()}) — 모든 주문에 연결`,
     );
 
     await this.#seedCsChatRooms(clients, superAdmin);
@@ -1164,6 +1167,81 @@ class Seeder {
     return services;
   }
 
+  // ─── 8-b. 주문↔채팅방 게이트웨이 ──────────────────────────────────────
+  // 같은 (client, expert, service) 조합은 방 1개를 공유. 처음 만들 때 참여자 +
+  // 기본 메시지 흐름까지 채워 채팅 진입/목록 노출이 보장되게 한다.
+  async #getOrCreateOrderRoom(
+    clientId: string,
+    expertId: string,
+    serviceId: string,
+    orderId: string,
+  ): Promise<string> {
+    const key = `${clientId}-${expertId}-${serviceId}`;
+    const cached = this.#roomCache.get(key);
+    if (cached) return cached;
+
+    const room = await this.#prisma.chatRoom.create({
+      data: {
+        clientUserId: clientId,
+        expertUserId: expertId,
+        currentServiceId: serviceId,
+        createdAt: faker.date.recent({ days: 60 }),
+      },
+    });
+    await this.#prisma.chatParticipant.createMany({
+      data: [
+        { chatRoomId: room.id, userId: clientId },
+        { chatRoomId: room.id, userId: expertId },
+      ],
+    });
+
+    let lastMessageId: string | null = null;
+    const addSystem = async (systemType: SystemMessageType): Promise<void> => {
+      const message = await this.#prisma.message.create({
+        data: {
+          chatRoomId: room.id,
+          type: MessageType.SYSTEM,
+          systemType,
+          content: SYSTEM_MESSAGE_CONTENT[systemType],
+          orderId,
+        },
+      });
+      lastMessageId = message.id;
+    };
+    const addLines = async (lines: ChatLine[]): Promise<void> => {
+      for (const line of lines) {
+        const message = await this.#prisma.message.create({
+          data: {
+            chatRoomId: room.id,
+            senderId: line.sender === 'client' ? clientId : expertId,
+            type: MessageType.TEXT,
+            content: line.text,
+          },
+        });
+        lastMessageId = message.id;
+      }
+    };
+
+    // 절반은 '거래요청 → 협의' 단계부터, 나머지는 결제 흐름부터
+    if (Math.random() < 0.5) {
+      await addSystem(SystemMessageType.TRADE_REQUEST);
+      await addLines(pick(CHAT_INTRO_SCRIPTS));
+    }
+    await addSystem(SystemMessageType.PAYMENT_COMPLETED);
+    await addSystem(SystemMessageType.PAYMENT_HELD);
+    await addSystem(SystemMessageType.SCHEDULE_REQUEST);
+    await addLines(pick(CHAT_BODY_SCRIPTS));
+    await addLines(pick(CHAT_CLOSING_SCRIPTS));
+
+    await this.#prisma.chatRoom.update({
+      where: { id: room.id },
+      data: { lastMessageId },
+    });
+
+    this.#roomCache.set(key, room.id);
+    return room.id;
+  }
+
   // ─── 9. Order + Payment + Review + Refund ─────────────────────────────
   // 14가지 시나리오로 약 600개 주문 생성 — 각 환불/취소 흐름 풀 커버 + 운영급 분포
   async #seedOrdersAndPayments(
@@ -1252,10 +1330,17 @@ class Seeder {
       '연락 두절',
     ];
 
+    const usedClientServicePairs = new Set<string>();
     for (const plan of orderPlan) {
       const { status } = plan;
-      const client = pick(clients);
-      const service = pick(services);
+      // 한 유저는 한 서비스에 한 번만 문의/주문 → (client, service) 유일 보장
+      let client = pick(clients);
+      let service = pick(services);
+      while (usedClientServicePairs.has(`${client.id}-${service.id}`)) {
+        client = pick(clients);
+        service = pick(services);
+      }
+      usedClientServicePairs.add(`${client.id}-${service.id}`);
       const isConfirmed =
         status === OrderStatus.PURCHASE_CONFIRMED ||
         status === OrderStatus.SETTLEMENT_REQUESTED ||
@@ -1345,6 +1430,17 @@ class Seeder {
         });
       }
 
+      const roomId = await this.#getOrCreateOrderRoom(
+        client.id,
+        service.expertUserId,
+        service.id,
+        order.id,
+      );
+      await this.#prisma.order.update({
+        where: { id: order.id },
+        data: { chatRoomId: roomId },
+      });
+
       seededOrders.push({
         orderId: order.id,
         clientUserId: client.id,
@@ -1418,28 +1514,8 @@ class Seeder {
       },
     });
 
-    const service = await this.#prisma.service.create({
-      data: {
-        expertUserId: expertTest.id,
-        title: '환불·취소 테스트 서비스',
-        workDuration: 30,
-        revisionCount: 3,
-        serviceScope: '환불/취소 흐름 검증용',
-        servicePrice: 1_000_000,
-        description: '환불·취소 API 테스트 전용 서비스입니다.',
-        preparationNotes: '테스트 시나리오 진행 전 기획서를 준비해주세요.',
-        refundPolicy:
-          '작업 시작 전 100% 환불, 작업 중 50% 환불, 작업 완료 후 환불 불가',
-        status: ServiceStatus.ACTIVE,
-        serviceGroupId: serviceGroups[0]!.id,
-        serviceCategoryId: serviceCategories[0]!.id,
-      },
-    });
-    await this.#prisma.serviceImage.create({
-      data: { serviceId: service.id, imgUrl: pickImage(), isMain: true },
-    });
-
     // 각 시나리오 충분히 — 테스트 귀신 모드 (한 시나리오에 3건씩)
+    // 한 유저는 한 서비스에 한 번만 문의 가능 → 주문마다 별도 서비스 생성
     const testPlan: ScenarioPlan[] = [
       // 취소 요청 테스트용 (NEGOTIATING ×3)
       ...range(3).map(() => ({ status: OrderStatus.NEGOTIATING })),
@@ -1458,10 +1534,31 @@ class Seeder {
     ];
 
     const seeded: SeededOrderInfo[] = [];
-    const platformFee = Math.floor(service.servicePrice * 0.1);
 
-    for (const plan of testPlan) {
+    for (const [i, plan] of testPlan.entries()) {
       const { status } = plan;
+      const service = await this.#prisma.service.create({
+        data: {
+          expertUserId: expertTest.id,
+          title: `환불·취소 테스트 서비스 ${(i + 1).toString()}`,
+          workDuration: 30,
+          revisionCount: 3,
+          serviceScope: '환불/취소 흐름 검증용',
+          servicePrice: 1_000_000,
+          description: '환불·취소 API 테스트 전용 서비스입니다.',
+          preparationNotes: '테스트 시나리오 진행 전 기획서를 준비해주세요.',
+          refundPolicy:
+            '작업 시작 전 100% 환불, 작업 중 50% 환불, 작업 완료 후 환불 불가',
+          status: ServiceStatus.ACTIVE,
+          serviceGroupId: serviceGroups[0]!.id,
+          serviceCategoryId: serviceCategories[0]!.id,
+        },
+      });
+      await this.#prisma.serviceImage.create({
+        data: { serviceId: service.id, imgUrl: pickImage(), isMain: true },
+      });
+      const platformFee = Math.floor(service.servicePrice * 0.1);
+
       const order = await this.#prisma.order.create({
         data: {
           clientUserId: clientTest.id,
@@ -1508,6 +1605,17 @@ class Seeder {
           },
         });
       }
+
+      const roomId = await this.#getOrCreateOrderRoom(
+        clientTest.id,
+        expertTest.id,
+        service.id,
+        order.id,
+      );
+      await this.#prisma.order.update({
+        where: { id: order.id },
+        data: { chatRoomId: roomId },
+      });
 
       seeded.push({
         orderId: order.id,
@@ -1726,155 +1834,6 @@ class Seeder {
           skipDuplicates: true,
         });
       }
-    }
-  }
-
-  // ─── 13. 1:1 채팅 ──────────────────────────────────────────────────────
-  async #seedChatRooms(
-    clients: User[],
-    experts: User[],
-    services: Service[],
-  ): Promise<void> {
-    const pairs = new Set<string>();
-    let created = 0;
-    let safety = 0;
-
-    while (created < 80 && safety < 500) {
-      safety++;
-      const client = pick(clients);
-      const expert = pick(experts);
-
-      const service = services.find((s) => s.expertUserId === expert.id);
-      if (!service) continue;
-
-      const key = `${client.id}-${expert.id}-${service.id}`;
-      if (pairs.has(key)) continue;
-      pairs.add(key);
-
-      const room = await this.#prisma.chatRoom.create({
-        data: {
-          clientUserId: client.id,
-          expertUserId: expert.id,
-          currentServiceId: service.id,
-          createdAt: faker.date.recent({ days: 60 }),
-        },
-      });
-
-      await this.#prisma.chatParticipant.createMany({
-        data: [
-          { chatRoomId: room.id, userId: client.id },
-          { chatRoomId: room.id, userId: expert.id },
-        ],
-      });
-
-      // 시스템 메시지(거래 상세/결제 모달)가 참조할 주문 1건 — 방과 양방향 연결
-      const platformFee = Math.floor(service.servicePrice * 0.1);
-      const order = await this.#prisma.order.create({
-        data: {
-          clientUserId: client.id,
-          expertUserId: expert.id,
-          serviceId: service.id,
-          agreedServicePrice: service.servicePrice,
-          platformFee,
-          totalAmount: service.servicePrice + platformFee,
-          status: OrderStatus.IN_PROGRESS,
-          startDate: faker.date.recent({ days: 30 }),
-          endDate: faker.date.soon({ days: 30 }),
-          chatRoomId: room.id,
-        },
-      });
-      await this.#prisma.payment.create({
-        data: {
-          orderId: order.id,
-          clientUserId: client.id,
-          paidAmount: order.totalAmount,
-          status: PaymentStatus.PAID,
-          method: pick(['신용카드 신한', '신용카드 KB국민', '신용카드 삼성']),
-          installmentMonths: pick([1, 1, 1, 3, 6]),
-          paymentKey: faker.string.uuid(),
-          rawData: { provider: 'toss', mock: true },
-          approvedAt: new Date(),
-        },
-      });
-
-      let lastMessageId: string | null = null;
-
-      // 시스템 메시지 — orderId 참조 (senderId 없음)
-      const addSystem = async (
-        systemType: SystemMessageType,
-      ): Promise<void> => {
-        const message = await this.#prisma.message.create({
-          data: {
-            chatRoomId: room.id,
-            type: MessageType.SYSTEM,
-            systemType,
-            content: SYSTEM_MESSAGE_CONTENT[systemType],
-            orderId: order.id,
-          },
-        });
-        lastMessageId = message.id;
-      };
-
-      const addLines = async (lines: ChatLine[]): Promise<void> => {
-        for (const line of lines) {
-          const message = await this.#prisma.message.create({
-            data: {
-              chatRoomId: room.id,
-              senderId: line.sender === 'client' ? client.id : expert.id,
-              type: MessageType.TEXT,
-              content: line.text,
-            },
-          });
-          lastMessageId = message.id;
-        }
-      };
-
-      const addFile = async (sender: User): Promise<void> => {
-        const message = await this.#prisma.message.create({
-          data: {
-            chatRoomId: room.id,
-            senderId: sender.id,
-            type: MessageType.FILE,
-            content: '파일을 보냈습니다.',
-          },
-        });
-        await this.#prisma.messageAttachment.create({
-          data: {
-            messageId: message.id,
-            fileUrl: pickImage(),
-            fileName: 'attachment.jpg',
-            fileType: 'image/jpeg',
-            fileSize: rand(100_000, 2_000_000),
-          },
-        });
-        lastMessageId = message.id;
-      };
-
-      // 결제완료 → 보관 → 일정요청 시스템 메시지 묶음
-      const addPaymentSystemFlow = async (): Promise<void> => {
-        await addSystem(SystemMessageType.PAYMENT_COMPLETED);
-        await addSystem(SystemMessageType.PAYMENT_HELD);
-        await addSystem(SystemMessageType.SCHEDULE_REQUEST);
-      };
-
-      // 절반은 '대화 후 결제'(거래요청 → 협의 → 결제), 절반은 '결제부터'
-      const isChatFirst = Math.random() < 0.5;
-      if (isChatFirst) {
-        await addSystem(SystemMessageType.TRADE_REQUEST);
-        await addLines(pick(CHAT_INTRO_SCRIPTS));
-        await addPaymentSystemFlow();
-      } else {
-        await addPaymentSystemFlow();
-      }
-      await addLines(pick(CHAT_BODY_SCRIPTS));
-      await addFile(expert);
-      await addLines(pick(CHAT_CLOSING_SCRIPTS));
-
-      await this.#prisma.chatRoom.update({
-        where: { id: room.id },
-        data: { lastMessageId },
-      });
-      created++;
     }
   }
 
@@ -2518,13 +2477,34 @@ class Seeder {
       },
     ];
 
-    for (const plan of orderPlan) {
+    for (const [i, plan] of orderPlan.entries()) {
+      // 채팅방은 (유저 1 + 서비스 1) 단위 → 주문마다 별도 서비스 생성
+      const planService = await this.#prisma.service.create({
+        data: {
+          expertUserId: expert.id,
+          title: `[테스트] Orders API용 서비스 ${(i + 1).toString()}`,
+          workDuration: 30,
+          revisionCount: 3,
+          serviceScope: 'Orders API 테스트 전용',
+          servicePrice: 1_000_000,
+          description: 'Orders API 테스트용 서비스입니다',
+          preparationNotes: '준비 사항 안내',
+          refundPolicy: '환불 정책 안내',
+          status: ServiceStatus.ACTIVE,
+          serviceGroupId: serviceGroup.id,
+          serviceCategoryId: serviceCategory.id,
+        },
+      });
+      await this.#prisma.serviceImage.create({
+        data: { serviceId: planService.id, imgUrl: pickImage(), isMain: true },
+      });
+
       const order = await this.#prisma.order.create({
         data: {
           clientUserId: client.id,
           expertUserId: expert.id,
-          serviceId: expertService.id,
-          agreedServicePrice: expertService.servicePrice,
+          serviceId: planService.id,
+          agreedServicePrice: planService.servicePrice,
           platformFee,
           totalAmount,
           status: plan.status,
@@ -2569,6 +2549,17 @@ class Seeder {
           },
         });
       }
+
+      const roomId = await this.#getOrCreateOrderRoom(
+        client.id,
+        expert.id,
+        planService.id,
+        order.id,
+      );
+      await this.#prisma.order.update({
+        where: { id: order.id },
+        data: { chatRoomId: roomId },
+      });
     }
 
     // 5) 타인 소유 IN_PROGRESS 주문 1건 (other ↔ 임의의 ACTIVE 서비스 보유 expert)
@@ -2614,6 +2605,16 @@ class Seeder {
         installmentMonths: pick([1, 1, 1, 1, 2, 3, 6, 12]),
         approvedAt: new Date(),
       },
+    });
+    const otherRoomId = await this.#getOrCreateOrderRoom(
+      other.id,
+      otherExpertService.expertUserId,
+      otherExpertService.id,
+      otherOrder.id,
+    );
+    await this.#prisma.order.update({
+      where: { id: otherOrder.id },
+      data: { chatRoomId: otherRoomId },
     });
 
     return expertService.id;

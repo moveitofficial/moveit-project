@@ -512,13 +512,13 @@ export class OrdersService {
 
     if (!updated) throw new AppException(ORDER_ERRORS.INVALID_STATUS);
 
-    if (
-      dto.roomId &&
-      order.status === OrderStatus.NEGOTIATING &&
-      order.endDate === null
-    ) {
-      void this.chatService
-        .sendSystemMessage(
+    // 등록·변경 모두 SCHEDULE_REGISTERED 발송.
+    // - 변경 시: 직전 SCHEDULE_CHANGE_REQUEST '대기'를 해제 → 일정관리 '일정변경' 버튼 사라짐.
+    // - 이후 판매자가 재요청하면 새 SCHEDULE_CHANGE_REQUEST가 최신이 되어 다시 대기 → 버튼 부활.
+    // 목록 refetch 레이스 방지를 위해 응답 전에 await (발송 실패해도 일정 업데이트는 성공 처리).
+    if (dto.roomId) {
+      try {
+        await this.chatService.sendSystemMessage(
           dto.roomId,
           'SCHEDULE_REGISTERED',
           {
@@ -528,13 +528,13 @@ export class OrdersService {
             endDate: endDate.toISOString(),
           },
           orderId,
-        )
-        .catch((error: unknown) => {
-          this.logger.error(
-            `일정등록 시스템 메시지 발송 실패. orderId=${orderId}`,
-            error instanceof Error ? error.stack : String(error),
-          );
-        });
+        );
+      } catch (error: unknown) {
+        this.logger.error(
+          `일정 등록/변경 시스템 메시지 발송 실패. orderId=${orderId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      }
     }
 
     return mapUpdateOrderScheduleResponse(updated);

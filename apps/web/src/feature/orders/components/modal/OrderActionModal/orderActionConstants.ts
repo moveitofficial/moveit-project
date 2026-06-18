@@ -39,6 +39,16 @@ export const CONFIRM_COPY = {
     title: '정산요청',
     description: '정산을 요청하시겠습니까?',
   },
+  requestScheduleChange: {
+    title: '일정변경 요청',
+    description:
+      '일정 변경을 요청하시겠습니까?\n구매자에게 일정 변경 요청 메시지가 전송됩니다.',
+  },
+  requestPurchaseConfirm: {
+    title: '구매확정 요청',
+    description:
+      '구매확정을 요청하시겠습니까?\n구매자에게 구매확정 요청 메시지가 전송됩니다.',
+  },
   completeWork: {
     title: '작업완료',
     description: '작업을 완료하셨습니까?',

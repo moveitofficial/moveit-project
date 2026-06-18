@@ -2,6 +2,7 @@
 
 import { ApiError } from '@repo/fetcher';
 import { ConfirmModal } from '@repo/ui/Modal';
+import { formatDate } from '@repo/utils';
 import clsx from 'clsx';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -16,6 +17,8 @@ import type {
   ScheduleSort,
 } from '@/feature/user/my-schedule/api';
 
+import { ScheduleModal } from '@/feature/message/components/ScheduleModal';
+import { sendChatText } from '@/feature/orders/sendChatText';
 import {
   SCHEDULE_FILTERS,
   SCHEDULE_SORT_OPTIONS,
@@ -26,6 +29,7 @@ import {
   useRequestScheduleChangeMutation,
   useScheduleCounts,
   useSchedulesInfinite,
+  useUpdateScheduleMutation,
 } from '@/feature/user/my-schedule/queries';
 import { useMyUserQuery } from '@/feature/user/queries';
 
@@ -52,6 +56,9 @@ export default function ScheduleView() {
   const [requestTargetOrderId, setRequestTargetOrderId] = useState<
     string | null
   >(null);
+  const [changeTargetOrderId, setChangeTargetOrderId] = useState<
+    string | null
+  >(null);
 
   const statuses =
     SCHEDULE_FILTERS.find((option) => option.key === filter)?.statuses ?? [];
@@ -68,6 +75,8 @@ export default function ScheduleView() {
   } = useSchedulesInfinite(as, statuses, sort);
   const { mutate: requestScheduleChange } =
     useRequestScheduleChangeMutation();
+  const { mutate: updateSchedule, isPending: isUpdatingSchedule } =
+    useUpdateScheduleMutation();
 
   const orders = flattenSchedulePages(data?.pages);
   const sentinelRef = useRef<HTMLLIElement>(null);
@@ -188,6 +197,9 @@ export default function ScheduleView() {
                     onRequestScheduleChange={() => {
                       setRequestTargetOrderId(order.id);
                     }}
+                    onChangeSchedule={() => {
+                      setChangeTargetOrderId(order.id);
+                    }}
                   />
                 </li>
               ))}
@@ -220,6 +232,47 @@ export default function ScheduleView() {
           { label: '아니오', variant: 'white', onClick: closeRequestModal },
         ]}
       />
+
+      {changeTargetOrderId !== null && (
+        <ScheduleModal
+          isOpen
+          onClose={() => {
+            setChangeTargetOrderId(null);
+          }}
+          title="일정 변경"
+          submitLabel="변경"
+          isSubmitting={isUpdatingSchedule}
+          onSubmit={(endDateIso) => {
+            const target = orders.find(
+              (order) => order.id === changeTargetOrderId,
+            );
+            const roomId = target?.chatRoomId ?? null;
+            // 새 창은 클릭 제스처 내에서 열어야 팝업 차단을 피함
+            if (roomId !== null) {
+              window.open(`/service/message?roomId=${roomId}`, '_blank');
+            }
+            updateSchedule(
+              {
+                orderId: changeTargetOrderId,
+                endDate: endDateIso,
+                roomId: roomId ?? undefined,
+              },
+              {
+                onSuccess: () => {
+                  // 변경 알림 — 상대(판매자)에게 채팅 메시지 + 알림 발송
+                  if (roomId !== null) {
+                    sendChatText(
+                      roomId,
+                      `일정이 ${formatDate(endDateIso)}로 변경되었습니다.`,
+                    );
+                  }
+                  setChangeTargetOrderId(null);
+                },
+              },
+            );
+          }}
+        />
+      )}
     </section>
   );
 }

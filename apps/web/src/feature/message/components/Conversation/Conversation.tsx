@@ -78,8 +78,6 @@ export default function Conversation({
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
-  // 구매자가 이번 변경 요청에 대해 일정을 바꿨는지(버튼 비활성화용).
-  const [scheduleChangeDone, setScheduleChangeDone] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -170,16 +168,16 @@ export default function Conversation({
     };
   }, []);
 
-  // 새 일정 변경 요청이 오면 변경 버튼을 다시 활성화.
-  let lastChangeRequestId: string | null = null;
+  // 일정 변경 응답 여부 — 최신 일정 시스템 메시지가 SCHEDULE_REGISTERED면 변경 완료(버튼 막힘),
+  // SCHEDULE_CHANGE_REQUEST면 변경 대기. 채팅·마이페이지 어디서 변경해도 메시지 기준으로 일관.
+  let scheduleChangeDone = false;
   for (const message of messages) {
     if (message.systemType === 'SCHEDULE_CHANGE_REQUEST') {
-      lastChangeRequestId = message.id;
+      scheduleChangeDone = false;
+    } else if (message.systemType === 'SCHEDULE_REGISTERED') {
+      scheduleChangeDone = true;
     }
   }
-  useEffect(() => {
-    setScheduleChangeDone(false);
-  }, [lastChangeRequestId]);
 
   const canSend = draft.trim().length > 0;
   // 결제요청은 판매자이고, 진행 중인 주문이 없을 때만.
@@ -442,7 +440,6 @@ export default function Conversation({
                   });
                   // 구매자의 일정 변경은 알릴 시스템 메시지가 없어 텍스트로 알린다.
                   if (!isSeller) {
-                    setScheduleChangeDone(true);
                     pinBottomRef.current = true;
                     sendText(
                       `일정이 ${formatScheduleDate(endDate)}로 변경되었습니다.`,

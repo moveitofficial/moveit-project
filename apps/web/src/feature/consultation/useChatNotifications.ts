@@ -45,13 +45,20 @@ export function useDeleteAllChatNotifications() {
 export function useChatNotificationSocket() {
   const queryClient = useQueryClient();
   useEffect(() => {
+    // forceNew: 룸/메시지 소켓과 연결을 공유(multiplex)하지 않도록 독립 연결.
     const socket = io(`${SOCKET_URL}/${SOCKET_NAMESPACES.CHAT}`, {
       withCredentials: true,
+      forceNew: true,
     });
-    socket.on(CHAT_EVENTS.CHAT_NOTIFICATION, () => {
+    const invalidate = (): void => {
       void queryClient.invalidateQueries({ queryKey: CHAT_NOTIFICATIONS_KEY });
-    });
+    };
+    // CHAT_NOTIFICATION: 텍스트·파일 / RECEIVE_MESSAGE: 시스템 메시지(일정·결제·거래요청 등)
+    socket.on(CHAT_EVENTS.CHAT_NOTIFICATION, invalidate);
+    socket.on(CHAT_EVENTS.RECEIVE_MESSAGE, invalidate);
     return () => {
+      socket.off(CHAT_EVENTS.CHAT_NOTIFICATION, invalidate);
+      socket.off(CHAT_EVENTS.RECEIVE_MESSAGE, invalidate);
       socket.disconnect();
     };
   }, [queryClient]);

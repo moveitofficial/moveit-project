@@ -39,6 +39,21 @@ export async function requestSettlement(orderId: string): Promise<void> {
   await api.post(`/orders/${orderId}/settlement-request`, {});
 }
 
+export async function updateOrderSchedule(
+  orderId: string,
+  endDate: string,
+  roomId?: string,
+): Promise<void> {
+  await api.patch(`/orders/${orderId}/schedule`, { endDate, roomId });
+}
+
+export async function requestScheduleChange(
+  orderId: string,
+  roomId: string,
+): Promise<void> {
+  await api.post(`/orders/${orderId}/schedule-change-request`, { roomId });
+}
+
 export async function completeWork(orderId: string): Promise<void> {
   await api.patch(`/orders/${orderId}/status`, { status: 'WORK_COMPLETED' });
 }
