@@ -1,8 +1,7 @@
 'use client';
 
 import { Modal } from '@repo/ui/Modal';
-import clsx from 'clsx';
-import { Heart, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
@@ -68,7 +67,6 @@ export default function PortfolioDetailModal({
   isLoading,
 }: Props) {
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
 
   const skillsByType =
     portfolio === null ? {} : groupSkillsByType(portfolio.skills);
@@ -134,28 +132,7 @@ export default function PortfolioDetailModal({
       ) : portfolio === null ? null : (
         <div className={styles.contentRow}>
           <div className={styles.leftPanel}>
-            <div className={styles.titleRow}>
-              <h2 className={styles.title}>{portfolio.title}</h2>
-              <button
-                type="button"
-                className={clsx(
-                  styles.favoriteButton,
-                  isLiked && styles.favoriteButtonActive,
-                )}
-                onClick={() => {
-                  setIsLiked((prev) => !prev);
-                }}
-                aria-pressed={isLiked}
-                aria-label="공유하기"
-              >
-                <Heart
-                  size={20}
-                  strokeWidth={2.5}
-                  fill={isLiked ? 'currentColor' : 'none'}
-                />
-                <span className={styles.favoriteCount}>{isLiked ? 1 : 0}</span>
-              </button>
-            </div>
+            <h2 className={styles.title}>{portfolio.title}</h2>
 
             <p className={styles.description}>{portfolio.description}</p>
 

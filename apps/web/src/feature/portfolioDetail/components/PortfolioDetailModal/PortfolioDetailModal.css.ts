@@ -133,42 +133,10 @@ export const rightPanel = style({
   overflowY: 'auto',
 });
 
-export const titleRow = style({
-  display: 'flex',
-  flexDirection: 'row',
-  alignItems: 'flex-start',
-  justifyContent: 'space-between',
-  gap: '12px',
-});
-
 export const title = style([
   typography.f20EB,
   {
     margin: 0,
-    color: vars.color.black500,
-  },
-]);
-
-export const favoriteButton = style({
-  display: 'inline-flex',
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: '4px',
-  padding: 0,
-  border: 'none',
-  background: 'none',
-  cursor: 'pointer',
-  color: vars.color.black500,
-  flexShrink: 0,
-});
-
-export const favoriteButtonActive = style({
-  color: vars.color.red200,
-});
-
-export const favoriteCount = style([
-  typography.f14EB,
-  {
     color: vars.color.black500,
   },
 ]);
