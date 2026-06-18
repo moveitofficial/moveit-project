@@ -101,6 +101,8 @@ export const SETTLEMENT_STATUS_OPTIONS = (
 ).map(([value, label]) => ({ value, label }));
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  PENDING: '결제대기',
+  TRADE_REQUEST_EXPIRED: '거래요청만료',
   NEGOTIATING: '논의중',
   CANCEL_REQUESTED: '취소신청',
   PAYMENT_CANCELLED: '취소완료',
