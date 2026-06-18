@@ -45,7 +45,7 @@ export const sortGroup = style({
 });
 
 export const sortTab = style([
-  typography.f14R,
+  typography.f12R,
   {
     cursor: 'pointer',
     color: vars.color.gray400,
