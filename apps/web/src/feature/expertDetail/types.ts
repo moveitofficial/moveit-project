@@ -19,7 +19,7 @@ export interface ExpertDetailDisplayStats {
 
 export interface ExpertDetailBusinessInfo {
   clientNames: string[];
-  foundedYear: number | null;
+  foundedYearLabel: string | null;
   regionLabel: string | null;
   employeeRangeLabel: string | null;
   contactTimeLabel: string;
