@@ -62,6 +62,7 @@ export class AdminUserRepository {
       status,
       specialtyGroup,
     );
+    const isExpert = role === Role.EXPERT;
 
     return {
       role,
@@ -69,10 +70,19 @@ export class AdminUserRepository {
       ...(provider && { provider }),
       ...(region && { region }),
       ...(search && {
-        OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } },
-        ],
+        OR: isExpert
+          ? [
+              {
+                expertProfile: {
+                  businessName: { contains: search, mode: 'insensitive' },
+                },
+              },
+              { email: { contains: search, mode: 'insensitive' } },
+            ]
+          : [
+              { name: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+            ],
       }),
       ...(expertProfileWhere && { expertProfile: expertProfileWhere }),
     };
