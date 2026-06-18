@@ -31,7 +31,7 @@ const CATEGORY_COLOR: Record<CommunityCategory, RectLabelColor> = {
 interface Props {
   comment: MyCommentListItem;
   onEdit: (comment: MyCommentListItem) => void;
-  onDelete: (postId: string, commentId: string) => void;
+  onDelete: () => void;
   isDeleting: boolean;
 }
 
@@ -69,9 +69,7 @@ export default function MyCommentCard({
             type="button"
             className={styles.actionButton}
             disabled={isDeleting}
-            onClick={() => {
-              onDelete(comment.post.id, comment.id);
-            }}
+            onClick={onDelete}
           >
             삭제
           </button>

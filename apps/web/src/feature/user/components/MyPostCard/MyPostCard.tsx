@@ -33,7 +33,7 @@ interface Props {
   post: MyPostListItem;
   profileImageUrl: string | null;
   onEdit: (post: MyPostListItem) => void;
-  onDelete: (postId: string) => void;
+  onDelete: () => void;
   isDeleting: boolean;
 }
 
@@ -67,9 +67,7 @@ export default function MyPostCard({
             type="button"
             className={styles.actionButton}
             disabled={isDeleting}
-            onClick={() => {
-              onDelete(post.id);
-            }}
+            onClick={onDelete}
           >
             삭제
           </button>

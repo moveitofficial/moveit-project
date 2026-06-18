@@ -98,6 +98,7 @@ export const actions = style({
 });
 
 const buttonBase = style({
+  minWidth: '72px',
   padding: '8px 14px',
   borderRadius: '8px',
   cursor: 'pointer',

@@ -23,8 +23,3 @@ export const SERVICE_DETAIL_REVIEW_SORT_OPTIONS = [
   { id: 'latest', label: '최신순' },
   { id: 'rating', label: '평점순' },
 ] as const;
-
-export const MOCK_EXPERT_CONTACT_TIME = {
-  start: 'AM 09:00',
-  end: 'PM 06:00',
-} as const;

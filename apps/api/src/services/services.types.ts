@@ -140,11 +140,13 @@ export type ReviewWithUser = Prisma.ReviewGetPayload<{
 
 export const myReviewListSelect = {
   id: true,
+  orderId: true,
   rating: true,
   content: true,
   createdAt: true,
   order: {
     select: {
+      id: true,
       service: {
         select: {
           title: true,

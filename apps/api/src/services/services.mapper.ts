@@ -34,6 +34,7 @@ export function mapMyReviewListItem(review: MyReviewListItem) {
 
   return {
     id: review.id,
+    orderId: review.orderId,
     rating: review.rating,
     content: review.content,
     createdAt: review.createdAt.toISOString(),
