@@ -23,10 +23,11 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           timeout: 60s
-          command_timeout: 15m
+          command_timeout: 20m
           script: |
             set -e
             export CI=true
+            export NODE_OPTIONS="--max-old-space-size=1536"
             
             echo "📦 [1/5] 코드 업데이트"
             cd /home/ubuntu/moveit
