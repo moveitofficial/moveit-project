@@ -245,11 +245,13 @@ export class AuthService {
     refreshToken: string,
   ): void {
     const secure = this.config.get<string>('NODE_ENV') === 'production';
+    const cookieDomain = this.config.get<string>('COOKIE_DOMAIN');
     const base = {
       httpOnly: true,
       secure,
       sameSite: 'lax' as const,
       path: '/',
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
     };
 
     res.cookie(ACCESS_COOKIE_NAME, accessToken, {
@@ -284,22 +286,26 @@ export class AuthService {
 
   setAccessCookie(res: Response, accessToken: string): void {
     const secure = this.config.get<string>('NODE_ENV') === 'production';
+    const cookieDomain = this.config.get<string>('COOKIE_DOMAIN');
     res.cookie(ACCESS_COOKIE_NAME, accessToken, {
       httpOnly: true,
       secure,
       sameSite: 'lax',
       path: '/',
       maxAge: ACCESS_MAX_AGE_MS,
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
     });
   }
 
   clearAuthCookies(res: Response): void {
     const secure = this.config.get<string>('NODE_ENV') === 'production';
+    const cookieDomain = this.config.get<string>('COOKIE_DOMAIN');
     const base = {
       httpOnly: true,
       secure,
       sameSite: 'lax' as const,
       path: '/',
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
     };
 
     res.clearCookie(ACCESS_COOKIE_NAME, base);
