@@ -98,5 +98,5 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // 정적 자산·_next·확장자 파일을 제외한 모든 경로에서 동작
-  matcher: [String.raw`/((?!_next/static|_next/image|favicon.ico|.*\..*).*)`],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*[.].*).*)'],
 };

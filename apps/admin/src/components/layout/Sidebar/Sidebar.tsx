@@ -8,6 +8,8 @@ import { usePathname } from 'next/navigation';
 import * as styles from './Sidebar.css';
 
 import type { AdminProfile } from '@/features/login/adminProfileCookie';
+import type { Route } from 'next';
+
 
 import { useAdminStore } from '@/stores/admin-store';
 
@@ -79,7 +81,7 @@ export default function Sidebar({
               {group.items.map((item) => (
                 <li key={item.href}>
                   <Link
-                    href={item.href}
+                    href={item.href as Route}
                     className={clsx(
                       typography.f16R,
                       styles.item,
