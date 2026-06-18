@@ -63,7 +63,10 @@ export default function HeaderUserMenu({
 
   return (
     <div className={styles.userMenuGroup}>
-      <Link href="#" className={clsx(typography.f16B, styles.navLink)}>
+      <Link
+        href="/mypage/orders"
+        className={clsx(typography.f16B, styles.navLink)}
+      >
         {isExpert ? '판매관리' : '구매관리'}
       </Link>
       <MessageMenu role={role} />
