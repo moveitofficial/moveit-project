@@ -232,6 +232,7 @@ export default function CommunityPostDetail({
     void toggleCommunityPostLike(post.id)
       .then((res) => {
         setIsLiked(res.data.isLiked);
+        router.refresh();
       })
       .catch(() => {
         setIsLiked(!next);
