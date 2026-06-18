@@ -91,10 +91,19 @@ export interface OrderTabCounts {
   settlement?: number;
 }
 
+// GET /users/me/orders/:orderId/payment 카드 결제 상세 (카드 결제가 아니면 null)
+export interface OrderPaymentCard {
+  number: string;
+  cardType: string;
+  issuerCode: string;
+  approveNo: string;
+}
+
 // GET /users/me/orders/:orderId/payment 공통 필드
 interface OrderPaymentBase {
   orderStatus: OrderStatus;
   method: string;
+  card: OrderPaymentCard | null;
   installmentMonths: number;
   approvedAt: string;
   refundAmount: number | null;
@@ -120,6 +129,7 @@ export type OrderPaymentResponse =
 export interface OrderTransaction {
   paidAt: string;
   method: string;
+  card: OrderPaymentCard | null;
   installmentMonths: number;
   servicePrice: number;
   platformFee: number;

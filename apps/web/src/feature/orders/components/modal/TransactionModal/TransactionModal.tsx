@@ -12,10 +12,49 @@ import { useEffect, useRef, useState } from 'react';
 
 import * as styles from './TransactionModal.css';
 
-import type { OrderTransaction } from '@/feature/orders/types';
+import type {
+  OrderPaymentCard,
+  OrderTransaction,
+} from '@/feature/orders/types';
 import type { Role } from '@/types/enums';
 
 import { getOrderTransaction } from '@/feature/orders/api';
+
+// Toss 카드사(발급사) 코드 → 카드사명.
+const CARD_ISSUERS: Record<string, string> = {
+  '3K': '기업BC',
+  '46': '광주',
+  '71': '롯데',
+  '30': '산업',
+  '31': 'BC',
+  '51': '삼성',
+  '38': '새마을금고',
+  '41': '신한',
+  '62': '신협',
+  '36': '씨티',
+  '33': '우리',
+  W1: '우리',
+  '37': '우체국',
+  '39': '저축은행',
+  '35': '전북',
+  '42': '제주',
+  '15': '카카오뱅크',
+  '3A': '케이뱅크',
+  '24': '토스뱅크',
+  '21': '하나',
+  '61': '현대',
+  '11': '국민',
+  '91': 'NH농협',
+};
+
+function formatMethod(method: string, card: OrderPaymentCard | null): string {
+  if (card === null) {
+    return method;
+  }
+  const issuer = CARD_ISSUERS[card.issuerCode];
+  const cardName = `${card.cardType}카드`;
+  return issuer === undefined ? cardName : `${cardName} ${issuer}`;
+}
 
 function getTransactionTitle(
   orderStatus: OrderTransaction['orderStatus'],
@@ -49,10 +88,16 @@ function getAmountValue(
 interface PaymentInfoProps {
   paidAt: string;
   method: string;
+  card: OrderPaymentCard | null;
   installmentMonths: number;
 }
 
-function PaymentInfo({ paidAt, method, installmentMonths }: PaymentInfoProps) {
+function PaymentInfo({
+  paidAt,
+  method,
+  card,
+  installmentMonths,
+}: PaymentInfoProps) {
   return (
     <div className={styles.infoBlock}>
       <p className={`${typography.f14EB} ${styles.sectionTitle}`}>결제 정보</p>
@@ -69,7 +114,7 @@ function PaymentInfo({ paidAt, method, installmentMonths }: PaymentInfoProps) {
           결제 수단
         </span>
         <span className={`${typography.f14R} ${styles.rowValue}`}>
-          {method}
+          {formatMethod(method, card)}
         </span>
       </div>
       <div className={styles.infoRow}>
@@ -87,6 +132,7 @@ function PaymentInfo({ paidAt, method, installmentMonths }: PaymentInfoProps) {
 interface AmountBlockProps {
   servicePrice: number;
   platformFee: number;
+  showPlatformFee: boolean;
   totalLabel: string;
   totalAmount: number;
   isRefund?: boolean;
@@ -95,6 +141,7 @@ interface AmountBlockProps {
 function AmountBlock({
   servicePrice,
   platformFee,
+  showPlatformFee,
   totalLabel,
   totalAmount,
   isRefund = false,
@@ -110,14 +157,16 @@ function AmountBlock({
           {formatPrice(servicePrice)}
         </span>
       </div>
-      <div className={styles.infoRow}>
-        <span className={`${typography.f14B} ${styles.rowLabel}`}>
-          무빗 수수료
-        </span>
-        <span className={`${typography.f14R} ${styles.rowValue}`}>
-          {formatPrice(platformFee)}
-        </span>
-      </div>
+      {showPlatformFee && (
+        <div className={styles.infoRow}>
+          <span className={`${typography.f14B} ${styles.rowLabel}`}>
+            무빗 수수료
+          </span>
+          <span className={`${typography.f14R} ${styles.rowValue}`}>
+            {formatPrice(platformFee)}
+          </span>
+        </div>
+      )}
       <div className={styles.infoRow}>
         <span className={`${typography.f14B} ${styles.rowLabel}`}>
           {totalLabel}
@@ -218,11 +267,13 @@ export default function TransactionModal({
               <PaymentInfo
                 paidAt={transaction.paidAt}
                 method={transaction.method}
+                card={transaction.card}
                 installmentMonths={transaction.installmentMonths}
               />
               <AmountBlock
                 servicePrice={transaction.servicePrice}
                 platformFee={transaction.platformFee}
+                showPlatformFee={role === 'CLIENT'}
                 totalLabel={amountLabel}
                 totalAmount={amountValue}
                 isRefund={isRefundCompleted}

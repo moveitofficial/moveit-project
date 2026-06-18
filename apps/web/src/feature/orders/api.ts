@@ -68,11 +68,9 @@ export async function getOrderTransaction(
   const transaction: OrderTransaction = {
     paidAt: order.approvedAt,
     method: order.method,
+    card: order.card,
     installmentMonths: order.installmentMonths,
     servicePrice: order.agreedServicePrice ?? 0,
-    // TODO: 백엔드 settlementAmount 수수료 미차감 버그(payments.mapper.ts) 수정 후
-    // ExpertOrderPaymentResponse에 platformFee가 내려오면 0 대신 그 값으로 교체,
-    // 안 내려오면 agreedServicePrice - settlementAmount로 계산
     platformFee: isClientOrderPayment(order) ? order.platformFee : 0,
     totalAmount: isClientOrderPayment(order) ? (order.totalAmount ?? 0) : 0,
     settlementAmount: isClientOrderPayment(order)
