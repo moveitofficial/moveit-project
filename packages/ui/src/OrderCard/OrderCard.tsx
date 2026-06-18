@@ -113,7 +113,7 @@ export default function OrderCard(props: OrderCardProps) {
         <p className={clsx(typography.f18EB, styles.amount)}>
           {formatPrice(amount)}
         </p>
-        
+
         {actions !== undefined && actions.length > 0 && (
           <div className={styles.actions}>
             {actions.map((action) => (
