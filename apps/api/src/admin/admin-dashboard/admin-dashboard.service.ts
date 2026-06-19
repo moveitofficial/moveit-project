@@ -51,13 +51,16 @@ export class AdminDashboardService {
 
     // 2. 공통 PendingItem 형태로 매핑
     const items: PendingItemDto[] = [
-      ...experts.map((e) => ({
-        type: PendingType.EXPERT_APPLICATION,
-        id: e.id,
-        content: `${e.user.name ?? '이름없음'} 판매자 권한 신청`,
-        requesterName: e.user.name ?? '이름없음',
-        createdAt: e.createdAt,
-      })),
+      ...experts.map((e) => {
+        const requesterName = e.businessName ?? '전문가';
+        return {
+          type: PendingType.EXPERT_APPLICATION,
+          id: e.id,
+          content: `${requesterName} 판매자 권한 신청`,
+          requesterName,
+          createdAt: e.appliedAt ?? e.createdAt,
+        };
+      }),
       ...reports.map((r) => ({
         type: PendingType.REPORT,
         id: r.id,
