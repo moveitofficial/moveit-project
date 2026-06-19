@@ -178,6 +178,7 @@ export class AdminOrderService {
     try {
       await this.adminOrderRepository.approveCancelByAdmin({
         orderId,
+        clientUserId: order.clientUserId,
         refundAmount: payment.paidAmount,
         canceledAt,
         rawData,
@@ -243,6 +244,7 @@ export class AdminOrderService {
     try {
       await this.adminOrderRepository.approveRefundByAdmin({
         orderId,
+        clientUserId: order.clientUserId,
         refundAmount: payment.paidAmount,
         canceledAt,
         rawData,

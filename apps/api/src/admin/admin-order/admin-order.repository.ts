@@ -153,6 +153,7 @@ export class AdminOrderRepository {
 
   approveCancelByAdmin(params: {
     orderId: string;
+    clientUserId: string;
     refundAmount: number;
     canceledAt: Date;
     rawData: Prisma.InputJsonValue;
@@ -197,7 +198,7 @@ export class AdminOrderRepository {
         data: {
           adminId: params.adminId,
           actionType: AdminActionType.CANCEL_APPROVED,
-          referenceId: params.orderId,
+          referenceId: params.clientUserId,
         },
       });
     });
@@ -205,6 +206,7 @@ export class AdminOrderRepository {
 
   approveRefundByAdmin(params: {
     orderId: string;
+    clientUserId: string;
     refundAmount: number;
     canceledAt: Date;
     rawData: Prisma.InputJsonValue;
@@ -249,7 +251,7 @@ export class AdminOrderRepository {
         data: {
           adminId: params.adminId,
           actionType: AdminActionType.REFUND_APPROVED,
-          referenceId: params.orderId,
+          referenceId: params.clientUserId,
         },
       });
     });
