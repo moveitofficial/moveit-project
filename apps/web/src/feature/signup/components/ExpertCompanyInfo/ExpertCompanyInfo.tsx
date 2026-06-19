@@ -14,7 +14,7 @@ import Dropdown from '../common/Dropdown';
 import FormFooter from '../common/FormFooter';
 import FormHeader from '../common/FormHeader';
 import { SERVICE_CATEGORIES_BY_GROUP } from '../common/serviceCategories';
-import { SERVICE_GROUPS, type ServiceGroupId } from '../common/serviceGroups';
+import { SERVICE_GROUPS_EXPERT, type ServiceGroupId } from '../common/serviceGroups';
 import { TECH_STACKS } from '../common/techStacks';
 
 import {
@@ -214,7 +214,7 @@ export default function ExpertCompanyInfo() {
         <div className={styles.field}>
           <span className={styles.label}>전문분야</span>
           <Dropdown
-            options={SERVICE_GROUPS}
+            options={SERVICE_GROUPS_EXPERT}
             value={form.specialtyGroup}
             onChange={handleSpecialtyGroupChange}
             placeholder="전문 분야를 선택해주세요"

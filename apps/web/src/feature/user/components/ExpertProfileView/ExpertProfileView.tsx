@@ -32,7 +32,7 @@ import PhoneField from '@/feature/signup/components/common/PhoneField';
 import { REGIONS } from '@/feature/signup/components/common/regions';
 import { SERVICE_CATEGORIES_BY_GROUP } from '@/feature/signup/components/common/serviceCategories';
 import {
-  SERVICE_GROUPS,
+  SERVICE_GROUPS_EXPERT,
   type ServiceGroupId,
 } from '@/feature/signup/components/common/serviceGroups';
 import { TECH_STACKS } from '@/feature/signup/components/common/techStacks';
@@ -120,7 +120,7 @@ const getRegionLabel = (id: string | null): string => {
 
 const getGroupLabel = (id: ServiceGroupId | ''): string => {
   if (id === '') return '';
-  return SERVICE_GROUPS.find((group) => group.id === id)?.label ?? id;
+  return SERVICE_GROUPS_EXPERT.find((group) => group.id === id)?.label ?? id;
 };
 
 interface Props {
@@ -754,7 +754,7 @@ export default function ExpertProfileView({ user: initialUser }: Props) {
                 <span className={styles.label}>전문 분야</span>
                 {isEditing ? (
                   <Dropdown
-                    options={SERVICE_GROUPS}
+                    options={SERVICE_GROUPS_EXPERT}
                     value={specialtyGroup}
                     onChange={handleSpecialtyGroupChange}
                     placeholder="전문 분야를 선택해주세요"
