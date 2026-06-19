@@ -18,12 +18,14 @@ export const DETAIL_AREAS_BY_INTEREST: Record<
     { id: 'WEB', label: '웹 제작' },
     { id: 'APP', label: '앱 제작' },
     { id: 'AI', label: 'AI 개발' },
+    { id: 'GAME', label: '게임 개발' },
     { id: 'DATA_ANALYTICS', label: '데이터분석/자동화' },
   ],
   PROJECT_REQUEST: [
     { id: 'WEB', label: '웹 제작' },
     { id: 'APP', label: '앱 제작' },
     { id: 'AI', label: 'AI 개발' },
+    { id: 'GAME', label: '게임 개발' },
     { id: 'DATA_ANALYTICS', label: '데이터분석/자동화' },
   ],
 };
